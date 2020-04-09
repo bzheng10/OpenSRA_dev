@@ -263,8 +263,8 @@ def saygili_2008(**kwargs):
     
     ## Get inputs
     pga = kwargs.get('pga',None) # g, peak ground acceleration
-    M = kwargs.get('M',None) # moment magnitude
     pgv = kwargs.get('pgv',None) # cm/s, peak ground velocity
+    M = kwargs.get('M',None) # moment magnitude
     Ia = kwargs.get('Ia',None) # m/s, arias intensity
     Tm = kwargs.get('Tm',None) # sec, mean period
     ky = kwargs.get('ky',None) # g, yield acceleration, either provided or computed below
@@ -484,8 +484,8 @@ def rathje_antonakos_2011(**kwargs):
 
     ## Get inputs
     pga = kwargs.get('pga',None) # g, peak ground acceleration
-    M = kwargs.get('M',None) # moment magnitude
     pgv = kwargs.get('pgv',None) # cm/s, peak ground velocity
+    M = kwargs.get('M',None) # moment magnitude
     Tm = kwargs.get('Tm',None) # sec, mean period
     Ts = kwargs.get('Tm',None) # sec, site period
     ky = kwargs.get('ky',None) # g, yield acceleration, either provided or computed below
@@ -994,3 +994,37 @@ def bray_macedo_2019(**kwargs):
         
     ##
     return D, p_D_eq_0, p_d_gt_d
+	
+	
+#####################################################################################################################
+##### FEMA (2004) HAZUS
+#####################################################################################################################
+def hazus_2004_land(data_makdisi_seed, pga, M, susc_land):
+    """
+
+
+    """
+    ## Load Makdisi & Seed digitized data
+    makdisi_seed = pd.read_csv(dir_makdisi_seed, sep='\t')
+    makdisi_seed_keys = makdisi_seed.keys()
+
+    ## Critical PGA based on landslide susceptibility
+    pga_c = [0.60 if susc_land == 1 else
+             0.50 if susc_land == 2 else
+             0.40 if susc_land == 3 else
+             0.35 if susc_land == 4 else
+             0.30 if susc_land == 5 else
+             0.25 if susc_land == 6 else
+             0.20 if susc_land == 7 else
+             0.15 if susc_land == 8 else
+             0.10 if susc_land == 9 else
+             0.05 if susc_land == 10 else 999]
+    pga_c = pga_c[0]
+    
+    ## PGD for landslide
+    n_cyc = 0.3419 * M**3 - 5.5214 * M**2 + 33.6154 * M - 70.7692
+    pga_is = pga # default - pga_is = pga
+    pgd_pgais_n_upper = np.interp(pga_c/pga_is,makdisi_seed[makdisi_seed_keys[0]],makdisi_seed[makdisi_seed_keys[1]]) 
+    pgd_pgais_n_lower = np.interp(pga_c/pga_is,makdisi_seed[makdisi_seed_keys[2]],makdisi_seed[makdisi_seed_keys[3]])
+    pgd_pgais_n = (pgd_pgais_n_upper + pgd_pgais_n_lower)/2
+    pgd_land = pgd_pgais_n * pga_is * n_cyc * globals()['cm']/globals()['inch']

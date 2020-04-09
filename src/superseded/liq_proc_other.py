@@ -37,7 +37,7 @@ def zhu_etal_2017(pgv, vs30, precip, dc, dr, dw, wtd, m):
         b_sqrt_dc_dr = -0.0369 #
 
         ## probability of liquefaction - sum of model variables
-        X_prob_liq = b_0 + b_lnpgv*np.log(pgv*sf) + b_vs30*np.log(vs30) + b_precip*precip + \
+        X_p_liq = b_0 + b_lnpgv*np.log(pgv*sf) + b_vs30*np.log(vs30) + b_precip*precip + \
                      b_sqrt_dc*np.sqrt(dc) + b_dr*dr + b_sqrt_dc_dr*np.sqrt(dc)*dr    
 
         ## coeffcients for areal liquefaction
@@ -56,7 +56,7 @@ def zhu_etal_2017(pgv, vs30, precip, dc, dr, dw, wtd, m):
         b_wtd = -0.0333 # m, global water table depth
 
         ## probability of liquefaction - sum of model variables
-        X_prob_liq = b_0 + b_lnpgv*np.log(pgv*sf) + b_vs30*np.log(vs30) + b_precip*precip + b_dw*dw + b_wtd*wtd
+        X_p_liq = b_0 + b_lnpgv*np.log(pgv*sf) + b_vs30*np.log(vs30) + b_precip*precip + b_dw*dw + b_wtd*wtd
 
         ## coeffcients for areal liquefaction
         a = 49.15
@@ -65,23 +65,60 @@ def zhu_etal_2017(pgv, vs30, precip, dc, dr, dw, wtd, m):
     
     ## probability of liquefacion
     if pgv < 3 or vs30 > 620:
-        prob_liq = 0
+        p_liq = 0
     else:
-        prob_liq = 1 / (1 + np.exp(-X_prob_liq))
+        p_liq = 1 / (1 + np.exp(-X_p_liq))
 
     ## areal liquefaction percent
-    prob_liq_areal = a / (1 + b * np.exp(-c * prob_liq))**2
+    p_liq_areal = a / (1 + b * np.exp(-c * p_liq))**2
 
     ## liquefaction susceptibility 
-    liq_susc = X_prob_liq - b_lnpgv*np.log(pgv*sf)
+    susc_liq = X_p_liq - b_lnpgv*np.log(pgv*sf)
 
 	## if on water (distance to coast < 0)
     if dc < 0:
 	
 		## set outputs to be invalid
-        prob_liq = -999
-        prob_liq_areal = -999
-        liq_susc = -999
+        p_liq = -999
+        p_liq_areal = -999
+        susc_liq = -999
 
 	##
-    return prob_liq, prob_liq_areal, liq_susc
+    return p_liq, p_liq_areal, susc_liq
+	
+
+#####################################################################################################################
+##### FEMA (2004) HAZUS - after Liao et al. (1988)
+#####################################################################################################################
+def hazus_2004_liq_trig(pga, M, d_w, susc_liq):
+    """
+
+    """
+    
+    ## Correlations based on liquefaction susceptibility
+    if susc_liq.lower() == 'very high':
+        p_liq_pga = np.maximum(np.minimum(9.09*pga-0.82,1),0)
+        p_ml = 0.25
+    elif susc_liq.lower() == 'high':
+        p_liq_pga = np.maximum(np.minimum(7.67*pga-0.92,1),0)
+        p_ml = 0.20
+    elif susc_liq.lower() == 'moderate':
+        p_liq_pga = np.maximum(np.minimum(6.67*pga-1.00,1),0)
+        p_ml = 0.10
+    elif susc_liq.lower() == 'low':
+        p_liq_pga = np.maximum(np.minimum(5.57*pga-1.18,1),0)
+        p_ml = 0.05
+    elif susc_liq.lower() == 'very low':
+        p_liq_pga = np.maximum(np.minimum(4.16*pga-1.08,1),0)
+        p_ml = 0.02
+    elif susc_liq.lower() == 'none':
+        p_liq_pga = np.ones(len(pga))*0.00
+        p_ml = 0.00
+    else:
+        p_liq_pga = np.ones(len(pga))*np.nan
+        p_ml = np.nan
+
+    ## Liquefaction likelihood, p_liq    
+    k_m = 0.0027 * M**3 - 0.0267 * M**2 - 0.2055 * M + 2.9188
+    k_w = 0.022 * d_w + 0.93
+    p_liq = p_liq_pga / k_m / k_w * p_ml

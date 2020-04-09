@@ -1,36 +1,12 @@
 #####################################################################################################################
-##### Miscellaneous functions
+##### Miscellaneous functions for Task 4B - liquefaction and landslide
 ##### Barry Zheng (Slate Geotechnical Consultants)
 ##### Updated: 2020-04-06
 #####################################################################################################################
 
 
 #####################################################################################################################
-##### Calculate the epicentral distances using the Haversine equation
-#####################################################################################################################
-def get_haversine_dist(lat1,long1,lat2,long2,z=0,unit='km'):
-	
-	## determine unit to reference for Earth's radius
-	if unit == 'km':
-		r = 6371 # km
-	elif unit == 'miles':
-		r = 3,958.8
-	
-	## convert long lat from degrees to radians
-    lat1 = np.log(lat1)
-    long1 = np.log(long1)
-    lat2 = np.log(lat2)
-    long2 = np.log(long2)
-	
-    ## Haversine function for epicentral distance
-    d = 2*r*np.arcsin(np.sqrt(np.sin((lat2-lat1)/2)**2 + np.cos(lat1)*np.cos(lat2)*np.sin((long2-long1)/2)**2))
-		
-	##
-	return d
-
-
-#####################################################################################################################
-##### Calculate stress profile - for cpt where properties at specific depths are given
+##### calculate stress profile - for cpt where properties at specific depths are given
 #####################################################################################################################
 def get_stress(**kwargs):
 
@@ -79,7 +55,7 @@ def get_stress(**kwargs):
 	
 
 #####################################################################################################################
-##### Calculate Vs over depth zmax (average slowness)
+##### calculate Vs over depth zmax (average slowness)
 #####################################################################################################################
 def get_Vs_zmax(**kwargs):
 
@@ -100,7 +76,7 @@ def get_Vs_zmax(**kwargs):
 
 
 #####################################################################################################################
-##### Calculate depth-reduction factor
+##### calculate depth-reduction factor
 #####################################################################################################################
 def get_rd(**kwargs):
 	## Current methods coded
@@ -231,7 +207,7 @@ def get_rd(**kwargs):
 	
 	
 #####################################################################################################################	
-## Get arias intensity
+##### get arias intensity
 #####################################################################################################################
 def get_Ia(t, acc, gval=9.81):
     
@@ -252,7 +228,7 @@ def get_Ia(t, acc, gval=9.81):
 	
 	
 #####################################################################################################################
-## Get Tm, mean period, a measure of frequency content of ground motion, eq. 3.15 in Saygili (2008) dissertation
+#### get Tm, mean period, a measure of frequency content of ground motion, eq. 3.15 in Saygili (2008) dissertation
 #####################################################################################################################
 def get_Tm(t,y):
     
@@ -283,8 +259,8 @@ def get_Tm(t,y):
 	
 	
 #####################################################################################################################
-### Summing volumetric strain over depth, with depth-weighted factor given by Cetin et al. (2009)
-### Cetin et al. (2009) Probabilistic Model for the Assessment of Cyclically Induced Reconsolidation (Volumetric) Settlements
+##### summing volumetric strain over depth, with depth-weighted factor given by Cetin et al. (2009)
+##### Cetin et al. (2009) Probabilistic Model for the Assessment of Cyclically Induced Reconsolidation (Volumetric) Settlements
 #####################################################################################################################
 def get_total_settlement(dh,eps_v,z_cr=18,flag_DF=True):
     
@@ -308,3 +284,5 @@ def get_total_settlement(dh,eps_v,z_cr=18,flag_DF=True):
     s_sum = eps_v_sum*h_sum
     
     return eps_v_sum, s_sum
+	
+	

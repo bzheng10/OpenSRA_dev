@@ -36,8 +36,9 @@ def grant_etal_2016(flag_failure, **kwargs):
     ##    - a = vertical distance between center of slip circle and landslide body's centroid
     ##
     
-    
+	###############################
     ## 1) Rock-slope failures:
+	###############################
     if flag_failure == 1:
         ## assign passed values to parameters
         phi = kwargs['phi']
@@ -52,13 +53,15 @@ def grant_etal_2016(flag_failure, **kwargs):
         h = 0.25*H # m, vertical height of failure mass
         FS = 2*c*np.sin(np.radians(beta))/(gamma*h*np.sin(np.radians(beta-alpha))*np.sin(np.radians(alpha))) +\
                                            np.tan(np.radians(phi))/np.tan(np.radians(alpha)) # factor of safety
-        ky = (FS-1)*np.sin(np.radians(theta)) # g, yield acceleration
+        ky = (FS-1)*np.sin(np.radians(theta)) # g, yield acceleration		
         if pga > ky:
             D = np.exp(0.215 + np.log((1-ky/pga)**2.341 * (ky/pga)**-1.438)) # cm, coseismic displacement, pga and ky in units of g
         else:
             D = 0
     
+	###############################
     elif flag_failure == 2:
+	###############################
         ## assign passed values to parameters
         phi = kwargs['phi']
         c = kwargs['c']
@@ -75,8 +78,10 @@ def grant_etal_2016(flag_failure, **kwargs):
             D = np.exp(0.215 + np.log((1-ky/pga)**2.341 * (ky/pga)**-1.438)) # cm, coseismic displacement, pga and ky in units of g
         else:
             D = 0
-        
+    
+	###############################
     elif flag_failure == 3:
+	###############################
         ## assign passed values to parameters
         phi = kwargs['phi']
         c = kwargs['c']
@@ -95,11 +100,13 @@ def grant_etal_2016(flag_failure, **kwargs):
               (W*(a/R + np.sin(np.radians(beta))*np.tan(np.radians(phi)))) # g, yield acceleration
         if pga > ky:
             D = np.exp(0.215 + np.log((1-ky/(0.5*pga))**2.341 * (ky/(0.5*pga))**-1.438)) # cm, coseismic displacement, 
-                                                                                           # pga and ky in units of g, factor of 50% applied to pga
+                                                                                         # pga and ky in units of g, factor of 50% applied to pga
         else:
             D = 0
 
+	###############################
     elif flag_failure == 4:
+	###############################
         ## assign passed values to parameters
         susc_liq = kwargs['susc_liq']
         pga = kwargs['pga']
@@ -148,13 +155,14 @@ def grant_etal_2016(flag_failure, **kwargs):
         else:
             D = 0
 
+	##
     return D, ky
 	
 
 #####################################################################################################################
 ##### Youd et al. (2002) Revised multilinear regression equations for prediction of lateral spread displacement
 #####################################################################################################################
-def youd_etal_2002(**kwargs):
+def youd_etal_2002(M, R, W, S, T_15, F_15, D50_15):
 
     ##### Regression coefficients for empirical lateral spread model
     ## Model inputs:
@@ -171,7 +179,7 @@ def youd_etal_2002(**kwargs):
     ##
     ## flag_model == 1: ground slope (infinite slope)
     ## flag_model == 2: free face
-    ##
+	
     ## Ground slope
     if flag_model == 1:
         b0 = -16.213
@@ -206,3 +214,34 @@ def youd_etal_2002(**kwargs):
     
     ##
     return Dh, sigma_ln_Dh
+	
+
+#####################################################################################################################
+##### Youd et al. (2002) Revised multilinear regression equations for prediction of lateral spread displacement
+#####################################################################################################################
+def hazus_2004(susc_liq, pga, M, z, dr):
+	"""
+	Compute lateral spreading, redirect to Grant et al. (2016) Case D.
+	
+    Parameters
+    ----------
+	susc_liq = susceptibility to liquefaction
+	pga = peak ground acceleration (g)
+	M = moment magnitude
+	z = elevation (m)
+	dr = distance to river (m)
+
+	"""
+	## get inputs
+	susc_liq = kwargs['susc_liq',None]
+	pga = kwargs['pga',None]
+	M = kwargs['M',None]
+	z = kwargs['z',None]
+	dr = kwargs['dr',None]
+	flag_failure = 4
+	
+	## run Case 4 in Grant et al. (2016)
+	d,_ = grant_etal_2016(flag_failure,susc_liq=susc_liq,pga=pga,M=M,z=z,dr=dr)
+	
+	##
+	return d

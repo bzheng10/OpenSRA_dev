@@ -89,7 +89,7 @@ def moss_etal_2006(**kwargs):
 ##### Boulanger and Idriss (2014) CPT and SPT Based Liquefaction Triggering Procedures (report)
 ##### Boulanger and Idriss (2016) CPT Based Liquefaction Triggering Procedure (journal)
 #####################################################################################################################
-def boulanger_idriss_2014(**kwargs):
+def boulanger_idriss_2014_cpt_corr(**kwargs):
     
     ############ Type of q-value for input ############
     q_type = kwargs.get('q_type','qc')

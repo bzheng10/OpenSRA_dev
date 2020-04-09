@@ -148,7 +148,6 @@ def boulanger_idriss_2014(**kwargs):
         csr_m_sigv = 0.65 * amax * sv0_tot/sv0_eff *rd # Seed and Idriss (1971), uncorrected
         csr = csr_m_sigv/msf/K_sigma/K_alpha # CSR for M=7.5 and corrected to 1 atm and static bias
 		
-	
     ## see if enough inputs are given for crr or p_liq
     if qc_1N_cs is None:
         print('Not enough inputs to proceed with procedure')
@@ -181,9 +180,9 @@ def boulanger_idriss_2014(**kwargs):
                 Co = 2.60 # recommended on pp. 9 in BI16
                 sigma_R = 0.20 # recommended on pp. 1192 in BI16
 
-                ## Probability of liquefaction (Cetin et al., 2004)
+                ## Probability of liquefaction
                 p_liq = norm.cdf(-(qc_1N_cs/113 + (qc_1N_cs/1000)**2 - (qc_1N_cs/140)**3 + \
-                                   (qc_1N_cs/137)**4 - Co - np.log(csr))/sigma_R) # eq. 31 in BI12
+                                   (qc_1N_cs/137)**4 - Co - np.log(csr))/sigma_R) # eq. 35 in BI16
 
                 ## Cyclic resistance ratio
                 crr = np.nan # not used
@@ -193,7 +192,7 @@ def boulanger_idriss_2014(**kwargs):
 			
                 ## Inverse analysis of CRR given pLiq, (Cetin et al., 2004)
                 crr = np.exp(qc_1N_cs/113 + (qc_1N_cs/1000)**2 - (qc_1N_cs/140)**3 + \
-                            (qc_1N_cs/137)**4 - Co + sigma*norm.ppf(p_liq)) # eq. 30 in BI12
+                            (qc_1N_cs/137)**4 - Co + sigma*norm.ppf(p_liq)) # eq. 34 in BI16
 
 
 			##

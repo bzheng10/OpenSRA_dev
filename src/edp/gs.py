@@ -6,9 +6,9 @@
 
 
 #####################################################################################################################
-### Cetin et al. (2009) Probabilistic Model for the Assessment of Cyclically Induced Reconsolidation (Volumetric) Settlements
-### Peterson (2016) Dissertation - Development of a Performance-Based Procedure for Assessment of Liquefaction-Induced Free-Field
-###                 Settlements
+##### Cetin et al. (2009) Probabilistic Model for the Assessment of Cyclically Induced Reconsolidation (Volumetric) Settlements
+##### Peterson (2016) Dissertation - Development of a Performance-Based Procedure for Assessment of Liquefaction-Induced Free-Field
+#####                 Settlements
 #####################################################################################################################
 def cetin_etal_2009(**kwargs):
     
@@ -71,7 +71,7 @@ def cetin_etal_2009(**kwargs):
 	
 
 #####################################################################################################################
-### Ishihara and Yoshimine (1992) Evaluation of Settlements in Sand Deposits Following Liquefaction During Earthquakes
+##### Ishihara and Yoshimine (1992) Evaluation of Settlements in Sand Deposits Following Liquefaction During Earthquakes
 #####################################################################################################################
 def ishihara_yoshimine_1992(N1_60_cs, Dr, FS_liq):
     
@@ -100,3 +100,50 @@ def ishihara_yoshimine_1992(N1_60_cs, Dr, FS_liq):
 
     ##
     return eps_v
+	
+
+#####################################################################################################################
+##### HAZUS approach FEMA (2004), modified from Tokimatsu and Seed (1987)
+#####################################################################################################################
+def hazus_2004(susc_liq):
+	"""
+	Compute ground settlement using simplified Tokimatsu and Seed (1987)
+	
+    Parameters
+    ----------
+	susc_liq: susceptibility to liquefaction
+
+	"""
+    ## Estimates based on liquefaction susceptibility
+    if susc_liq.lower() == 'very high':
+        s = 12 # inches
+    elif susc_liq.lower() == 'high':
+        s = 6 # inches
+    elif susc_liq.lower() == 'moderate':
+        s = 2 # inches
+    elif susc_liq.lower() == 'low':
+        s = 1 # inches
+    elif susc_liq.lower() == 'very low':
+        s = 0 # inches
+    elif susc_liq.lower() == 'none':
+        s = 0 # inches
+    else:
+        s = np.nan
+	
+	##
+	return s
+	
+#####################################################################################################################
+##### Tokimatsu and Seed (1987)
+#####################################################################################################################
+def tokimatsu_seed_1987(**kwargs):
+	"""
+	Compute ground settlement using Tokimatsu and Seed (1987)
+	
+    Parameters
+    ----------
+	TBD
+
+	"""
+
+	print('Placeholder - still under development')

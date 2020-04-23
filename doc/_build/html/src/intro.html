@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Introduction &#8212; OpenSRA (20XX) documentation</title>
+    <link rel="stylesheet" href="../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>OpenSRA is an open-source software (<a href="#id3"><span class="problematic" id="id4">`OpenSRA Github page`_</span></a>) released under a <strong>XXXX</strong> license (see <code class="xref std std-numref docutils literal notranslate"><span class="pre">lblLicense</span></code>). The <a href="#id1"><span class="problematic" id="id2">|app|</span></a> can be used to quantify losses from an earthquake or hurricane scenario in the form of <em>decision variables</em> (DVs). This functionality is typically utilized for performance-based engineering and regional natural hazard risk assessment. This library can help you in several steps of performance assessment:</p>
+<p>Backbone Methodology of OpenSRA:
+The program is trying to solve the following equation from PEER (Deierlein et al., 2003) at user-defined locations:</p>
+<p>IM = intensity measures (e.g., PGA, PGV)
+From PSHA
+EDP = engineering demand parameters (e.g., seismic- or liquefaction-induced shear strains and/or permanent ground deformations)
+From various methods and procedures with epistemic uncertainty
+DM = damage measures (e.g., gas leaks, breaks, repairs)
+Fragility curves from available methods (e.g., FEMA/Hazus) and those developed by subgroups
+DV = decision values/variables (e.g., safety, costs of repair/upgrade)
+From technical advisory committee or other user entities
+λ = mean annual rate of occurrence for the intensity measure
+from scenarios used in PSHA</p>
+<p>Workflow:
+The program is expected to work on a personal computer. For every run, the program goes through the following workflow:
+Site characterization:
+Define location of interest, with options for:
+Region/grid
+Individual sites defined by user
+Entered manually or get locations from maps or networks of pipe/transmission lines
+Get intensity measures (IM) at locations defined above:
+Source characterization:
+Use scenarios from UCERF3
+Ground motion characterization:
+NGAWest2
+Run PSHA get hazard curves
+Do we want to give the option for deterministic analysis?
+Evaluate engineering demand parameters (EDP) at user-defined locations:
+Allow users to select method(s) for analyzing EDP
+one method at a time or parallel (a lot of inputs will be required if using multiple methods at once)
+allow user-defined EDP functions?
+For the selected method, show the list of required inputs, and:
+Provide users the option to define input values themselves or use maps
+Allow users to define their own fragility functions (?)
+Allow users to define their own epistemic uncertainty for each model
+Evaluate damage measures (DM) given EDP’s and/or IM’s
+Allow users to select multiple fragility functions to use.
+Allow users to define criteria for damage measures (i.e., generate conditional probabilities p(dm&gt;DM|EDP,IM))
+E.g., difference damage states (minor, moderate, severe)
+Allow users to define their own fragility functions (?)
+Allow users to define their own epistemic uncertainty for each model
+Evaluate decision values (DV) given DM’s:
+Options to generate various plots for multiple decisions, for example:
+prob(dv&gt;DV) vs. DM, EDP, IM
+prob(dv&gt;DV|DM) vs. DM, EDP, IM
+Export results onto csv files(?)</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenSRA_logo_1600ppi.png" alt="Logo"/>
+            </a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/src/intro.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Slate Geotechnical Consultants and The Regents of the University of California.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.
+    </div>
+  </body>
+</html>

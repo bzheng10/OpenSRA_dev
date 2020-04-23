@@ -1,0 +1,7 @@
+$ cat .gitignore
+
+/.ipynb_checkpoints
+/src/.ipynb_checkpoints
+/src/superseded
+/src/test_src.ipynb
+/src/test_zhu_etal.ipynb

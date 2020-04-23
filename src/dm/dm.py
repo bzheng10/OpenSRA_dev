@@ -1,7 +1,13 @@
 #####################################################################################################################
-##### Functions for damage measures given intensity measures and engineering demand parameters
-##### Barry Zheng (Slate Geotechnical Consultants)
-##### Updated: 2020-04-06
+##### Open-Source Seismic Risk Assessment, OpenSRA(TM)
+##### 
+##### Copyright(c) 2020-2022 The Regents of the University of California and 
+##### Slate Geotechnical Consultants. All Rights Reserved.
+##### 
+##### Methods for damage measures
+##### 
+##### Created: April 13, 2020
+##### @author: Barry Zheng (Slate Geotechnical Consultants)
 #####################################################################################################################
 
 
@@ -9,7 +15,7 @@
 ##### sort list where each index has multiple elements, sort by column index
 ##### FEMA (2004) HAZUS
 #####################################################################################################################
-def hazus_2004(pgv, pgd_ls, pgd_gs, pipe_type='brittle', l_seg=1):
+def hazus_2004_rr(pgv, pgd_ls, pgd_gs, pipe_type='brittle', l_seg=1):
 	
     ## Average PGD due to liquefaction-induced deformation
     pgd_liq = np.sqrt(pgd_ls*pgd_gs)

@@ -1,0 +1,1900 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Engineering Demand Parameters &#8212; OpenSRA (20XX) documentation</title>
+    <link rel="stylesheet" href="../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Damage Measures" href="dm.html" />
+    <link rel="prev" title="Intensity Measures" href="im.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dm.html" title="Damage Measures"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="im.html" title="Intensity Measures"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="engineering-demand-parameters">
+<h1>Engineering Demand Parameters<a class="headerlink" href="#engineering-demand-parameters" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="correction-procedures-for-cpt">
+<h2>Correction Procedures for CPT<a class="headerlink" href="#correction-procedures-for-cpt" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="boulanger-idriss-2014">
+<h3>Boulanger &amp; Idriss (2014)<a class="headerlink" href="#boulanger-idriss-2014" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.corr_cpt.boulanger_idriss_2014_corr_cpt">
+<code class="sig-prename descclassname">edp.corr_cpt.</code><code class="sig-name descname">boulanger_idriss_2014_corr_cpt</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.corr_cpt.boulanger_idriss_2014_corr_cpt" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPT tip resistance correction to <strong>qc_1N_cs</strong> using works by Idriss and Boulanger (2008) and Boulanger and Idriss (2014). Users can specify any type of tip resistance measures (<strong>qc</strong>, <strong>qt</strong>, <strong>qc_1N</strong>) and the function will apply the remaining corrections. Note that this function is used to produce <strong>qc_1N_cs</strong>, which is the primary input for the Boulanger &amp; Idriss (2014) deterministic and probabilistic liquefaction triggering procedures (see <a class="reference internal" href="#edp.liq.boulanger_idriss_2014_liq" title="edp.liq.boulanger_idriss_2014_liq"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.liq.boulanger_idriss_2014_liq()</span></code></a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>qc</strong><span class="classifier">float</span></dt><dd><p>[kPa] tip resistance</p>
+</dd>
+<dt><strong>qc_type</strong><span class="classifier">str</span></dt><dd><p>describe the qc value specified, pick from <strong>qc</strong>, <strong>qt</strong>, <strong>qc_1N</strong>; default = <strong>qc</strong></p>
+</dd>
+<dt><strong>Parameters for cone tip area correction</strong></dt><dd></dd>
+<dt><strong>u2</strong><span class="classifier">float</span></dt><dd><p>[kPa] pore pressure measured above the cone tip</p>
+</dd>
+<dt><strong>ar</strong><span class="classifier">float</span></dt><dd><p>net area ratio for cone tip, varies between 0.65 to 0.85 (Boulanger &amp; Idriss, 2014); default = 0.8</p>
+</dd>
+<dt><strong>Parameters for overburden correction</strong></dt><dd></dd>
+<dt><strong>fs</strong><span class="classifier">float</span></dt><dd><p>[kPa] sleeve friction</p>
+</dd>
+<dt><strong>sv0_tot</strong><span class="classifier">float</span></dt><dd><p>[kPa] initial vertical total stress</p>
+</dd>
+<dt><strong>sv0_eff</strong><span class="classifier">float</span></dt><dd><p>[kPa] initial vertical effective stress</p>
+</dd>
+<dt><strong>patm</strong><span class="classifier">float</span></dt><dd><p>[kPa] atmospheric pressure, default = 101.3 kPa</p>
+</dd>
+<dt><strong>Parameters for fines content correction</strong></dt><dd></dd>
+<dt><strong>fc</strong><span class="classifier">float, optional</span></dt><dd><p>[%] fines content, can be estimated from the SBT index <strong>Ic</strong>; default = 0</p>
+</dd>
+<dt><strong>Cfc</strong><span class="classifier">float, optional</span></dt><dd><p>fitting parameter for quantifying the uncertainty in estimating <strong>fc</strong> using <strong>Ic</strong>, <span class="math notranslate nohighlight">\(\pm\)</span> 0.29 = 1 standard deviation; default to 0</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>qc_1N_cs</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] qc value corrected for area, overburden, and fines content</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r88abff76bffd-1"><span class="brackets">1</span></dt>
+<dd><p>Idriss, I.M., and Boulanger, R.W., 2008, Soil Liquefaction During Earthquakes, Monograph No. 12, Earthquake Engineering Research Institute, Oakland, CA, 261 pp.</p>
+</dd>
+<dt class="label" id="r88abff76bffd-2"><span class="brackets">2</span></dt>
+<dd><p>Boulanger, R.W., and Idriss, I.M., 2014, CPT and SPT Based Liquefaction Triggering procedures, Report UCD/CGM-14/01, Department of Civil and Environmental Engineering, University of California, Davis, CA, 134 pp.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="moss-et-al-2006">
+<h3>Moss et al. (2006)<a class="headerlink" href="#moss-et-al-2006" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.corr_cpt.moss_etal_2006_corr">
+<code class="sig-prename descclassname">edp.corr_cpt.</code><code class="sig-name descname">moss_etal_2006_corr</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.corr_cpt.moss_etal_2006_corr" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPT tip resistance correction to <strong>qc_1</strong> using the Moss et al. (2006a) method. Note that Moss et al. (2006a) uses <strong>qc_1</strong> instead as one of the model parameters for estimating the probability of liquefaction (see <a class="reference internal" href="#edp.liq.moss_etal_2006_liq" title="edp.liq.moss_etal_2006_liq"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.liq.moss_etal_2006_liq()</span></code></a>). Users can need to specify <strong>qc</strong>, and the function will apply the overburden correction to obtain qc_1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>qc</strong><span class="classifier">float</span></dt><dd><p>[MPa] tip resistance</p>
+</dd>
+<dt><strong>Parameters for overburden correction</strong></dt><dd></dd>
+<dt><strong>sv0_tot</strong><span class="classifier">float</span></dt><dd><p>[kPa] initial vertical total stress</p>
+</dd>
+<dt><strong>sv0_eff</strong><span class="classifier">float</span></dt><dd><p>[kPa] initial vertical effective stress</p>
+</dd>
+<dt><strong>patm</strong><span class="classifier">float</span></dt><dd><p>[kPa] atmospheric pressure, default = 101.3 kPa</p>
+</dd>
+<dt><strong>c</strong><span class="classifier">float, optional</span></dt><dd><p>normalization exponent for overburden correction, users can specify this instead of calculating it interally</p>
+</dd>
+<dt><strong>fs</strong><span class="classifier">float, optional</span></dt><dd><p>[MPa] sleeve friction, required to calculate <strong>Rf</strong> if <strong>Rf</strong> is not given</p>
+</dd>
+<dt><strong>Rf</strong><span class="classifier">float, optional</span></dt><dd><p>[%] friction ratio, required if <strong>fs</strong> is not provided to calculate <strong>Rf</strong></p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>qc_1</strong><span class="classifier">float</span></dt><dd><p>normalized tip resistance corrected for overburden, used by Moss et al. (2006a) for liquefaction triggering</p>
+</dd>
+<dt><strong>Rf</strong><span class="classifier">float</span></dt><dd><p>[%] friction ratio, used by Moss et al. (2006a) for liquefaction triggering</p>
+</dd>
+<dt><strong>c</strong><span class="classifier">float</span></dt><dd><p>overburden normalization exponent, used by Moss et al. (2006a) for liquefaction triggering</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r4d4968df6364-1"><span class="brackets">1</span></dt>
+<dd><p>Moss, R.E.S., Seed, R.B., Kayen, R.E., Stewart, J.P., Der Kiureghian, A., and Cetin, K.O., 2006a, CPT-Based Probabilistic and Deterministic Assessment of In Situ Seismic Soil Liquefaction Potential, Journal of Geotechnical and Geoenvironmental Engineering, vol. 132, no. 8, pp. 1032-1051.</p>
+</dd>
+<dt class="label" id="r4d4968df6364-2"><span class="brackets">2</span></dt>
+<dd><p>Moss, R.E.S., Seed, R.B., and Olsen, R.S., 2006b, Normalizing the CPT for Overburden Stress, Journal of Geotechnical and Geoenvironmental Engineering, vol. 132, no. 3, pp. 378-387.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="correction-procedures-for-spt">
+<h2>Correction Procedures for SPT<a class="headerlink" href="#correction-procedures-for-spt" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h3>Boulanger &amp; Idriss (2014)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.corr_spt.boulanger_idriss_2014_corr_spt">
+<code class="sig-prename descclassname">edp.corr_spt.</code><code class="sig-name descname">boulanger_idriss_2014_corr_spt</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.corr_spt.boulanger_idriss_2014_corr_spt" title="Permalink to this definition">¶</a></dt>
+<dd><p>SPT blow count correction to <strong>N1_60_cs</strong> using works by Idriss and Boulanger (2008; 2010) and Boulanger and Idriss (2014). Users can specify any type of blow count values (<strong>Nm</strong>, <strong>N60</strong>, <strong>N1</strong>, <strong>N1_60</strong>) and the function will apply the remaining corrections to obtain <strong>N1_60_cs</strong>. Note that this function is used to produce <strong>N1_60_cs</strong>, which is the primary input for the Boulanger &amp; Idriss (2014) deterministic and probabilistic liquefaction triggering procedures (see <a class="reference internal" href="#edp.liq.boulanger_idriss_2014_liq" title="edp.liq.boulanger_idriss_2014_liq"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.liq.boulanger_idriss_2014_liq()</span></code></a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>N</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] N-value</p>
+</dd>
+<dt><strong>N_type</strong><span class="classifier">str</span></dt><dd><p>describe the N-value specified, pick from <strong>Nm</strong>, <strong>N60</strong>, <strong>N1</strong>, <strong>N1_60</strong>; default = <strong>Nm</strong></p>
+</dd>
+<dt><strong>Parameters for energy correction</strong></dt><dd></dd>
+<dt><strong>ERm</strong><span class="classifier">float</span></dt><dd><p>[%] measured energy ratio, default = 75%</p>
+</dd>
+<dt><strong>BH_diam</strong><span class="classifier">float</span></dt><dd><p>[mm]: borehold diameter</p>
+</dd>
+<dt><strong>L_rod</strong><span class="classifier">float</span></dt><dd><p>[m] rod stick-up length, default = 5 m</p>
+</dd>
+<dt><strong>flag_liner_room</strong><span class="classifier">boolean</span></dt><dd><p>flag for whether sampler has room for liner, default = False</p>
+</dd>
+<dt><strong>flag_liner_absent</strong><span class="classifier">boolean</span></dt><dd><p>flag for the absence of the liner, given that there is room, default = True</p>
+</dd>
+<dt><strong>Parameters for overburden correction</strong></dt><dd></dd>
+<dt><strong>sv0_eff</strong><span class="classifier">float</span></dt><dd><p>[kPa] initial vertical effective stress</p>
+</dd>
+<dt><strong>patm</strong><span class="classifier">float, optional</span></dt><dd><p>[kPa] atmospheric pressure, default = 101.3 kPa</p>
+</dd>
+<dt><strong>Parameters for fines content correction</strong></dt><dd></dd>
+<dt><strong>fc</strong><span class="classifier">float</span></dt><dd><p>[%] fines content; default = 0</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>N1_60</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] N-value corrected for energy and overburden</p>
+</dd>
+<dt><strong>N1_60_cs</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] N-value corrected for energy, overburden, and fines content</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rea22e392da91-1"><span class="brackets">1</span></dt>
+<dd><p>Idriss, I.M., and Boulanger, R.W., 2008, Soil Liquefaction During Earthquakes, Monograph No. 12, Earthquake Engineering Research Institute, Oakland, CA, 261 pp.</p>
+</dd>
+<dt class="label" id="rea22e392da91-2"><span class="brackets">2</span></dt>
+<dd><p>Idriss, I.M., and Boulanger, R.W., 2010, SPT-Based Liquefaction Triggering Procedures, Report UCD/CGM-10/02, Department of Civil and Environmental Engineering, University of California, Davis, CA, 259 pp.</p>
+</dd>
+<dt class="label" id="rea22e392da91-3"><span class="brackets">3</span></dt>
+<dd><p>Boulanger, R.W., and Idriss, I.M., 2014, CPT and SPT Based Liquefaction Triggering procedures, Report UCD/CGM-14/01, Department of Civil and Environmental Engineering, University of California, Davis, CA, 134 pp.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="cetin-et-al-2004">
+<h3>Cetin et al. (2004)<a class="headerlink" href="#cetin-et-al-2004" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.corr_spt.cetin_etal_2004_corr">
+<code class="sig-prename descclassname">edp.corr_spt.</code><code class="sig-name descname">cetin_etal_2004_corr</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.corr_spt.cetin_etal_2004_corr" title="Permalink to this definition">¶</a></dt>
+<dd><p>SPT blow count correction to <strong>N1_60</strong> and <strong>N1_60_cs</strong> using the Cetin et al. (2004) method. Users can specify any type of blow count values (<strong>Nm</strong>, <strong>N60</strong>, <strong>N1</strong>, <strong>N1_60</strong>) and the function will apply the remaining corrections. Note that this function is used to produce <strong>N1_60</strong>, which is the primary input for the Youd et al. (2001) deterministic liquefaction triggering procedure (see <a class="reference internal" href="#edp.liq.youd_etal_2001_liq" title="edp.liq.youd_etal_2001_liq"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.liq.youd_etal_2001_liq()</span></code></a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>N</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] N-value</p>
+</dd>
+<dt><strong>N_type</strong><span class="classifier">str</span></dt><dd><p>describe the N-value specified, pick from <strong>Nm</strong>, <strong>N60</strong>, <strong>N1</strong>, <strong>N1_60</strong>; default = <strong>Nm</strong></p>
+</dd>
+<dt><strong>Parameters for energy correction</strong></dt><dd></dd>
+<dt><strong>ERm</strong><span class="classifier">float</span></dt><dd><p>[%] measured energy ratio, default = 75%</p>
+</dd>
+<dt><strong>BH_diam</strong><span class="classifier">float</span></dt><dd><p>[mm]: borehold diameter</p>
+</dd>
+<dt><strong>L_rod</strong><span class="classifier">float</span></dt><dd><p>[m] rod stick-up length, default = 5 m</p>
+</dd>
+<dt><strong>flag_liner_room</strong><span class="classifier">boolean</span></dt><dd><p>flag for whether sampler has room for liner, default = False</p>
+</dd>
+<dt><strong>flag_liner_absent</strong><span class="classifier">boolean</span></dt><dd><p>flag for the absence of the liner, given that there is room, default = True</p>
+</dd>
+<dt><strong>Parameters for overburden correction</strong></dt><dd></dd>
+<dt><strong>CN_method</strong><span class="classifier">str</span></dt><dd><p>method for estimating the overburden correction factor, <strong>CN</strong>, methods available includes ‘<strong>lw86</strong>’ for Liao and Whitman (1986) and ‘<strong>k92</strong>’ for Kayen et al. (1992); default = ‘<strong>lw86</strong>’</p>
+</dd>
+<dt><strong>sv0_eff</strong><span class="classifier">float</span></dt><dd><p>[kPa] initial vertical effective stress</p>
+</dd>
+<dt><strong>patm</strong><span class="classifier">float, optional</span></dt><dd><p>[kPa] atmospheric pressure, default = 101.3 kPa</p>
+</dd>
+<dt><strong>Parameters for fines content correction</strong></dt><dd></dd>
+<dt><strong>fc</strong><span class="classifier">float</span></dt><dd><p>[%] fines content; default = 0</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>N1_60</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] N-value corrected for energy and overburden</p>
+</dd>
+<dt><strong>N1_60_cs</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] N-value corrected for energy, overburden, and fines content</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r5b32cef30392-1"><span class="brackets">1</span></dt>
+<dd><p>Cetin, K.O., Seed, R.B., Der Kiureghian, A., Tokimatsu, K., Harder Jr, L.F., Kayen, R.E., and Moss, R.E., 2004, Standard Penetration Test-Based Probabilistic and Deterministic Assessment of Seismic Soil Liquefaction Potential, Journal of Geotechnical and Geoenvironmental Engineering, vol. 130, no. 12, pp. 1314-1340.</p>
+</dd>
+<dt class="label" id="r5b32cef30392-2"><span class="brackets">2</span></dt>
+<dd><p>Liao, S.S., and Whitman, R.V., 1986, Overburden Correction Factors for SPT in Sand, Journal of Geotechnical Engineering, vol. 112, no. 3, pp. 373-377.</p>
+</dd>
+<dt class="label" id="r5b32cef30392-3"><span class="brackets">3</span></dt>
+<dd><p>Kayen, R.E., Mitchell, J.K., Seed, R.B., Lodge, A., Nishio, S., and Coutinho, R., 1992, Evaluation of SPT-, CPT-, and Shear Wave-Based Methods for Liquefaction Potential Assessment Using Loma Prieta Data, Proceeding of the 4th Japan-U.S. Workshop on Earthquake-Resistant Design of Lifeline Facilities and Countermeasures for Soil Liquefaction, vol. 1, pp. 177–204.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="youd-et-al-2001">
+<h3>Youd et al. (2001)<a class="headerlink" href="#youd-et-al-2001" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.corr_spt.youd_etal_2001_corr">
+<code class="sig-prename descclassname">edp.corr_spt.</code><code class="sig-name descname">youd_etal_2001_corr</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.corr_spt.youd_etal_2001_corr" title="Permalink to this definition">¶</a></dt>
+<dd><p>SPT blow count correction to <strong>N1_60_cs</strong> using the NCEER method (Youd et al., 2001). Users can specify any type of blow count values (<strong>Nm</strong>, <strong>N60</strong>, <strong>N1</strong>, <strong>N1_60</strong>) and the function will apply the remaining corrections. Note that this function is used to produce N1_60, which is the primary input for the Cetin et al. (2004) probabilistic liquefaction triggering procedure (see <a class="reference internal" href="#edp.liq.cetin_etal_2004_liq" title="edp.liq.cetin_etal_2004_liq"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.liq.cetin_etal_2004_liq()</span></code></a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>N</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] N-value</p>
+</dd>
+<dt><strong>N_type</strong><span class="classifier">str</span></dt><dd><p>describe the N-value specified, pick from <strong>Nm</strong>, <strong>N60</strong>, <strong>N1</strong>, <strong>N1_60</strong>; default = <strong>Nm</strong></p>
+</dd>
+<dt><strong>Parameters for energy correction</strong></dt><dd></dd>
+<dt><strong>ERm</strong><span class="classifier">float</span></dt><dd><p>[%] measured energy ratio, default = 75%</p>
+</dd>
+<dt><strong>BH_diam</strong><span class="classifier">float</span></dt><dd><p>[mm]: borehold diameter</p>
+</dd>
+<dt><strong>L_rod</strong><span class="classifier">float</span></dt><dd><p>[m] rod stick-up length, default = 5 m</p>
+</dd>
+<dt><strong>flag_liner_room</strong><span class="classifier">boolean</span></dt><dd><p>flag for whether sampler has room for liner, default = False</p>
+</dd>
+<dt><strong>Parameters for overburden correction</strong></dt><dd></dd>
+<dt><strong>CN_method</strong><span class="classifier">str</span></dt><dd><p>method for estimating the overburden correction factor, <strong>CN</strong>, methods available includes ‘<strong>lw86</strong>’ for Liao and Whitman (1986) and ‘<strong>k92</strong>’ for Kayen et al. (1992); default = ‘<strong>lw86</strong>’</p>
+</dd>
+<dt><strong>sv0_eff</strong><span class="classifier">float</span></dt><dd><p>[kPa] initial vertical effective stress</p>
+</dd>
+<dt><strong>patm</strong><span class="classifier">float, optional</span></dt><dd><p>[kPa] atmospheric pressure, default = 101.3 kPa</p>
+</dd>
+<dt><strong>Parameters for fines content correction</strong></dt><dd></dd>
+<dt><strong>fc</strong><span class="classifier">float</span></dt><dd><p>[%] fines content; default = 0</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>N1_60</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] N-value corrected for energy and overburden</p>
+</dd>
+<dt><strong>N1_60_cs</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] N-value corrected for energy, overburden, and fines content</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r74c531ed19ad-1"><span class="brackets">1</span></dt>
+<dd><p>Youd, T.L., et al., 2001, Liquefaction Resistance of Soils; Summary Report from the 1996 NCEER and 1998 NCEER/NSF Workshops on Evaluation of Liquefaction Resistance of Soils, Journal of Geotechnical and Geoenvironmental Engineering, vol. 127, no. 10, pp. 817–833.</p>
+</dd>
+<dt class="label" id="r74c531ed19ad-2"><span class="brackets">2</span></dt>
+<dd><p>Liao, S.S., and Whitman, R.V., 1986, Overburden Correction Factors for SPT in Sand, Journal of Geotechnical Engineering, vol. 112, no. 3, pp. 373-377.</p>
+</dd>
+<dt class="label" id="r74c531ed19ad-3"><span class="brackets">3</span></dt>
+<dd><p>Kayen, R.E., Mitchell, J.K., Seed, R.B., Lodge, A., Nishio, S., and Coutinho, R., 1992, Evaluation of SPT-, CPT-, and Shear Wave-Based Methods for Liquefaction Potential Assessment Using Loma Prieta Data, Proceeding of the 4th Japan-U.S. Workshop on Earthquake-Resistant Design of Lifeline Facilities and Countermeasures for Soil Liquefaction, vol. 1, pp. 177–204.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="ground-settlement">
+<h2>Ground Settlement<a class="headerlink" href="#ground-settlement" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="cetin-et-al-2009">
+<h3>Cetin et al. (2009)<a class="headerlink" href="#cetin-et-al-2009" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.gs.cetin_etal_2009">
+<code class="sig-prename descclassname">edp.gs.</code><code class="sig-name descname">cetin_etal_2009</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.gs.cetin_etal_2009" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute volumetric strain following the Cetin et al. (2009) probabilistic method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>N1_60_cs</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] SPT blow count corrected for energy and equipment, overburden, and fines content</p>
+</dd>
+<dt><strong>amax</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>sv0_tot</strong><span class="classifier">float</span></dt><dd><p>[kPa] initial vertical total stress</p>
+</dd>
+<dt><strong>sv0_eff</strong><span class="classifier">float</span></dt><dd><p>[kPa] initial vertical effective stress</p>
+</dd>
+<dt><strong>rd</strong><span class="classifier">float</span></dt><dd><p>stress reduction factor with depth</p>
+</dd>
+<dt><strong>Dr</strong><span class="classifier">float</span></dt><dd><p>[%] relative density</p>
+</dd>
+<dt><strong>patm</strong><span class="classifier">float, optional</span></dt><dd><p>[kPa] atmospheric pressure; <strong>default = 101.3 kPa</strong></p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>eps_v</strong><span class="classifier">float</span></dt><dd><p>[%] volumetric strain</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="ra3cb91814ab2-1"><span class="brackets">1</span></dt>
+<dd><p>Cetin, K.O., Bilge, H.T., Wu, J., Kammerer, A.M., and Seed, R.B., 2009, Probabilistic Model for the Assessment of Cyclically Induced Reconsolidation (Volumetric) Settlements, Journal of Geotechnical and Geoenvironmental Engineering, vol. 135, no. 3, pp. 387-398.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="hazus-fema-2014">
+<h3>HAZUS (FEMA, 2014)<a class="headerlink" href="#hazus-fema-2014" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.gs.hazus_2014_gs">
+<code class="sig-prename descclassname">edp.gs.</code><code class="sig-name descname">hazus_2014_gs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">liq_susc</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.gs.hazus_2014_gs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute volumetric strain at a given location using a simplified deterministic approach (after Tokimatsu and Seed, 1987).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>liq_susc</strong><span class="classifier">str</span></dt><dd><p>susceptibility category to liquefaction (none, very low, low, moderate, high, very high)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>s</strong><span class="classifier">float</span></dt><dd><p>[cm] settlement</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rfc9704f75525-1"><span class="brackets">1</span></dt>
+<dd><p>Federal Emergency Management Agency (FEMA), 2014, Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, National Institute of Buildin Sciences and Federal Emergency Management Agency, Washington, DC, 690 p.</p>
+</dd>
+<dt class="label" id="rfc9704f75525-2"><span class="brackets">2</span></dt>
+<dd><p>Tokimatsu, K., and Seed, H.B., 1987, Evaluation of Settlements in Sands Due to Earthquake Shaking. Journal of Geotechnical Engineering, vol. 113, no. 8, pp. 861-878.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="ishihara-yoshimine-1992">
+<h3>Ishihara &amp; Yoshimine (1992)<a class="headerlink" href="#ishihara-yoshimine-1992" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.gs.ishihara_yoshimine_1992">
+<code class="sig-prename descclassname">edp.gs.</code><code class="sig-name descname">ishihara_yoshimine_1992</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">N1_60_cs</span></em>, <em class="sig-param"><span class="n">Dr</span></em>, <em class="sig-param"><span class="n">FS_liq</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.gs.ishihara_yoshimine_1992" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute volumetric strain following the Ishihara and Yoshimine (1992) deterministic method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>N1_60_cs</strong><span class="classifier">float</span></dt><dd><p>[blows/ft] SPT blow count corrected for energy and equipment, overburden, and fines content</p>
+</dd>
+<dt><strong>Dr</strong><span class="classifier">float</span></dt><dd><p>[%] relative density</p>
+</dd>
+<dt><strong>FS_liq</strong><span class="classifier">float</span></dt><dd><p>factor of safety against liquefaction triggering</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>eps_v</strong><span class="classifier">float</span></dt><dd><p>[%] volumetric strain</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="re64d70b7e1cb-1"><span class="brackets">1</span></dt>
+<dd><p>Ishihara, K., and Yoshimine, M., 1992, Evaluation of Settlements in Sand Deposits Following Liquefaction During Earthquakes, Soils and Foundations, vol. 32, np. 1, pp. 173-188.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="tokimatsu-seed-1987">
+<h3>Tokimatsu &amp; Seed (1987)<a class="headerlink" href="#tokimatsu-seed-1987" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.gs.tokimatsu_seed_1987">
+<code class="sig-prename descclassname">edp.gs.</code><code class="sig-name descname">tokimatsu_seed_1987</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.gs.tokimatsu_seed_1987" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute volumetric strain following the Tokimatsu and Seed (1987) deterministic method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>TBD</strong><span class="classifier">float</span></dt><dd><p>TBD</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>eps_v</strong><span class="classifier">float</span></dt><dd><p>[%] volumetric strain</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r02c44c3ac1ba-1"><span class="brackets">1</span></dt>
+<dd><p>Tokimatsu, K., and Seed, H.B., 1987, Evaluation of Settlements in Sands Due to Earthquake Shaking. Journal of Geotechnical Engineering, vol. 113, no. 8, pp. 861-878.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="landslide-slope-stability">
+<h2>Landslide/Slope Stability<a class="headerlink" href="#landslide-slope-stability" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="bray-macedo-2019">
+<h3>Bray &amp; Macedo (2019)<a class="headerlink" href="#bray-macedo-2019" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.land.bray_macedo_2019">
+<code class="sig-prename descclassname">edp.land.</code><code class="sig-name descname">bray_macedo_2019</code><span class="sig-paren">(</span><em class="sig-param">gm_type</em>, <em class="sig-param">ky</em>, <em class="sig-param">M</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.land.bray_macedo_2019" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute slope displacement at a given location using the Bray and Macedo (2007) probabilistic model. Based on the site period, <strong>Ts</strong>, the model decides whether to use the PGA (for Ts = 0 sec) or the Sa(Ts_deg) correlation. Regression models based on three sets of ground motions are available:</p>
+<ol class="arabic simple">
+<li><p><strong>Ordinary</strong>: <strong>d</strong> = f(ky, Sa(T), Ts, M)</p></li>
+<li><p><strong>Near-fault</strong>: <strong>d</strong> = f(ky, Sa(T), Ts, M, pgv)</p></li>
+<li><p><strong>General</strong> (default): <strong>d</strong> = f(ky, Sa(T), Ts, M, pgv)</p></li>
+</ol>
+<p>Note that:</p>
+<ul class="simple">
+<li><p>The site period can either be specified or calculated using site conditions; see <code class="xref py py-func docutils literal notranslate"><span class="pre">_edp.fcn_liq_land.get_Ts()</span></code></p></li>
+<li><p>If <strong>Ts</strong> &lt; 0.05 sec, PGA must be entered. For all other <strong>Ts</strong>, either <strong>Sa_Ts_deg</strong> or a list of of periods (<strong>T_arr</strong>) and spectral accelerations (<strong>Sa_arr</strong>) are required.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>gm_type</strong><span class="classifier">str</span></dt><dd><p>type of ground motions used to develop the regressional model: <strong>ordinary</strong>, <strong>near-fault</strong>, or <strong>general</strong> (ordinary + near-fault)</p>
+</dd>
+<dt><strong>ky</strong><span class="classifier">float</span></dt><dd><p>[g] yield acceleration</p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+<dt><strong>Ts</strong><span class="classifier">float, optional</span></dt><dd><p>[sec] site period (see notes above)</p>
+</dd>
+<dt><strong>pga</strong><span class="classifier">float, optional</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>pgv</strong><span class="classifier">float, optional</span></dt><dd><p>[cm/s] peak ground velocity, required for <strong>near-fault</strong> and <strong>general</strong> models</p>
+</dd>
+<dt><strong>Parameters for PGA correction (if PGA is specified)</strong></dt><dd></dd>
+<dt><strong>beta</strong><span class="classifier">float, optional</span></dt><dd><p>[degree] slope angle, for PGA correction (see Rathje &amp; Bray, 2001; Ashford &amp; Sitar, 2002)</p>
+</dd>
+<dt><strong>flag_topo</strong><span class="classifier">str, optional</span></dt><dd><p><strong>local</strong> or <strong>long</strong> potential sliding mass, for PGA correction</p>
+</dd>
+<dt><strong>Parameters for Ts</strong></dt><dd></dd>
+<dt><strong>H</strong><span class="classifier">float</span></dt><dd><p>[m] slope/structure height</p>
+</dd>
+<dt><strong>vs</strong><span class="classifier">float</span></dt><dd><p>[m/sec] shear wave velocity</p>
+</dd>
+<dt><strong>nDim</strong><span class="classifier">int</span></dt><dd><p><strong>1</strong> (trapezoidal) or <strong>2</strong> (triangular) dimension for calculating <strong>Ts</strong>; default = 2</p>
+</dd>
+<dt><strong>Parameters for Ts_deg</strong></dt><dd></dd>
+<dt><strong>T_arr</strong><span class="classifier">float, array</span></dt><dd><p>[sec] array of periods for interpolation of Ts_deg</p>
+</dd>
+<dt><strong>Sa_arr</strong><span class="classifier">float, array</span></dt><dd><p>[g] array of spectral accelerations for interpolation of Ts_deg</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>[cm] slope displacement</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r66ffffb3a7a1-1"><span class="brackets">1</span></dt>
+<dd><p>Bray, J.D., and Macedo, J., 2019, Procedure for Estimating Shear-Induced Seismic Slope Displacement for Shallow Crustal Earthquakes, Journal of Geotechnical and Geoenvironmental Engineering, vol. 145, pp. 12, 04019106.</p>
+</dd>
+<dt class="label" id="r66ffffb3a7a1-2"><span class="brackets">2</span></dt>
+<dd><p>Bray, J.D., and Travasarou, T., 2007, Simplified Procedure for Estimating Earthquake-Induced Deviatoric Slope Displacements, Journal of Geotechnical and Geoenvironmental Engineering, vol. 133, no. 4, pp. 381-392.</p>
+</dd>
+<dt class="label" id="r66ffffb3a7a1-3"><span class="brackets">3</span></dt>
+<dd><p>Rathje, E.M., and Bray, J.D., 2001, One- and Two-Dimensional Seismic Analysis of Solid-Waste Landfills, Canadian Geotechnical Journal, vol. 38, no. 4, pp. 850–862.</p>
+</dd>
+<dt class="label" id="r66ffffb3a7a1-4"><span class="brackets">4</span></dt>
+<dd><p>Ashford, S.A., and Sitar, N., 2002, Simplified Method for Evaluating Seismic Stability of Steep Slopes, Journal of Geotechnical and Geoenvironmental Engineering, vol. 128, no. 2, pp. 119-128.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="bray-travasarou-2007">
+<h3>Bray &amp; Travasarou (2007)<a class="headerlink" href="#bray-travasarou-2007" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.land.bray_travasarou_2007">
+<code class="sig-prename descclassname">edp.land.</code><code class="sig-name descname">bray_travasarou_2007</code><span class="sig-paren">(</span><em class="sig-param">gm_type</em>, <em class="sig-param">ky</em>, <em class="sig-param">M</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.land.bray_travasarou_2007" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute slope displacement at a given location using the Bray and Travasarou (2007) probabilistic model. Based on the site period, <strong>Ts</strong>, the model decides whether to use the PGA (for Ts &lt; 0.05 sec) or the Sa(Ts_deg) correlation.</p>
+<p>Note that:</p>
+<ul class="simple">
+<li><p>The site period can either be specified or calculated using site conditions; see <code class="xref py py-func docutils literal notranslate"><span class="pre">_edp.fcn_liq_land.get_Ts()</span></code></p></li>
+<li><p>If <strong>Ts</strong> &lt; 0.05 sec, PGA must be entered. For all other <strong>Ts</strong>, either <strong>Sa_Ts_deg</strong> or a list of of periods (<strong>T_arr</strong>) and spectral accelerations (<strong>Sa_arr</strong>) are required.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>ky</strong><span class="classifier">float</span></dt><dd><p>[g] yield acceleration</p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+<dt><strong>Ts</strong><span class="classifier">float, optional</span></dt><dd><p>[sec] site period (see notes above)</p>
+</dd>
+<dt><strong>pga</strong><span class="classifier">float, optional</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>Parameters for PGA correction (if PGA is specified)</strong></dt><dd></dd>
+<dt><strong>beta</strong><span class="classifier">float</span></dt><dd><p>[degree] slope angle, for PGA correction (see Rathje &amp; Bray, 2001; Ashford &amp; Sitar, 2002)</p>
+</dd>
+<dt><strong>flag_topo</strong><span class="classifier">str</span></dt><dd><p><strong>local</strong> or <strong>long</strong> potential sliding mass, for PGA correction</p>
+</dd>
+<dt><strong>Parameters for Ts</strong></dt><dd></dd>
+<dt><strong>H</strong><span class="classifier">float</span></dt><dd><p>[m] slope/structure height</p>
+</dd>
+<dt><strong>vs</strong><span class="classifier">float</span></dt><dd><p>[m/sec] shear wave velocity</p>
+</dd>
+<dt><strong>nDim</strong><span class="classifier">int</span></dt><dd><p><strong>1</strong> (trapezoidal) or <strong>2</strong> (triangular) dimension for calculating <strong>Ts</strong>; default = 2</p>
+</dd>
+<dt><strong>Parameters for Ts_deg</strong></dt><dd></dd>
+<dt><strong>T_arr</strong><span class="classifier">float, array</span></dt><dd><p>[sec] array of periods for interpolation of Ts_deg</p>
+</dd>
+<dt><strong>Sa_arr</strong><span class="classifier">float, array</span></dt><dd><p>[g] array of spectral accelerations for interpolation of Ts_deg</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>[cm] slope displacement</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rac488b508360-1"><span class="brackets">1</span></dt>
+<dd><p>Bray, J.D., and Travasarou, T., 2007, Simplified Procedure for Estimating Earthquake-Induced Deviatoric Slope Displacements, Journal of Geotechnical and Geoenvironmental Engineering, vol. 133, no. 4, pp. 381-392.</p>
+</dd>
+<dt class="label" id="rac488b508360-2"><span class="brackets">2</span></dt>
+<dd><p>Bray, J.D., Macedo, J., and Travasarou, T., 2018, Simplified Procedure for Estimating Seismic Slope Displacements for Subduction Zone Earthquakes, Journal of Geotechnical and Geoenvironmental Engineering, vol. 144, no. 3, 04017124.</p>
+</dd>
+<dt class="label" id="rac488b508360-3"><span class="brackets">3</span></dt>
+<dd><p>Rathje, E.M., and Bray, J.D., 2001, One- and Two-Dimensional Seismic Analysis of Solid-Waste Landfills, Canadian Geotechnical Journal, vol. 38, no. 4, pp. 850–862.</p>
+</dd>
+<dt class="label" id="rac488b508360-4"><span class="brackets">4</span></dt>
+<dd><p>Ashford, S.A., and Sitar, N., 2002, Simplified Method for Evaluating Seismic Stability of Steep Slopes, Journal of Geotechnical and Geoenvironmental Engineering, vol. 128, no. 2, pp. 119-128.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="grant-et-al-2016">
+<h3>Grant et al. (2016)<a class="headerlink" href="#grant-et-al-2016" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.land.grant_etal_2016_land">
+<code class="sig-prename descclassname">edp.land.</code><code class="sig-name descname">grant_etal_2016_land</code><span class="sig-paren">(</span><em class="sig-param">slope_type</em>, <em class="sig-param">pga</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.land.grant_etal_2016_land" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute rock and soil landslide displacement using following the Grant et al. (2016) deterministic procedure. Of the 40 coseismic landslide datasets described in Keefer (1984), Grant et al. (2016) selected the four most fundamental modes of failures (see Table 1 in Grant et al., 2016, for detailed descriptions):</p>
+<ol class="arabic simple">
+<li><p><strong>Rock</strong>-slope failures: wedge geometry, slope range = 35-90 degrees, typically tens of meters to kilometers</p></li>
+<li><p>Disrupted soil slides: <strong>infinite slope</strong>, slope range = 15-50 degrees, typically meters to a hundred meters</p></li>
+<li><p>Coherent <strong>rotational</strong> slides: circular-rotation, slope range = 20-35 degrees, typically under 2 meters</p></li>
+<li><p>Lateral spreads: empirirically-developed geometry, slope range = 0-6 degrees, typically under 2 meters</p></li>
+</ol>
+<p>Note that:</p>
+<ul class="simple">
+<li><p>The regression model for lateral spreads is coded separately; see <a class="reference internal" href="#edp.ls.grant_etal_2016_ls" title="edp.ls.grant_etal_2016_ls"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.ls.grant_etal_2016_ls()</span></code></a>.</p></li>
+<li><p>The yield acceleration, <strong>ky</strong>, can either be specfied or or calculated using material and site properties; see <a class="reference internal" href="#edp.fcn_liq_land.get_ky" title="edp.fcn_liq_land.get_ky"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.fcn_liq_land.get_ky()</span></code></a> for methods used to estimate yield accelerations for landslide.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>slope_type</strong><span class="classifier">str</span></dt><dd><p>type of slope to assess; enter any of the bolded words shown in the above list of failure modes (i.e., <strong>rock</strong>, <strong>infinite slope</strong>, or <strong>rotational</strong>)</p>
+</dd>
+<dt><strong>pga</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>ky</strong><span class="classifier">float, optional</span></dt><dd><p>[g] yield acceleration (see notes above)</p>
+</dd>
+<dt><strong>General parameters required ky</strong></dt><dd></dd>
+<dt><strong>phi</strong><span class="classifier">float</span></dt><dd><p>[degree] friction angle</p>
+</dd>
+<dt><strong>c</strong><span class="classifier">float</span></dt><dd><p>[kPa] cohesion</p>
+</dd>
+<dt><strong>beta</strong><span class="classifier">float</span></dt><dd><p>[degree] slope angle</p>
+</dd>
+<dt><strong>gamma</strong><span class="classifier">float</span></dt><dd><p>[kN/m^3] unit weight</p>
+</dd>
+<dt><strong>Additional parameters specific to rock-slope failures:</strong></dt><dd></dd>
+<dt><strong>H</strong><span class="classifier">float</span></dt><dd><p>[m] height of slope (local relief)</p>
+</dd>
+<dt><strong>Additional parameters specific to disrupted soil slides:</strong></dt><dd></dd>
+<dt><strong>cr</strong><span class="classifier">float</span></dt><dd><p>[kPa] root cohesion</p>
+</dd>
+<dt><strong>t</strong><span class="classifier">float</span></dt><dd><p>[m] thickness of failure mass</p>
+</dd>
+<dt><strong>Parameters for Coherent Rotational Slides (failure_mode == 3):</strong></dt><dd></dd>
+<dt><strong>H</strong><span class="classifier">float</span></dt><dd><p>[m] height of slope (local relief)</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">float</span></dt><dd><p>[m] width of cylindrical pixel</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>[cm] permanent ground deformation (see <em>return_param</em> under “Parameters”)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rcfde94197807-1"><span class="brackets">1</span></dt>
+<dd><p>Grant, A., Wartman, J., and Abou-Jaoude, G., 2016, Multimodal Method for Coseismic Landslide Hazard Assessment, Engineering Geology, vol. 212, pp. 146-160.</p>
+</dd>
+<dt class="label" id="rcfde94197807-2"><span class="brackets">2</span></dt>
+<dd><p>Keefer, D.K., 1984., Landslides Caused by Earthquakes, Geological Society of America Bulletin, vol. 95, no. 4, pp. 406-421.</p>
+</dd>
+<dt class="label" id="rcfde94197807-3"><span class="brackets">3</span></dt>
+<dd><p>Wills, C.J., Perez, F.G., and Gutierrez, C.I., 2011, Susceptibility to Deep-Seated Landslides in California. California Geological Survey Map Sheet no. 58.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="id31">
+<h3>HAZUS (FEMA, 2014)<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.land.hazus_2014_land">
+<code class="sig-prename descclassname">edp.land.</code><code class="sig-name descname">hazus_2014_land</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">land_susc</span></em>, <em class="sig-param"><span class="n">pga</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">pga_is</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.land.hazus_2014_land" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute landslide displacement at a given location using a simplified deterministic approach (after Makdisi &amp; Seed, 1978).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>land_susc</strong><span class="classifier">int</span></dt><dd><p>susceptibility category to deep-seated landslide (1 to 10, see Wills et al., 2011)</p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+<dt><strong>pga</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>pga_is</strong><span class="classifier">float, optional</span></dt><dd><p>[g] average (induced) acceleration within entire slide mass; default = PGA</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>[cm] permanent ground displacement</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rda645bc2cc62-1"><span class="brackets">1</span></dt>
+<dd><p>Federal Emergency Management Agency (FEMA), 2014, Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, National Institute of Building Sciences and Federal Emergency Management Agency, Washington, DC, 690 p.</p>
+</dd>
+<dt class="label" id="rda645bc2cc62-2"><span class="brackets">2</span></dt>
+<dd><p>Makdisi, F.I., and Seed, H.B., 1978, Simplified Procedure for Estimating Dam and Embankment Earthquake-Induced Deformations, Journal of Geotechnical and Geoenvironmental Engineering, vol. 104, no. 7, pp. 849-867.</p>
+</dd>
+<dt class="label" id="rda645bc2cc62-3"><span class="brackets">3</span></dt>
+<dd><p>Seed, H.B., and Idriss, I.M., 1982, Ground Motions and Soil Liquefaction During Earthquakes, Earthquake Engineering Research Institute, Oakland, California, Monograph Series.</p>
+</dd>
+<dt class="label" id="rda645bc2cc62-4"><span class="brackets">4</span></dt>
+<dd><p>Wills, C.J., Perez, F.G., and Gutierrez, C.I., 2011, Susceptibility to Deep-Seated Landslides in California. California Geological Survey Map Sheet no. 58.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="jibson-2007">
+<h3>Jibson (2007)<a class="headerlink" href="#jibson-2007" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.land.jibson_2007">
+<code class="sig-prename descclassname">edp.land.</code><code class="sig-name descname">jibson_2007</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.land.jibson_2007" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute landslide displacement at a given location using the Jibson (2007) probabilistic models. Four regression models are provided:</p>
+<ol class="arabic simple">
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>)</p></li>
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>, <strong>M</strong>)</p></li>
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>, <strong>Ia</strong>)</p></li>
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>Ia</strong>)</p></li>
+</ol>
+<p>Note that:</p>
+<ul class="simple">
+<li><p>If all parameters are given, the model with the lowest <strong>sigma</strong> is returned</p></li>
+<li><p>The yield acceleration, <strong>ky</strong>, can either be specfied or calculated using the methods from Newmark (1965). In the simplest form, <strong>ky</strong> can be calculate as follows, with <strong>FS</strong> as the factor of safety against landslide and <strong>alpha</strong> as the slope angle (see <a class="reference internal" href="#edp.fcn_liq_land.get_ky" title="edp.fcn_liq_land.get_ky"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.fcn_liq_land.get_ky()</span></code></a> for additional methods used to estimate yield accelerations for landslide):</p></li>
+</ul>
+<p><strong>ky</strong> = (<strong>FS</strong> - 1) * sin(<strong>alpha</strong>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pga</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration, primary model parameter</p>
+</dd>
+<dt><strong>ky</strong><span class="classifier">float, optional</span></dt><dd><p>[g] yield acceleration, additional model parameter (see notes above)</p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float, optional</span></dt><dd><p>moment magnitude, additional model parameter</p>
+</dd>
+<dt><strong>Ia</strong><span class="classifier">float, optional</span></dt><dd><p>[g] peak ground acceleration, additional model parameter</p>
+</dd>
+<dt><strong>Additional parameters for ky</strong></dt><dd></dd>
+<dt><strong>alpha</strong><span class="classifier">float</span></dt><dd><p>[degree] slope angle, required if <strong>ky</strong> needs to be calculated (see description above)</p>
+</dd>
+<dt><strong>FS</strong><span class="classifier">float</span></dt><dd><p>factor of safety against slope stability, required if <strong>ky</strong> needs to be calculated (see description above)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>[cm] landslide displacement for the regression model with the lowest sigma</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r810f17b16681-1"><span class="brackets">1</span></dt>
+<dd><p>Jibson, R.W., 2007. Regression Models for Estimating Coseismic Landslide Displacement, Engineering Geology, vol. 91, no. 2, pp. 209–218.</p>
+</dd>
+<dt class="label" id="r810f17b16681-2"><span class="brackets">2</span></dt>
+<dd><p>Newmark, N.M., 1965, Effects of Earthquakes on Dams and Embankments, Geotechnique, vol. 15, pp. 139–159.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="rathje-antonakos-2011">
+<h3>Rathje &amp; Antonakos (2011)<a class="headerlink" href="#rathje-antonakos-2011" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.land.rathje_antonakos_2011">
+<code class="sig-prename descclassname">edp.land.</code><code class="sig-name descname">rathje_antonakos_2011</code><span class="sig-paren">(</span><em class="sig-param">pga</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.land.rathje_antonakos_2011" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute landslide displacement at a given location using the Saygili (2008) probabilistic models. Two regression models are provided, with and without correction for flexibility (<strong>Ts</strong>/<strong>Tm</strong>):</p>
+<ol class="arabic simple">
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>, <strong>M</strong>, <strong>Tm</strong>, <strong>Ts</strong>)</p></li>
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>, <strong>pgv</strong>, <strong>Tm</strong>, <strong>Ts</strong>)</p></li>
+</ol>
+<p>Note that:</p>
+<ul class="simple">
+<li><p>If all parameters are given, the model with the lowest <strong>sigma</strong> is returned</p></li>
+<li><p>The yield acceleration, <strong>ky</strong>, can either be specfied or calculated using material and site properties; see the method for <strong>infinite slope</strong> in <code class="xref py py-func docutils literal notranslate"><span class="pre">_edp.fcn_liq_land.get_ky()</span></code></p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pga</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration, primary model parameter</p>
+</dd>
+<dt><strong>Tm</strong><span class="classifier">float, optional</span></dt><dd><p>[sec] mean period</p>
+</dd>
+<dt><strong>Ts</strong><span class="classifier">float, optional</span></dt><dd><p>[sec] peak ground acceleration, additional model parameter</p>
+</dd>
+<dt><strong>ky</strong><span class="classifier">float, optional</span></dt><dd><p>[g] yield acceleration (see notes above)</p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float, optional</span></dt><dd><p>moment magnitude, additional model parameter</p>
+</dd>
+<dt><strong>pgv</strong><span class="classifier">float, optional</span></dt><dd><p>moment magnitude, additional model parameter</p>
+</dd>
+<dt><strong>Additional parameters for ky</strong></dt><dd></dd>
+<dt><strong>phi</strong><span class="classifier">float</span></dt><dd><p>[degree] friction angle</p>
+</dd>
+<dt><strong>c</strong><span class="classifier">float</span></dt><dd><p>[kPa] cohesion</p>
+</dd>
+<dt><strong>beta</strong><span class="classifier">float</span></dt><dd><p>[degree] slope angle</p>
+</dd>
+<dt><strong>gamma</strong><span class="classifier">float</span></dt><dd><p>[kN/m^3] total unit weight of material</p>
+</dd>
+<dt><strong>t</strong><span class="classifier">float</span></dt><dd><p>[m] thickness of failure surface</p>
+</dd>
+<dt><strong>m</strong><span class="classifier">float</span></dt><dd><p>[%] percent of failure thickness that is saturated</p>
+</dd>
+<dt><strong>gamma_w</strong><span class="classifier">float</span></dt><dd><p>[kN/m^3] unit weight of water, default = 9.81 kN/m^3</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>[cm] landslide displacement calculated using the regression model that maximizes the mumber of supplied parameters (pga, ky, M, Tm, Ts)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r3903da899685-1"><span class="brackets">1</span></dt>
+<dd><p>Rathje, E.M., and Antonakos, G., 2011, A Unified Model for Predicting Earthquake-Induced Sliding Displacements of Rigid and Flexible Slopes. Engineering Geology, vol. 122, no. 1-2, pp. 51-60.</p>
+</dd>
+<dt class="label" id="r3903da899685-2"><span class="brackets">2</span></dt>
+<dd><p>Rathje, E.M., and Saygili, G., 2009, Probabilistic Assessment of Earthquake-Induced Sliding Displacements of Natural Slopes, Bulletin of the New Zealand Society for Earthquake Engineering, vol. 42, no. 1, pp. 18-27.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="saygili-2008">
+<h3>Saygili (2008)<a class="headerlink" href="#saygili-2008" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.land.saygili_2008">
+<code class="sig-prename descclassname">edp.land.</code><code class="sig-name descname">saygili_2008</code><span class="sig-paren">(</span><em class="sig-param">pga</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.land.saygili_2008" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute landslide displacement at a given location using the Saygili (2008) probabilistic models. Seven regression
+models are provided:</p>
+<ol class="arabic simple">
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>)</p></li>
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>, <strong>M</strong>)</p></li>
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>, <strong>pgv</strong>)</p></li>
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>, <strong>pgv</strong>, <strong>Ia</strong>)</p></li>
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>, <strong>Ia</strong>)</p></li>
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>, <strong>Tm</strong>)</p></li>
+<li><p><strong>d</strong> = f(<strong>ky</strong>, <strong>pga</strong>, <strong>Tm</strong>, <strong>Ia</strong>)</p></li>
+</ol>
+<p>Note that:</p>
+<ul class="simple">
+<li><p>If all parameters are given, the model with the lowest <strong>sigma</strong> is returned</p></li>
+<li><p>The yield acceleration, <strong>ky</strong>, can either be specfied or calculated using material and site propertie; see the method for <strong>infinite slope</strong> in <a class="reference internal" href="#edp.fcn_liq_land.get_ky" title="edp.fcn_liq_land.get_ky"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.fcn_liq_land.get_ky()</span></code></a></p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pga</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration, primary model parameter</p>
+</dd>
+<dt><strong>ky</strong><span class="classifier">float, optional</span></dt><dd><p>[g] yield acceleration (see notes above)</p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float, optional</span></dt><dd><p>moment magnitude, additional model parameter</p>
+</dd>
+<dt><strong>Ia</strong><span class="classifier">float, optional</span></dt><dd><p>[g] peak ground acceleration, additional model parameter</p>
+</dd>
+<dt><strong>Additional parameters for ky</strong></dt><dd></dd>
+<dt><strong>phi</strong><span class="classifier">float</span></dt><dd><p>[degree] friction angle</p>
+</dd>
+<dt><strong>c</strong><span class="classifier">float</span></dt><dd><p>[kPa] cohesion</p>
+</dd>
+<dt><strong>beta</strong><span class="classifier">float</span></dt><dd><p>[degree] slope angle</p>
+</dd>
+<dt><strong>gamma</strong><span class="classifier">float</span></dt><dd><p>[kN/m^3] total unit weight of material</p>
+</dd>
+<dt><strong>t</strong><span class="classifier">float</span></dt><dd><p>[m] thickness of failure surface</p>
+</dd>
+<dt><strong>m</strong><span class="classifier">float</span></dt><dd><p>[%] percent of failure thickness that is saturated</p>
+</dd>
+<dt><strong>gamma_w</strong><span class="classifier">float</span></dt><dd><p>[kN/m^3] unit weight of water, default = 9.81 kN/m^3</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>[cm] landslide displacement calculated using the regression model that maximizes the mumber of supplied parameters (pga, ky, M, Ia, Tm)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r0ba151615837-1"><span class="brackets">1</span></dt>
+<dd><p>Newmark, N.M., 1965, Effects of Earthquakes on Dams and Embankments, Geotechnique, vol. 15, pp. 139–159.</p>
+</dd>
+<dt class="label" id="r0ba151615837-2"><span class="brackets">2</span></dt>
+<dd><p>Rathje, E.M., and Saygili, G., 2009, Probabilistic Assessment of Earthquake-Induced Sliding Displacements of Natural Slopes, Bulletin of the New Zealand Society for Earthquake Engineering, vol. 42, no. 1, pp. 18-27.</p>
+</dd>
+<dt class="label" id="r0ba151615837-3"><span class="brackets">3</span></dt>
+<dd><p>Saygili, G., 2008, A Probabilistic Approach for Evaluating Earthquake-Induced Landslides, PhD Thesis, Universtiy of Texas at Austin.</p>
+</dd>
+<dt class="label" id="r0ba151615837-4"><span class="brackets">4</span></dt>
+<dd><p>Saygili, G., and Rathje, E.M., 2008, Empirical Predictive Models for Earthquake-Induced Sliding Displacements of Slopes, Journal of Geotechnical and Geoenvironmental Engineering, vol. 134, no. 6, pp. 790-803.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="lateral-spreading">
+<h2>Lateral Spreading<a class="headerlink" href="#lateral-spreading" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id44">
+<h3>Grant et al. (2016)<a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.ls.grant_etal_2016_ls">
+<code class="sig-prename descclassname">edp.ls.</code><code class="sig-name descname">grant_etal_2016_ls</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">liq_susc</span></em>, <em class="sig-param"><span class="n">pga</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">z</span></em>, <em class="sig-param"><span class="n">dr</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.ls.grant_etal_2016_ls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute rock and soil landslide displacement using following the Grant et al. (2016) deterministic procedure.
+Of the 40 coseismic landslide datasets described in Keefer (1984), Grant et al. (2016) selected the four
+most fundamental modes of failures (see Table 1 in Grant et al., 2016, for detailed descriptions):</p>
+<ol class="arabic simple">
+<li><p>Rock-slope failures: wedge geometry, slope range = 35-90 degrees, typically tens of meters to kilometers</p></li>
+<li><p>Disrupted soil slides: infinite slope, slope range = 15-50 degrees, typically meters to a hundred meters</p></li>
+<li><p>Coherent rotational slides: circular-rotation, slope range = 20-35 degrees, typically under 2 meters</p></li>
+<li><p>Lateral spreads: empirirically-developed geometry, slope range = 0-6 degrees, typically under 2 meters</p></li>
+</ol>
+<p>Note that:</p>
+<ul class="simple">
+<li><p>The regression models for <strong>failure modes 1-3</strong> are coded separately; see :func: <cite>edp.ls.grant_etal_2016_ls</cite>.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pga</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>liq_susc</strong><span class="classifier">str</span></dt><dd><p>susceptibility category to liquefaction (none, very low, low, moderate, high, very high)</p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+<dt><strong>z</strong><span class="classifier">float</span></dt><dd><p>[m] elevation; site is susceptible to lateral spreads if z &lt; 25 m</p>
+</dd>
+<dt><strong>dr</strong><span class="classifier">float</span></dt><dd><p>[m] distance to river; site is susceptible to lateral spreads if dr &lt; 25 m</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>[cm] permanent ground deformation (see <em>return_param</em> under “Parameters”)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>[1] Grant, A., Wartman, J., and Abou-Jaoude, G., 2016, Multimodal Method for Coseismic Landslide Hazard 
+Assessment, Engineering Geology, vol. 212, pp. 146-160.
+[2] Keefer, D.K., 1984., Landslides Caused by Earthquakes, Geological Society of America Bulletin, vol. 95, 
+no. 4, pp. 406-421.
+[3] Wills, C.J., Perez, F.G., and Gutierrez, C.I., 2011, Susceptibility to Deep-Seated 
+Landslides in California. California Geological Survey Map Sheet no. 58.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="id45">
+<h3>HAZUS (FEMA, 2014)<a class="headerlink" href="#id45" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.ls.hazus_2014_ls">
+<code class="sig-prename descclassname">edp.ls.</code><code class="sig-name descname">hazus_2014_ls</code><span class="sig-paren">(</span><em class="sig-param">\*args</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.ls.hazus_2014_ls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute lateral spreading, which is the the same procedure used by Grant et al. (2016). See and use the function <a class="reference internal" href="#edp.ls.grant_etal_2016_ls" title="edp.ls.grant_etal_2016_ls"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.ls.grant_etal_2016_ls()</span></code></a>.</p>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r711220c41a13-1"><span class="brackets">1</span></dt>
+<dd><p>Federal Emergency Management Agency (FEMA), 2014, Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, National Institute of Building Sciences and Federal Emergency Management Agency, Washington, DC, 690 p.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="youd-et-al-2002">
+<h3>Youd et al. (2002)<a class="headerlink" href="#youd-et-al-2002" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.ls.youd_etal_2002">
+<code class="sig-prename descclassname">edp.ls.</code><code class="sig-name descname">youd_etal_2002</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">R</span></em>, <em class="sig-param"><span class="n">W</span></em>, <em class="sig-param"><span class="n">S</span></em>, <em class="sig-param"><span class="n">T_15</span></em>, <em class="sig-param"><span class="n">F_15</span></em>, <em class="sig-param"><span class="n">D50_15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.ls.youd_etal_2002" title="Permalink to this definition">¶</a></dt>
+<dd><p>Text</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="liquefaction-triggering">
+<h2>Liquefaction Triggering<a class="headerlink" href="#liquefaction-triggering" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id47">
+<h3>Boulanger &amp; Idriss (2014)<a class="headerlink" href="#id47" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.liq.boulanger_idriss_2014_liq">
+<code class="sig-prename descclassname">edp.liq.</code><code class="sig-name descname">boulanger_idriss_2014_liq</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.liq.boulanger_idriss_2014_liq" title="Permalink to this definition">¶</a></dt>
+<dd><p>A site-specific procedure to quantify liquefaction at a given location using the deterministic and probabilistic procedures by Idriss and Boulanger (2008) and Boulanger and Idriss (2012; 2014; 2016). This function works with both SPT or CPT inputs, and should be used in conjuction with either <a class="reference internal" href="#edp.corr_spt.boulanger_idriss_2014_corr_spt" title="edp.corr_spt.boulanger_idriss_2014_corr_spt"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_spt.boulanger_idriss_2014_corr_spt()</span></code></a> or <a class="reference internal" href="#edp.corr_cpt.boulanger_idriss_2014_corr_cpt" title="edp.corr_cpt.boulanger_idriss_2014_corr_cpt"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_cpt.boulanger_idriss_2014_corr_cpt()</span></code></a>. A flag is required for deciding whether to follow the deterministic or the probabilistic approach. For the probabilistic approach, this funtion produces <strong>p_liq</strong> or equivalent <strong>crr</strong> if <strong>p_liq</strong> is specified</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>flag_det_prob</strong><span class="classifier">str</span></dt><dd><p>procedure to run: <strong>deterministic</strong> or <strong>probabilistic</strong></p>
+</dd>
+<dt><strong>pen_type</strong><span class="classifier">str</span></dt><dd><p>type of penetrometer: specify <strong>spt</strong> or <strong>cpt</strong></p>
+</dd>
+<dt><strong>resistance</strong><span class="classifier">float</span></dt><dd><p>[varies] corrected penetration resistance, <strong>N1_60_cs</strong> or <strong>qc_1N_cs</strong>, see <a class="reference internal" href="#edp.corr_spt.boulanger_idriss_2014_corr_spt" title="edp.corr_spt.boulanger_idriss_2014_corr_spt"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_spt.boulanger_idriss_2014_corr_spt()</span></code></a> or <a class="reference internal" href="#edp.corr_cpt.boulanger_idriss_2014_corr_cpt" title="edp.corr_cpt.boulanger_idriss_2014_corr_cpt"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_cpt.boulanger_idriss_2014_corr_cpt()</span></code></a></p>
+</dd>
+<dt><strong>amax</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>sv0_tot</strong><span class="classifier">float</span></dt><dd><p>[g] initial vertical total stress</p>
+</dd>
+<dt><strong>sve_tot</strong><span class="classifier">float</span></dt><dd><p>[g] initial vertical effective stress</p>
+</dd>
+<dt><strong>rd</strong><span class="classifier">float</span></dt><dd><p>[g] depth-reduction factor, see <a class="reference internal" href="#edp.fcn_liq_land.get_rd" title="edp.fcn_liq_land.get_rd"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.fcn_liq_land.get_rd()</span></code></a></p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+<dt><strong>tau_stat</strong><span class="classifier">float</span></dt><dd><p>[kPa] static shear stress</p>
+</dd>
+<dt><strong>patm</strong><span class="classifier">float, optional</span></dt><dd><p>[kPa] atmospheric pressure, default = 101.3 kPa</p>
+</dd>
+<dt><strong>Q</strong><span class="classifier">float, optional</span></dt><dd><p>fitting parameter for the critical state line used to calculate the relative state parameter; default = 10</p>
+</dd>
+<dt><strong>K0</strong><span class="classifier">float, optional</span></dt><dd><p>coefficient of lateral earth pressure; default = 0.5</p>
+</dd>
+<dt><strong>p_liq</strong><span class="classifier">float, optional</span></dt><dd><p>[%] probability of liquefaction, if looking to get CRR</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>crr</strong><span class="classifier">float</span></dt><dd><p>[%] equivalent cyclic resistance ratio if p_liq is specified, otherwise NaN</p>
+</dd>
+<dt><strong>csr</strong><span class="classifier">float</span></dt><dd><p>[%] cyclic stress ratio, corrected for magnitude/duration and overburden</p>
+</dd>
+<dt><strong>fs</strong><span class="classifier">float, optional</span></dt><dd><p>factor of safety, depends on <strong>flag_det_prob</strong></p>
+</dd>
+<dt><strong>p_liq</strong><span class="classifier">float, optional</span></dt><dd><p>[%] probability of liquefaction, depends on <strong>flag_det_prob</strong></p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rf8993e7cb6eb-1"><span class="brackets">1</span></dt>
+<dd><p>Idriss, I.M., and Boulanger, R.W., 2008, Soil Liquefaction During Earthquakes, Monograph No. 12, Earthquake Engineering Research Institute, Oakland, CA, 261 pp.</p>
+</dd>
+<dt class="label" id="rf8993e7cb6eb-2"><span class="brackets">2</span></dt>
+<dd><p>Boulanger, R.W., and Idriss, I.M., 2014, CPT and SPT Based Liquefaction Triggering procedures, Report UCD/CGM-14/01, Department of Civil and Environmental Engineering, University of California, Davis, CA, 134 pp.</p>
+</dd>
+<dt class="label" id="rf8993e7cb6eb-3"><span class="brackets">3</span></dt>
+<dd><p>Boulanger, R.W., and Idriss, I.M., 2012, Probabilistic Standard Penetration Test–Based Liquefaction–Triggering Procedure, Journal of Geotechnical and Geoenvironmental Engineering, vol. 138, no. 10, pp. 1185-1195.</p>
+</dd>
+<dt class="label" id="rf8993e7cb6eb-4"><span class="brackets">4</span></dt>
+<dd><p>Boulanger, R.W., and Idriss, I.M., 2016, CPT-Based Liquefaction Triggering Procedure, Journal of Geotechnical and Geoenvironmental Engineering, vol. 142, no. 2, 04015065.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="id52">
+<h3>Cetin et al. (2004)<a class="headerlink" href="#id52" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.liq.cetin_etal_2004_liq">
+<code class="sig-prename descclassname">edp.liq.</code><code class="sig-name descname">cetin_etal_2004_liq</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.liq.cetin_etal_2004_liq" title="Permalink to this definition">¶</a></dt>
+<dd><p>An SPT-Based procedure to quantify liquefaction at a given location using probabilistic model by Cetin et al. (2004). This function produces <strong>p_liq</strong> or equivalent <strong>crr</strong> if <strong>p_liq</strong> is specified. This function is to be used in conjuction with <a class="reference internal" href="#edp.corr_spt.cetin_etal_2004_corr" title="edp.corr_spt.cetin_etal_2004_corr"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_spt.cetin_etal_2004_corr()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>N1_60</strong><span class="classifier">float</span></dt><dd><p>N-value corrected for energy and overburden, see <a class="reference internal" href="#edp.corr_spt.cetin_etal_2004_corr" title="edp.corr_spt.cetin_etal_2004_corr"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_spt.cetin_etal_2004_corr()</span></code></a></p>
+</dd>
+<dt><strong>amax</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>sv0_tot</strong><span class="classifier">float</span></dt><dd><p>[g] initial vertical total stress</p>
+</dd>
+<dt><strong>sve_tot</strong><span class="classifier">float</span></dt><dd><p>[g] initial vertical effective stress</p>
+</dd>
+<dt><strong>rd</strong><span class="classifier">float</span></dt><dd><p>[g] depth-reduction factor, see <a class="reference internal" href="#edp.fcn_liq_land.get_rd" title="edp.fcn_liq_land.get_rd"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.fcn_liq_land.get_rd()</span></code></a></p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+<dt><strong>fc</strong><span class="classifier">float</span></dt><dd><p>[%] relative density</p>
+</dd>
+<dt><strong>patm</strong><span class="classifier">float, optional</span></dt><dd><p>[kPa] atmospheric pressure, default = 101.3 kPa</p>
+</dd>
+<dt><strong>p_liq</strong><span class="classifier">float, optional</span></dt><dd><p>[%] probability of liquefaction, if looking to get <strong>crr</strong></p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>crr</strong><span class="classifier">float</span></dt><dd><p>equivalent cyclic resistance ratio if p_liq is specified, otherwise NaN</p>
+</dd>
+<dt><strong>csr</strong><span class="classifier">float</span></dt><dd><p>cyclic stress ratio, corrected for magnitude/duration and overburden</p>
+</dd>
+<dt><strong>p_liq</strong><span class="classifier">float</span></dt><dd><p>[%] probability of liquefaction</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rfb56cbe33e43-1"><span class="brackets">1</span></dt>
+<dd><p>Cetin, K.O., Seed, R.B., Der Kiureghian, A., Tokimatsu, K., Harder Jr, L.F., Kayen, R.E., and Moss, R.E., 2004, Standard Penetration Test-Based Probabilistic and Deterministic Assessment of Seismic Soil Liquefaction Potential, Journal of Geotechnical and Geoenvironmental Engineering, vol. 130, no. 12, pp. 1314-1340.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="id54">
+<h3>HAZUS (FEMA, 2014)<a class="headerlink" href="#id54" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.liq.hazus_2014_liq">
+<code class="sig-prename descclassname">edp.liq.</code><code class="sig-name descname">hazus_2014_liq</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">liq_susc</span></em>, <em class="sig-param"><span class="n">pga</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">d_w</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.liq.hazus_2014_liq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute probability of liquefaction at a given location using a simplified method after Liao et al. (1988).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>liq_susc</strong><span class="classifier">str</span></dt><dd><p>susceptibility category to liquefaction (none, very low, low, moderate, high, very high)</p>
+</dd>
+<dt><strong>pga</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+<dt><strong>d_w</strong><span class="classifier">float, optional</span></dt><dd><p>[m] depth to water table</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>p_liq</strong><span class="classifier">float</span></dt><dd><p>[%] probability of liquefaction</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r336f6766dbf0-1"><span class="brackets">1</span></dt>
+<dd><p>Federal Emergency Management Agency (FEMA), 2014, Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, National Institute of Building Sciences and Federal Emergency Management Agency, Washington, DC, 690 p.</p>
+</dd>
+<dt class="label" id="r336f6766dbf0-2"><span class="brackets">2</span></dt>
+<dd><p>Liao, S.S., Veneziano, D., and Whitman, R.V., 1988, Regression Models for Evaluating Liquefaction Probability, Journal of Geotechnical Engineering, vol. 114, no. 4, pp. 389-411.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="id57">
+<h3>Moss et al. (2006)<a class="headerlink" href="#id57" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.liq.moss_etal_2006_liq">
+<code class="sig-prename descclassname">edp.liq.</code><code class="sig-name descname">moss_etal_2006_liq</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.liq.moss_etal_2006_liq" title="Permalink to this definition">¶</a></dt>
+<dd><p>A CPT-based procedure to quantify liquefaction at a given location using probabilistic model by Moss et al. (2006). This function produces <strong>p_liq</strong> or equivalent <strong>crr</strong> if <strong>p_liq</strong> is specified. This function is to be used in conjuction with <a class="reference internal" href="#edp.corr_cpt.moss_etal_2006_corr" title="edp.corr_cpt.moss_etal_2006_corr"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_cpt.moss_etal_2006_corr()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>qc_1</strong><span class="classifier">float</span></dt><dd><p>normalized tip resistance corrected for overburden, see <a class="reference internal" href="#edp.corr_cpt.moss_etal_2006_corr" title="edp.corr_cpt.moss_etal_2006_corr"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_cpt.moss_etal_2006_corr()</span></code></a></p>
+</dd>
+<dt><strong>Rf</strong><span class="classifier">float</span></dt><dd><p>[%] friction ratio, see <a class="reference internal" href="#edp.corr_cpt.moss_etal_2006_corr" title="edp.corr_cpt.moss_etal_2006_corr"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_cpt.moss_etal_2006_corr()</span></code></a></p>
+</dd>
+<dt><strong>c</strong><span class="classifier">float</span></dt><dd><p>overburden normalization exponent, see <a class="reference internal" href="#edp.corr_cpt.moss_etal_2006_corr" title="edp.corr_cpt.moss_etal_2006_corr"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_cpt.moss_etal_2006_corr()</span></code></a></p>
+</dd>
+<dt><strong>amax</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>sv0_tot</strong><span class="classifier">float</span></dt><dd><p>[g] initial vertical total stress</p>
+</dd>
+<dt><strong>sve_tot</strong><span class="classifier">float</span></dt><dd><p>[g] initial vertical effective stress</p>
+</dd>
+<dt><strong>rd</strong><span class="classifier">float</span></dt><dd><p>[g] depth-reduction factor, see <a class="reference internal" href="#edp.fcn_liq_land.get_rd" title="edp.fcn_liq_land.get_rd"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.fcn_liq_land.get_rd()</span></code></a></p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+<dt><strong>p_liq</strong><span class="classifier">float, optional</span></dt><dd><p>[%] probability of liquefaction, if looking to get <strong>crr</strong></p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>crr</strong><span class="classifier">float</span></dt><dd><p>equivalent cyclic resistance ratio if p_liq is specified, otherwise NaN</p>
+</dd>
+<dt><strong>csr</strong><span class="classifier">float</span></dt><dd><p>cyclic stress ratio, corrected for magnitude/duration</p>
+</dd>
+<dt><strong>p_liq</strong><span class="classifier">float</span></dt><dd><p>[%] probability of liquefaction</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r8a687a48906c-1"><span class="brackets">1</span></dt>
+<dd><p>Moss, R.E.S., Seed, R.B., Kayen, R.E., Stewart, J.P., Der Kiureghian, A., and Cetin, K.O., 2006a, CPT-Based Probabilistic and Deterministic Assessment of In Situ Seismic Soil Liquefaction Potential, Journal of Geotechnical and Geoenvironmental Engineering, vol. 132, no. 8, pp. 1032-1051.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="id59">
+<h3>Youd et al. (2001)<a class="headerlink" href="#id59" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.liq.youd_etal_2001_liq">
+<code class="sig-prename descclassname">edp.liq.</code><code class="sig-name descname">youd_etal_2001_liq</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.liq.youd_etal_2001_liq" title="Permalink to this definition">¶</a></dt>
+<dd><p>An SPT-based procedure to quantify liquefaction (<strong>crr</strong> and <strong>fs</strong>) at a given location using the deterministic model by Youd et al. (2001). This function is to be used in conjuction with <a class="reference internal" href="#edp.corr_spt.youd_etal_2001_corr" title="edp.corr_spt.youd_etal_2001_corr"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_spt.youd_etal_2001_corr()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>N1_60_cs</strong><span class="classifier">float</span></dt><dd><p>N-value corrected for energy, overburden, and fines content, see <a class="reference internal" href="#edp.corr_spt.youd_etal_2001_corr" title="edp.corr_spt.youd_etal_2001_corr"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.corr_spt.youd_etal_2001_corr()</span></code></a></p>
+</dd>
+<dt><strong>amax</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>sv0_tot</strong><span class="classifier">float</span></dt><dd><p>[g] initial vertical total stress</p>
+</dd>
+<dt><strong>sve_tot</strong><span class="classifier">float</span></dt><dd><p>[g] initial vertical effective stress</p>
+</dd>
+<dt><strong>rd</strong><span class="classifier">float</span></dt><dd><p>[g] depth-reduction factor, see <a class="reference internal" href="#edp.fcn_liq_land.get_rd" title="edp.fcn_liq_land.get_rd"><code class="xref py py-func docutils literal notranslate"><span class="pre">edp.fcn_liq_land.get_rd()</span></code></a></p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+<dt><strong>Dr</strong><span class="classifier">float</span></dt><dd><p>[%] relative density</p>
+</dd>
+<dt><strong>tau_stat</strong><span class="classifier">float</span></dt><dd><p>[kPa] static shear stress</p>
+</dd>
+<dt><strong>patm</strong><span class="classifier">float, optional</span></dt><dd><p>[kPa] atmospheric pressure, default = 101.3 kPa</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>crr</strong><span class="classifier">float</span></dt><dd><p>equivalent cyclic resistance ratio</p>
+</dd>
+<dt><strong>csr</strong><span class="classifier">float</span></dt><dd><p>cyclic stress ratio, corrected for magnitude/duration, overburden, and static bias</p>
+</dd>
+<dt><strong>fs</strong><span class="classifier">float</span></dt><dd><p>factor of safety</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rc5cbab6b9c67-1"><span class="brackets">1</span></dt>
+<dd><p>Youd, T.L., et al., 2001, Liquefaction Resistance of Soils; Summary Report from the 1996 NCEER and 1998 NCEER/NSF Workshops on Evaluation of Liquefaction Resistance of Soils, Journal of Geotechnical and Geoenvironmental Engineering, vol. 127, no. 10, pp. 817–833.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="zhu-et-al-2017">
+<h3>Zhu et al. (2017)<a class="headerlink" href="#zhu-et-al-2017" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.liq.zhu_etal_2017">
+<code class="sig-prename descclassname">edp.liq.</code><code class="sig-name descname">zhu_etal_2017</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.liq.zhu_etal_2017" title="Permalink to this definition">¶</a></dt>
+<dd><p>A map-based procedure to quantify liquefaction at a given location using logistic models by Zhu et al. (2017). Two models are provided:</p>
+<ol class="arabic simple">
+<li><p>For distance to coast &lt; cutoff, <strong>p_liq</strong> = f(<strong>pgv</strong>, <strong>vs30</strong>, <strong>precip</strong>, <strong>dc</strong>, <strong>dr</strong>)</p></li>
+<li><p>For distance to coast &gt;= cutoff, <strong>p_liq</strong> = f(<strong>pgv</strong>, <strong>vs30</strong>, <strong>precip</strong>, <strong>dc</strong>, <strong>dr</strong>, <strong>wtd</strong>)</p></li>
+</ol>
+<p>Additionally, an ad-hoc magnitude scaling factor is included for PGV correction, see <a class="reference external" href="https://earthquake.usgs.gov/data/ground-failure/background.php">https://earthquake.usgs.gov/data/ground-failure/background.php</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>vs30</strong><span class="classifier">float, array</span></dt><dd><p>[m/s] shear wave velocity</p>
+</dd>
+<dt><strong>precip</strong><span class="classifier">float, array</span></dt><dd><p>[mm] mean annual precipitation</p>
+</dd>
+<dt><strong>dc</strong><span class="classifier">float, array</span></dt><dd><p>[km] distance to nearest coast</p>
+</dd>
+<dt><strong>dr</strong><span class="classifier">float, array</span></dt><dd><p>[km] distance to nearest river</p>
+</dd>
+<dt><strong>wtd</strong><span class="classifier">float, array</span></dt><dd><p>[m] global water table depth</p>
+</dd>
+<dt><strong>pgv</strong><span class="classifier">float, array, optional</span></dt><dd><p>[cm/s] peak ground velocity, required if seeking liquefaction triggering</p>
+</dd>
+<dt><strong>M</strong><span class="classifier">float, array, optional</span></dt><dd><p>moment magnitude, for <strong>pgv</strong> correction; no correction is applied if <strong>M</strong> is not provided</p>
+</dd>
+<dt><strong>dc_cutoff</strong><span class="classifier">float, array, optional</span></dt><dd><p>[km] cutoff for <strong>dc</strong> where the procedure switches from model 1 to model 2, default to 20 km</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>liq_susc_cat</strong><span class="classifier">str, array</span></dt><dd><p>liquefaction susceptibility (none to very high)</p>
+</dd>
+<dt><strong>p_liq</strong><span class="classifier">float, array</span></dt><dd><p>[%] probability of liquefaction</p>
+</dd>
+<dt><strong>areal_liq</strong><span class="classifier">float, array</span></dt><dd><p>[%] areal liquefaction percent</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r40a089eba2d6-1"><span class="brackets">1</span></dt>
+<dd><p>Zhu, J., Baise, L.G., and Thompson, E.M., 2017, An Updated Geospatial Liquefaction Model for Global Application, Bulletin of the Seismological Society of America, vol. 107, no. 3, pp. 1365-1385.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="subsurface-fault-rupture">
+<h2>Subsurface Fault Rupture<a class="headerlink" href="#subsurface-fault-rupture" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="surface-fault-rupture">
+<h2>Surface Fault Rupture<a class="headerlink" href="#surface-fault-rupture" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id62">
+<h3>HAZUS (FEMA, 2014)<a class="headerlink" href="#id62" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.surf.hazus_2014_surf">
+<code class="sig-prename descclassname">edp.surf.</code><code class="sig-name descname">hazus_2014_surf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.surf.hazus_2014_surf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute surface fault rupture displacement using Wells &amp; Coppersmith (1994) with modified parameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>[m] surface fault rupture displacement</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r6c4bfbe2115e-1"><span class="brackets">1</span></dt>
+<dd><p>Federal Emergency Management Agency (FEMA), 2014, Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, National Institute of Building Sciences and Federal Emergency Management Agency, Washington, DC, 690 p.</p>
+</dd>
+<dt class="label" id="r6c4bfbe2115e-2"><span class="brackets">2</span></dt>
+<dd><p>Wells, D.L., and Coppersmith, K.J., 1994, New Empirical Relationships Among Magnitude, Rupture Length, Rupture width, Rupture Area, and Surface Displacement, Bulletin of the Seismological Society of America, vol. 84, no. 4, pp. 974-1002.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="wells-coppersmith-1994">
+<h3>Wells &amp; Coppersmith (1994)<a class="headerlink" href="#wells-coppersmith-1994" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.surf.wells_coppersmith_1994">
+<code class="sig-prename descclassname">edp.surf.</code><code class="sig-name descname">wells_coppersmith_1994</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">d_type</span><span class="o">=</span><span class="default_value">'max'</span></em>, <em class="sig-param"><span class="n">fault_type</span><span class="o">=</span><span class="default_value">'all'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.surf.wells_coppersmith_1994" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute surface fault rupture displacement using Wells &amp; Coppersmith (1994).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>M</strong><span class="classifier">float</span></dt><dd><p>moment magnitude</p>
+</dd>
+<dt><strong>d_type</strong><span class="classifier">str</span></dt><dd><p>type of displacement type: either <strong>maximum</strong> or <strong>average</strong></p>
+</dd>
+<dt><strong>fault_type</strong><span class="classifier">str</span></dt><dd><p>type of fault, enter bolded keywords: <strong>ss</strong> (strike-slip), <strong>r</strong> (reverse), <strong>n</strong> (normal), or <strong>all</strong></p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>[m] surface fault rupture displacement</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rfaba7ca2f8dd-1"><span class="brackets">1</span></dt>
+<dd><p>Wells, D.L., and Coppersmith, K.J., 1994, New Empirical Relationships Among Magnitude, Rupture Length, Rupture width, Rupture Area, and Surface Displacement, Bulletin of the Seismological Society of America, vol. 84, no. 4, pp. 974-1002.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="transient-strain">
+<h2>Transient Strain<a class="headerlink" href="#transient-strain" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="newmark-1967">
+<h3>Newmark (1967)<a class="headerlink" href="#newmark-1967" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.ts.newmark_1967">
+<code class="sig-prename descclassname">edp.ts.</code><code class="sig-name descname">newmark_1967</code><span class="sig-paren">(</span><em class="sig-param">pgv</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.ts.newmark_1967" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the transient ground strain using the Newmark (1967) approach, as described in O’Rourke and Liu (2004). Two analytical solutions are provided, for shear wave and Rayleigh wave propogation, where:</p>
+<ol class="arabic simple">
+<li><p><strong>eps_g</strong> by shear wave = f(<strong>pgv</strong>, <strong>vs</strong>, <strong>gamma</strong>)</p></li>
+<li><p><strong>eps_g</strong> by Rayleigh wave = f(<strong>pgv</strong>, <strong>cr</strong>)</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pgv</strong><span class="classifier">float</span></dt><dd><p>[cm/s] peak ground velocity</p>
+</dd>
+<dt><strong>Parameters for shear wave solution</strong></dt><dd></dd>
+<dt><strong>vs</strong><span class="classifier">float</span></dt><dd><p>[m/s] shear wave velocity</p>
+</dd>
+<dt><strong>gamma</strong><span class="classifier">float</span></dt><dd><p>[degree] angle of incidence</p>
+</dd>
+<dt><strong>Parameters for shear wave solution</strong></dt><dd></dd>
+<dt><strong>cr</strong><span class="classifier">float</span></dt><dd><p>[m/s] Rayleigh wave velocity</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>eps_g</strong><span class="classifier">float</span></dt><dd><p>[%] transient ground strain parallel to pipe axis</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r5f660d5a77d9-1"><span class="brackets">1</span></dt>
+<dd><p>Newmark, N.M., 1967, Problems in Wave Propagation in Soil and Rocks, Proceedings of the International Symposium on Wave Propagation and Dynamic Properties of Earth Materials, University of New Mexico Press, pp. 7-26.</p>
+</dd>
+<dt class="label" id="r5f660d5a77d9-2"><span class="brackets">2</span></dt>
+<dd><p>O’Rourke, M.J., and Liu, J., 2004, The Seismic Design of Buried and Offshore Pipelines, MCEER Monograph No. 4, 2012, MCEER, University at Buffalo, Buffalo, NY.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="o-rourke-el-hmadi-1988">
+<h3>O’Rourke &amp; El Hmadi (1988)<a class="headerlink" href="#o-rourke-el-hmadi-1988" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.ts.orourke_elhmadi_1988">
+<code class="sig-prename descclassname">edp.ts.</code><code class="sig-name descname">orourke_elhmadi_1988</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.ts.orourke_elhmadi_1988" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the transient pipe strain given transient ground strain using the O’Rourke &amp; El Hmadi (1988) approach, as described in O’Rourke and Liu (2004).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>eps_g</strong><span class="classifier">float</span></dt><dd><p>[%] transient ground strain</p>
+</dd>
+<dt><strong>D</strong><span class="classifier">float</span></dt><dd><p>[m] outer diameter of pipe</p>
+</dd>
+<dt><strong>t</strong><span class="classifier">float</span></dt><dd><p>[m] wall thickness of pipe</p>
+</dd>
+<dt><strong>E</strong><span class="classifier">float</span></dt><dd><p>[kPa] modulus of elasticity of pipe</p>
+</dd>
+<dt><strong>tu</strong><span class="classifier">float</span></dt><dd><p>[kPa] maximum frictional resistance at the shear interface</p>
+</dd>
+<dt><strong>lam</strong><span class="classifier">float</span></dt><dd><p>[m] wavelength</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>eps_p</strong><span class="classifier">float</span></dt><dd><p>[%] transient pipe (structural) strain</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r63f17988a6be-1"><span class="brackets">1</span></dt>
+<dd><p>O’Rourke, M.J., and El Hmadi, K.E., 1988, Analysis of Continuous Buried Pipelines for Seismic Wave Effects, Earthquake Engineering and Structural Dynamics, v. 16, pp. 917-929.</p>
+</dd>
+<dt class="label" id="r63f17988a6be-2"><span class="brackets">2</span></dt>
+<dd><p>O’Rourke, M.J., and Liu, J., 2004, The Seismic Design of Buried and Offshore Pipelines, MCEER Monograph No. 4, 2012, MCEER, University at Buffalo, Buffalo, NY.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="shinozuka-koike-1979">
+<h3>Shinozuka &amp; Koike (1979)<a class="headerlink" href="#shinozuka-koike-1979" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="edp.ts.shinozuka_koike_1979">
+<code class="sig-prename descclassname">edp.ts.</code><code class="sig-name descname">shinozuka_koike_1979</code><span class="sig-paren">(</span><em class="sig-param">eps_g</em>, <em class="sig-param">D</em>, <em class="sig-param">t</em>, <em class="sig-param">E</em>, <em class="sig-param">G</em>, <em class="sig-param">lam</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.ts.shinozuka_koike_1979" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the transient pipe strain given transient ground strain using the Shinozuka &amp; Koike (1979) approach, as described in O’Rourke and Liu (2004).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>eps_g</strong><span class="classifier">float</span></dt><dd><p>[%] transient ground strain</p>
+</dd>
+<dt><strong>D</strong><span class="classifier">float</span></dt><dd><p>[m] outer diameter of pipe</p>
+</dd>
+<dt><strong>t</strong><span class="classifier">float</span></dt><dd><p>[m] wall thickness of pipe</p>
+</dd>
+<dt><strong>E</strong><span class="classifier">float</span></dt><dd><p>[kPa] modulus of elasticity of pipe</p>
+</dd>
+<dt><strong>G</strong><span class="classifier">float</span></dt><dd><p>[kPa] shear modulus</p>
+</dd>
+<dt><strong>lam</strong><span class="classifier">float</span></dt><dd><p>[m] wavelength</p>
+</dd>
+<dt><strong>gamma_cr</strong><span class="classifier">float, optional</span></dt><dd><p>[%] critical shear strain before slippage occurs; default = 0.1%</p>
+</dd>
+<dt><strong>q</strong><span class="classifier">float, optional</span></dt><dd><p>degree of slippage at the pipe-soil interface, ranges from 1 to <span class="math notranslate nohighlight">\(\pi\)</span>/2; default = <span class="math notranslate nohighlight">\(\pi\)</span>/2 (slippage over the whole pipe length)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>eps_p</strong><span class="classifier">float</span></dt><dd><p>[%] transient pipe (structural) strain</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r54679f8d7d56-1"><span class="brackets">1</span></dt>
+<dd><p>Shinozuka, M., and Koike, T., 1979, Estimation of Structural Strain in Underground Lifeline Pipes, Lifeline Earthquake Engineering-Buried Pipelines, Seismic Risk and instrumentation, ASME, New York, pp. 31-48.</p>
+</dd>
+<dt class="label" id="r54679f8d7d56-2"><span class="brackets">2</span></dt>
+<dd><p>O’Rourke, M.J., and Liu, J., 2004, The Seismic Design of Buried and Offshore Pipelines, MCEER Monograph No. 4, 2012, MCEER, University at Buffalo, Buffalo, NY.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-edp.fcn_liq_land">
+<span id="miscellaneous-functions"></span><h2>Miscellaneous Functions<a class="headerlink" href="#module-edp.fcn_liq_land" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="edp.fcn_liq_land.get_Ia">
+<code class="sig-prename descclassname">edp.fcn_liq_land.</code><code class="sig-name descname">get_Ia</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">acc</span></em>, <em class="sig-param"><span class="n">gval</span><span class="o">=</span><span class="default_value">9.81</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.fcn_liq_land.get_Ia" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the arias intensity, Ia, for a given acceleration time history.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>t</strong><span class="classifier">float, array</span></dt><dd><p>[sec] time</p>
+</dd>
+<dt><strong>acc</strong><span class="classifier">float, array</span></dt><dd><p>[g] acceleration</p>
+</dd>
+<dt><strong>gval</strong><span class="classifier">float, optional</span></dt><dd><p>[g] gravitational acceleration, default = 9.81 m/s^2</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Tm = float</dt><dd><p>[sec] mean period</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="edp.fcn_liq_land.get_Tm">
+<code class="sig-prename descclassname">edp.fcn_liq_land.</code><code class="sig-name descname">get_Tm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">y</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.fcn_liq_land.get_Tm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the mean period, <strong>Tm</strong>, a measure of the mean frequency content in the ground motion record; used in Saygili (2008). A Fourier Transform is applied a time history. The frequencies between 0.25 and 25 Hz are weighted by the square of the respective FFT amplitudes and then summed. The sum is divided by the sum of the weights (i.e., square of FFT amplitudes) to obtain the mean period, <strong>Tm</strong>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>t</strong><span class="classifier">float, array</span></dt><dd><p>[sec] time</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">float, array</span></dt><dd><p>[varies] y values</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Tm = float</dt><dd><p>[sec] mean period</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r259ca2aba582-1"><span class="brackets">1</span></dt>
+<dd><p>Saygili, G., 2008, A Probabilistic Approach for Evaluating Earthquake-Induced Landslides, PhD Thesis, Universtiy of Texas at Austin.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="edp.fcn_liq_land.get_Ts">
+<code class="sig-prename descclassname">edp.fcn_liq_land.</code><code class="sig-name descname">get_Ts</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">H</span></em>, <em class="sig-param"><span class="n">vs</span></em>, <em class="sig-param"><span class="n">nDim</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.fcn_liq_land.get_Ts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the site period, <strong>Ts</strong>. For 1D, Ts = 4*H/vs; for 2D, Ts = 2.6*H/vs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>H</strong><span class="classifier">float</span></dt><dd><p>[m] slope/structure height</p>
+</dd>
+<dt><strong>vs</strong><span class="classifier">float</span></dt><dd><p>[m/s] shear wave velocity</p>
+</dd>
+<dt><strong>nDim</strong><span class="classifier">int</span></dt><dd><p><strong>1</strong> (trapezoidal) or <strong>2</strong> (triangular) dimension for calculating <strong>Ts</strong>; default = 2</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>Ts</strong><span class="classifier">float</span></dt><dd><p>[sec] site period</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rd50adcebd772-1"><span class="brackets">1</span></dt>
+<dd><p>Bray, J.D., and Travasarou, T., 2007, Simplified Procedure for Estimating Earthquake-Induced Deviatoric Slope Displacements, Journal of Geotechnical and Geoenvironmental Engineering, vol. 133, no. 4, pp. 381-392.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="edp.fcn_liq_land.get_Vs_zmax">
+<code class="sig-prename descclassname">edp.fcn_liq_land.</code><code class="sig-name descname">get_Vs_zmax</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.fcn_liq_land.get_Vs_zmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the avery slowness over a depth of <strong>zmax</strong> (e.g., vs30) by zmax dividing by the total travel time to depth of <strong>zmax</strong> (total travel time = sum(dh_i/vs_i), where dh_i = layer thickness, and vs_i = layer’s shear wave velocity)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>vs_arr</strong><span class="classifier">float, array</span></dt><dd><p>[m/sec] shear wave velocity profile</p>
+</dd>
+<dt><strong>z_bot_arr</strong><span class="classifier">float, optional</span></dt><dd><p>[m] depth to bottom of each transition of shear wave velocity</p>
+</dd>
+<dt><strong>zmax</strong><span class="classifier">float</span></dt><dd><p>[m] maximum depth to compute mean shear wave velocity over, default to 30 m</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>vs_zmax = float</dt><dd><p>[m/sec] average slowness down to a depth o <strong>zmax</strong></p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="edp.fcn_liq_land.get_ky">
+<code class="sig-prename descclassname">edp.fcn_liq_land.</code><code class="sig-name descname">get_ky</code><span class="sig-paren">(</span><em class="sig-param">slope_type</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.fcn_liq_land.get_ky" title="Permalink to this definition">¶</a></dt>
+<dd><p>Various methods to calculate the yield acceleration:</p>
+<ol class="arabic simple">
+<li><p>Newmark sliding <strong>block</strong></p></li>
+<li><p><strong>Rock</strong>-slope failures</p></li>
+<li><p>Disrupted soil slides (<strong>infinite slope</strong>)</p></li>
+<li><p>Coherent <strong>rotational</strong> slides</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>slope_type</strong><span class="classifier">str</span></dt><dd><p>type of slope to assess; enter any of the bolded words shown in the above list of failure modes (i.e., <strong>rock</strong>, <strong>infinite slope</strong>, or <strong>rotational</strong>)</p>
+</dd>
+<dt><strong>phi</strong><span class="classifier">float</span></dt><dd><p>[degree] friction angle</p>
+</dd>
+<dt><strong>c</strong><span class="classifier">float</span></dt><dd><p>[kPa] cohesion</p>
+</dd>
+<dt><strong>beta</strong><span class="classifier">float</span></dt><dd><p>[degree] slope angle</p>
+</dd>
+<dt><strong>gamma</strong><span class="classifier">float</span></dt><dd><p>[kN/m^3] unit weight</p>
+</dd>
+<dt><strong>pga</strong><span class="classifier">float</span></dt><dd><p>[g] peak ground acceleration</p>
+</dd>
+<dt><strong>Additional parameters specific to sliding block:</strong></dt><dd></dd>
+<dt><strong>Incomplete</strong></dt><dd></dd>
+<dt><strong>Additional parameters specific to rock-slope failures:</strong></dt><dd></dd>
+<dt><strong>H</strong><span class="classifier">float</span></dt><dd><p>[m] height of slope (local relief)</p>
+</dd>
+<dt><strong>Additional parameters specific to disrupted soil slides:</strong></dt><dd></dd>
+<dt><strong>cr</strong><span class="classifier">float</span></dt><dd><p>[kPa] root cohesion</p>
+</dd>
+<dt><strong>t</strong><span class="classifier">float</span></dt><dd><p>[m] thickness of failure mass</p>
+</dd>
+<dt><strong>m</strong><span class="classifier">float</span></dt><dd><p>[%] percent of failure thickness that is saturated</p>
+</dd>
+<dt><strong>gamma_w</strong><span class="classifier">float</span></dt><dd><p>[kN/m^3] unit weight of water, default = 9.81 kN/m^3</p>
+</dd>
+<dt><strong>method</strong><span class="classifier">str</span></dt><dd><p>slight difference in form between <strong>Grant</strong> et al. (2016) and <strong>Rathje</strong> &amp; Antonakos (2011), specify author name</p>
+</dd>
+<dt><strong>Parameters for Coherent Rotational Slides (failure_mode == 3):</strong></dt><dd></dd>
+<dt><strong>H</strong><span class="classifier">float</span></dt><dd><p>[m] height of slope (local relief)</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">float</span></dt><dd><p>[m] width of cylindrical pixel</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>ky</strong><span class="classifier">float</span></dt><dd><p>[g] yield acceleration (see <em>return_param</em> under “Parameters”)</p>
+</dd>
+<dt><strong>FS</strong><span class="classifier">float</span></dt><dd><p>factor of safety (if calculated explicitly)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rd0a9b84b95cc-1"><span class="brackets">1</span></dt>
+<dd><p>Grant, A., Wartman, J., and Abou-Jaoude, G., 2016, Multimodal Method for Coseismic Landslide Hazard Assessment, Engineering Geology, vol. 212, pp. 146-160.</p>
+</dd>
+<dt class="label" id="rd0a9b84b95cc-2"><span class="brackets">2</span></dt>
+<dd><p>Keefer, D.K., 1984., Landslides Caused by Earthquakes, Geological Society of America Bulletin, vol. 95, no. 4, pp. 406-421.</p>
+</dd>
+<dt class="label" id="rd0a9b84b95cc-3"><span class="brackets">3</span></dt>
+<dd><p>Newmark, N.M., 1965, Effects of Earthquakes on Dams and Embankments, Geotechnique, vol. 15, pp. 139–159.</p>
+</dd>
+<dt class="label" id="rd0a9b84b95cc-4"><span class="brackets">4</span></dt>
+<dd><p>Rathje, E.M., and Saygili, G., 2009, Probabilistic Assessment of Earthquake-Induced Sliding Displacements of Natural Slopes, Bulletin of the New Zealand Society for Earthquake Engineering, vol. 42, no. 1, pp. 18-27.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="edp.fcn_liq_land.get_rd">
+<code class="sig-prename descclassname">edp.fcn_liq_land.</code><code class="sig-name descname">get_rd</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.fcn_liq_land.get_rd" title="Permalink to this definition">¶</a></dt>
+<dd><p>docstring</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="edp.fcn_liq_land.get_stress">
+<code class="sig-prename descclassname">edp.fcn_liq_land.</code><code class="sig-name descname">get_stress</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#edp.fcn_liq_land.get_stress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the in-situ total and effective stress and pore pressure profiles an interpolate pressures at user-specified depths. The function handles two types of inputs:</p>
+<ol class="arabic simple">
+<li><p>properties by layer (typical for SPT): properties for various layers are provided, along with layer thicknesses</p></li>
+<li><p>properties by depth (typical for CPT): properties are given at specfic depths</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>z</strong><span class="classifier">float, array</span></dt><dd><p>[m] depths to interpolate for stresses</p>
+</dd>
+<dt><strong>dtw</strong><span class="classifier">float</span></dt><dd><p>[m] depth to water table</p>
+</dd>
+<dt><strong>gamma_w = float, optional</strong></dt><dd><p>[kN/m^3] unit weight of water, default = 9.81 kN/m^3</p>
+</dd>
+<dt><strong>Type 1 inputs</strong></dt><dd></dd>
+<dt><strong>gamma_layer</strong><span class="classifier">float, array</span></dt><dd><p>[kN/m^3] unit weight of soil at each layer</p>
+</dd>
+<dt><strong>dh_layer</strong><span class="classifier">float, array</span></dt><dd><p>[m] layer thicknesses</p>
+</dd>
+<dt><strong>Type 2 inputs</strong></dt><dd></dd>
+<dt><strong>gamma_z</strong><span class="classifier">float, array</span></dt><dd><p>[kN/m^3] unit weights at specific depths</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>sig_tot_z = float, array</dt><dd><p>[kPa] in-situ vertical total stress</p>
+</dd>
+<dt>u_z = float, array</dt><dd><p>[kPa] hydrostatic pore pressure (ignoring capillary suction above <strong>gwt</strong>)</p>
+</dd>
+<dt>sig_eff_z = float, array</dt><dd><p>[kPa] in-situ vertical effective stress</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="edp.fcn_liq_land.get_total_settlement">
+<code class="sig-prename descclassname">edp.fcn_liq_land.</code><code class="sig-name descname">get_total_settlement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dh</span></em>, <em class="sig-param"><span class="n">eps_v</span></em>, <em class="sig-param"><span class="n">flag_DF</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">z_cr</span><span class="o">=</span><span class="default_value">18</span></em><span class="sig-paren">)</span><a class="headerlink" href="#edp.fcn_liq_land.get_total_settlement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes total settlement for a 1D soil column given the volumetrain strain in each layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>dh</strong><span class="classifier">float, array</span></dt><dd><p>[m] thickness of each layer</p>
+</dd>
+<dt><strong>eps_v</strong><span class="classifier">float, array</span></dt><dd><p>[%] volumetric strain at each layer</p>
+</dd>
+<dt><strong>flag_DF</strong><span class="classifier">boolean, optional</span></dt><dd><p>flag for calculation of depth-weight factor, to increase settlement contribution from depths less than <strong>z_cr</strong> and reduce contribution from depths greater than <strong>z_cr</strong> (cetin et al., 2009), default = True</p>
+</dd>
+<dt><strong>z_cr</strong><span class="classifier">float, optional</span></dt><dd><p>[m] critical depth for where depth-weighted factor is equal to 1 (cetin et al., 2009), default = 18 m</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>s_sum = float</dt><dd><p>[m] cumulative ground settlement</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="rd7c96488300f-1"><span class="brackets">1</span></dt>
+<dd><p>Cetin, K.O., Bilge, H.T., Wu, J., Kammerer, A.M., and Seed, R.B., 2009, Probabilistic Model for the Assessment of Cyclically Induced Reconsolidation (Volumetric) Settlements, Journal of Geotechnical and Geoenvironmental Engineering, vol. 135, no. 3, pp. 387-398.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenSRA_logo_1600ppi.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Engineering Demand Parameters</a><ul>
+<li><a class="reference internal" href="#correction-procedures-for-cpt">Correction Procedures for CPT</a><ul>
+<li><a class="reference internal" href="#boulanger-idriss-2014">Boulanger &amp; Idriss (2014)</a></li>
+<li><a class="reference internal" href="#moss-et-al-2006">Moss et al. (2006)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#correction-procedures-for-spt">Correction Procedures for SPT</a><ul>
+<li><a class="reference internal" href="#id5">Boulanger &amp; Idriss (2014)</a></li>
+<li><a class="reference internal" href="#cetin-et-al-2004">Cetin et al. (2004)</a></li>
+<li><a class="reference internal" href="#youd-et-al-2001">Youd et al. (2001)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ground-settlement">Ground Settlement</a><ul>
+<li><a class="reference internal" href="#cetin-et-al-2009">Cetin et al. (2009)</a></li>
+<li><a class="reference internal" href="#hazus-fema-2014">HAZUS (FEMA, 2014)</a></li>
+<li><a class="reference internal" href="#ishihara-yoshimine-1992">Ishihara &amp; Yoshimine (1992)</a></li>
+<li><a class="reference internal" href="#tokimatsu-seed-1987">Tokimatsu &amp; Seed (1987)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#landslide-slope-stability">Landslide/Slope Stability</a><ul>
+<li><a class="reference internal" href="#bray-macedo-2019">Bray &amp; Macedo (2019)</a></li>
+<li><a class="reference internal" href="#bray-travasarou-2007">Bray &amp; Travasarou (2007)</a></li>
+<li><a class="reference internal" href="#grant-et-al-2016">Grant et al. (2016)</a></li>
+<li><a class="reference internal" href="#id31">HAZUS (FEMA, 2014)</a></li>
+<li><a class="reference internal" href="#jibson-2007">Jibson (2007)</a></li>
+<li><a class="reference internal" href="#rathje-antonakos-2011">Rathje &amp; Antonakos (2011)</a></li>
+<li><a class="reference internal" href="#saygili-2008">Saygili (2008)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lateral-spreading">Lateral Spreading</a><ul>
+<li><a class="reference internal" href="#id44">Grant et al. (2016)</a></li>
+<li><a class="reference internal" href="#id45">HAZUS (FEMA, 2014)</a></li>
+<li><a class="reference internal" href="#youd-et-al-2002">Youd et al. (2002)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#liquefaction-triggering">Liquefaction Triggering</a><ul>
+<li><a class="reference internal" href="#id47">Boulanger &amp; Idriss (2014)</a></li>
+<li><a class="reference internal" href="#id52">Cetin et al. (2004)</a></li>
+<li><a class="reference internal" href="#id54">HAZUS (FEMA, 2014)</a></li>
+<li><a class="reference internal" href="#id57">Moss et al. (2006)</a></li>
+<li><a class="reference internal" href="#id59">Youd et al. (2001)</a></li>
+<li><a class="reference internal" href="#zhu-et-al-2017">Zhu et al. (2017)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#subsurface-fault-rupture">Subsurface Fault Rupture</a></li>
+<li><a class="reference internal" href="#surface-fault-rupture">Surface Fault Rupture</a><ul>
+<li><a class="reference internal" href="#id62">HAZUS (FEMA, 2014)</a></li>
+<li><a class="reference internal" href="#wells-coppersmith-1994">Wells &amp; Coppersmith (1994)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#transient-strain">Transient Strain</a><ul>
+<li><a class="reference internal" href="#newmark-1967">Newmark (1967)</a></li>
+<li><a class="reference internal" href="#o-rourke-el-hmadi-1988">O’Rourke &amp; El Hmadi (1988)</a></li>
+<li><a class="reference internal" href="#shinozuka-koike-1979">Shinozuka &amp; Koike (1979)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-edp.fcn_liq_land">Miscellaneous Functions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="im.html"
+                        title="previous chapter">Intensity Measures</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dm.html"
+                        title="next chapter">Damage Measures</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/src/edp.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dm.html" title="Damage Measures"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="im.html" title="Intensity Measures"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Slate Geotechnical Consultants and The Regents of the University of California.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.
+    </div>
+  </body>
+</html>

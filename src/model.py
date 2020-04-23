@@ -334,7 +334,7 @@ class assessment(object):
 				- SPT-based
 					1) youd_etal_2001(N_type, N, fc, sv0_eff, patm, ERm, BH_diam, L_rod, 
 									  flag_liner_room, flag_liner_absent, CN_method)
-					2) cetain_etal_2004(N_type, N, fc, sv0_eff, patm, ERm, BH_diam, L_rod,
+					2) cetin_etal_2004(N_type, N, fc, sv0_eff, patm, ERm, BH_diam, L_rod,
 									    flag_liner_room, flag_liner_absent, CN_method)
 					3) boulanger_idriss_2014(input_type, N_type, N, fc, sv0_eff, patm, ERm, BH_diam,
 						 				     L_rod, flag_liner_room, flag_liner_absent, CN_method)

@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome to documentation for OpenSRA! &#8212; OpenSRA (20XX) documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="OpenSRA Framework" href="src/framework.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="src/framework.html" title="OpenSRA Framework"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-documentation-for-opensra">
+<h1>Welcome to documentation for OpenSRA!<a class="headerlink" href="#welcome-to-documentation-for-opensra" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="about">
+<h2>About<a class="headerlink" href="#about" title="Permalink to this headline">¶</a></h2>
+<p>Open Seismic Risk Assessment Tool (OpenSRA) is an open-source software (<a class="reference external" href="https://github.com/OpenSRA/OpenSRA">OpenSRA Github page</a>) licensed under <a class="reference external" href="http://slategeotech.com/">Slate Geotechnical Consultants</a> and the Regents of the University of California. The OpenSRA quantifies losses of gas pipelines, distribution lines, and transmission lines from earthquake scenarios in the form of <em>decision variables</em> (DVs), following the performance-based earthquake engineering (<em>PBEE</em>) framework from <a class="reference external" href="https://peer.berkeley.edu/">PEER</a> (Deierlein et al., 2003).</p>
+</div>
+<div class="section" id="developers">
+<h2>Developers<a class="headerlink" href="#developers" title="Permalink to this headline">¶</a></h2>
+<p>Barry Zheng (Slate),
+Jennie Watson-Lamprey (Slate), 
+Wael Elhaddad (SimCenter, NHERI), 
+Frank McKenna (SimCenter, NHERI),</p>
+</div>
+<div class="section" id="contacts">
+<h2>Contacts<a class="headerlink" href="#contacts" title="Permalink to this headline">¶</a></h2>
+<p>Barry Zheng, Slate Geotechnical Consultants, <a class="reference external" href="mailto:bzheng&#37;&#52;&#48;slategeotech&#46;com">bzheng<span>&#64;</span>slategeotech<span>&#46;</span>com</a></p>
+</div>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="src/framework.html">OpenSRA Framework</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src/framework.html#details-to-the-short-name-workflow">Details to the OpenSRA workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="src/im.html">Intensity Measures</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src/im.html#correlations-spatial">Correlations - Spatial</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/im.html#jayaram-baker-2009">Jayaram &amp; Baker (2009)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src/im.html#correlations-spectral">Correlations - Spectral</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/im.html#baker-jayaram-2008">Baker &amp; Jayaram (2008)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src/im.html#module-im.fcn_im">Miscellaneous Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="src/edp.html">Engineering Demand Parameters</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src/edp.html#correction-procedures-for-cpt">Correction Procedures for CPT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#boulanger-idriss-2014">Boulanger &amp; Idriss (2014)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#moss-et-al-2006">Moss et al. (2006)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src/edp.html#correction-procedures-for-spt">Correction Procedures for SPT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#id5">Boulanger &amp; Idriss (2014)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#cetin-et-al-2004">Cetin et al. (2004)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#youd-et-al-2001">Youd et al. (2001)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src/edp.html#ground-settlement">Ground Settlement</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#cetin-et-al-2009">Cetin et al. (2009)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#hazus-fema-2014">HAZUS (FEMA, 2014)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#ishihara-yoshimine-1992">Ishihara &amp; Yoshimine (1992)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#tokimatsu-seed-1987">Tokimatsu &amp; Seed (1987)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src/edp.html#landslide-slope-stability">Landslide/Slope Stability</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#bray-macedo-2019">Bray &amp; Macedo (2019)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#bray-travasarou-2007">Bray &amp; Travasarou (2007)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#grant-et-al-2016">Grant et al. (2016)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#id31">HAZUS (FEMA, 2014)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#jibson-2007">Jibson (2007)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#rathje-antonakos-2011">Rathje &amp; Antonakos (2011)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#saygili-2008">Saygili (2008)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src/edp.html#lateral-spreading">Lateral Spreading</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#id44">Grant et al. (2016)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#id45">HAZUS (FEMA, 2014)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#youd-et-al-2002">Youd et al. (2002)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src/edp.html#liquefaction-triggering">Liquefaction Triggering</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#id47">Boulanger &amp; Idriss (2014)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#id52">Cetin et al. (2004)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#id54">HAZUS (FEMA, 2014)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#id57">Moss et al. (2006)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#id59">Youd et al. (2001)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#zhu-et-al-2017">Zhu et al. (2017)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src/edp.html#subsurface-fault-rupture">Subsurface Fault Rupture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src/edp.html#surface-fault-rupture">Surface Fault Rupture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#id62">HAZUS (FEMA, 2014)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#wells-coppersmith-1994">Wells &amp; Coppersmith (1994)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src/edp.html#transient-strain">Transient Strain</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#newmark-1967">Newmark (1967)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#o-rourke-el-hmadi-1988">O’Rourke &amp; El Hmadi (1988)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src/edp.html#shinozuka-koike-1979">Shinozuka &amp; Koike (1979)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src/edp.html#module-edp.fcn_liq_land">Miscellaneous Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="src/dm.html">Damage Measures</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src/dm.html#repair-rates">Repair Rates</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src/dm.html#hazus-fema-2014">HAZUS (FEMA, 2014)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="src/dv.html">Decision Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="src/fcn_gen.html">General Functions</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="#">
+              <img class="logo" src="_static/OpenSRA_logo_1600ppi.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="#">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to documentation for OpenSRA!</a><ul>
+<li><a class="reference internal" href="#about">About</a></li>
+<li><a class="reference internal" href="#developers">Developers</a></li>
+<li><a class="reference internal" href="#contacts">Contacts</a></li>
+<li><a class="reference internal" href="#contents">Contents</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="src/framework.html"
+                        title="next chapter">OpenSRA Framework</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="src/framework.html" title="OpenSRA Framework"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Slate Geotechnical Consultants and The Regents of the University of California.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.
+    </div>
+  </body>
+</html>

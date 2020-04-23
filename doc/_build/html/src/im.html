@@ -1,0 +1,251 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Intensity Measures &#8212; OpenSRA (20XX) documentation</title>
+    <link rel="stylesheet" href="../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Engineering Demand Parameters" href="edp.html" />
+    <link rel="prev" title="OpenSRA Framework" href="framework.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="edp.html" title="Engineering Demand Parameters"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="framework.html" title="OpenSRA Framework"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="intensity-measures">
+<h1>Intensity Measures<a class="headerlink" href="#intensity-measures" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="correlations-spatial">
+<h2>Correlations - Spatial<a class="headerlink" href="#correlations-spatial" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="jayaram-baker-2009">
+<h3>Jayaram &amp; Baker (2009)<a class="headerlink" href="#jayaram-baker-2009" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="im.corr_spatial.jayaram_baker_2009">
+<code class="sig-prename descclassname">im.corr_spatial.</code><code class="sig-name descname">jayaram_baker_2009</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">h</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="n">geo_cond</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#im.corr_spatial.jayaram_baker_2009" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute correlations between spatial ordinates using Jayaram &amp; Baker (2009).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>h</strong><span class="classifier">float</span></dt><dd><p>[km] distance</p>
+</dd>
+<dt><strong>T</strong><span class="classifier">float</span></dt><dd><p>[sec] period</p>
+</dd>
+<dt><strong>geo_cond</strong><span class="classifier">int, optional</span></dt><dd><p>geologic condition: <strong>1</strong> for variability within soil, <strong>2</strong> for homogenous conditions; default = 2</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>corr</strong><span class="classifier">float</span></dt><dd><p>correlation for two sites at a distance of <strong>d</strong></p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r457555c71c50-1"><span class="brackets">1</span></dt>
+<dd><p>Jayaram, N., and Baker, J.W., 2009, Correlation Model for Spatially Distributed Ground‐Motion Intensities, Earthquake Engineering and Structural Dynamics, vol. 38, no. 15, pp. 1687-1708.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="correlations-spectral">
+<h2>Correlations - Spectral<a class="headerlink" href="#correlations-spectral" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="baker-jayaram-2008">
+<h3>Baker &amp; Jayaram (2008)<a class="headerlink" href="#baker-jayaram-2008" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="im.corr_spectral.baker_jayaram_2008">
+<code class="sig-prename descclassname">im.corr_spectral.</code><code class="sig-name descname">baker_jayaram_2008</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">T1</span></em>, <em class="sig-param"><span class="n">T2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#im.corr_spectral.baker_jayaram_2008" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute correlations between spectral ordinates using Baker &amp; Jayaram (2008).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>T1</strong><span class="classifier">float</span></dt><dd><p>[sec] first period</p>
+</dd>
+<dt><strong>T2</strong><span class="classifier">float</span></dt><dd><p>[sec] second period</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>corr</strong><span class="classifier">float</span></dt><dd><p>correlation between <strong>T1</strong> and <strong>T2</strong></p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r0a773c158195-1"><span class="brackets">1</span></dt>
+<dd><p>Baker, J.W., and Jayaram, N., 2008, Correlation of Spectral Acceleration Values from NGA Ground Motion Models, Earthquake Spectra, vol. 24, no. 1, pp. 299-317.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-im.fcn_im">
+<span id="miscellaneous-functions"></span><h2>Miscellaneous Functions<a class="headerlink" href="#module-im.fcn_im" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="im.fcn_im.generate_IM_samples">
+<code class="sig-prename descclassname">im.fcn_im.</code><code class="sig-name descname">generate_IM_samples</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mean</span></em>, <em class="sig-param"><span class="n">cov</span></em>, <em class="sig-param"><span class="n">nsamp</span></em>, <em class="sig-param"><span class="n">nsite</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">var_list</span><span class="o">=</span><span class="default_value">['pga', 'pgv']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#im.fcn_im.generate_IM_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform multivariate sampling for normally distributed random variables and partition the results according to input variables. Currently works with two variables max, but as many spatial</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mean</strong><span class="classifier">float, array</span></dt><dd><p>[varies] mean of a random variable or a list for multiple variables</p>
+</dd>
+<dt><strong>cov</strong><span class="classifier">float, matrix</span></dt><dd><p>variance of a random variable or the covariance matrix for multiple variables</p>
+</dd>
+<dt><strong>nsamp</strong><span class="classifier">float</span></dt><dd><p>number of samples or realizations</p>
+</dd>
+<dt><strong>nsite</strong><span class="classifier">float, optional</span></dt><dd><p>number of sites, default = 1</p>
+</dd>
+<dt><strong>var_list</strong><span class="classifier">str, array, optional</span></dt><dd><p>list of variables, default = [‘pga’, ‘pgv’]</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>sample_dict</strong><span class="classifier">float, dictionary</span></dt><dd><p>[varies] a dictionary of entries equal to number of variables. Each entry contains <strong>nsamp</strong> of realizations by <strong>nsites</strong></p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="im.fcn_im.get_cov">
+<code class="sig-prename descclassname">im.fcn_im.</code><code class="sig-name descname">get_cov</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">corr_h_pga</span></em>, <em class="sig-param"><span class="n">corr_h_pgv</span></em>, <em class="sig-param"><span class="n">corr_p</span></em>, <em class="sig-param"><span class="n">sig_pga</span></em>, <em class="sig-param"><span class="n">sig_pgv</span></em>, <em class="sig-param"><span class="n">dim_h</span></em>, <em class="sig-param"><span class="n">dim_p</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#im.fcn_im.get_cov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute correlation and covariance matrices for PGA and PGV and across different sites</p>
+<p>Parameters</p>
+<p>Correlations</p>
+<blockquote>
+<div><p>corr_h_pga: list of spatial correlations across sites for PGA
+corr_h_pgv: list of spatial correlations across sites for PGC
+corr_p: spectral correlation between PGA (T ~ 0.01sec) and PGV (T ~ 1sec)</p>
+</div></blockquote>
+<p>Covariances</p>
+<blockquote>
+<div><p>sig_pga: sigma for PGA
+sig_pga: sigma for PGV</p>
+</div></blockquote>
+<p>Others</p>
+<blockquote>
+<div><p>dim_h: number of sites
+dim_p: number of periods (fixed to 2 for now)</p>
+<p>Name of the site data input file with relative path. The file is
+expected to be a JSON with data stored in a standard format described
+in detail in the Input section of the documentation.</p>
+</div></blockquote>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenSRA_logo_1600ppi.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Intensity Measures</a><ul>
+<li><a class="reference internal" href="#correlations-spatial">Correlations - Spatial</a><ul>
+<li><a class="reference internal" href="#jayaram-baker-2009">Jayaram &amp; Baker (2009)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#correlations-spectral">Correlations - Spectral</a><ul>
+<li><a class="reference internal" href="#baker-jayaram-2008">Baker &amp; Jayaram (2008)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-im.fcn_im">Miscellaneous Functions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="framework.html"
+                        title="previous chapter">OpenSRA Framework</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="edp.html"
+                        title="next chapter">Engineering Demand Parameters</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/src/im.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="edp.html" title="Engineering Demand Parameters"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="framework.html" title="OpenSRA Framework"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Slate Geotechnical Consultants and The Regents of the University of California.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.
+    </div>
+  </body>
+</html>

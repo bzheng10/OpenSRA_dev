@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>OpenSRA Framework &#8212; OpenSRA (20XX) documentation</title>
+    <link rel="stylesheet" href="../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Intensity Measures" href="im.html" />
+    <link rel="prev" title="Welcome to documentation for OpenSRA!" href="../index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="im.html" title="Intensity Measures"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to documentation for OpenSRA!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="short-name-framework">
+<h1>OpenSRA Framework<a class="headerlink" href="#short-name-framework" title="Permalink to this headline">¶</a></h1>
+<p>The OpenSRA workflow is shown in the figure presented at the bottom of this page. OpenSRA follows the performance-based earthquake engineering (<strong>PBEE</strong>) framework from <a class="reference external" href="https://peer.berkeley.edu/">PEER</a> (Deierlein et al., 2003):</p>
+<div class="math notranslate nohighlight">
+\[{\lambda}(DV) = {\int\int\int}G{\langle}DV`|`DM{\rangle} dG{\langle}DM`|`EDP{\rangle} dG{\langle}EDP`|`IM{\rangle} d{\lambda}(IM)\]</div>
+<p>Where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\lambda\)</span> = mean annual rate of occurrence for rupture scenarios</p></li>
+<li><p><strong>IM</strong>: intensity measures (e.g., PGA, PGV)</p></li>
+<li><p><strong>EDP</strong>: engineering demand parameters (e.g., seismic-induced transient and permenant strains and deformations)</p></li>
+<li><p><strong>DM</strong>: damage measures (e.g., gas leaks, breaks, repairs)</p></li>
+<li><p><strong>DV</strong> = decision values/variables (e.g., safety, costs of repair/upgrade)</p></li>
+</ul>
+<div class="section" id="details-to-the-short-name-workflow">
+<h2>Details to the OpenSRA workflow<a class="headerlink" href="#details-to-the-short-name-workflow" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><strong>1. Site characterization</strong>: User can either define their own list of sites (grid-based or individual points), or use public-domain networks that have been pre-compiled in the release version. Users must specific at the minimum the coordinates associated with each site. Additional information can also be entered (e.g., soil and structural attributes).</p></li>
+<li><p><strong>2. Develop ground motion parameters</strong>: For each site of interest, OpenSRA screens through a rupture inventory (e.g., UCERF3) for all scenarios within a specified distance (e.g., 100 km) and computes the rupture distance to the nearest segment for each scenario. For each rupture scenario, the magnitude and rupture distance are passed through the ground motion models (GMMs) in <a class="reference external" href="https://peer.berkeley.edu/research/nga-west-2">NGA West 2</a> to compute the median ground motion intensities (<strong>PGA</strong>, <strong>PGV</strong>) and the event standard deviations.</p></li>
+<li><p><strong>3. Generate random realizations</strong>: A multivariate-sampling procedure is performed using the statistical moments from all the sites to generate realizations of <strong>PGA</strong> and <strong>PGV</strong>. Spatial and spectral correlations are incorporated in the development of the covariance matrix used for sampling.</p></li>
+<li><p><strong>4. Compute demands parameters</strong>: Given the random realizations, the users can choose to compute individual or all engineering demand parameters. For each demand parameter, by default the program will perform the procedure that provides the best result (i.e., lowest uncertainty). The users may also choose specific methods to run.</p></li>
+<li><p><strong>5. Compute damage measures</strong>: Users select from a list of damage measure(s) to compute for. For each damage measure, the users can choose to use specific fragility functions or all of the available functions. Users will also have the option to enter their own fragility functions.</p></li>
+<li><p><strong>6. Compute decision variables</strong>: Similar to damage measures, the users first a decision variable to compute for. For that decision variable, the users can choose to use available correlations or enter their own.</p></li>
+</ul>
+<p>(May decide to revert steps 4 through 6 and have users select what damages they want to see, and then determine which demand paramters are required for calculation.)</p>
+<img alt="../_images/framework.png" src="../_images/framework.png" />
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenSRA_logo_1600ppi.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">OpenSRA Framework</a><ul>
+<li><a class="reference internal" href="#details-to-the-short-name-workflow">Details to the OpenSRA workflow</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../index.html"
+                        title="previous chapter">Welcome to documentation for OpenSRA!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="im.html"
+                        title="next chapter">Intensity Measures</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/src/framework.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="im.html" title="Intensity Measures"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to documentation for OpenSRA!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Slate Geotechnical Consultants and The Regents of the University of California.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.
+    </div>
+  </body>
+</html>

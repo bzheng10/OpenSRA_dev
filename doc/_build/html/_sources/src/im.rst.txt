@@ -18,6 +18,7 @@ Baker & Jayaram (2008)
 .. autofunction:: baker_jayaram_2008
 
 Miscellaneous Functions
------------------------
+-----------------------	
 .. automodule:: im.fcn_im
 	:members:
+	:exclude-members: standard_normal

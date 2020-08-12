@@ -9,7 +9,7 @@ Welcome to documentation for OpenSRA!
 About
 -----
 
-|full name| (|short name|) is an open-source software (|github link|) licensed under |slate link| and the Regents of the University of California. The |short name| quantifies losses of gas pipelines, distribution lines, and transmission lines from earthquake scenarios in the form of *decision variables* (DVs), following the performance-based earthquake engineering (*PBEE*) framework from |peer link| (Deierlein et al., 2003).
+|full name| (|short name|) is an open-source software (|github link|) licensed under |slate link| and the Regents of the University of California. The |short name| quantifies losses of gas pipelines, distribution lines, and transmission lines from earthquake scenarios in the form of decision variables, following the performance-based earthquake engineering (PBEE) framework from |peer link| (Deierlein et al., 2003).
 
 Developers
 ----------
@@ -26,6 +26,7 @@ Contents
    :maxdepth: 3
    
    src/framework
+   src/model
    src/im
    src/edp
    src/dm

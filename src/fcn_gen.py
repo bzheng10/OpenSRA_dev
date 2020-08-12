@@ -1,38 +1,124 @@
 #####################################################################################################################
 ##### Open-Source Seismic Risk Assessment, OpenSRA(TM)
-##### 
-##### Copyright(c) 2020-2022 The Regents of the University of California and 
+#####
+##### Copyright(c) 2020-2022 The Regents of the University of California and
 ##### Slate Geotechnical Consultants. All Rights Reserved.
-##### 
+#####
 ##### General functions
-##### 
+#####
 ##### Created: April 13, 2020
 ##### @author: Barry Zheng (Slate Geotechnical Consultants)
 #####################################################################################################################
 
 
 #####################################################################################################################
-##### important packges
+##### required packages
+import logging
 import numpy as np
 #####################################################################################################################
 
 
 #####################################################################################################################
-##### calculate the epicentral distances using the Haversine equation
+##### logging function
+#####################################################################################################################
+def setLogging(level,file=None):
+    """
+    This method set the logging level and the format of the logs
+    """
+    
+    ## setting logging level
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG if level.lower() == 'debug' else logging.INFO)
+
+    ## setting log format for print
+    handlerStream = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handlerStream.setFormatter(formatter)
+    logger.addHandler(handlerStream)
+    
+    ## setting log format for save
+    if file is not None:
+        handlerFile = logging.FileHandler(file, mode='w')
+        handlerFile.setFormatter(formatter)
+        logger.addHandler(handlerFile)
+
+
+#####################################################################################################################
+def common_member(a, b): 
+    a_set = set(a) 
+    b_set = set(b) 
+  
+    if (a_set & b_set): 
+        return True
+    else: 
+        return False
+    
+
+#####################################################################################################################
+##### get closest projection and spherical distance for a location relative to a line segment
+#####################################################################################################################
+def get_closest_pt(loc,line):
+    """
+    returns the closest location and shortest distance between a location and a line segment
+
+    Parameters
+    ----------
+    loc : [float, float]
+        [degree] coordinate of point
+    line : [[float, float], [float, float]]
+        [degree] two pairs of coordinates [pt1, pt2] that define the line
+    
+    Returns
+    -------
+    closest_loc : [float, float]
+        [degree] closest point on line
+    shortest_dist : [float, float]
+        [degree] shorest distance
+    
+    """
+    ## calculations
+    line_vect = [line[1][0]-line[0][0],line[1][1]-line[0][1]] # get vector for line from pt 1 to pt 2
+    len_line = np.dot(line_vect,line_vect)**0.5 # length of line
+    if line_vect[0] == 0:
+        line_theta = np.radians(90)
+    else:
+        line_theta = np.arctan(line_vect[1]/line_vect[0]) # rad, angle for line vector relative to horizontal
+    loc_vect = [loc[0]-line[0][0],loc[1]-line[0][1]] # get vector from pt 1 of line to pt to project
+    proj_dist = np.dot(loc_vect,line_vect/len_line) # compute projected length of pt on line
+    
+    ## check if point is within or outside of line:
+    if proj_dist <= 0:
+        closest_loc = line[0]
+    elif proj_dist >= len_line:
+        closest_loc = line[1]
+    else:
+        closest_loc = [line[0][0]+proj_dist*np.cos(line_theta),
+                        line[0][1]+proj_dist*np.sin(line_theta)] # compute projection
+        closest_loc = np.round(closest_loc,decimals=6)
+    
+    ##
+    shortest_dist = get_haversine_dist(loc[0],loc[1],closest_loc[0],closest_loc[1])
+    
+    ##
+    return closest_loc,shortest_dist
+
+
+#####################################################################################################################
+##### Haversine equation for distances
 #####################################################################################################################
 def get_haversine_dist(lon1,lat1,lon2,lat2,unit='km'):
 	"""
-	calculates the Haversine distance between two coordinates
+	calculates the Haversine distance between two sets of coordinates
 	
 	Parameters
 	----------
-	lon1 : float
+	lon1 : float, array
 		[degree] longitude of site 1
-	lat1 : float
+	lat1 : float, array
 		[degree] latitude of site 1
-	lon2 : float
+	lon2 : float, array
 		[degree] longitude of site 2
-	lat2 : float
+	lat2 : float, array
 		[degree] latitude of site 2
 	unit : str
 		unit for output: '**km**' or '**miles**'
@@ -40,7 +126,7 @@ def get_haversine_dist(lon1,lat1,lon2,lat2,unit='km'):
 	Returns
 	-------
 	
-	d : float
+	d : float, array
 		distance
 	
 	"""
@@ -49,7 +135,7 @@ def get_haversine_dist(lon1,lat1,lon2,lat2,unit='km'):
 	if 'k' in unit.lower():
 		r = 6371 # km
 	elif 'mi' in unit.lower():
-		r = 3,958.8 # miles
+		r = 3958.8 # miles
 	
 	## convert long lat from degrees to radians
 	lon1 = np.radians(lon1)
@@ -59,13 +145,13 @@ def get_haversine_dist(lon1,lat1,lon2,lat2,unit='km'):
 	
 	## Haversine function for epicentral distance
 	d = 2*r*np.arcsin(np.sqrt(np.sin((lat2-lat1)/2)**2 + np.cos(lat1)*np.cos(lat2)*np.sin((lon2-lon1)/2)**2))
-		
+	
 	##
 	return d
-	
-	
+
+
 #####################################################################################################################
-##### trapezoidal integration function
+##### trapezoidal integration
 #####################################################################################################################
 def inte_trap(y,x=None):
 	"""
@@ -93,7 +179,7 @@ def inte_trap(y,x=None):
 	## initialize array
 	inte_y = np.zeros(len(y))
 	
-	## integrate 
+	## integrate
 	for i in range(1,len(y)):
 		inte_y[i] = inte_y[i-1] + (y[i-1] + y[i])/2 * (x[i]-x[i-1])
 	
@@ -103,8 +189,8 @@ def inte_trap(y,x=None):
 	
 	##
 	return inte_y
-	
-	
+
+
 #####################################################################################################################
 ##### count number of instances in a given range
 #####################################################################################################################
@@ -147,8 +233,8 @@ def count_in_range(list, a=-np.inf, b=np.inf, flag_include_a=True, flag_include_
 		
 	##
 	return count_a-count_b
-	
-	
+
+
 #####################################################################################################################
 ##### sort list where each index has multiple elements, sort by column index
 #####################################################################################################################
@@ -173,8 +259,8 @@ def sort(list,col):
 	
 	##
 	return(sorted(list, key = lambda x: x[col]))
-	
-	
+
+
 #####################################################################################################################
 ##### get random combination, for LHS
 #####################################################################################################################
@@ -199,10 +285,10 @@ def gen_rand_com(nBin,nVar):
 			choice2 = np.delete(choice,ind2del)
 			comb[j,i] = np.random.permutation(choice2)[0]
 			
-	## 
+	##
 	return comb
-	
-	
+
+
 #####################################################################################################################
 ##### convert a 1D array to a symmetric matrix
 #####################################################################################################################
@@ -234,17 +320,17 @@ def convert_array_to_sym_mat(x,n):
 	
 	##
 	return mat
-	
-	
+
+
 #####################################################################################################################
 ##### get probability of exceedance by count
 #####################################################################################################################
 def get_prob_exceed_by_count(x, y):
 	"""
-	Count the number of instances in **y_red** where **y** > **i** for every **i** in **x**. Probability = count/total. 
+	Count the number of instances in **y** where **y** > **i** for every **i** in **x**. Probability = count/total. 
 	
 	Parameters
-	----------	
+	----------
 	x : float, array
 		an array of values to get probability of exceendance for
 	y : float, array
@@ -273,8 +359,8 @@ def get_prob_exceed_by_count(x, y):
 	
 	##
 	return prob, count
-	
-	
+
+
 #####################################################################################################################
 ##### calculated weighted average
 #####################################################################################################################
@@ -288,7 +374,7 @@ def get_weighted_average(x, weights):
 		array of unweighted values
 	weights : float, array
 		list of weights corresponding to x
-		
+	
 	Returns
 	-------
 	sum_weighted : float
@@ -316,8 +402,8 @@ def get_weighted_average(x, weights):
 	
 	##
 	return sum_weighted, avg_weighted
-	
-	
+
+
 #####################################################################################################################
 ##### get probability of exceedance given criteria
 #####################################################################################################################
@@ -372,8 +458,8 @@ def get_cond_prob_exceed_by_count(xbins, x, y, ycriteria):
 	
 	##
 	return prob
-	
-	
+
+
 #####################################################################################################################
 ##### find elements in an array given condition and set to new value
 #####################################################################################################################
@@ -398,9 +484,36 @@ def find_set_nan(arr,find_val,set_val):
     """
 	
     ##
-    filters = arr == find_val
-    arr[filters] = set_val
+    filters = np.where(arr==find_val)
+    if len(filters[0]) > 0:
+        arr[filters] = set_val
     
     ##
     return arr
-	
+
+
+#####################################################################################################################
+##### faster algorithm to get triu_indices
+##### ref = https://mail.python.org/pipermail/numpy-discussion/2013-September/067534.html
+#####################################################################################################################
+def fast_triu_indices(dim,k=0):
+	"""
+	faster algorithm to get triu_indices (over numpy.triu_indices)
+    
+    Parameters
+    ----------
+    
+    Returns
+    -------
+
+	"""
+
+	tmp_range = np.arange(dim-k)
+	rows = np.repeat(tmp_range,(tmp_range+1)[::-1])
+	cols = np.ones(rows.shape[0],dtype=np.int)
+	inds = np.cumsum(tmp_range[1:][::-1]+1)
+	np.put(cols,inds,np.arange(dim*-1+2+k,1))
+	cols[0] = k
+	np.cumsum(cols,out=cols)
+	##
+	return np.vstack([rows,cols])

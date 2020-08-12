@@ -12,16 +12,22 @@
 
 
 #####################################################################################################################
+##### important packges
+import numpy as np
+#####################################################################################################################
+
+
+#####################################################################################################################
 ##### get spatial correlations (between sites)
 ##### Jayaram & Baker (2009) Correlation model for spatially distributed ground-motion intensities
 #####################################################################################################################
-def jayaram_baker_2009(h, T, geo_cond=2):
+def jayaram_baker_2009(d, T, geo_cond=2):
 	"""
 	Compute correlations between spatial ordinates using Jayaram & Baker (2009).
 	
 	Parameters
 	----------
-	h : float
+	d : float, array
 		[km] distance
 	T : float
 		[sec] period
@@ -30,7 +36,7 @@ def jayaram_baker_2009(h, T, geo_cond=2):
 		
 	Returns
 	-------
-	corr : float
+	corr : float, array
 		correlation for two sites at a distance of **d**
 		
 	References
@@ -49,5 +55,5 @@ def jayaram_baker_2009(h, T, geo_cond=2):
 		b = 22.0 + 3.7*T
 
 	##
-	return np.exp(-3*h/b)
+	return np.exp(-3*d/b)
 

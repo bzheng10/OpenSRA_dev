@@ -1,0 +1,271 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Assessment Class Object &#8212; OpenSRA (20XX) documentation</title>
+    <link rel="stylesheet" href="../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Intensity Measures" href="im.html" />
+    <link rel="prev" title="OpenSRA Framework" href="framework.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="im.html" title="Intensity Measures"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="framework.html" title="OpenSRA Framework"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-model.assessment">
+<span id="assessment-class-object"></span><h1>Assessment Class Object<a class="headerlink" href="#module-model.assessment" title="Permalink to this headline">¶</a></h1>
+<p>Assess the damages and decision values at target sites using ground motion predictions and demand parameters.</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.assessment.create_RV" title="model.assessment.create_RV"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_RV</span></code></a>(self, im_tool[, dir_im, …])</p></td>
+<td><p>Read and store IM and rupture data from files.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model.assessment.generate_IM" title="model.assessment.generate_IM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_IM</span></code></a>(self, nsamp[, flag_corr_d, …])</p></td>
+<td><p>Perform multivariate random sampling of <strong>PGA</strong> and <strong>PGV</strong> using means and sigmas for all scenarios.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.assessment.generate_EDP" title="model.assessment.generate_EDP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_EDP</span></code></a>(self, param, method, …)</p></td>
+<td><p>Using the simulated intensity measures to calculate engineering demand parameters.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model.assessment.generate_DM" title="model.assessment.generate_DM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_DM</span></code></a>(self, param, method, …)</p></td>
+<td><p>Using the simulated intensity measures and engineering demand parameters to calculate damage measures.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.assessment.generate_DV" title="model.assessment.generate_DV"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_DV</span></code></a>(self, param, method, …)</p></td>
+<td><p>Using the damage measures to estimate decision variables/values.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt id="model.assessment.create_RV">
+<code class="sig-prename descclassname">model.assessment.</code><code class="sig-name descname">create_RV</code><span class="sig-paren">(</span><em class="sig-param">self, im_tool, dir_im=None, path_siteloc=None, rate_min=0.0001, im_list=['pga', 'pgv'], \*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.assessment.create_RV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read and store IM and rupture data from files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>im_tool</strong><span class="classifier">str</span></dt><dd><p>tool used to generate intensity measures: currently either <strong>EQHazard</strong> or <strong>EventCalc</strong></p>
+</dd>
+<dt><strong>dir_im</strong><span class="classifier">str</span></dt><dd><p>directory containing the IM files</p>
+</dd>
+<dt><strong>path_siteloc</strong><span class="classifier">str</span></dt><dd><p>path of the file containing the site locations</p>
+</dd>
+<dt><strong>im_list</strong><span class="classifier">str, array, optional</span></dt><dd><p>list of intensity measures to pull and create random variables for; default = [<strong>pga</strong>, <strong>pgv</strong>]</p>
+</dd>
+<dt><strong>rate_min</strong><span class="classifier">float, optional</span></dt><dd><p>cutoff for rate of occurrence for scenarios; default = 0.0001 (~975 yr)</p>
+</dd>
+<dt><strong>Additional parameters for **EventCalc</strong> tool**</dt><dd></dd>
+<dt><strong>flag_export</strong><span class="classifier">boolean, optional</span></dt><dd><p>flag whether to simplify the matrix for sigma total and inter and export the reduced-size files</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>_RV_dict</strong><span class="classifier">dict</span></dt><dd><p>stored IM moments, eq. rupture information, and site data, to be used for generating IMs</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.assessment.generate_IM">
+<code class="sig-prename descclassname">model.assessment.</code><code class="sig-name descname">generate_IM</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">nsamp</em>, <em class="sig-param">flag_corr_d=True</em>, <em class="sig-param">flag_corr_T=True</em>, <em class="sig-param">T_pga=0.01</em>, <em class="sig-param">T_pgv=1.0</em>, <em class="sig-param">method_d='jayaram_baker_2009'</em>, <em class="sig-param">method_T='baker_jayaram_2008'</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.assessment.generate_IM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform multivariate random sampling of <strong>PGA</strong> and <strong>PGV</strong> using means and sigmas for all scenarios. Spatial and spectral orrelations can be applied.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>nsamp</strong><span class="classifier">float</span></dt><dd><p>number of samples/realizations</p>
+</dd>
+<dt><strong>flag_corr_d</strong><span class="classifier">boolean, optional</span></dt><dd><p>decision on performing correlation between sites (distance); default = True</p>
+</dd>
+<dt><strong>flag_corr_T</strong><span class="classifier">boolean, optional</span></dt><dd><p>decision on performing correlation between periods; default = True</p>
+</dd>
+<dt><strong>T_pga</strong><span class="classifier">float, optional</span></dt><dd><p>[sec] approximate period for <strong>PGA</strong> to be used in spectral correlation; default = 0.01 sec</p>
+</dd>
+<dt><strong>T_pgv</strong><span class="classifier">float, optional</span></dt><dd><p>[sec] approximate period for <strong>PGV</strong> to be used in spectral correlation; default = 1.0 sec</p>
+</dd>
+<dt><strong>method_d = str, optional</strong></dt><dd><p>method to use for spatial correlation; default = jayaram_baker_2009</p>
+</dd>
+<dt><strong>method_T = str, optional</strong></dt><dd><p>method to use for spectral correlation; default = baker_jayaram_2008</p>
+</dd>
+<dt><strong>For additional parameters, see the respective methods under :func:`im.corr_spatial.py` and :func:`im.corr_spectral.py`</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>_IM_dict</strong><span class="classifier">dict</span></dt><dd><p>stored samples for all intensity measures and rupture scenarios</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.assessment.generate_EDP">
+<code class="sig-prename descclassname">model.assessment.</code><code class="sig-name descname">generate_EDP</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">param</em>, <em class="sig-param">method</em>, <em class="sig-param">flag_clear_dict</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.assessment.generate_EDP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using the simulated intensity measures to calculate engineering demand parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>param</strong><span class="classifier">str</span></dt><dd><p>demand parameter to calculate; options are <strong>corr_spt</strong>, <strong>corr_cpt</strong>, <strong>liq</strong>, <strong>ls</strong>, <strong>gs</strong>, <strong>land</strong>, <strong>ts</strong>, <strong>surf</strong>, <strong>subsurf</strong> (see <code class="xref py py-func docutils literal notranslate"><span class="pre">edp()</span></code> for meaning of the options)</p>
+</dd>
+<dt><strong>method</strong><span class="classifier">str</span></dt><dd><p>method/procedure to use to calculate the demand; see <code class="xref py py-func docutils literal notranslate"><span class="pre">edp()</span></code> for available methods.</p>
+</dd>
+<dt><strong>flag_clear_dict</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> to clear the calculated demands or <strong>False</strong> to keep them.</p>
+</dd>
+<dt><strong>For method parameters, refer to the method documentation under :func:`edp`.</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>output</strong><span class="classifier">varies</span></dt><dd><p>[varies] output depends on the target demand and methods.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.assessment.generate_DM">
+<code class="sig-prename descclassname">model.assessment.</code><code class="sig-name descname">generate_DM</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">param</em>, <em class="sig-param">method</em>, <em class="sig-param">flag_clear_dict</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.assessment.generate_DM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using the simulated intensity measures and engineering demand parameters to calculate damage measures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>param</strong><span class="classifier">str</span></dt><dd><p>damage parameter to calculate; options are <strong>rr</strong> (more to be added, see <code class="xref py py-func docutils literal notranslate"><span class="pre">dm()</span></code> for meaning of the options)</p>
+</dd>
+<dt><strong>method</strong><span class="classifier">str</span></dt><dd><p>method/procedure to use to calculate the damage; see <code class="xref py py-func docutils literal notranslate"><span class="pre">dm()</span></code> for available methods.</p>
+</dd>
+<dt><strong>flag_clear_dict</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> to clear the calculated damages or <strong>False</strong> to keep them.</p>
+</dd>
+<dt><strong>For method parameters, refer to the method documentation under :func:`dm`.</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>output</strong><span class="classifier">varies</span></dt><dd><p>[varies] output depends on the target damage measure and methods.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="model.assessment.generate_DV">
+<code class="sig-prename descclassname">model.assessment.</code><code class="sig-name descname">generate_DV</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">param</em>, <em class="sig-param">method</em>, <em class="sig-param">flag_clear_dict</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.assessment.generate_DV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using the damage measures to estimate decision variables/values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>param</strong><span class="classifier">str</span></dt><dd><p>damage parameter to calculate; options are <strong>TBD</strong> (more to be added, see <code class="xref py py-func docutils literal notranslate"><span class="pre">dm()</span></code> for meaning of the options)</p>
+</dd>
+<dt><strong>method</strong><span class="classifier">str</span></dt><dd><p>method/procedure to use to calculate the damage; see <code class="xref py py-func docutils literal notranslate"><span class="pre">dm()</span></code> for available methods.</p>
+</dd>
+<dt><strong>flag_clear_dict</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> to clear the calculated damages or <strong>False</strong> to keep them.</p>
+</dd>
+<dt><strong>For method parameters, refer to the method documentation under :func:`dm`.</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>output</strong><span class="classifier">varies</span></dt><dd><p>[varies] output depends on the target damage measure and methods.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenSRA_logo_1600ppi.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="framework.html"
+                        title="previous chapter">OpenSRA Framework</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="im.html"
+                        title="next chapter">Intensity Measures</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/src/model.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="im.html" title="Intensity Measures"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="framework.html" title="OpenSRA Framework"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Slate Geotechnical Consultants and The Regents of the University of California.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.
+    </div>
+  </body>
+</html>

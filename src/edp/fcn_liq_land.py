@@ -446,6 +446,7 @@ def get_ky(slope_type,**kwargs):
 	2. **Rock**-slope failures
 	3. Disrupted soil slides (**infinite slope**)
 	4. Coherent **rotational** slides
+	5. Simplified method (Bray and Travasarou, 2009)
 	
 	Parameters
 	----------
@@ -459,8 +460,6 @@ def get_ky(slope_type,**kwargs):
 		[degree] slope angle
 	gamma : float
 			[kN/m^3] unit weight
-	pga : float
-		[g] peak ground acceleration   
 	
 	Additional parameters specific to sliding block:
 	Incomplete
@@ -479,7 +478,7 @@ def get_ky(slope_type,**kwargs):
 	gamma_w : float
 			[kN/m^3] unit weight of water, default = 9.81 kN/m^3
 	method : str
-		slight difference in form between **Grant** et al. (2016) and **Rathje** & Antonakos (2011), specify author name
+		slight difference in form between **Bray** (2007), **Grant** et al. (2016), and **Rathje** & Antonakos (2011), specify author name
 	
 	Parameters for Coherent Rotational Slides (failure_mode == 3):
 	H : float
@@ -500,6 +499,8 @@ def get_ky(slope_type,**kwargs):
 	.. [2] Keefer, D.K., 1984., Landslides Caused by Earthquakes, Geological Society of America Bulletin, vol. 95, no. 4, pp. 406-421.
 	.. [3] Newmark, N.M., 1965, Effects of Earthquakes on Dams and Embankments, Geotechnique, vol. 15, pp. 139–159.
 	.. [4] Rathje, E.M., and Saygili, G., 2009, Probabilistic Assessment of Earthquake-Induced Sliding Displacements of Natural Slopes, Bulletin of the New Zealand Society for Earthquake Engineering, vol. 42, no. 1, pp. 18-27.
+	.. [5] Bray, J.D., and Travasarou, T., 2009, Technical Notes: Pseudostatic Coefficient for Use in Simplified Seismic Slope Stability Evaluation, Journal of Geotechnical and Geoenvironmental Engineering, vol. 135, no. 9, pp. 1336-1340.
+	.. [6] Bray, J.D., 2007, Simplified Seismic Slope Displacement Procedures, Earthquake Geotechnical Engineering, Springer, Dordrecht, pp. 327-353.
 	
 	"""
 	
@@ -546,26 +547,34 @@ def get_ky(slope_type,**kwargs):
 		beta = kwargs.get('beta',None) # deg, slope angle
 		gamma = kwargs.get('gamma',None) # kN/m3, unit weight
 		t = kwargs.get('t',None) # m, thickness of failure mass
-		method = kwargs.get('method',None) # Grant or Rathje form for calculating ky
+		method = kwargs.get('method',None) # Grant, Rathje, or Bray form for calculating ky
 				
 		## additional factors that are used in Grant et al. (2016) and Rathje and Saygili (2009) for factor of safety
 		cr = kwargs.get('cr',0) # kPa, root cohesion, see Grant et al. (2016)
 		m = kwargs.get('m',0) # %, percent of failure thickness that is saturated, see Rathje & Saygili (2009)
 		gamma_w = kwargs.get('gamma_w',9.81) # kN/m3, unit weight of water
 		
-		## calculate factor of safety
-		FS = (c+cr)/(gamma*t*np.sin(np.radians(beta))) + \
-			np.tan(np.radians(phi))/np.tan(np.radians(beta)) - \
-			gamma_w * m/100 * np.tan(np.radians(phi)) / (gamma * np.tan(np.radians(beta))) # factor of safety
-	
-		## calculate yield acceleration, form depends if phi is used (depends on method)
-		if 'grant' in method.lower():
-			## simplest form for ky without internal friction (used by Grant et al., 2016)
-			ky = (FS-1)*np.sin(np.radians(beta)) # g
+		## avoid tan(0 deg)
+		beta[beta==0] = 0.001
 		
-		elif 'rathje' in method.lower():
-			## eq. 1 in Rathje and Saygili (2009)
-			ky = (FS-1) / (np.cos(np.radians(beta)) * np.tan(np.radians(phi)) + 1/np.tan(np.radians(beta))) # g
+		if 'bray' in method.lower():
+			ky = np.tan(np.radians(phi-beta)) + c/(gamma*t*(np.cos(np.radians(beta))**2*(1+np.tan(np.radians(phi))*np.tan(np.radians(beta)))))
+		
+		else:
+			## calculate factor of safety
+			FS = (c+cr)/(gamma*t*np.sin(np.radians(beta))) + \
+				np.tan(np.radians(phi))/np.tan(np.radians(beta)) - \
+				gamma_w * m/100 * np.tan(np.radians(phi)) / (gamma * np.tan(np.radians(beta))) # factor of safety
+		
+			## calculate yield acceleration, form depends if phi is used (depends on method)
+			if 'grant' in method.lower():
+				## simplest form for ky without internal friction (used by Grant et al., 2016)
+				ky = (FS-1)*np.sin(np.radians(beta)) # g
+			
+			## 
+			elif 'rathje' in method.lower():
+				## eq. 1 in Rathje and Saygili (2009)
+				ky = (FS-1) / (np.cos(np.radians(beta)) * np.tan(np.radians(phi)) + 1/np.tan(np.radians(beta))) # g
 		
 	###############################
 	## 4) Coherent rotational slides (deep):
@@ -578,22 +587,25 @@ def get_ky(slope_type,**kwargs):
 		gamma = kwargs.get('gamma',None) # kN/m3, unit weight
 		H = kwargs.get('H',None) # m, local hillside relief/height of slope
 		y = kwargs.get('y',None) # m, cylindrical width of pixel
+		method = kwargs.get('method',None) # Grant or Bray form for calculating ky
 	
-		## intermediate calculations
-		R = 1.5*H # m, radius of circular failure plane acting through a dry homogeneous hillslope
-		delta = np.arcsin(1/(3*np.sin(np.radians(beta)))) # rad, for beta > 20 degrees
-		L = 2*delta*R # m, failure plane length
-		a = (4*R*(np.sin(delta))**3 / (3*(2*delta-np.sin(2*delta))) - R) * np.cos(delta) # m, landslide body's centroid
-		W = 1/2*gamma*y*R**2*(2*delta - np.sin(2*delta)) # kN
-		
-		## calculate yield acceleration
-		ky = (c*L*y + W*(np.cos(np.radians(beta))*np.tan(np.radians(phi)) - np.sin(np.radians(beta)))) / \
-			(W*(a/R + np.sin(np.radians(beta))*np.tan(np.radians(phi)))) # g
+		if 'grant' in method.lower():
+			## intermediate calculations
+			R = 1.5*H # m, radius of circular failure plane acting through a dry homogeneous hillslope
+			delta = np.arcsin(1/(3*np.sin(np.radians(beta)))) # rad, for beta > 20 degrees
+			L = 2*delta*R # m, failure plane length
+			a = (4*R*(np.sin(delta))**3 / (3*(2*delta-np.sin(2*delta))) - R) * np.cos(delta) # m, landslide body's centroid
+			W = 1/2*gamma*y*R**2*(2*delta - np.sin(2*delta)) # kN
 			
-		FS = np.nan
+			## calculate yield acceleration
+			ky = (c*L*y + W*(np.cos(np.radians(beta))*np.tan(np.radians(phi)) - np.sin(np.radians(beta)))) / \
+				(W*(a/R + np.sin(np.radians(beta))*np.tan(np.radians(phi)))) # g
+		
+		elif 'bray' in method.lower():
+			print('Bray (2007) for deep slides - not coded')
 	
 	## 
-	return ky, FS
+	return ky
 	
 
 #####################################################################################################################

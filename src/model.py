@@ -1,484 +1,981 @@
 #####################################################################################################################
-##### Primary models (e.g., PBEE)
-##### Barry Zheng (Slate Geotechnical Consultants)
-##### Updated: 2020-04-06
+##### Open-Source Seismic Risk Assessment, OpenSRA(TM)
+#####
+##### Copyright(c) 2020-2022 The Regents of the University of California and
+##### Slate Geotechnical Consultants. All Rights Reserved.
+#####
+##### Risk model class object
+#####
+##### Created: April 27, 2020
+##### Updated: July 14, 2020
+##### @author: Barry Zheng (Slate Geotechnical Consultants)
 #####################################################################################################################
 
 
 #####################################################################################################################
-##### Assessment class object that follows the PBEE framework (IM -> EDP -> DM -> DV)
+##### Python modules
+import numpy as np
+import time, importlib, sys, h5py, os, logging
+from scipy import sparse
+
+##### OpenSRA modules and functions
+from src import fcn_gen, file_io
+from src.im import fcn_im
+
+
 #####################################################################################################################
 class assessment(object):
-	"""
-	Order of operation for assessment class
-	1) create class object:
-		- var = asssessment()
-	2) read input intensity measures from EQHazard:
-		- 
-	3) read other site data
-		- 
-	4) create random variables from EQHazard output:
-		-
-	5) randomly samply intensity measures
-		-
-	6) calculate engineering demand parameters from IM realizations
-		-
-	7) calculate damage measures
-		-
-	8) calculate decision values
-		-
-	9) sort and evaluate probabilities and recurrences
-		-
-	10) produce summary
-		-
-	
-	"""
-	#############################################################################################################
-	## base directories
-    def __init__(self):
-		"""
-        Clear dictionaries
-		
-		"""
-        ## inputs
-        self._Site_in = None # site data from maps (e.g. groundwater depth, mapped liquefaction susceptibility)
-        self._IM_in = None # intensity measures from EQHazard (pga, pgv)
-        self._EDP_in = None # engineering demand parameters (e.g., mapped deformation)
-        # self._POP_in = None # population
-        # self._FG_in = None # fragility
-
-        ## random variables and loss model
-        self._RV_dict = None # dictionary for creating random variables (pga, pgv)
-        self._IM_dict = None # create and randomly sample intensity measures
-        self._EDP_dict = None # engineering demand parameters
-        self._DM_dict = None # damage measures
-        # self._FR_dict = None # fragility estimates
-        self._DV_dict = None # decision values/variables
-
-        ## results
-        # self._TIME = None
-        # self._POP = None
-        # self._COL = None
-        # self._ID_dict = None
-        # self._DMG = None
-        # self._DV_dict = None
-        self._SUMMARY = None
-
-        # self._assessment_type = 'generic'
+    """
+    Assess the damages and decision values at target sites using ground motion predictions and demand parameters.
     
-	
-	#############################################################################################################
-	## read inputs from EQHazard
-    def read_inputs_IM(self, path, verbose=False):
-        """
-        Read and process the input files from EQHazard to describe the assessment task.
-
-        Parameters
-        ----------
-        path: string
-            Name of the intensity measure input file with relative path. The file
-            is expected to be a JSON with data stored in a standard format described
-            in detail in the Input section of the documentation.
-        
-        verbose: boolean, default: False
-            If True, the method echoes the information read from the files.
-            This can be useful to ensure that the information in the file is
-            properly read by the method.
-
-        """
-		## ## initialize dictionary if it is none
-		if self._IM_in is None:
-			self._IM_in = {}
-		
-		## read data
-        self._IM_in = read_json_EQHazard(path, verbose=verbose)
+    .. autosummary::
     
-	
-	#############################################################################################################
-	## read other inputs on site data
-	def read_inputs_site_data(self, path, search_name, store_name=None, verbose=False):
-	    """
-        Read and process site data (e.g., map-based liquefaction suscep) not realted to IM.
+        get_src_GM_site
+        sim_IM
+        assess_EDP
+        assess_DM
+        assess_DV
+    
+    """
+    
 
-        Parameters
-        ----------
-        path: string
-            Name of the site data input file with relative path. The file is
-            expected to be a JSON with data stored in a standard format described
-            in detail in the Input section of the documentation.
-        
-        verbose: boolean, default: False
-            If True, the method echoes the information read from the files.
-            This can be useful to ensure that the information in the file is
-            properly read by the method.
-
-        """
-		## ## initialize dictionary if it is none
-		if self._Site_in is None:
-			self._Site_in = {}
-		
-		## if store_name is not provided
-		if store_name is None:
-			store_name = search_name
-			
-		## read and store information
-        self._Site_in[store_name].update({store_name: read_json_other(path,search_name)})
-        # self._IM_in['site_data'].update({'l_seg': read_other_json(path_json,'LSegment')})
-        # self._IM_in['site_data'].update({'liq_susc': read_other_json(path_json,'LiqSusc')})
-        # self._IM_in['site_data'].update({'ls_susc': read_other_json(path_json,'LsSusc')})
-        # self._IM_in['site_data'].update({'d_w': read_other_json(path_json,'Z2gw')})
-
-
-	#############################################################################################################
-	## create intensity measure random variables and store statistical moments
-    def _create_RV(self, im_list=['pga','pgv']):
-        """
-        Searches through IM_in from EQHazard and gets the statstical moments.
-		
-		Parameters
-        ----------
-        im_list: array of strings (e.g., pga, pgv, sa)
-			Define a list of intensity measures to pull and create random variables for
-
-        """
-		## initialize dictionary if it is none
-		if self._RV_dict is None:
-			self._RV_dict = {}
-
-        ## get site coordinates from _IM_in
-        site_loc = self._IM_in.get('site_loc', None)
-		
-		## pull lat and lon from site_loc to be stored in _IM_dict
-        site_lat = site_loc.get('latitude', None)
-        site_lon = site_loc.get('longitude', None)
-
-		## get statistical moments and periods
-        im_data = self._IM_in.get('im_data', None)
-		
-		## get periods for spectral acceleration
-        period = im_data.get('period', None)
-        
-		## initialize data dictionary
-        data = {}
-		
-		## loop through im_list and pull relevant information
-        for var in var_list:
-			##
-            mean = im_data.get(var+'_mean', None) ## mean, natural log
-            sig_tot = np.asarray(im_data.get(var+'_std_total', None)) ## total sigma
-            sig_intra = np.asarray(im_data.get(var+'_std_intra', None)) ## sigma for intra event
-            sig_inter = np.asarray(im_data.get(var+'_std_inter', None)) ## sigma for inter event
-			
-			## store the moments of each IM into data dictionary
-            data.update({var: {'mean': mean,
-                               'sig_total': sig_tot,
-                               'sig_intra': sig_intra,
-                               'sig_inter': sig_inter}})
-
-		## transfer from data to _IM_dict
-        self._RV_dict.update({'site_lat': site_lat,
-                              'site_lon': site_lon})
-		for var in var_list:
-			self_.RV_dict.update({var: data[var]})
-
-		
-	#############################################################################################################
-    def generate_IM(self, nsamp, flag_corr_d=True, flag_corr_T=True, T_pga=0.01, T_pgv=1.0, 
-					method_d='jayaram_baker_2009', method_T='baker_jayaram_2008', **kwargs):
-	    """
-        Uses the statistcal moments pulled from EQHazard to generate random samples.
-		Cross-correlations can be applied
-
-        Parameters
-        ----------
-        nsamp: number of samples/realizations
-		
-		flag_corr_d: 'True' or 'False' for performing correlation between sites (distance)
-			- default to 'True'
-
-		flag_corr_T: 'True' or 'False' for performing correlation between periods
-			- default to 'True'
-        
-		T_pga: approximate period for PGA to be used in period correlation
-			- default to 0.01 seconds
-		
-		T_pgv: approximate period for PGV to be used in period correlation
-			- default to 1.0 second
-			
-		method_d = method to use for spatial correlation
-			- default = jayaram_baker_2009
-			
-		method_T = method to use for spectral correlation
-			- default = baker_jayaram_2008
-			
-        kwargs: other parameters (method-dependent)
-
-        """
-		## initialize dictionary if it is none
-		if self._IM_dict is None:
-			self._IM_dict = {}
-	
-		## pull list of site coordinates
-        site_lat = self._RV_dict.get('site_lat',None)
-        site_lon = self._RV_dict.get('site_lon',None)
-	
-		## dimensions
-        dim_d = len(site_lat) # number of sites
-		dim_T = 2 # number of periods of interest
-	
-		## pull statistics
-        # assess_ID = 'id_1'
-        pga_moment = self._RV_dict.get('pga',None)
-        pgv_moment = self._RV_dict.get('pgv',None)
-        sa_moment = self._RV_dict.get('pga',None)
-	
-		## approximate periods to use for pga and pgv
-        # T_pga = 0.01
-		# T_pgv = 1.0
-	
-        ## get correlations between sites
-        if flag_corr_d is True:
-	
-			## check input for method to use
-			method_d = kwargs.get('method_d','jayaram_baker_2009')
-	
-			## calculate distance between sites using Haversine function
-            d = [get_haversine_dist(site_lon[i],site_lat[i],
-                                    site_lon[j],site_lat[j])
-                 for i in range(dim_d) for j in range(dim_d) if j >= i]
-	
-            ## compute intra-event correlations between sites for pga and pgv
-			if method_d == 'jayaram_baker_2009':
-				corr_d_intra_pga = np.asarray([get_corr_spatial(method_d, d=i, T=T_pga, geo_cond=2) for i in d])
-				corr_d_intra_pgv = np.asarray([get_corr_spatial(method_d, d=i, T=T_pgv, geo_cond=2) for i in d])
-	
-			## inter-event sigma: perfect correlation (=1)
-            corr_d_inter = np.ones(int(dim_d*(dim_d+1)/2)) ## same correlations for pga and pgv
-	
-        else:
-			## identity matrix
-            corr_d_intra_pga = np.identity(int(dim_d*(dim_d+1)/2))
-            corr_d_intra_pga = corr_d_intra_pga[np.triu_indices(dim_d)]
-            corr_d_intra_pgv = corr_d_intra_pga
-	
-			## identity matrix
-            corr_d_inter = corr_d_intra_pga ## same correlations for pga and pgv
-	
-        # Get correlations between periods, same for intra- and inter- events
-        if flag_corr_T is True:
-	
-			## check input for method to use
-			method_T = kwargs.get('method_T','baker_jayaram_2008')
-	
-            ## compute intra-event correlations between pga and pgv
-			if method_T == 'baker_jayaram_2008':
-				corr_T = np.asarray([get_corr_spectral(method_T, T1=T_pga, T2=T_pgv)
-				                     for i in range(dim_T) for j in range(dim_T) if j >= i])
-	
-        else:
-			## set correlations along diagonal to 1 and off-diagonal to 0 (i.e., identity matrix)
-            corr_T = np.identity(int(dim_T*(dim_T+1)/2))
-            corr_T = corr_T[np.triu_indices(dim_T)]
-	
-        ## form correlation matrix for intra-event sigma
-        corr_intra, _, cov_intra = get_cov(corr_d_intra_pga, corr_d_intra_pgv, corr_T,
-                                           pga_moment['sig_intra'], pgv_moment['sig_intra'],
-                                           dim_d,dim_T)
-	
-		## form correlation matrix for inter-event 
-        corr_inter, _, cov_inter = get_cov(corr_d_inter, corr_d_inter, corr_T,
-                                           pga_moment['sig_inter'], pgv_moment['sig_inter'],
-                                           dim_d,dim_T)
-	
-        ## calculate total covariance
-        cov_total = np.asarray(cov_intra + cov_inter)
-        sig_total = np.sqrt(cov_total)
-	
-        ## get means into an array
-        mean = np.hstack([pga_moment['mean'],pgv_moment['mean']])
-	
-		## simulate intensity measures
-        sample_dict = get_IM_sims(mean, cov_total, nsamp, dim_d, var_list=['pga','pgv'])
-		pga = sample_dict['pga']
-		pgv = sample_dict['pgv']
-	
-		## meta-data
-		meta = {}
-		meta['dim_d'] = dim_d
-		meta['dim_T'] = dim_T
-		meta['T_pga'] = T_pga
-		meta['T_pgv'] = T_pgv
-		meta['method_d'] = 'jayaram_baker_2009'
-		meta['method_T'] = 'baker_jayaram_2008'
-		
-        ## Store correlations and covariances
-        self._IM_dict.update({'meta':meta,
-							  'pga': pga,
-							  'pgv': pgv,
-							  'corr_intra': corr_intra,
-                              'corr_inter': corr_inter,
-                              'cov_intra': cov_intra,
-                              'cov_inter': cov_inter,
-                              'cov_total': cov_total})
-	
-	
-	#############################################################################################################
-    def generate_EDP(self, demand, method, **kwargs):
-		"""
-        Using the simulated IMs to calculate EDPs
-
-        Parameters
-        ----------
-		demand: which demand parameter or procedure to run or solve for
-			0) pen_corr: correction of penetration resistance for liquefaction triggering
-				- SPT-based
-					1) youd_etal_2001(N_type, N, fc, sv0_eff, patm, ERm, BH_diam, L_rod, 
-									  flag_liner_room, flag_liner_absent, CN_method)
-					2) cetin_etal_2004(N_type, N, fc, sv0_eff, patm, ERm, BH_diam, L_rod,
-									    flag_liner_room, flag_liner_absent, CN_method)
-					3) boulanger_idriss_2014(input_type, N_type, N, fc, sv0_eff, patm, ERm, BH_diam,
-						 				     L_rod, flag_liner_room, flag_liner_absent, CN_method)
-				- CPT-Based:
-					4) moss_et_al_2006(q_type, qc, fs, patm, sv0_tot, sv0_eff, c)
-					5) boulanger_idriss_2014(input_type, q_type, qc, u2, ar, patm, fc, sv0_tot, sv0_eff, fs, Cfc)
-					
-			1) liq: liquefaction triggering (run with pen_corr)
-				1) youd_etal_2001(N1_60_cs, amax, sv0_tot, sv0_eff, rd, M, Dr, patm, tau_stat)
-				2) cetin_etal_2004(N1_60, fc, amax, sv0_tot, sv0_eff, rd, M, patm, p_liq, flag_include_error)
-				3) boulanger_idriss_2014(input_type, resistance, amax, sv0_tot, sv0_eff, rd, M, patm, tau_stat,
-									     Q, K0, flag_det_prob, p_liq)
-				4) moss_etal_2006(qc_1, Rf, c, amax, sv0_tot, sv0_eff, rd, M, patm, p_liq)
-				5) zhu_etal_2017(pgv, vs30, precip, dc, dr, dw, wtd, M)
-				6) hazus_2004(pga, M, dw, susc_liq)
-						
-			2) ls: lateral spreading
-				1) grant_etal_2016(flag_failure, additional inputs depend on failure type)
-				2) youd_etal_2002(M, R, W, S, T_15, F_15, D50_15)
-				3) hazus_2004(susc_liq, pga, M, z, dr)
-			
-			3) gs: ground settlement
-				1) cetin_etal_2009(N1_60_cs, amax, sv0_tot, sv0_eff, rd, Dr, patm)
-				2) ishihara_yoshimine_1992(N1_60_cs, Dr, FS_liq)
-				3) hazus_2004(susc_liq)
-				4) tokimatsu_seed_1987(TBD)
-			
-			4) land: landslide/slope stability
-				1) grant_etal_2016(flag_failure, susc_liq, pga, M, z, dr)
-				2) jibson_2007(pga, M, Ia, ky, alpha, FS)
-				3) saygili_2008(pga, pgv, M, Ia, Tm, ky, coh, phi, t, m, gamma, gamm_w, alpha)
-				4) rathje_antonakos_2011(pga, pgv, M, Tm, Ts, ky, coh, phi, t, m, gamma, gamm_w, alpha)
-				5) bray_travasarou_2007(M, T_arr, Sa_arr, slope, eps, pga, flag_topo, Ts, Sa_Ts_deg)
-				6) bray_macedo_2019(gm_type, M, T_arr, sa_arr, slope, eps, pga, pgv, flag_topo, slope_loc, Ts, Sa_Ts_deg, ky, h, vs)
-				7) hazus_2004(dir_makdisi_seed, pga, M, susc_land)
-			
-			5) tgs = transient ground strain
-				1) newmark_1967(Vmax, Vs, gamma_s, Cr)
-				2) shinozuka_koike_1979(eps_g, D, l, t, E, G, beta_0, gamma_0, gamma_cr)
-				3) orourke_elhmadi_1988(eps_g, D, l, t, E, tu)
-			
-			6) sfr = surface fault rupture
-				1) wells_coppersmith_1994(M, d_type, fault_type)
-				2) hazus_2004(M)
-			
-			7) bfr = buried fault rupture
-				1) TBD
-		
-        kwargs: other parameters (method-dependent)
-		
-        """
-		## initialize dictionary if it is none
-		if self._EDP_dict is None:
-			self._EDP_dict = {}
-		
-		## get magnitude
-		# M = self._IM_in['eq_rup']['Magnitude']
-        # l_seg = self._IM_in['site_data']['l_seg']
-        # liq_susc = self._IM_in['site_data']['liq_susc']
-        # ls_susc = self._IM_in['site_data']['ls_susc']
-        # d_w = self._IM_in['site_data']['ls_susc']
-		
-		## import method
-		module = import_module('src.edp'+demand)
-		proc = getatt(module,method)
-		
-		######################################################
-		## run method for every site 
-		output = proc(kwargs)
-		
-		## Note: need to figure out how to run it for every site efficiently
-		## some methods can run all sites at once, while others require
-		## site-by-site runs
-		######################################################
-		
-		## store in dictionary
-		self._EDP_dict.update({demand: {method: output}})
-	
-	#############################################################################################################
-    def generate_DM(self, damage, method, dim_d, **kwargs):
-		"""
-        Using the simulated IMs and mapped/calculated EDPs to calculate DMs
-
-        Parameters
-        ----------
-		damage: which damage measure to run
-			1) rr: repair rate (number of repairs per distance)
-				- 1) hazus_2004(pgv, pgd_ls, pgd_gs, pipe_type, l_seg)
-				
-			2) TBD
-			
-		dim_d = number of sites
-		
-        kwargs: other parameters (method-dependent)
-		
-        """	
-		## initialize dictionary if it is none
-		if self._DM_dict is None:
-			self._DM_dict = {}
-			
-		## import method
-		module = import_module('src.dm'+damage)
-		proc = getatt(module,method)
-		
-		## run method for every site
-		# for i in range(dim_d):
-		output = proc(kwargs)
-	
-		## store in dictionary
-		self._DM_dict.update({damage: {method: output}})
-		
-		## get segment-weighted damages
-        # n_leak_tot, rr_leak_avg = get_weighted_average([self._DM_dict['site_'+str(i+1)]['rr_leak'] for i in range(dim_d)], l_seg)
-        # n_break_tot, rr_break_avg = get_weighted_average([self._DM_dict['site_'+str(i+1)]['rr_break'] for i in range(dim_d)], l_seg)
-        
-        # store information
-        # self._DM_dict.update({'rr_leak_avg': rr_leak_avg,
-                              # 'rr_break_avg': rr_break_avg,
-                              # 'n_leak_tot': n_leak_tot,
-                              # 'n_break_tot': n_break_tot})
-							  
     #############################################################################################################
-    def generate_DV(self, method_list, **kwargs):
-		"""
-        Using the calculated DMs to assess DVs
-
+    ## base directories
+    def __init__(self):
+        """
+        Initialize class object.
+        
         Parameters
         ----------
-		method_list: list of methods to run
-			1) TBD
-
-        kwargs: other parameters (method-dependent)
-		
-        """	
-		## initialize dictionary if it is none
-		if self._DV_dict is None:
-			self._DV_dict = {}
-			
-		print('Placeholder - still under development')
+        
+        Returns
+        -------
     
-	#############################################################################################################
+        """
+        ## Source, GM, and site characterization
+        self._src_site_dict = None # store rupture sources and site data/params
+        self._GM_pred_dict = None # store GMM-predicted IM moments (mean, sigma)
+        
+        ## Random sampling for IM
+        self._IM_dict = None # simulated intensity measures
+        
+        ## PBEE workflow
+        self._EDP_dict = None # assessed engineering demand parameters
+        self._DM_dict = None # assessed damage measures
+        self._DV_dict = None # assessed decision values/variables
+    
+        ## results
+        self._SUMMARY = None # summary of results
+    
+    
+    #############################################################################################################
+    ## create intensity measure random variables and store statistical moments
+    def get_src_GM_site(self, phase_to_run, site_data, gm_tool, gm_pred_dir, ims, 
+                        rup_meta_file, flag_clear_dict=False, **kwargs):
+        """
+        Read and store IM and rupture data from files.
+        
+        Parameters
+        ----------
+        phase_to_run : int
+            analysis phase for OpenSRA
+        site_file : str
+            file containing the site locations and data
+        gm_tool : str
+            tool used to generate intensity measures: currently **RegionalProcessor** or **EQHazard**
+        gm_dir : str
+            directory containing the GM files
+        rup_meta_file : str
+            full path for the file rupture metadata (M, r)
+        ims : str, list
+            list of **IM** variables to create: **pga** and/or **pgv**
+        flag_sample_exist : boolean, optional
+            **True** if samples are available or **False** to import statistical parameters and create random variables; default = **False**
+        flag_clear_dict : boolean, optional
+            **True** to clear the calculated demands or **False** to keep them; default = **False**
+    
+        Additional parameters for **EventCalc** tool
+        rate_min : float, optional
+            cutoff for mean annual rate; default to 1/1000
+        rmax : float, optional
+            cutoff distance for searching ruptures and calculating GMs
+        flag_export : boolean, optional
+            flag whether to simplify the matrix for sigma total and inter and export the reduced-size files
+        
+        Additional parameters for **RegionalProcessor** tool
+        rup_group : str
+            name of folder with **IM** to import (e.g., 0_99, 100_199)
+        num_rups : int, optional
+            first number of ruptures in the group to uploaded, default = None (run all ruptures in group)
+        
+        Returns
+        -------
+        _GM_pred_dict : dict
+            stored IM moments, eq. rupture information, and site data, to be used for generating IMs
+    
+        """
+        
+        ## initialize dictionary if it is none
+        if self._IM_dict is None or flag_clear_dict is True:
+            self._GM_pred_dict = {}
+        
+        if self._src_site_dict is None:
+            self._src_site_dict = {}
+            
+            ## read site locations and info
+            if site_data is not None:
+                ## load and store site locations
+                self._src_site_dict.update({'site_lon': site_data.get('Longitude').values,
+                                    'site_lat': site_data.get('Latitude').values})
+                self._src_site_dict.update({'l_seg': site_data.get('l_seg (km)').values})
+                logging.debug(f"\t\tLoaded site locations and pipe segment length into '_src_site_dict'")
+            else:
+                logging.debug(f"\t\tSite data not provided")
+            
+            ## open rup_meta_file and load in rupture information
+            if rup_meta_file is not None:
+                with h5py.File(rup_meta_file, 'r') as f:
+                    self._src_site_dict.update({'src':f.get('src')[:]})
+                    self._src_site_dict.update({'rup':f.get('rup')[:]})
+                    self._src_site_dict.update({'M':f.get('M')[:]})
+                    self._src_site_dict.update({'rate':f.get('rate')[:]})
+                f.close()
+                logging.debug(f"\t\tLoaded rupture meta data into '_src_site_dict'")
+            else:
+                logging.debug(f"\t\tRupture metafile not provided")
+                src = None
+                rup = None
+                M = None
+                rate = None
+                
+        src = self._src_site_dict['src']
+        rup = self._src_site_dict['rup']
+        M = self._src_site_dict['M']
+        rate = self._src_site_dict['rate']
+                        
+        ##
+        if 'regionalprocessor' in gm_tool.lower():
+            rup_group = kwargs.get('rup_group',0)
+            self._GM_pred_dict.update({'rup':file_io.read_sha_sparse(gm_pred_dir, rup_group, 
+                                                                ims, src, rup, M, rate).copy()})
+            logging.debug(f"\t\tLoaded GM predictions for current rupture group into '_GM_pred_dict'")
+                                                                
+        elif 'eqhazard' in gm_tool.lower():
+            ## removed outdated code, may not implement again
+            pass
+        
+        ## store IM tool used
+        self._GM_pred_dict.update({'gm_tool':gm_tool})
+        
+        ## clear variables
+        src = None
+        rup = None
+        r = None
+        M = None
+        
+        
+    #############################################################################################################
+    def sim_IM(self, n_samp_im, ims=['pga,pgv'], flag_spatial_corr=False, flag_cross_corr=True, T_pga=0.01, T_pgv=1.0, 
+                    method_d='jayaram_baker_2009', method_T='baker_jayaram_2008', flag_sample_with_sigma_total=False,
+                    sigma_aleatory=None, flag_clear_dict=False, flag_sample_exist=False, path_sample=None, **kwargs):
+        """
+        Perform multivariate random sampling of **PGA** and **PGV** using means and sigmas for all scenarios. Spatial and spectral orrelations can be applied.
+    
+        Parameters
+        ----------
+        n_samp_im : float
+            number of samples/realizations for intensity measures
+        ims : str, list, optional
+            list of **IM** variables to create: **pga** or **pgv** (default = both)
+        flag_spatial_corr : boolean, optional
+            decision on performing correlation between sites (distance); default = True
+        flag_cross_corr : boolean, optional
+            decision on performing correlation between periods; default = True (only if **ims** contains **pga** and **pgv**)
+        T_pga : float, optional
+            [sec] approximate period for **PGA** to be used in spectral correlation; default = 0.01 sec
+        T_pgv : float, optional
+            [sec] approximate period for **PGV** to be used in spectral correlation; default = 1.0 sec
+        method_d = str, optional
+            method to use for spatial correlation; default = jayaram_baker_2009
+        method_T = str, optional
+            method to use for spectral correlation; default = baker_jayaram_2008
+        flag_clear_dict : boolean, optional
+            **True** to clear the calculated demands or **False** to keep them; default = **False**
+        flag_sample_exist : boolean, optional
+            **True** if samples are available or **False** to import statistical parameters and create random variables; default = **False**
+        path_sample : str, optional
+            path to folder samples; default = None
+        
+        
+        For additional parameters, see the respective methods under :func:`im.corr_spatial.py` and :func:`im.corr_spectral.py`
+    
+        Returns
+        -------
+        _IM_dict : dict
+            stored samples for all intensity measures and rupture scenarios
+        
+        """
+        
+        ## initialize dictionary if it is none
+        if self._IM_dict is None or flag_clear_dict is True:
+            self._IM_dict = {}
+    
+        ##
+        gm_tool = self._GM_pred_dict.get('gm_tool',None)
+    
+        ## dimensions
+        if 'event' in gm_tool.lower() or 'calc' in gm_tool.lower():
+            n_site = len(self._GM_pred_dict['rup'][0]['pga_mean'])
+            n_rup = len(self._GM_pred_dict['rup'])
+    
+        ## make period array for spectral correlations
+        T_im = [T_pga,T_pgv]
+        
+        ## check input for method to use
+        method_T = kwargs.get('method_T','baker_jayaram_2008')
+        proc = getattr(importlib.import_module('src.im.corr_spectral'),method_T)
+
+        ## compute intra-event correlations between pga and pgv
+        if method_T == 'baker_jayaram_2008':
+            corr_T = proc(T1=T_pga, T2=T_pgv)
+
+        ## make list of variables
+        param_names = ['mean', 'inter', 'intra']
+        var_list = [i+'_'+j for i in ims for j in param_names]
+        
+        ##
+        n_site = len(self._src_site_dict['site_lon'])
+        n_rup = len(self._GM_pred_dict['rup']['src'])
+        n_T = len(ims) # number of periods of interest
+    
+        ## check if spatial correlation is required
+        if flag_spatial_corr is False:
+            ## no correlations, random/LHS sampling
+            
+            self._IM_dict.update({'pgv':{}})
+            self._IM_dict.update({'pga':{}})
+            
+            ## check if samples already exist
+            if flag_sample_exist is True:   # load samples
+            
+                ## loop through ims
+                for im in ims:
+                    ## loop through and import all samples
+                    for i in range(n_samp_im):
+                        file_name = im+'_samp_'+str(i)+'.npz'
+                        self._IM_dict[im].update({i:sparse.coo_matrix(sparse.load_npz(os.path.join(path_sample,file_name))).expm1()})
+            
+            else:   # perform random sampling
+
+                ## loop through number of samples
+                for i in range(n_samp_im):
+                
+                    ## first sample pgv
+                    eps_pgv = np.random.normal(size=(n_rup,n_site))
+                    samp = self._GM_pred_dict['rup']['pgv'+'_mean']
+                    
+                    ## use total sigma or separate into intra- and inter- event sigmas
+                    if flag_sample_with_sigma_total:
+                        ## correct for sigma
+                        if sigma_aleatory is None: ## if total sigma is not provided
+                            sigma_total = self._GM_pred_dict['rup']['pgv_intra'].power(2) + self._GM_pred_dict['rup']['pgv_inter'].power(2)
+                            sigma_total = sigma_total.power(0.5)
+                            samp = samp.multiply(sigma_total.multiply(eps_pgv).expm1() + np.ones((n_rup,n_site)))
+                        
+                        else:
+                            # only supports singular inputs for sigma_aleatory, expand to matrix later
+                            samp = samp.multiply(np.exp(sigma_aleatory*eps_pgv))
+                    
+                    else:
+                        ## get residuals for intra (epsilon) and inter (eta) (norm dist with mean = 0 and sigma = 1)
+                        eta_pgv = np.random.normal(size=n_rup)
+                        eta_pgv = np.repeat(eta_pgv[:,np.newaxis],n_site,axis=1) ## eta is constant with site, varies only between rupture
+                        
+                        ## correct for predicted mean and sigma
+                        samp = samp.multiply(self._GM_pred_dict['rup']['pgv_intra'].multiply(eps_pgv).expm1() + np.ones((n_rup,n_site)))
+                        samp = samp.multiply(self._GM_pred_dict['rup']['pgv_inter'].multiply(eta_pgv).expm1() + np.ones((n_rup,n_site)))
+                
+                    ## store samples
+                    self._IM_dict['pgv'].update({i:samp})
+                    
+                    ## see if 'pga' is needed
+                    if 'pga' in ims:
+                    
+                        ## conditional sigma for pga
+                        sigma_cond_pga = np.sqrt(1-corr_T**2)
+                        
+                        ## conditional mean of eps
+                        cond_mean_pga_eps = corr_T*eps_pgv
+                        eps_pga = np.random.normal(size=(n_rup,n_site),loc=cond_mean_pga_eps,scale=sigma_cond_pga)
+                        samp = self._GM_pred_dict['rup']['pga'+'_mean']
+                                        
+                        ## use total sigma or separate into intra- and inter- event sigmas
+                        if flag_sample_with_sigma_total:
+                            ## correct for sigma
+                            if sigma_aleatory is None: ## if total sigma is not provided
+                                sigma_total = self._GM_pred_dict['rup']['pga'+'_intra'].power(2) + self._GM_pred_dict['rup']['pga'+'_inter'].power(2)
+                                sigma_total = sigma_total.power(0.5)
+                                samp = samp.multiply(sigma_total.multiply(eps_pga).expm1() + np.ones((n_rup,n_site)))
+                            
+                            else:
+                                # only supports singular inputs for sigma_aleatory, expand to matrix later
+                                samp = samp.multiply(np.exp(sigma_aleatory*eps_pga))
+                                
+                        else:
+                            ## conditional sampling of eta
+                            cond_mean_pga_eta = corr_T*eta_pgv
+                            eta_pga = np.random.normal(size=cond_mean_pga_eta.shape,loc=cond_mean_pga_eta,scale=sigma_cond_pga)
+                            
+                            ## correct for predicted mean and sigma
+                            samp = samp.multiply(self._GM_pred_dict['rup']['pga'+'_intra'].multiply(eps_pga).expm1() + np.ones((n_rup,n_site)))
+                            samp = samp.multiply(self._GM_pred_dict['rup']['pga'+'_inter'].multiply(eta_pga).expm1() + np.ones((n_rup,n_site)))
+                
+                        ## store samples
+                        self._IM_dict['pga'].update({i:samp})
+        
+        else:
+            ## get correlations between sites
+            if flag_spatial_corr is True:
+                
+                ## check input for method to use
+                method_d = kwargs.get('method_d','jayaram_baker_2009')
+                proc = getattr(importlib.import_module('im.corr_spatial'),method_d)
+        
+                ind1,ind2 = np.triu_indices(n_site)
+
+                d = fcn_gen.get_haversine_dist(site_lon[ind1],site_lat[ind1],site_lon[ind2],site_lat[ind2])
+                
+                ## compute intra-event correlations between sites for pga and pgv
+                if method_d == 'jayaram_baker_2009':
+                    geo_cond = kwargs.get('geo_cond',2)
+                    corr_d_intra_pga = proc(d=d, T_im=T_pga, geo_cond=geo_cond)
+                    corr_d_intra_pgv = proc(d=d, T_im=T_pgv, geo_cond=geo_cond)
+                
+                ## inter-event sigma: perfect correlation (=1)
+                corr_d_inter = np.ones(int(n_site*(n_site+1)/2)) ## same correlations for pga and pgv
+                
+            else:
+                ## identity matrix
+                corr_d_intra_pga = np.identity(int(n_site*(n_site+1)/2))
+                corr_d_intra_pga = corr_d_intra_pga[np.triu_indices(n_site)]
+                corr_d_intra_pgv = corr_d_intra_pga
+        
+                ## identity matrix
+                corr_d_inter = corr_d_intra_pga ## same correlations for pga and pgv
+                
+            # Get correlations between periods, same for intra- and inter- events
+            if flag_cross_corr is True:
+        
+                ## check input for method to use
+                method_T = kwargs.get('method_T','baker_jayaram_2008')
+                proc = getattr(importlib.import_module('im.corr_spectral'),method_T)
+        
+                ## compute intra-event correlations between pga and pgv
+                if method_T == 'baker_jayaram_2008':
+                    corr_T = np.asarray([proc(T1=T_im[i], T2=T_im[j])
+                                        for i in range(n_T) for j in range(n_T) if j >= i])
+                
+            else:
+                ## set correlations along diagonal to 1 and off-diagonal to 0 (i.e., identity matrix)
+                corr_T = np.identity(int(n_T*(n_T+1)/2))
+                corr_T = corr_T[np.triu_indices(n_T)]
+                
+            ## form correlation matrix for intra-event sigma
+            cov_intra = fcn_im.get_cov(corr_d_intra_pga, corr_d_intra_pgv, corr_T,
+                                        np.ones(n_site)*pga_intra, np.ones(n_site)*pgv_intra,
+                                        n_site,n_T)
+        
+            ## form correlation matrix for inter-event 
+            cov_inter = fcn_im.get_cov(corr_d_inter, corr_d_inter, corr_T,
+                                        np.ones(n_site)*pga_inter, np.ones(n_site)*pgv_inter,
+                                        n_site,n_T)
+        
+    #       ## calculate total covariance
+            cov_total = np.asarray(cov_intra + cov_inter)
+
+            ## store information
+            self._IM_dict.update({'cov_intra': cov_intra,
+                                'cov_inter': cov_inter,
+                                'cov_total': cov_total})
+        
+    
+    #############################################################################################################
+    def assess_EDP(self, edp_category, edp_procs_info, edp_other_params, n_samp_im=1, store_name=None, 
+                    flag_clear_dict=False, **kwargs):
+        """
+        Using the simulated intensity measures to calculate engineering demand parameters.
+    
+        Parameters
+        ----------
+        edp_category : str
+            demand category to calculate; options are **corr_spt**, **liq**, **ls**, **gs**, etc. (see :func:`edp` for all **EDP** categories)
+        method : str
+            method/procedure to use to calculate the demand; see :func:`edp` for available methods
+        return_param : str, list
+            single of a list of parameters to return, see the return variables under each function (:func:`edp`)
+        store_name : str, list, optional
+            names to store parameter as; default = **return_param**
+        flag_clear_dict : boolean, optional
+            **True** to clear the calculated demands or **False** to keep them; default = **False**
+        flag_pga : boolean, optional
+            **True** include simulated **PGA**; default = **False**
+        flag_pgv : boolean, optional
+            **True** include simulated **PGV**; default = **False**
+        flag_M : boolean, optional
+            **True** include moment magnitude **M** from rupture metadata; default = **False**
+        flag_rup_depend : boolean, optional
+            **True** if dependent on rupture scenario; default = **False**
+        source_dict : str, list, optional
+            dictionary that contains **source_param** and **source_method**; default = None
+        source_param : str, list, optional
+            parameter to get from **existing** stored parameters (e.g., **liq_susc**); default = None
+        source_method : str, list, optional
+            method used to obtain the source_param (e.g., **zhu_etal_2017**); default = None
+        
+        For input parameters to each method, refer to the method documentation under :func:`edp`.
+        
+        Returns
+        -------
+        output : varies
+            [varies] output depends on the target demand and methods.
+        
+        """
+        
+        ## pull other params
+        method = edp_procs_info.get('method',None)[0]
+        return_param = edp_procs_info.get('return_param',None)
+        source_dict = edp_procs_info.get('source_dict',None)
+        source_param = edp_procs_info.get('source_param',None)
+        source_method = edp_procs_info.get('source_method',None)
+        store_name = edp_procs_info.get('store_name',None)
+        flag_pga = edp_procs_info.get('flag_pga',None)
+        flag_pgv = edp_procs_info.get('flag_pgv',None)
+        flag_M = edp_procs_info.get('flag_M',None)
+        
+        ## add params under other_params to kwargs
+        for key in edp_other_params.keys():
+            kwargs[key] = edp_other_params.get(key)
+        
+        ## add return_param into kwargs
+        kwargs['return_param'] = return_param
+        if store_name == None:
+            store_name = return_param
+            
+        ## add number of im samples to kwargs
+        kwargs['n_samp_im'] = n_samp_im
+        
+        ## initialize dictionary if it is none or if user wishes to clear dict
+        if self._EDP_dict is None or flag_clear_dict is True:
+            self._EDP_dict = {}
+        
+        ## create keys
+        for i in return_param:
+            if not i in self._EDP_dict.keys():
+                self._EDP_dict[i] = {}
+            
+        ## load method
+        proc = getattr(importlib.import_module('src.edp.'+edp_category),method)
+        
+        ## dimensions               
+        n_site = len(self._src_site_dict['site_lon'])
+        n_rup = len(self._GM_pred_dict['rup']['src'])
+        kwargs['n_site'] = n_site
+        kwargs['n_rup'] = n_rup
+        
+        ## set output storage
+        output = {}
+        
+        ## if source_param is not empty, then get parameter from method
+        param_add = {}
+        if source_param is not None:
+            for i in range(len(source_param)):
+                try:
+                    source_dict_i = getattr(self,source_dict[i])
+                except:
+                    logging.info(f"\t\t{source_dict[i]} does not exist")
+                    break
+                else:
+                    source_param_i = source_dict_i.get(source_param[i],None)
+                    if source_param_i is None:
+                        logging.info(f"\t\t{source_param[i]} does not exist")
+                        break
+                    else:
+                        for j in source_param_i:
+                            if source_param_i[j].get('method',None) == source_method[i]:
+                                param_add.update({source_param[i]:source_param_i[j]['output'].copy()})
+        
+        ## get M from scenarios
+        if flag_M is True:
+            kwargs['M'] = self._GM_pred_dict['rup'].get('M',None)
+        
+        ## if pga nor pgv is required, only run procedure once
+        if flag_pga is False and flag_pgv is False:
+            ## add additional parameters into kwargs
+            if source_param is not None:
+                for j in source_param:
+                    kwargs[j] = param_add[j].copy()
+            ## run method
+            out = proc(**kwargs)
+            output = {}
+            output.update({'prob_dist':out.get('prob_dist',None)})
+            for i in return_param:
+                output.update({i:out[i]})
+            out = None
+            
+        ## if either pga or pgv is required, run procedure through all scenarios
+        else:
+            ## add additional parameters into kwargs
+            if source_param is not None:
+                for j in source_param:
+                    kwargs[j] = param_add[j].copy()
+            ## get IM simulations for scenario
+            if flag_pga is True:
+                kwargs['pga'] = self._IM_dict['pga']
+            if flag_pgv is True:
+                kwargs['pgv'] = self._IM_dict['pgv']
+
+            ## run method
+            output = proc(**kwargs)
+        
+        ## 
+        eps_epistemic = edp_procs_info.get('eps_epistemic',[0])
+        eps_aleatory = edp_procs_info.get('eps_aleatory',[0])
+        wgt_aleatory = edp_procs_info.get('wgt_aleatory',[1])
+        
+        ## store in dictionary
+        for i in return_param:
+            count = len(self._EDP_dict[i]) # see how many methods have been used
+            
+            if count == 0:
+                name = 'method'+str(count+1)
+                self._EDP_dict[i].update({name: {'method':method,
+                                                'source_param':source_param,
+                                                'source_method':source_method,
+                                                'eps_epistemic':eps_epistemic,
+                                                'eps_aleatory':eps_aleatory,
+                                                'wgt_aleatory':wgt_aleatory}})
+            
+            else:
+                name = None
+                for key in self._EDP_dict[i].keys():
+                    if self._EDP_dict[i][key]['method'] == method and \
+                        self._EDP_dict[i][key]['source_param'] == source_param and \
+                        self._EDP_dict[i][key]['source_method'] == source_method and \
+                        self._EDP_dict[i][key]['eps_epistemic'] == eps_epistemic and \
+                        self._EDP_dict[i][key]['eps_aleatory'] == eps_aleatory and \
+                        self._EDP_dict[i][key]['wgt_aleatory'] == wgt_aleatory:
+                        
+                        name = key
+                        break
+                        
+                if name is None:
+                    name = 'method'+str(count+1)
+                    self._EDP_dict[i].update({name: {'method':method,
+                                                    'source_param':source_param,
+                                                    'source_method':source_method,
+                                                    'eps_epistemic':eps_epistemic,
+                                                    'eps_aleatory':eps_aleatory,
+                                                    'wgt_aleatory':wgt_aleatory}})
+            
+            ## store distribution
+            if 'pgd' in i:
+                self._EDP_dict[i][name].update({'prob_dist': output['prob_dist']})
+            
+            ## store output
+            self._EDP_dict[i][name].update({'output': output[i]})
+            
+            
+    #############################################################################################################
+    def assess_DM(self, dm_category, dm_procs_info, dm_other_params, n_samp_dm, store_name=None, 
+                    flag_clear_dict=False, **kwargs):
+        """
+        Using the simulated intensity measures and engineering demand parameters to calculate damage measures.
+    
+        Parameters
+        ----------
+        
+        For input parameters to each method, refer to the method documentation under :func:`dm`.
+        
+        Returns
+        -------
+        output : varies
+            [varies] output depends on the target demand and methods.
+        
+        """
+        
+    #############################################################################################################
+    def assess_DV(self, dv_category, dv_method, dv_procs_info, dv_other_params, edp=None, n_samp_im=1, n_samp_edp=1,
+                    store_name=None, flag_clear_dict=False, **kwargs):
+        """
+        Using the simulated intensity measures, engineering demand parameters, and damage measures to calculate decision variables/values.
+    
+        Parameters
+        ----------
+        dv_category : str
+            decision variable category to calculate; options are **rr** (more to be added, see :func:`dv` for meaning of the options)
+        dv_method : str
+            method/procedure to use to calculate the damage; see :func:`dv` for available methods.
+        return_param : str, list
+            single of a list of parameters to return, see the return variables under each function (:func:`dv`)
+        store_name : str, list, optional
+            names to store parameter as; default = **return_param**
+        ims : str, list, optional
+            list of **IM** variables to create: **pga** or **pgv** (default = both)
+        flag_clear_dict : boolean, optional
+            **True** to clear the calculated damages or **False** to keep them; default = **False**
+        flag_pga : boolean, optional
+            **True** include simulated **PGA**; default = **False**
+        flag_pgv : boolean, optional
+            **True** include simulated **PGV**; default = **False**
+        flag_M : boolean, optional
+            **True** include moment magnitude **M** from rupture metadata; default = **False**
+        flag_rup_depend : boolean, optional
+            **True** if dependent on rupture scenario; default = **False**
+        source_dict : str, list, optional
+            dictionary that contains **source_param** and **source_method**; default = None
+        source_param : str, list, optional
+            parameter to get from **existing** stored parameters in (e.g., **liq_susc**); default = None
+        source_method : str, list, optional
+            method used to obtain the source_param (e.g., **zhu_etal_2017**); default = None
+        
+        For method parameters, refer to the method documentation under :func:`dv`.
+        
+        Returns
+        -------
+        output : varies
+            [varies] output depends on the target decision variables and methods.
+        
+        """
+        
+        ## pull other params
+        return_param = dv_procs_info.get('return_param',None)
+        source_dict = dv_procs_info.get('source_dict',None)
+        source_param = dv_procs_info.get('source_param',None)
+        source_method = dv_procs_info.get('source_method',None)
+        if edp is not None:
+            source_dict = source_dict.get(edp)
+            source_param = source_param.get(edp)
+            source_method = source_method.get(edp)
+        store_name = dv_procs_info.get('store_name',None)
+        flag_pga = dv_procs_info.get('flag_pga',False)
+        flag_pgv = dv_procs_info.get('flag_pgv',False)
+        flag_M = dv_procs_info.get('flag_M',False)
+        
+        ##
+        flag_rup_depend = dv_other_params.get('flag_rup_depend',False)
+        
+        ## add params under other_params to kwargs
+        for key in dv_other_params.keys():
+            kwargs[key] = dv_other_params.get(key)
+        
+        ## add return_param into kwargs
+        kwargs['return_param'] = return_param
+        if store_name == None:
+            store_name = return_param
+            
+        ## add number of im samples to kwargs
+        kwargs['n_samp_im'] = n_samp_im
+        kwargs['n_samp_edp'] = n_samp_edp
+        
+        ## initialize dictionary if it is none or if user wishes to clear dict
+        if self._DV_dict is None or flag_clear_dict is True:
+            self._DV_dict = {}
+        
+        ## create keys
+        for i in return_param:
+            if not i in self._DV_dict.keys():
+                self._DV_dict[i] = {}
+            
+        ## load method
+        proc = getattr(importlib.import_module('src.dv.'+dv_category),dv_method)
+        
+        ## dimensions
+        n_site = len(self._src_site_dict['site_lon'])
+        n_rup = len(self._GM_pred_dict['rup']['src'])
+        kwargs['n_site'] = n_site
+        kwargs['n_rup'] = n_rup
+    
+        ## rate
+        rate = self._GM_pred_dict['rup']['rate']
+        rate = np.repeat(rate[:,np.newaxis],n_site,axis=1)
+        
+        ## add l_seg to kwargs
+        pgd_label = dv_other_params.get('pgd_label',None)
+        if pgd_label is not None:
+            if 'surf' in pgd_label and ('ala' in dv_method or 'orourke' in dv_method):
+                kwargs['l_seg'] = self._src_site_dict['l_seg']
+        
+        ## if source_param is not empty, then get parameter from method
+        param_add = {}
+        if source_param is not None:
+            for i in range(len(source_param)):
+                try:
+                    source_dict_i = getattr(self,source_dict[i])
+                except:
+                    logging.info(f"\t\t{source_dict[i]} does not exist")
+                    break
+                else:
+                    source_param_i = source_dict_i.get(source_param[i],None)
+                    if source_param_i is None:
+                        logging.info(f"\t\t{source_param[i]} does not exist")
+                        break
+                    else:
+                        for j in source_param_i:
+                            if source_param_i[j].get('method',None) == source_method[i]:
+                                param_add.update({source_param[i]:source_param_i[j]['output'].copy()})
+        
+        ## pull statisical epsilons for uncertainty
+        eps_epistemic = [0]
+        eps_aleatory = [0]
+        wgt_aleatory = [1]
+        if 'rr_pgd' in return_param:
+            for param in source_param:
+                if 'pgd' in param:
+                    eps_epistemic = self._EDP_dict[param]['method1']['eps_epistemic']
+                    eps_aleatory = self._EDP_dict[param]['method1']['eps_aleatory']
+                    wgt_aleatory = self._EDP_dict[param]['method1']['wgt_aleatory']
+                    prob_dist_pgd = self._EDP_dict[param]['method1']['prob_dist']
+                    break
+        # print(eps_epistemic, eps_aleatory, wgt_aleatory)
+                    
+        if 'rr_pgv' in return_param:
+            sigma_epistemic = dv_procs_info.get('sigma_epistemic',None)
+            eps_epistemic = dv_procs_info.get('eps_epistemic',None)
+            
+        ## if pga nor pgv are required, only run procedure once
+        if flag_pga is False and flag_pgv is False and flag_rup_depend is False:
+            ## add additional parameters into kwargs
+            if source_param is not None:
+                for param in source_param:
+                    if not 'pgd' in param:
+                        kwargs[param] = param_add[param].copy()
+            
+            ## loop through all cases of epistemic branches
+            for epi_i in range(len(eps_epistemic)):
+                
+                ## store in dictionary
+                for i in return_param:
+                    
+                    count = len(self._DV_dict[i]) # see how many methods have been used
+                    if count == 0:
+                        name = 'method'+str(count+1)
+                        self._DV_dict[i].update({name: {'method':dv_method,
+                                                        'source_param':source_param,
+                                                        'source_method':source_method,
+                                                        'eps_epistemic':eps_epistemic[epi_i],
+                                                        'eps_aleatory':eps_aleatory,
+                                                        'wgt_aleatory':wgt_aleatory}})
+                    
+                    else:
+                        name = None
+                        for key in self._DV_dict[i].keys():
+                            if self._DV_dict[i][key]['method'] == dv_method and \
+                                self._DV_dict[i][key]['source_param'] == source_param and \
+                                self._DV_dict[i][key]['source_method'] == source_method and \
+                                self._DV_dict[i][key]['eps_epistemic'] == eps_epistemic[epi_i]:
+                            
+                                name = key
+                                break
+                                
+                        if name is None:
+                            name = 'method'+str(count+1)
+                            self._DV_dict[i].update({name: {'method':dv_method,
+                                                            'source_param':source_param,
+                                                            'source_method':source_method,
+                                                            'eps_epistemic':eps_epistemic[epi_i],
+                                                            'eps_aleatory':eps_aleatory,
+                                                            'wgt_aleatory':wgt_aleatory}})
+        
+                ## loop through all cases of aleatory branches
+                for ale_j in range(len(eps_aleatory)):
+                
+                    ## add additional parameters into kwargs
+                    if source_param is not None:
+                        for param in source_param:
+                            if 'pgd' in param:
+                                ## temporarily store pgd median
+                                pgd_median = param_add[param].copy()
+                                
+                                ## operate on pgd to get realizations based on distribution
+                                if prob_dist_pgd['type'] == 'lognormal':
+                                    if eps_epistemic[epi_i] == 999: # lumped uncertainty
+                                        pgd_i_j = pgd_median.muliply(np.exp(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total']))
+                                    else:
+                                        pgd_i_j = pgd_median.muliply(np.exp(
+                                                        eps_aleatory[ale_j]*prob_dist_pgd['sigma_aleatory'] + \
+                                                        eps_epistemic[epi_i]*prob_dist_pgd['sigma_epistemic']))
+                                
+                                elif prob_dist_pgd['type'] == 'uniform':
+                                    samp_pgd = np.random.rand(len(pgd_median.data))*(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory']) + \
+                                                1/prob_dist_pgd['factor_aleatory']
+                                    samp_pgd = sparse.coo_matrix((samp_pgd,(pgd_median.row,pgd_median.col)),shape=pgd_median.shape)
+                                    pgd_i_j = pgd_median.multiply(samp_pgd)*prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i]
+                                
+                                break
+        
+        ## if either pga or pgv is required, run procedure through all scenarios
+        else:
+        
+            ## add additional parameters into kwargs
+            if source_param is not None:
+                for param in source_param:
+                    if not 'pgd' in param:
+                        kwargs[param] = param_add[param].copy()            
+            
+            ## loop through all cases of epistemic branches
+            for epi_i in range(len(eps_epistemic)):
+                
+                ## if running PGV fragilities
+                if 'rr_pgv' in return_param:
+                    kwargs['n_samp'] = n_samp_im
+                    pgv_epi = {}
+                    for samp_i in range(n_samp_im):
+                        pgv_epi.update({samp_i:self._IM_dict['pgv'][samp_i].multiply(np.exp(eps_epistemic[epi_i]*sigma_epistemic))})
+                    kwargs['pgv'] = pgv_epi
+                
+                ## store in dictionary
+                for i in return_param:
+                    
+                    count = len(self._DV_dict[i]) # see how many methods have been used
+                    if count == 0:
+                        name = 'method'+str(count+1)
+                        self._DV_dict[i].update({name: {'method':dv_method,
+                                                        'source_param':source_param,
+                                                        'source_method':source_method,
+                                                        'eps_epistemic':eps_epistemic[epi_i],
+                                                        'eps_aleatory':eps_aleatory,
+                                                        'wgt_aleatory':wgt_aleatory}})
+                    else:
+                        name = None
+                        for key in self._DV_dict[i].keys():
+                            if self._DV_dict[i][key]['method'] == dv_method and \
+                                self._DV_dict[i][key]['source_param'] == source_param and \
+                                self._DV_dict[i][key]['source_method'] == source_method and \
+                                self._DV_dict[i][key]['eps_epistemic'] == eps_epistemic[epi_i]:
+                            
+                                name = key
+                                break
+                                
+                        if name is None:
+                            name = 'method'+str(count+1)
+                            self._DV_dict[i].update({name: {'method':dv_method,
+                                                            'source_param':source_param,
+                                                            'source_method':source_method,
+                                                            'eps_epistemic':eps_epistemic[epi_i],
+                                                            'eps_aleatory':eps_aleatory,
+                                                            'wgt_aleatory':wgt_aleatory}})
+        
+                ## loop through all cases of aleatory branches
+                for ale_j in range(len(eps_aleatory)):
+                
+                    ## add additional parameters into kwargs
+                    if source_param is not None:
+                        for param in source_param:
+                            if 'pgd' in param:
+                                kwargs['n_samp'] = n_samp_edp
+                                ## temporarily store pgd median
+                                pgd_median = param_add[param].copy()
+                                
+                                ## pgd_median's type is dict if it has more than 1 IM sample
+                                if type(pgd_median) == dict:
+                                    pgd_i_j = {}
+                                    for k in range(n_samp_edp):
+                                        ## operate on pgd to get realizations based on distribution
+                                        if prob_dist_pgd['type'] == 'lognormal':
+                                            if eps_epistemic[epi_i] == 999: # lumped uncertainty
+                                                pgd_k = pgd_median[k].multiply(np.exp(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total'])).tocoo()
+                                                if 'bray_macedo_2019' in source_method:
+                                                    d0 = kwargs.get('d0',0.5)
+                                                    pgd_k.data[pgd_k.data<=d0] = 0
+                                                pgd_i_j.update({k:pgd_k})
+                                                # if k == 0:
+                                                    # print(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total'])
+
+                                            else:
+                                                pgd_k = pgd_median[k].multiply(np.exp(
+                                                                    eps_aleatory[ale_j]*prob_dist_pgd['sigma_aleatory'] + \
+                                                                    eps_epistemic[epi_i]*prob_dist_pgd['sigma_epistemic'])).tocoo()
+                                                if 'bray_macedo_2019' in source_method:
+                                                    d0 = kwargs.get('d0',0.5)
+                                                    pgd_k.data[pgd_k.data<=d0] = 0
+                                                pgd_i_j.update({k:pgd_k})
+                                                # if k == 0:
+                                                    # print(eps_aleatory[ale_j]*prob_dist_pgd['sigma_aleatory'] + \
+                                                        # eps_epistemic[epi_i]*prob_dist_pgd['sigma_epistemic'])
+                                            
+                                        elif prob_dist_pgd['type'] == 'uniform':
+                                            # samp_pgd = np.random.rand(len(pgd_median[k].data))*(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory']) + \
+                                                        # 1/prob_dist_pgd['factor_aleatory'] # interpolate in linear scale
+                                            samp_pgd = prob_dist_pgd['factor_aleatory']**(2*np.random.rand(len(pgd_median[k].data)) - 1) # interpolate in log scale
+                                            samp_pgd = sparse.coo_matrix((samp_pgd,(pgd_median[k].row,pgd_median[k].col)),shape=pgd_median[k].shape)
+                                            pgd_i_j.update({k:pgd_median[k].multiply(samp_pgd).tocoo()*(prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i])})
+                                            # if k == 0:                                            
+                                                # print(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory'],1/prob_dist_pgd['factor_aleatory'])
+                                                # print(prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i])
+                            
+                                else:
+                                    ## operate on pgd to get realizations based on distribution
+                                    if prob_dist_pgd['type'] == 'lognormal':
+                                        if eps_epistemic[epi_i] == 999: # lumped uncertainty
+                                            pgd_i_j = pgd_median.multiply(np.exp(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total']))
+                                            # print('a', ale_j, eps_aleatory[ale_j], prob_dist_pgd['sigma_total'], eps_aleatory[ale_j]*prob_dist_pgd['sigma_total'])
+                                        else:
+                                            pgd_i_j = pgd_median.multiply(np.exp(
+                                                        eps_aleatory[ale_j]*prob_dist_pgd['sigma_aleatory'] + \
+                                                        eps_epistemic[epi_i]*prob_dist_pgd['sigma_epistemic']))
+                                            # print(eps_aleatory[ale_j]*prob_dist_pgd['sigma_aleatory'] + \
+                                                        # eps_epistemic[epi_i]*prob_dist_pgd['sigma_epistemic'])
+                                
+                                    elif prob_dist_pgd['type'] == 'uniform':
+                                        # samp_pgd = np.random.rand(len(pgd_median.data))*(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory']) + \
+                                                    # 1/prob_dist_pgd['factor_aleatory'] # interpolate in linear scale
+                                        samp_pgd = prob_dist_pgd['factor_aleatory']**(2*np.random.rand(len(pgd_median.data)) - 1) # interpolate in log scale
+                                        samp_pgd = sparse.coo_matrix((samp_pgd,(pgd_median.row,pgd_median.col)),shape=pgd_median.shape)
+                                        pgd_i_j = pgd_median.multiply(samp_pgd)*(prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i])
+                                        # print(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory'],1/prob_dist_pgd['factor_aleatory'])
+                                        # print(prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i])
+                                    
+                                    ##
+                                    pgd_i_j = pgd_i_j.tocoo() # convert back to COO matrix
+                    
+                            ## add adjusted pgd to inputs for damage
+                            kwargs[param] = pgd_i_j
+                            
+                            break
+
+                    ## run method
+                    output = proc(**kwargs)
+                    
+                    ##
+                    if 'all' in output[i].keys():
+                        result_curr = sparse.csc_matrix(np.sum(output[i]['all'].multiply(rate).toarray(),axis=0))
+                    else:
+                        result_curr = sparse.csc_matrix([np.sum(output[i][j].multiply(rate).toarray(),axis=0) for j in range(n_samp_im)])
+                    
+                    ##
+                    # print(result_curr.data[:10])
+                    # result_curr = result_curr.power(wgt_aleatory[ale_j]) # weight in log space
+                    # print(result_curr.data[:10])
+                    try:
+                        result_updated = self._DV_dict[i][name]['output'] + result_curr*wgt_aleatory[ale_j] # linearly weight results
+                        # result_updated = self._DV_dict[i][name]['output'].multiply(result_curr) # weight in log space
+                        # print('b', ale_j, wgt_aleatory[ale_j])
+                    except:
+                        result_updated = result_curr*wgt_aleatory[ale_j] # linearly weight results
+                        # result_updated = result_curr # weight in log space
+                        # print('c', ale_j, wgt_aleatory[ale_j])
+                        
+                    # print(wgt_aleatory[ale_j])
+            
+                    ##
+                    self._DV_dict[i][name].update({'output':result_updated})
+
+    
+    #############################################################################################################
     def get_probability(self, method_list, **kwargs):
-	
-#        dim_d = sum([1 for i in A._DM_dict.keys() if 'site_' in i])
+    
+        return None
+#        n_site = sum([1 for i in A._DM_dict.keys() if 'site_' in i])
 #        
 #        ## initialize arrays for getting probabilities
 #        pga_arr_mid = [round((pga_arr[i]+pga_arr[i+1])/2,2) for i in range(len(pga_arr)-1)]
@@ -505,7 +1002,7 @@ class assessment(object):
 #                              'pgv_criteria': pgv_criteria[0]})
 #        
 #        # Develop fragility curve for each site
-#        for i in range(dim_d):
+#        for i in range(n_site):
 #        
 #            # pull previously calculated damage values
 #            pga = self._DM_dict['site_'+str(i+1)]['pga']
@@ -549,4 +1046,5 @@ class assessment(object):
 #        # store information
 #        self._FR_dict.update({'p_leak_avg': p_leak_avg,
 #                              'p_break_avg': p_break_avg})
-#							  
+#                             
+    

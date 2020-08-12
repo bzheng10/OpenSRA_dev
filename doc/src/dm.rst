@@ -6,7 +6,7 @@ Repair Rates
 
 Fragility functions for repair rates...
 
-.. currentmodule:: dm.dm
+.. currentmodule:: dm.rr
 
 HAZUS (FEMA, 2014)
 ~~~~~~~~~~~~~~~~~~

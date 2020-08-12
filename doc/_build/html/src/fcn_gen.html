@@ -149,17 +149,17 @@
 <dl class="py function">
 <dt id="fcn_gen.get_haversine_dist">
 <code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">get_haversine_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lon1</span></em>, <em class="sig-param"><span class="n">lat1</span></em>, <em class="sig-param"><span class="n">lon2</span></em>, <em class="sig-param"><span class="n">lat2</span></em>, <em class="sig-param"><span class="n">unit</span><span class="o">=</span><span class="default_value">'km'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.get_haversine_dist" title="Permalink to this definition">¶</a></dt>
-<dd><p>calculates the Haversine distance between two coordinates</p>
+<dd><p>calculates the Haversine distance between two sets of coordinates</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>lon1</strong><span class="classifier">float</span></dt><dd><p>[degree] longitude of site 1</p>
+<dt><strong>lon1</strong><span class="classifier">float, array</span></dt><dd><p>[degree] longitude of site 1</p>
 </dd>
-<dt><strong>lat1</strong><span class="classifier">float</span></dt><dd><p>[degree] latitude of site 1</p>
+<dt><strong>lat1</strong><span class="classifier">float, array</span></dt><dd><p>[degree] latitude of site 1</p>
 </dd>
-<dt><strong>lon2</strong><span class="classifier">float</span></dt><dd><p>[degree] longitude of site 2</p>
+<dt><strong>lon2</strong><span class="classifier">float, array</span></dt><dd><p>[degree] longitude of site 2</p>
 </dd>
-<dt><strong>lat2</strong><span class="classifier">float</span></dt><dd><p>[degree] latitude of site 2</p>
+<dt><strong>lat2</strong><span class="classifier">float, array</span></dt><dd><p>[degree] latitude of site 2</p>
 </dd>
 <dt><strong>unit</strong><span class="classifier">str</span></dt><dd><p>unit for output: ‘<strong>km</strong>’ or ‘<strong>miles</strong>’</p>
 </dd>
@@ -167,7 +167,7 @@
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>d</strong><span class="classifier">float</span></dt><dd><p>distance</p>
+<dt><strong>d</strong><span class="classifier">float, array</span></dt><dd><p>distance</p>
 </dd>
 </dl>
 </dd>

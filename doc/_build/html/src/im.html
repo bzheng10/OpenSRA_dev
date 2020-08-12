@@ -16,7 +16,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Engineering Demand Parameters" href="edp.html" />
-    <link rel="prev" title="OpenSRA Framework" href="framework.html" /> 
+    <link rel="prev" title="Assessment Class Object" href="model.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -31,7 +31,7 @@
           <a href="edp.html" title="Engineering Demand Parameters"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="framework.html" title="OpenSRA Framework"
+          <a href="model.html" title="Assessment Class Object"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
       </ul>
@@ -50,12 +50,12 @@
 <h3>Jayaram &amp; Baker (2009)<a class="headerlink" href="#jayaram-baker-2009" title="Permalink to this headline">¶</a></h3>
 <dl class="py function">
 <dt id="im.corr_spatial.jayaram_baker_2009">
-<code class="sig-prename descclassname">im.corr_spatial.</code><code class="sig-name descname">jayaram_baker_2009</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">h</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="n">geo_cond</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#im.corr_spatial.jayaram_baker_2009" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">im.corr_spatial.</code><code class="sig-name descname">jayaram_baker_2009</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="n">geo_cond</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#im.corr_spatial.jayaram_baker_2009" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute correlations between spatial ordinates using Jayaram &amp; Baker (2009).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>h</strong><span class="classifier">float</span></dt><dd><p>[km] distance</p>
+<dt><strong>d</strong><span class="classifier">float, array</span></dt><dd><p>[km] distance</p>
 </dd>
 <dt><strong>T</strong><span class="classifier">float</span></dt><dd><p>[sec] period</p>
 </dd>
@@ -65,7 +65,7 @@
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>corr</strong><span class="classifier">float</span></dt><dd><p>correlation for two sites at a distance of <strong>d</strong></p>
+<dt><strong>corr</strong><span class="classifier">float, array</span></dt><dd><p>correlation for two sites at a distance of <strong>d</strong></p>
 </dd>
 </dl>
 </dd>
@@ -117,13 +117,13 @@
 <div class="section" id="module-im.fcn_im">
 <span id="miscellaneous-functions"></span><h2>Miscellaneous Functions<a class="headerlink" href="#module-im.fcn_im" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
-<dt id="im.fcn_im.generate_IM_samples">
-<code class="sig-prename descclassname">im.fcn_im.</code><code class="sig-name descname">generate_IM_samples</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mean</span></em>, <em class="sig-param"><span class="n">cov</span></em>, <em class="sig-param"><span class="n">nsamp</span></em>, <em class="sig-param"><span class="n">nsite</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">var_list</span><span class="o">=</span><span class="default_value">['pga', 'pgv']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#im.fcn_im.generate_IM_samples" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform multivariate sampling for normally distributed random variables and partition the results according to input variables. Currently works with two variables max, but as many spatial</p>
+<dt id="im.fcn_im.get_RV_sims">
+<code class="sig-prename descclassname">im.fcn_im.</code><code class="sig-name descname">get_RV_sims</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mean</span></em>, <em class="sig-param"><span class="n">cov</span></em>, <em class="sig-param"><span class="n">nsamp</span></em>, <em class="sig-param"><span class="n">nsite</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">var_list</span><span class="o">=</span><span class="default_value">['pga', 'pgv']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#im.fcn_im.get_RV_sims" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform multivariate sampling for normally distributed random variables and partition the results according to input variables. Currently works with two variables max, but as many sites as desired</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>mean</strong><span class="classifier">float, array</span></dt><dd><p>[varies] mean of a random variable or a list for multiple variables</p>
+<dt><strong>mean</strong><span class="classifier">float, array</span></dt><dd><p>[ln(g) or ln(cm/s)] mean of a random variable or a list for multiple variables</p>
 </dd>
 <dt><strong>cov</strong><span class="classifier">float, matrix</span></dt><dd><p>variance of a random variable or the covariance matrix for multiple variables</p>
 </dd>
@@ -137,7 +137,7 @@
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>sample_dict</strong><span class="classifier">float, dictionary</span></dt><dd><p>[varies] a dictionary of entries equal to number of variables. Each entry contains <strong>nsamp</strong> of realizations by <strong>nsites</strong></p>
+<dt><strong>sample_dict</strong><span class="classifier">float, dictionary</span></dt><dd><p>[g or cm/s] a dictionary of entries equal to number of variables. Each entry contains <strong>nsamp</strong> of realizations by <strong>nsites</strong></p>
 </dd>
 </dl>
 </dd>
@@ -146,28 +146,36 @@
 
 <dl class="py function">
 <dt id="im.fcn_im.get_cov">
-<code class="sig-prename descclassname">im.fcn_im.</code><code class="sig-name descname">get_cov</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">corr_h_pga</span></em>, <em class="sig-param"><span class="n">corr_h_pgv</span></em>, <em class="sig-param"><span class="n">corr_p</span></em>, <em class="sig-param"><span class="n">sig_pga</span></em>, <em class="sig-param"><span class="n">sig_pgv</span></em>, <em class="sig-param"><span class="n">dim_h</span></em>, <em class="sig-param"><span class="n">dim_p</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#im.fcn_im.get_cov" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute correlation and covariance matrices for PGA and PGV and across different sites</p>
-<p>Parameters</p>
-<p>Correlations</p>
-<blockquote>
-<div><p>corr_h_pga: list of spatial correlations across sites for PGA
-corr_h_pgv: list of spatial correlations across sites for PGC
-corr_p: spectral correlation between PGA (T ~ 0.01sec) and PGV (T ~ 1sec)</p>
-</div></blockquote>
-<p>Covariances</p>
-<blockquote>
-<div><p>sig_pga: sigma for PGA
-sig_pga: sigma for PGV</p>
-</div></blockquote>
-<p>Others</p>
-<blockquote>
-<div><p>dim_h: number of sites
-dim_p: number of periods (fixed to 2 for now)</p>
-<p>Name of the site data input file with relative path. The file is
-expected to be a JSON with data stored in a standard format described
-in detail in the Input section of the documentation.</p>
-</div></blockquote>
+<code class="sig-prename descclassname">im.fcn_im.</code><code class="sig-name descname">get_cov</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">corr_d_pga</span></em>, <em class="sig-param"><span class="n">corr_d_pgv</span></em>, <em class="sig-param"><span class="n">corr_T</span></em>, <em class="sig-param"><span class="n">pga_sigma</span></em>, <em class="sig-param"><span class="n">pgv_sigma</span></em>, <em class="sig-param"><span class="n">dim_d</span></em>, <em class="sig-param"><span class="n">dim_T</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#im.fcn_im.get_cov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute correlation and covariance matrices for PGA and PGV over a list of sites</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>corr_d_pga</strong><span class="classifier">float, array</span></dt><dd><p>list of spatial correlations across sites for <strong>PGA</strong></p>
+</dd>
+<dt><strong>corr_d_pgv</strong><span class="classifier">float, array</span></dt><dd><p>list of spatial correlations across sites for <strong>PGV</strong></p>
+</dd>
+<dt><strong>corr_T</strong><span class="classifier">float, array</span></dt><dd><p>list of spectral correlation between PGA (T ~ 0.01sec) and PGV (T ~ 1sec)</p>
+</dd>
+<dt><strong>pga_sigma</strong><span class="classifier">float, array</span></dt><dd><p>sigmas for <strong>PGA</strong> for the list of sites</p>
+</dd>
+<dt><strong>pgv_sigma</strong><span class="classifier">float, array</span></dt><dd><p>sigmas for <strong>PGV</strong> for the list of sites</p>
+</dd>
+<dt><strong>dim_d</strong><span class="classifier">int</span></dt><dd><p>number of sites</p>
+</dd>
+<dt><strong>dim_T</strong><span class="classifier">int, optional</span></dt><dd><p>number of periods (fixed to 2 for now)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>corr_mat</strong><span class="classifier">float, array</span></dt><dd><p>correlation matrix</p>
+</dd>
+<dt><strong>cov_mat_corr</strong><span class="classifier">float, arry</span></dt><dd><p>correlated covariance matrix</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -199,8 +207,8 @@ in detail in the Input section of the documentation.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="framework.html"
-                        title="previous chapter">OpenSRA Framework</a></p>
+  <p class="topless"><a href="model.html"
+                        title="previous chapter">Assessment Class Object</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="edp.html"
                         title="next chapter">Engineering Demand Parameters</a></p>
@@ -238,7 +246,7 @@ in detail in the Input section of the documentation.</p>
           <a href="edp.html" title="Engineering Demand Parameters"
              >next</a> |</li>
         <li class="right" >
-          <a href="framework.html" title="OpenSRA Framework"
+          <a href="model.html" title="Assessment Class Object"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
       </ul>

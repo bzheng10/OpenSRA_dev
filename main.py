@@ -109,7 +109,7 @@ def main(logging_level):
         flag_update_site_data = True # updated site data
     ## check if site data is updated, if so then save to site file
     if flag_update_site_data:
-        site_data.to_csv(site_file)
+        site_data.to_csv(site_file,index=False)
         
     ## load rupture groups
     if os.path.exists(rup_group_file):
@@ -411,60 +411,62 @@ def main(logging_level):
     
     
     #####################################################################################################################
-    ##### create assessment class object
-    model_assess = model.assessment()
-    logging.info(f'Created model class object named "model_assess"')
+    ##
+    if input.phase_to_run >= 3:
+    
+        ##### create assessment class object
+        model_assess = model.assessment()
+        logging.info(f'Created model class object named "model_assess"')
 
 
-    #####################################################################################################################
-    ##### define multiplier; grops to run = multiplier * rup_per_group
-    # multi_start = 14
-    # n_multi = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    # if flag_get_IM or flag_gen_sample:
-        # multi_end = multi_start+n_multi
-        # logging.info(f"Multiplers to run: {multi_start} to {multi_end-1}.")
-    # else:
-        # multi_end = multi_start+1
-        # logging.info(f"Samples not needed, no need to loop multi.")
-
-    time_start = time.time()
-
-    ## loop through multipliers
-    # for multi in range(multi_start,multi_end):
-        
-    ## define range of ruptures for IM
-    #range_start = rup_per_group*multi
-    #if flag_get_IM or flag_gen_sample:
-    #    range_end = range_start+rup_per_group
-    #    # range_end = range_start+1
-    #    logging.debug(f"Multi {multi}...")
-    #else:
-    #    range_end = range_start+1
-    # count = range_start
-    count = 0
-
-    ## loop through groups
-    # for rup_group in list_rup_group[range_start:range_end]:
-    for rup_group in list_rup_group:
-        count += 1
-        count_EDP = 0
-        logging.debug(f"========================================================")
-        logging.info(f'Count = {count}: rupture group = {rup_group}...')
-        
-        #####################################################################
-        #####################################################################
-        logging.debug(f"\t-------------Intensity Measures-------------")
-        #####################################################################
-        ## load GM predictions and create random variable
-        model_assess.get_src_GM_site(input.phase_to_run, site_data, input.gm_tool, gm_pred_dir,
-                    input.ims, rup_meta_file_tr_rmax, flag_clear_dict=True,
-                    rup_group=rup_group)
-        logging.debug(f'\tIM_rv: Updated "_GM_pred_dict"')
-        
-        #####################################################################
-        ## generate/import samples
-        if input.phase_to_run >= 3:
+        #####################################################################################################################
+        ##### define multiplier; grops to run = multiplier * rup_per_group
+        # multi_start = 14
+        # n_multi = 1 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         # if flag_get_IM or flag_gen_sample:
+            # multi_end = multi_start+n_multi
+            # logging.info(f"Multiplers to run: {multi_start} to {multi_end-1}.")
+        # else:
+            # multi_end = multi_start+1
+            # logging.info(f"Samples not needed, no need to loop multi.")
+
+        time_start = time.time()
+
+        ## loop through multipliers
+        # for multi in range(multi_start,multi_end):
+            
+        ## define range of ruptures for IM
+        #range_start = rup_per_group*multi
+        #if flag_get_IM or flag_gen_sample:
+        #    range_end = range_start+rup_per_group
+        #    # range_end = range_start+1
+        #    logging.debug(f"Multi {multi}...")
+        #else:
+        #    range_end = range_start+1
+        # count = range_start
+        count = 0
+
+        ## loop through groups
+        # for rup_group in list_rup_group[range_start:range_end]:
+        for rup_group in list_rup_group:
+            count += 1
+            count_EDP = 0
+            logging.debug(f"========================================================")
+            logging.info(f'Count = {count}: rupture group = {rup_group}...')
+            
+            #####################################################################
+            #####################################################################
+            logging.debug(f"\t-------------Intensity Measures-------------")
+            #####################################################################
+            ## load GM predictions and create random variable
+            model_assess.get_src_GM_site(input.phase_to_run, site_data, input.gm_tool, gm_pred_dir,
+                        input.ims, rup_meta_file_tr_rmax, flag_clear_dict=True,
+                        rup_group=rup_group)
+            logging.debug(f'\tIM_rv: Updated "_GM_pred_dict"')
+            
+            #####################################################################
+            ## generate/import samples
+            # if flag_get_IM or flag_gen_sample:
             ## directory name for current rupture group
             path_sample = os.path.join(im_dir,rup_group)
             if os.path.isdir(path_sample) is False: # check if directory exists

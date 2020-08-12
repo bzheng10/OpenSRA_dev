@@ -32,7 +32,7 @@ import numpy as np
 ## 			2 = get GMM predictions of IMs
 ## 			3 = generate realizations of IMs (i.e., sampling)
 ## 			4 = assess EDPs, DMs, DVs
-phase_to_run = 4
+phase_to_run = 1
 ## phase display message
 if phase_to_run == 1:
 	phase_message = 'get rupture scenarios and fault crossings given site'
@@ -44,8 +44,8 @@ elif phase_to_run == 4:
     phase_message = 'assess EDPs, DMs, DVs'
 
 ## Basic information
-work_dir = r'C:\Users\barry\Desktop\for_chris' # working directory with input files and sub-directories
-site_file_name = 'Balboa Blvd_OpenSRA Input File.csv' # file with site locations and site-specific inputs, should be placed under work_dir
+work_dir = r'C:\Users\barry\Desktop\ex1' # working directory with input files and sub-directories
+site_file_name = 'ex_site_data_file.csv' # file with site locations and site-specific inputs, should be placed under work_dir
 geo_shp_file = r'lib\other\GDM_002_GMC_750k_v2_GIS\shapefiles\GMC_geo_poly.shp' # shapefile with geologic units, set path relative to OpenSRA base directory
 geo_unit_param_file = r'lib\slate\Seismic Hazard_CGS_Unit Strengths.csv' # Micaela's file with properties for geologic units, set path relative to OpenSRA base directory
 

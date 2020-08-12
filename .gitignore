@@ -1,12 +1,12 @@
 $ cat .gitignore
 
-.ipynb_checkpoints/
-.vscode/
-__pycache__/
+**/.ipynb_checkpoints
+**/.vscode
+**/__pycache__
 
 *.ipynb
 
-superseded/
+**/superseded
 # src/.ipynb_checkpoints
 # src/__pycache__	
 

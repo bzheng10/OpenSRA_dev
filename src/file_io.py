@@ -43,7 +43,7 @@ def read_sha_sparse(gm_dir, rup_group, im_list, src, rup, M, rate):
     """
     
     ## make list of variables
-    param_names = ['mean', 'inter', 'intra']
+    param_names = ['median', 'inter', 'intra']
     var_list = [i+'_'+j for i in im_list for j in param_names]
     
     ## number of rupture scenarios
@@ -79,7 +79,7 @@ def read_sha_sparse(gm_dir, rup_group, im_list, src, rup, M, rate):
             
         gm_in.update({var: mat})
         
-        # if 'mean' in var:
+        # if 'median' in var:
             # rup_num_unique = np.unique(mat.row)+rup_start
             # sites_unique = np.unique(mat.col)
             # src_unique = src[rup_num_unique]

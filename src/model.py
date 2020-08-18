@@ -179,7 +179,7 @@ class assessment(object):
                     method_d='jayaram_baker_2009', method_T='baker_jayaram_2008', flag_sample_with_sigma_total=False,
                     sigma_aleatory=None, flag_clear_dict=False, flag_sample_exist=False, path_sample=None, **kwargs):
         """
-        Perform multivariate random sampling of **PGA** and **PGV** using means and sigmas for all scenarios. Spatial and spectral orrelations can be applied.
+        Perform multivariate random sampling of **PGA** and **PGV** using medians and sigmas for all scenarios. Spatial and spectral orrelations can be applied.
     
         Parameters
         ----------
@@ -225,7 +225,7 @@ class assessment(object):
     
         ## dimensions
         if 'event' in gm_tool.lower() or 'calc' in gm_tool.lower():
-            n_site = len(self._GM_pred_dict['rup'][0]['pga_mean'])
+            n_site = len(self._GM_pred_dict['rup'][0]['pga_median'])
             n_rup = len(self._GM_pred_dict['rup'])
     
         ## make period array for spectral correlations
@@ -240,7 +240,7 @@ class assessment(object):
             corr_T = proc(T1=T_pga, T2=T_pgv)
 
         ## make list of variables
-        param_names = ['mean', 'inter', 'intra']
+        param_names = ['median', 'inter', 'intra']
         var_list = [i+'_'+j for i in ims for j in param_names]
         
         ##
@@ -272,7 +272,7 @@ class assessment(object):
                 
                     ## first sample pgv
                     eps_pgv = np.random.normal(size=(n_rup,n_site))
-                    samp = self._GM_pred_dict['rup']['pgv'+'_mean']
+                    samp = self._GM_pred_dict['rup']['pgv'+'_median']
                     
                     ## use total sigma or separate into intra- and inter- event sigmas
                     if flag_sample_with_sigma_total:
@@ -287,11 +287,11 @@ class assessment(object):
                             samp = samp.multiply(np.exp(sigma_aleatory*eps_pgv))
                     
                     else:
-                        ## get residuals for intra (epsilon) and inter (eta) (norm dist with mean = 0 and sigma = 1)
+                        ## get residuals for intra (epsilon) and inter (eta) (norm dist with median = 0 and sigma = 1)
                         eta_pgv = np.random.normal(size=n_rup)
                         eta_pgv = np.repeat(eta_pgv[:,np.newaxis],n_site,axis=1) ## eta is constant with site, varies only between rupture
                         
-                        ## correct for predicted mean and sigma
+                        ## correct for predicted median and sigma
                         samp = samp.multiply(self._GM_pred_dict['rup']['pgv_intra'].multiply(eps_pgv).expm1() + np.ones((n_rup,n_site)))
                         samp = samp.multiply(self._GM_pred_dict['rup']['pgv_inter'].multiply(eta_pgv).expm1() + np.ones((n_rup,n_site)))
                 
@@ -304,10 +304,10 @@ class assessment(object):
                         ## conditional sigma for pga
                         sigma_cond_pga = np.sqrt(1-corr_T**2)
                         
-                        ## conditional mean of eps
-                        cond_mean_pga_eps = corr_T*eps_pgv
-                        eps_pga = np.random.normal(size=(n_rup,n_site),loc=cond_mean_pga_eps,scale=sigma_cond_pga)
-                        samp = self._GM_pred_dict['rup']['pga'+'_mean']
+                        ## conditional median of eps
+                        cond_median_pga_eps = corr_T*eps_pgv
+                        eps_pga = np.random.normal(size=(n_rup,n_site),loc=cond_median_pga_eps,scale=sigma_cond_pga)
+                        samp = self._GM_pred_dict['rup']['pga'+'_median']
                                         
                         ## use total sigma or separate into intra- and inter- event sigmas
                         if flag_sample_with_sigma_total:
@@ -323,10 +323,10 @@ class assessment(object):
                                 
                         else:
                             ## conditional sampling of eta
-                            cond_mean_pga_eta = corr_T*eta_pgv
-                            eta_pga = np.random.normal(size=cond_mean_pga_eta.shape,loc=cond_mean_pga_eta,scale=sigma_cond_pga)
+                            cond_median_pga_eta = corr_T*eta_pgv
+                            eta_pga = np.random.normal(size=cond_median_pga_eta.shape,loc=cond_median_pga_eta,scale=sigma_cond_pga)
                             
-                            ## correct for predicted mean and sigma
+                            ## correct for predicted median and sigma
                             samp = samp.multiply(self._GM_pred_dict['rup']['pga'+'_intra'].multiply(eps_pga).expm1() + np.ones((n_rup,n_site)))
                             samp = samp.multiply(self._GM_pred_dict['rup']['pga'+'_inter'].multiply(eta_pga).expm1() + np.ones((n_rup,n_site)))
                 

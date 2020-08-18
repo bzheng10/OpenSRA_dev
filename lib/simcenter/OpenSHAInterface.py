@@ -328,7 +328,7 @@ def init_processor(case_to_run, path_siteloc, path_vs30=None, numThreads=1, rmax
     
 #####################################################################################################################
 def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, list_out=None, 
-                        list_im=['pga','pgv'], list_param=['mean','inter','intra']):
+                        list_im=['pga','pgv'], list_param=['median','inter','intra']):
     """
     Main entry method to run the hazard analysis
     """
@@ -361,7 +361,7 @@ def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, list_out=Non
     ## convert to sparse matrix and export
     for i in range(len(list_out)):
         saveName = os.path.join(saveDir,list_out[i]+'.npz')
-        if 'mean' in list_out[i]:
+        if 'median' in list_out[i]:
             out_i = np.reshape(out[:,[i][:]],[shape[0],shape[2]])
             zero_loc = out_i<-9.9 ## find where values = -10 (cases that exceed rmax)
             out_i = np.round(np.exp(out_i),decimals=4)
@@ -379,7 +379,7 @@ def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, list_out=Non
 #####################################################################################################################
 def get_IM_from_opensha(proc, src_ind, rup_ind):
     """
-    get PGA and PGV means and stdevs from OpenSHA
+    get PGA and PGV medians and stdevs from OpenSHA
     """
     logging.debug(f"==============src = {src_ind}, rup = {rup_ind}=========================")
     
@@ -398,9 +398,9 @@ def get_IM_from_opensha(proc, src_ind, rup_ind):
     #Calculating intensity measures using GMM
     proc.calculateIMs()
     
-    #Reading the calculated means
-    # pgaMeans = np.round(proc.getMeans(),decimals=3)
-    pgaMeans = np.round(proc.getMeans(),decimals=6)
+    #Reading the calculated medians
+    # pgaMedian = np.round(proc.getMeans(),decimals=3)
+    pgaMedian = np.round(proc.getMeans(),decimals=6)
     #Reading the calculated Std. Devs.
     pgaInter = np.round(proc.getInterEvStdDevs(),decimals=3)
     pgaIntra = np.round(proc.getIntraEvStdDevs(),decimals=3)
@@ -412,15 +412,15 @@ def get_IM_from_opensha(proc, src_ind, rup_ind):
     #Calculating intensity measures using GMM
     proc.calculateIMs()
     
-    #Reading the calculated means
-    # pgvMeans = np.round(proc.getMeans(),decimals=3)
-    pgvMeans = np.round(proc.getMeans(),decimals=6)
+    #Reading the calculated medians
+    # pgvMedian = np.round(proc.getMeans(),decimals=3)
+    pgvMedian = np.round(proc.getMeans(),decimals=6)
     #Reading the calculated Std. Devs.
     pgvInter = np.round(proc.getInterEvStdDevs(),decimals=3)
     pgvIntra = np.round(proc.getIntraEvStdDevs(),decimals=3)
     
     ##
-    return pgaMeans, pgaInter, pgaIntra, pgvMeans, pgvInter, pgvIntra
+    return pgaMedian, pgaInter, pgaIntra, pgvMedian, pgvInter, pgvIntra
     
     
 #####################################################################################################################
@@ -527,7 +527,7 @@ def load_src_rup_M_rate(rup_meta_file, ind_range, proc=None, rate_cutoff=1/10000
             n_rup_groups = int(np.ceil(len(src_rup[0])/rup_per_group))
             list_rup_group = [str(rup_per_group*i)+'_'+str(rup_per_group*(i+1)-1) for i in range(n_rup_groups)]
             np.savetxt(rup_group_file,list_rup_group,fmt='%s')
-            logging.info(f"\tNumber of rupture groups = {n_rup_groups}")
+            logging.info(f"\tNumber of rupture groups = {n_rup_groups} (each group contains {rup_per_group} ruptures)")
 
         ##
         

@@ -273,7 +273,7 @@ def main(logging_level):
     ## for phases 2+
     if input.phase_to_run >= 2:
         logging.info(f"\tGM model: {input.gm_model}")
-        # logging.info(f"Number of groups of ruptures = {len(list_rup_group)} (each group = {rup_per_group} ruptures)")
+        # logging.info(f"Number of groups of ruptures = {len(list_rup_group)} (each group contains {rup_per_group} ruptures)")
         
         if flag_get_IM or flag_gen_sample:
             logging.info(f"\tWill print messages every {inc1} groups (each group contains {input.rup_per_group} ruptures)")

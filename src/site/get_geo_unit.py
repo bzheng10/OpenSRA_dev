@@ -114,11 +114,11 @@ def get_geo_unit(site_data, geo_shp_file, geo_unit_param_file):
     gamma2use = site_data['Unit Weight (kN/m^3)'].values
     
     ##
-    ky_bray = fcn_liq_land.get_ky(slope_type='infinite',method='bray',phi=phi2use,c=c2use,beta=beta2use,
+    ky_bray = fcn_edp.get_ky(slope_type='infinite',method='bray',phi=phi2use,c=c2use,beta=beta2use,
                             t=t2use,gamma=gamma2use)
-    ky_grant = fcn_liq_land.get_ky(slope_type='infinite',method='grant',phi=phi2use,c=c2use,beta=beta2use,
+    ky_grant = fcn_edp.get_ky(slope_type='infinite',method='grant',phi=phi2use,c=c2use,beta=beta2use,
                             t=t2use,gamma=gamma2use)
-    ky_rathje = fcn_liq_land.get_ky(slope_type='infinite',method='rathje',phi=phi2use,c=c2use,beta=beta2use,
+    ky_rathje = fcn_edp.get_ky(slope_type='infinite',method='rathje',phi=phi2use,c=c2use,beta=beta2use,
                             t=t2use,gamma=gamma2use)
     ky_bray[ky_bray<0]=0
     ky_grant[ky_grant<0]=0

@@ -29,7 +29,7 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 ##### OpenSRA modules and functions
-import src.edp.fcn_liq_land as fcn_liq_land
+import src.edp.fcn_edp as fcn_edp
 
 
 #####################################################################################################################

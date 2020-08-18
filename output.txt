@@ -1,0 +1,1095 @@
+Folder PATH listing
+Volume serial number is 7408-2447
+C:.
+|   .gitignore
+|   get_all_segment.ipynb
+|   get_all_segment.py
+|   input.py
+|   main.py
+|   output.txt
+|   README.md
+|   __init__.py
+|   
++---.git
+|   |   COMMIT_EDITMSG
+|   |   config
+|   |   description
+|   |   FETCH_HEAD
+|   |   HEAD
+|   |   index
+|   |   ORIG_HEAD
+|   |   packed-refs
+|   |   
+|   +---branches
+|   +---hooks
+|   |       applypatch-msg.sample
+|   |       commit-msg.sample
+|   |       fsmonitor-watchman.sample
+|   |       post-update.sample
+|   |       pre-applypatch.sample
+|   |       pre-commit.sample
+|   |       pre-push.sample
+|   |       pre-rebase.sample
+|   |       pre-receive.sample
+|   |       prepare-commit-msg.sample
+|   |       update.sample
+|   |       
+|   +---info
+|   |       exclude
+|   |       refs
+|   |       
+|   +---logs
+|   |   |   HEAD
+|   |   |   
+|   |   \---refs
+|   |       +---heads
+|   |       |       master
+|   |       |       
+|   |       \---remotes
+|   |           \---origin
+|   |                   HEAD
+|   |                   master
+|   |                   
+|   +---objects
+|   |   +---00
+|   |   |       ab957472a61eb958ab97b484673041442fd356
+|   |   |       
+|   |   +---03
+|   |   |       b74af7fa71cb17e18751dd5ad863bcf094116c
+|   |   |       
+|   |   +---04
+|   |   |       49ced6cb124413cd552d9da2bd6506f217b832
+|   |   |       
+|   |   +---05
+|   |   |       c26fa013a6abcd1804069ead63a1c6d242c632
+|   |   |       
+|   |   +---07
+|   |   |       41708409e67a32451e65525f5b6ae8b48b1d3f
+|   |   |       499b6c1453efcb9f80a48e71d2acbc5759af70
+|   |   |       
+|   |   +---08
+|   |   |       4319669ae736a4baef2c9e52f217d18e226851
+|   |   |       445d85398606f4a6dc69d572b0275364c481a8
+|   |   |       
+|   |   +---0a
+|   |   |       1679501fd4cda8f03b3bf3e1c52db2d57e0e53
+|   |   |       
+|   |   +---0c
+|   |   |       565ad96fbd970df3c7361e5249ed5470177bb6
+|   |   |       8d98a4fd356f180e75cdee4024bb91a4bf1ab0
+|   |   |       be35dfdac108872ba8fb31fcf59ce21e10737d
+|   |   |       df7eb539994e050cafed35cca08396338abea9
+|   |   |       
+|   |   +---0d
+|   |   |       fb96b951d5b174181b97f841c0b1f80b7db7b6
+|   |   |       
+|   |   +---12
+|   |   |       339bd623340ef6835d65a3b5e8569630435f24
+|   |   |       
+|   |   +---13
+|   |   |       1ab2750776c71ada1b3aceb9b0d94e3ad7c56c
+|   |   |       
+|   |   +---14
+|   |   |       256d0cce9c075792e10422f4b95508957d623a
+|   |   |       4fcce2ffd017d786264e0f6054372b0f8e9d94
+|   |   |       
+|   |   +---15
+|   |   |       263361ff4e0bae409c53a90297d093ee9e2654
+|   |   |       
+|   |   +---16
+|   |   |       e1f5678e7b958a1e90d80f50dd4328962f724b
+|   |   |       
+|   |   +---19
+|   |   |       4cbce57300206ffb71e646e25224fc7855896f
+|   |   |       
+|   |   +---1a
+|   |   |       d08cddd9832a7a1774cfe1a0a0093fbb2bd648
+|   |   |       
+|   |   +---1b
+|   |   |       dec28d51b19edd4758541914963dd33cf218cf
+|   |   |       
+|   |   +---1d
+|   |   |       b03abb5d92a7a985351017c99a046235a27128
+|   |   |       
+|   |   +---1e
+|   |   |       bc531f1ec2fbff3f905d5717d11b6b57a8573f
+|   |   |       e3289ef43d671265789a3e213acb15d46560a6
+|   |   |       
+|   |   +---1f
+|   |   |       7af89664a62bbd4b5f4ac71cab3efcc8e2269d
+|   |   |       
+|   |   +---21
+|   |   |       015735515e920a1c0c00f5ca71f809ff08da53
+|   |   |       
+|   |   +---22
+|   |   |       b7e2ee352d38b1a3c13ad3ceb1dd3cde2ecee9
+|   |   |       ba9a619af26cc29c465b2571f6f5239b2bfcef
+|   |   |       
+|   |   +---23
+|   |   |       d2b1767515c64b3900c108e257c47b20e6e860
+|   |   |       
+|   |   +---24
+|   |   |       09802f25e1253509637843be385490c2780281
+|   |   |       a45a768423a181a1c563ba9945088767a56f2f
+|   |   |       
+|   |   +---25
+|   |   |       30cf158faf4d7e63151dc3bc6250b1b4d93f67
+|   |   |       83a24f8c68825ce04f980ac93f1555487e6b2d
+|   |   |       
+|   |   +---26
+|   |   |       b33a83339ede513da29cb0fbc366d7a4e19dad
+|   |   |       
+|   |   +---27
+|   |   |       a5edfca4c6ba6c6866217f9d18c6faccb9817f
+|   |   |       
+|   |   +---28
+|   |   |       ad7ec666a02eb014d8778e46b24ca0f17c171b
+|   |   |       
+|   |   +---29
+|   |   |       226a685f25690291d7554c16e3fad175f2cabb
+|   |   |       
+|   |   +---2a
+|   |   |       097b3a906b0c7d39f1ebae6eeb9f55927a8526
+|   |   |       98c93adab6374c865fccc1045125683eb4a05b
+|   |   |       fce879aaf6b0d930f75c1bfa876a5c8886df63
+|   |   |       
+|   |   +---2b
+|   |   |       faca5a0fc267811c014b9dcb64bc82e7949495
+|   |   |       
+|   |   +---2c
+|   |   |       8a98d588831e2140ca8cc0764fb544c35bdc47
+|   |   |       b362ff45b863dcc57054a79443c66d6b95c64a
+|   |   |       f9f217e946cc590fa3d5a5550e2a29de72af19
+|   |   |       
+|   |   +---2f
+|   |   |       80ed4fe5fed90691cce6424c11c3787cc56315
+|   |   |       92620f56f6603884fe9c3183dfd7d3ab3b739e
+|   |   |       
+|   |   +---31
+|   |   |       caf6458d02d185f636cba0f8d5ea8c2e02b3a7
+|   |   |       
+|   |   +---33
+|   |   |       a81ae593a09d8f37515b74655720364ca5426a
+|   |   |       
+|   |   +---34
+|   |   |       e5dfe38f9d3becb385ec4e519736d78d03e63d
+|   |   |       
+|   |   +---36
+|   |   |       7eddb65f0f6c5539916b2dded40aac6ffda4b9
+|   |   |       
+|   |   +---38
+|   |   |       da36a1c2a8fb98d81d76b1f114432774f2b1a5
+|   |   |       
+|   |   +---3a
+|   |   |       085a2d1e549a67dd849432626eda18c99fd04d
+|   |   |       c4ae28150849cc2f5f430d5f1937f227351325
+|   |   |       d133c048f2189041151425a73485649e6c32c0
+|   |   |       
+|   |   +---3b
+|   |   |       54a9cbe1430627d0fd40dac04da3501668be16
+|   |   |       65823d50534d08a9a38aba2847896909b4739c
+|   |   |       
+|   |   +---3c
+|   |   |       377bd22398d76503ef840a34742cd8d4aa1fbc
+|   |   |       
+|   |   +---3d
+|   |   |       32aefb29ba59b05e68da2762bb75a8a1abdb23
+|   |   |       fce814a28d5ba9564626890288af419c429b34
+|   |   |       
+|   |   +---3e
+|   |   |       74caa5b3b12ef6b2028b9c886317e05773deb4
+|   |   |       
+|   |   +---3f
+|   |   |       aaed9f83cf65c3d09c428c03d57e9d20475624
+|   |   |       
+|   |   +---40
+|   |   |       79810b65a1912ee20f44fbf8c9e935365d544d
+|   |   |       d8bb9abcbcc24d5f1630b5d347d1aecf5a253d
+|   |   |       
+|   |   +---42
+|   |   |       f710ee98f7a6e065160bd344d96fdbfba088ce
+|   |   |       
+|   |   +---43
+|   |   |       5335d0f67284eb76e6129cda93374dad25689a
+|   |   |       571585f62530098b79dc65cc75637c239f87ad
+|   |   |       93562cbbba15668ab19b44f39162884855dc98
+|   |   |       
+|   |   +---44
+|   |   |       205a5149407b99d7cb1e63ad6b2252fbc76edb
+|   |   |       35af2ecb47e541d1bbe1fbc8fc3a927b3ca0d5
+|   |   |       6c59b25c7907479f5e17884dc8769804b17106
+|   |   |       
+|   |   +---45
+|   |   |       26a5f9f1c50456214c5829185eed378c105d18
+|   |   |       54d00c7298a768cef866e74e42fcd9ef5be7cf
+|   |   |       95f325f7b1e3a1a8d397b6b9b471da29bdffad
+|   |   |       e58a27cba5004d6dcd0e152b673812b92efd75
+|   |   |       
+|   |   +---46
+|   |   |       8f3a6641472f630676f72bad1cce62981683fa
+|   |   |       c62c2987ce87b98d37ca705bdf8df5e256cb9e
+|   |   |       
+|   |   +---48
+|   |   |       93ebd1f689108a374a9e30536cddfe7c86b5e9
+|   |   |       
+|   |   +---49
+|   |   |       af9afe3b4eb071f964689c1d1a98125d7fc31a
+|   |   |       
+|   |   +---4b
+|   |   |       133b46cc96bcce1b38b51f4335d95d31850db9
+|   |   |       5c0fb19993129db4208bdace92b6cf850f301f
+|   |   |       
+|   |   +---4c
+|   |   |       952d666a02275cf3e5339b5b984faa4cb4c870
+|   |   |       
+|   |   +---4d
+|   |   |       6e332294cef7e42b13ed09bdff5c44192fdba2
+|   |   |       
+|   |   +---4e
+|   |   |       53c0990c47c4c22d27beb51436e849a11c53cc
+|   |   |       
+|   |   +---51
+|   |   |       0ee3de29f203a075fb90e90092a1b8ebe889fb
+|   |   |       603692bf99f4cc9e011d5485bbdb23e5c7afa6
+|   |   |       
+|   |   +---52
+|   |   |       f1dde7841888c78356b1a27a1e7c7afe1d0865
+|   |   |       
+|   |   +---53
+|   |   |       03287c175d55f94920dcab7853e1301b9f8f37
+|   |   |       68aa539284af5bcd0c0da68cb9c0b831e8ab4e
+|   |   |       
+|   |   +---55
+|   |   |       764113fd6b25ba64eba8f605211c03cb3e1ff6
+|   |   |       
+|   |   +---56
+|   |   |       b88e89bdb52b8c558d58f3e7c0b918ce85aca5
+|   |   |       
+|   |   +---58
+|   |   |       df68d525b47a895d5876a8bf5f437a90afc3f0
+|   |   |       
+|   |   +---59
+|   |   |       dc419a2b78c62c2d837e8ce25d01fcf9a076fb
+|   |   |       
+|   |   +---5c
+|   |   |       ec8fd79a07133de5b94b8b3237668edac1166a
+|   |   |       
+|   |   +---5d
+|   |   |       d08e308cffec2347a3558fc6878b9bca801518
+|   |   |       da39b3ce96afc913b2730d5201d8b11619fc54
+|   |   |       
+|   |   +---5e
+|   |   |       bf907697846aa4172667201c88d9bc4ea1ae0d
+|   |   |       
+|   |   +---5f
+|   |   |       8635d005687adb26f67d284d9b33b25cdd598a
+|   |   |       
+|   |   +---61
+|   |   |       f4ded05cf259cc9a8900cdceeac65869c72151
+|   |   |       
+|   |   +---63
+|   |   |       9f8b40a09a25cb49de65f632372bf40c3635fb
+|   |   |       
+|   |   +---64
+|   |   |       12da2189193c20254d8fead99b2751046ab3f5
+|   |   |       c04cd024405292f099b6ca521d1ab5304ca8e4
+|   |   |       
+|   |   +---65
+|   |   |       547e969f193de7b153679d106dd82eafdca5ce
+|   |   |       e9375d4bacf65a4fcaeda3e979441c84b4a5e6
+|   |   |       
+|   |   +---66
+|   |   |       7308aa4670929324b7de40aa026b4326740a5e
+|   |   |       
+|   |   +---67
+|   |   |       30bc787e79bb23ce5f5fa891f7ae1ab523af65
+|   |   |       
+|   |   +---68
+|   |   |       1e7412c4ff77d52161c4c11da3460ce97fbb1f
+|   |   |       
+|   |   +---69
+|   |   |       66b246a3ac41cab4fa806e19f7fdcb945f70c6
+|   |   |       bbc485764a916a8a5dac1d1f63b2a6a9624c63
+|   |   |       e77a7e82314da10a5060b6625232e9339420b1
+|   |   |       
+|   |   +---6a
+|   |   |       a2615b8686b59dec40464f367cdc41aed8522d
+|   |   |       
+|   |   +---6c
+|   |   |       e2fd40e8aa4ec5c8e8d0e32bca7dea843070ad
+|   |   |       
+|   |   +---6d
+|   |   |       197a44de5669d26a9fbeb2411c54cdd409578c
+|   |   |       
+|   |   +---6f
+|   |   |       3684257277648d1547f4a33683165f9f86c7fe
+|   |   |       89272616461c83c84eeed7c5881e3c6fa6da68
+|   |   |       
+|   |   +---70
+|   |   |       fd72a5e18b394642f31c4b1c2ea1841e7501ea
+|   |   |       
+|   |   +---71
+|   |   |       ac4a9e35fc0c83f05cdfdc8ac04973aaf3c4de
+|   |   |       
+|   |   +---73
+|   |   |       a2639ff54b661957132bed8171c334f5b3836c
+|   |   |       
+|   |   +---76
+|   |   |       f983992018176d729913f34e7d151b924c16fa
+|   |   |       
+|   |   +---78
+|   |   |       fb00a1ca09dbc42f92d13a3020eacbb3f2052d
+|   |   |       
+|   |   +---7a
+|   |   |       b510d6499e603ff89ad429ba28f312565fb767
+|   |   |       
+|   |   +---7b
+|   |   |       00d62372f4caa2a06c47907849dc87470425a9
+|   |   |       
+|   |   +---7c
+|   |   |       12c568195050346285f43f1164067d9ce86e7c
+|   |   |       
+|   |   +---7d
+|   |   |       6e77cd2a76aefacccd7e67dcb7ca2a3d0a5d66
+|   |   |       9399e5170b35175db3b8b346607ca30d41b86f
+|   |   |       
+|   |   +---7f
+|   |   |       049efd222135a7ee7fd832d7b74d1085fc838b
+|   |   |       afab0c6bd7221ad689c36a6c48604cefe97949
+|   |   |       e1b8fa41724e09660cc83353f2f43024020e76
+|   |   |       ec51502cbc3200b3d0ffc6bbba1fe85e197f3d
+|   |   |       
+|   |   +---81
+|   |   |       25fa6cf89c7f773d5bd5620ec020985888cd7d
+|   |   |       
+|   |   +---82
+|   |   |       64df789a8dd43a9ea9ccad38729774bb45e752
+|   |   |       6c7760927ba52461879a9dc65a44c7ec483371
+|   |   |       
+|   |   +---83
+|   |   |       033141790df2a58c8d4da1ff9b2c463ae70f5b
+|   |   |       
+|   |   +---84
+|   |   |       2271ffff8700fdd7d7ba4485ca0941b62377c0
+|   |   |       29ff2a62c6e6fa8bfd4455ac6f68f746914748
+|   |   |       
+|   |   +---85
+|   |   |       f46004f87e1a511915d93a4b1da96a74085b82
+|   |   |       
+|   |   +---86
+|   |   |       400c4b4bed87821872718e2e8eac8279bff97f
+|   |   |       
+|   |   +---87
+|   |   |       e05943d6973994ed8b0ebd4a6780c5ba624f6f
+|   |   |       
+|   |   +---89
+|   |   |       2349c31c5ab28e986566d0b48001e446433013
+|   |   |       6e64ab6ca704d6b85c91f0b2287ded8f326a71
+|   |   |       
+|   |   +---8c
+|   |   |       519f16a621d469b0193814e3fa25b5938b9b00
+|   |   |       
+|   |   +---8d
+|   |   |       973bfa9cf647a40657d3e24b75546cf55ae8b9
+|   |   |       afbe4714a2c5704216ad9c2e06392721c8d5ed
+|   |   |       
+|   |   +---8e
+|   |   |       f3c290e24bdf013b9ca24f6d863d54c1c3667b
+|   |   |       
+|   |   +---91
+|   |   |       0466a15d811108df9d3aeb279558de6bc32d3f
+|   |   |       4a98612a7fa64b89e06de8a9e9fa8066a0227c
+|   |   |       dd2258fcd1dbc16ea2e07192cc4565b603a613
+|   |   |       dec6137f656da671173b7d6bee51d41b2611a6
+|   |   |       
+|   |   +---92
+|   |   |       c4a25191b05509e11a93d5943f05487985479c
+|   |   |       e7d268e1df2bc4f007b409efdc91b6fb5451de
+|   |   |       
+|   |   +---94
+|   |   |       31c9d24f82d2314dd5579021b4e9671a75554b
+|   |   |       9079bfcb26e724e93048fd3c626ecf57ab5b1e
+|   |   |       f86070906a84571bd828696274dcc2b8946d69
+|   |   |       
+|   |   +---95
+|   |   |       11bc5db01494671f041dcc4d966b6779e7b301
+|   |   |       4659813054404fae9539a550682971e7dbcb94
+|   |   |       cf4c9ea0b951abdbaffe7c3c8cebf3d8c29ecd
+|   |   |       
+|   |   +---98
+|   |   |       94195c881614df9e45fe5f06a918836225ab50
+|   |   |       
+|   |   +---99
+|   |   |       2e2623be6df88b426348bb7360746db35c7b84
+|   |   |       5c799838bb685d1974958239886b37f162ba9b
+|   |   |       
+|   |   +---9b
+|   |   |       b37ede8938d9f9f1514826d8f3ee12b83592ca
+|   |   |       
+|   |   +---9c
+|   |   |       b120e15aa4aede622cfb975094d14f437aad5a
+|   |   |       
+|   |   +---9e
+|   |   |       3521800b82eca7b7cd8fdd2e18cb1569322f59
+|   |   |       bb1ffe74c499d1c3da45890533e2a7bf8660e5
+|   |   |       
+|   |   +---9f
+|   |   |       502ec158e18a00c20e0271135b2571418ed181
+|   |   |       c3365bf03a24ac8a268230cf6edeb74b7d6ed2
+|   |   |       
+|   |   +---a0
+|   |   |       647df4bf2e370d5af55bf12663f4eae6aa53f1
+|   |   |       af90eaae1fb1738ddead12a36441ef8292c88d
+|   |   |       
+|   |   +---a1
+|   |   |       d002f3d7e4cf9331a246960346f00deee71860
+|   |   |       
+|   |   +---a2
+|   |   |       4fd9586b57934ada8c1256099f78bf39b87375
+|   |   |       
+|   |   +---a3
+|   |   |       90f172fcad86566960900f6fad485ba0a255b2
+|   |   |       
+|   |   +---a4
+|   |   |       3aa58e4c59e7c2e81ea1becffa9291c9d714a1
+|   |   |       a59779fe293f8c96e84d03fcbfa1468ef2b36b
+|   |   |       f334d7ba2a29501d0c354bfa511e177f638ce0
+|   |   |       
+|   |   +---a5
+|   |   |       1e1388cccab56285c941354ddcd23cc9009be0
+|   |   |       a6b0eac0bc68c735e5c688e53c60b58000a935
+|   |   |       
+|   |   +---a7
+|   |   |       1e827441d16a8cf9c40bb196a783a61cba9213
+|   |   |       75f9860a62b0c4dc7f4c0f7ee8a768757cfe51
+|   |   |       86e127004dd9e94e88fda7742d248237ad8885
+|   |   |       
+|   |   +---a9
+|   |   |       093929b4c04ca0c32eb9070ce8d3c6280e4a9a
+|   |   |       
+|   |   +---aa
+|   |   |       0b9a44f6cda9cd2b7759d1d27e276edbd1581b
+|   |   |       3f5d41bd7f37e6982a93e4607194b0bb76344f
+|   |   |       6c33761839661b3ad9f288ce82e00a1e451ca7
+|   |   |       
+|   |   +---ac
+|   |   |       2e69030856c866af1145079c354a392b794995
+|   |   |       
+|   |   +---af
+|   |   |       6bb60cd3b187883c1288ee53b9d742c16b7f86
+|   |   |       
+|   |   +---b0
+|   |   |       2aa7510589a8e036faa03406cf6d841029f368
+|   |   |       495f5d07e6c4463c0fede6ecb0e696a24851fd
+|   |   |       
+|   |   +---b1
+|   |   |       c5f9df7489e619b76c9d9eb07a7682cfe9f55f
+|   |   |       
+|   |   +---b3
+|   |   |       0972d84af49dad21243a211047599d850ac538
+|   |   |       
+|   |   +---b5
+|   |   |       2c2f1b44f1f3858291913378862b58c3805147
+|   |   |       32addcab823e2ebf0f403ed51d0f848c33c5ee
+|   |   |       5d472dd4c8cf2034a2384e41aba681e038387f
+|   |   |       
+|   |   +---b7
+|   |   |       082614ec8e26f1250bff354a607dd4be084277
+|   |   |       
+|   |   +---b9
+|   |   |       6d184eb3878043fcc801663405ffa98c288995
+|   |   |       
+|   |   +---bc
+|   |   |       7f7b7f0d3ef52e439c35b033589a729dfb2f49
+|   |   |       887093f340449a4e4f40224ff3a487814c09a8
+|   |   |       
+|   |   +---bf
+|   |   |       d93ff6dd986f7199579ef20a806642735e92b3
+|   |   |       ee926c0838f7e93ab5c15bcb36280d7812ec7b
+|   |   |       
+|   |   +---c0
+|   |   |       38ed2cbd03e1e680fe1cbac861287b0a75042a
+|   |   |       
+|   |   +---c3
+|   |   |       120abeca07f17c146aaedb729e1321746dcd0a
+|   |   |       fef081c7a62ddee6372d059145d2a6d483a3aa
+|   |   |       
+|   |   +---c4
+|   |   |       4befc11f57166a783f85ff4b6821be84fcc877
+|   |   |       91f51cbcb2604fa836f5a3732dfbedd610d8c2
+|   |   |       b6cfc7bc1f198e878916f3fc7dc43da9e9390c
+|   |   |       
+|   |   +---c5
+|   |   |       53d6c367290da22259fdee3c6fcda91891d164
+|   |   |       767ac4b81c06c96991f6a7e489107fa8f0262b
+|   |   |       
+|   |   +---c6
+|   |   |       08a88be082bd48fb5821f6bacf48df11c2495d
+|   |   |       
+|   |   +---c8
+|   |   |       2520cafc9f19a62d85d88e34d54cf326e30e94
+|   |   |       de2f64a8ac4328cdd21ed686852fdba147e36f
+|   |   |       
+|   |   +---c9
+|   |   |       6d32160db5a7a818817c168e5eb2259ad63721
+|   |   |       d0caa2233c4a1fcbaf3847dab2f14df879a2b9
+|   |   |       
+|   |   +---cc
+|   |   |       24e2a06b9b9cd5f6fe51035fb99fb73263853b
+|   |   |       29770283951f7481d35cf5200571fcd42bd426
+|   |   |       6a513ca174ef6778dd55c6d3a72fd55945b223
+|   |   |       
+|   |   +---ce
+|   |   |       81e7b4d6821e8e1cef3216257c915d3fc3ad93
+|   |   |       
+|   |   +---cf
+|   |   |       cc09306189015f31a43e7dc438a777bcc66048
+|   |   |       
+|   |   +---d0
+|   |   |       0a3d76c5df93a77b8abd9893ce3b9bed930acc
+|   |   |       34f596f8b4e425d8993bd0a115b75174a0b7ed
+|   |   |       a5c56b282de18da8da79b70998a93ef795452c
+|   |   |       a5f713afe6e50db986ae9ae6817e2a1ceaf50a
+|   |   |       ec3281b47618cefdc22419b2091e44c29a380e
+|   |   |       
+|   |   +---d1
+|   |   |       06465a4b11ca7e140e4c581a5604a996ed1bed
+|   |   |       bfb0db2c39ab999434b822f57baea0a1acf8b3
+|   |   |       
+|   |   +---d2
+|   |   |       344ff6c3c3ae7da22caf56e5f87644a598fd0a
+|   |   |       
+|   |   +---d3
+|   |   |       01f07aa2e3421010133510071b3eb9a0d6c96f
+|   |   |       70c87ae3c81d072a17323799a596e08b6cd295
+|   |   |       ed0e02bc37a4acb19776052c7e70a2f1c4d77c
+|   |   |       
+|   |   +---d7
+|   |   |       0bc73c9a4081a26a1bb62bd5dfa96b460c3dfd
+|   |   |       7342e51bc7afd1dcf7240afe3f3f929d4bb4ca
+|   |   |       956dd4c56d3fdb00937f42b66efec0930c9fd4
+|   |   |       95923d7bf6a224f1aa37d370ef9d8d222515a6
+|   |   |       
+|   |   +---d8
+|   |   |       1d82ab59058928ef7b81025dbaef73a0fafa44
+|   |   |       
+|   |   +---d9
+|   |   |       32441efca502c66e12bbc70e34013e773a7705
+|   |   |       8bbd69f92f5b8faa6ee9634629fe69595263d0
+|   |   |       
+|   |   +---da
+|   |   |       6e56de332deba15fe37cade5b9a52a67ae7db9
+|   |   |       
+|   |   +---db
+|   |   |       7d244de386c6203437f26e98379fea183bcc98
+|   |   |       c48391bbff694e059854a78241e69c3a5f0f38
+|   |   |       d9e23377073d82e87c18ab6f6289036edada2f
+|   |   |       
+|   |   +---dd
+|   |   |       4eac3d63c11900408507679a9fa8df952f8bb2
+|   |   |       
+|   |   +---de
+|   |   |       ad7ac07f308b4897ffe2867b0b59a779fea5b5
+|   |   |       e3a4ea062679a2d18ead81c96631ff0ead8591
+|   |   |       
+|   |   +---e1
+|   |   |       a986f570dbeef40aaad8b1729741ac2acf476c
+|   |   |       
+|   |   +---e3
+|   |   |       815946903cfef5a2ac96d6f505c7b1b4c6283e
+|   |   |       
+|   |   +---e4
+|   |   |       30149e326d08e768adfb7dd8a41d5fa1874bcb
+|   |   |       c017a0f1451976c7c6d3fee99488016f199732
+|   |   |       
+|   |   +---e6
+|   |   |       239b3a8236caaf778a6a659e31bad5de721271
+|   |   |       79ba511b053eccc21f04143c029ca4db982d0c
+|   |   |       c136a57b9921a23fc62cbe18efd9118dcc934f
+|   |   |       
+|   |   +---e7
+|   |   |       b89bdda96b54302e89fbc56c647c98a3e06a88
+|   |   |       
+|   |   +---e8
+|   |   |       63358fe756f156f514c3318a2740853d90cafd
+|   |   |       abfa38c587f002684c89881baf8bb8dd6f8f92
+|   |   |       d168993dd6b1bc9ca98c1c407945338b3ca845
+|   |   |       
+|   |   +---e9
+|   |   |       3a7b1cee8c27423b0ee0b6ac3d94cf786d9d16
+|   |   |       b72fc4782717c1371f028f399614533c20f48d
+|   |   |       
+|   |   +---ea
+|   |   |       c462449faef83ba88cebb1b39b6b67eec9654d
+|   |   |       
+|   |   +---eb
+|   |   |       ca3026710c4ce6cdc49a017b870b9e6a7fa952
+|   |   |       ef98a5244b20c2ef382f3de4f5385ca2cd677a
+|   |   |       
+|   |   +---ed
+|   |   |       46e15a61a25a6c34e69d831bbc69eccdad8d60
+|   |   |       f4042e445f6beb4b2cfbfc9daa7105afa2bb7b
+|   |   |       
+|   |   +---ef
+|   |   |       3b727f979d2ede950fdfccd8fd141ad9b65874
+|   |   |       4d97732b5b5430d85d6dfabd8be18f299e7e16
+|   |   |       b65872394339485f3de4c102f8d255a201b41e
+|   |   |       dfd5d9bd2b36d6098ba852b8b4733994fc09ea
+|   |   |       
+|   |   +---f0
+|   |   |       874576d77b790909007f45d96fcfdfc36d61c0
+|   |   |       
+|   |   +---f1
+|   |   |       5c1a4d6fd3c2f1b3136deba5c499ce7bc58f5d
+|   |   |       
+|   |   +---f2
+|   |   |       9293dcd839aad8e80c91f43e20cfa70d2bd663
+|   |   |       
+|   |   +---f3
+|   |   |       4f854bb7c80e338b692a28e64ba5cfcbf11444
+|   |   |       
+|   |   +---f5
+|   |   |       6fb61bc423eafca363ddd78ec22e165e5d7149
+|   |   |       7d212a71f13a3abc403b1a3278affcff05c6a2
+|   |   |       
+|   |   +---f6
+|   |   |       4c328b4db1b53692d13c3f5e71aac9c2e7a4ad
+|   |   |       a980408a61fdaec4353939ebc4f8599479eda8
+|   |   |       
+|   |   +---f8
+|   |   |       d71c6f5037cfadbbc9f30d9284660bfdc60b35
+|   |   |       e7f2cbdcf8990c863cdaf1db2fb3f40bb1373b
+|   |   |       
+|   |   +---fa
+|   |   |       836c786010ed4cb33d3fcf0137d9b04f1760a1
+|   |   |       f20eba86b03cf2de7f3125ba21fa69a2593548
+|   |   |       
+|   |   +---fd
+|   |   |       15467573476edc354c85bc5e688b065613afbf
+|   |   |       ab63a06df26ff0f94d96d6fc83d6a4975445be
+|   |   |       
+|   |   +---ff
+|   |   |       56eedcdd6d64d27c12ead3f36a3fe1b5f8c5e3
+|   |   |       
+|   |   +---info
+|   |   |       packs
+|   |   |       
+|   |   \---pack
+|   |           pack-882773b00fb5effa7be7a50d984b869947d8d5fb.idx
+|   |           pack-882773b00fb5effa7be7a50d984b869947d8d5fb.pack
+|   |           
+|   \---refs
+|       +---heads
+|       |       master
+|       |       
+|       +---remotes
+|       |   \---origin
+|       |           HEAD
+|       |           master
+|       |           
+|       \---tags
++---.ipynb_checkpoints
+|       get_all_segment-checkpoint.ipynb
+|       
++---.vscode
+|       launch.json
+|       
++---doc
+|   |   conf.py
+|   |   index.rst
+|   |   make.bat
+|   |   Makefile
+|   |   
+|   +---src
+|   |       dm.rst
+|   |       dv.rst
+|   |       edp.rst
+|   |       fcn_gen.rst
+|   |       framework.rst
+|   |       im.rst
+|   |       model.rst
+|   |       
+|   +---_build
+|   |   +---doctrees
+|   |   |   |   environment.pickle
+|   |   |   |   index.doctree
+|   |   |   |   
+|   |   |   \---src
+|   |   |           dm.doctree
+|   |   |           dv.doctree
+|   |   |           edp.doctree
+|   |   |           fcn_gen.doctree
+|   |   |           framework.doctree
+|   |   |           im.doctree
+|   |   |           model.doctree
+|   |   |           
+|   |   \---html
+|   |       |   .buildinfo
+|   |       |   .nojekyll
+|   |       |   genindex.html
+|   |       |   index.html
+|   |       |   objects.inv
+|   |       |   py-modindex.html
+|   |       |   search.html
+|   |       |   searchindex.js
+|   |       |   
+|   |       +---src
+|   |       |       dm.html
+|   |       |       dv.html
+|   |       |       edp.html
+|   |       |       fcn_gen.html
+|   |       |       framework.html
+|   |       |       im.html
+|   |       |       model.html
+|   |       |       
+|   |       +---_images
+|   |       |       framework.png
+|   |       |       
+|   |       +---_sources
+|   |       |   |   index.rst.txt
+|   |       |   |   
+|   |       |   \---src
+|   |       |           dm.rst.txt
+|   |       |           dv.rst.txt
+|   |       |           edp.rst.txt
+|   |       |           fcn_gen.rst.txt
+|   |       |           framework.rst.txt
+|   |       |           im.rst.txt
+|   |       |           model.rst.txt
+|   |       |           
+|   |       \---_static
+|   |               basic.css
+|   |               doctools.js
+|   |               documentation_options.js
+|   |               file.png
+|   |               framework.png
+|   |               jquery-3.4.1.js
+|   |               jquery.js
+|   |               language_data.js
+|   |               minus.png
+|   |               nature.css
+|   |               OpenSRA_logo_1600ppi.png
+|   |               plus.png
+|   |               pygments.css
+|   |               searchtools.js
+|   |               underscore-1.3.1.js
+|   |               underscore.js
+|   |               
+|   +---_static
+|   |       framework.png
+|   |       OpenSRA_logo_1600ppi.png
+|   |       
+|   \---_templates
++---lib
+|   +---other
+|   |   |   makdisi_seed.txt
+|   |   |   
+|   |   \---GDM_002_GMC_750k_v2_GIS
+|   |       |   GDM_002_GMC_750k_v2.mxd
+|   |       |   GDM_002_GMC_750k_v2_metadata.htm
+|   |       |   
+|   |       +---GDM_002_GMC_750k_v2.gdb
+|   |       |       a00000001.freelist
+|   |       |       a00000001.gdbindexes
+|   |       |       a00000001.gdbtable
+|   |       |       a00000001.gdbtablx
+|   |       |       a00000001.TablesByName.atx
+|   |       |       a00000002.gdbtable
+|   |       |       a00000002.gdbtablx
+|   |       |       a00000003.gdbindexes
+|   |       |       a00000003.gdbtable
+|   |       |       a00000003.gdbtablx
+|   |       |       a00000004.CatItemsByPhysicalName.atx
+|   |       |       a00000004.CatItemsByType.atx
+|   |       |       a00000004.FDO_UUID.atx
+|   |       |       a00000004.freelist
+|   |       |       a00000004.gdbindexes
+|   |       |       a00000004.gdbtable
+|   |       |       a00000004.gdbtablx
+|   |       |       a00000004.spx
+|   |       |       a00000005.CatItemTypesByName.atx
+|   |       |       a00000005.CatItemTypesByParentTypeID.atx
+|   |       |       a00000005.CatItemTypesByUUID.atx
+|   |       |       a00000005.gdbindexes
+|   |       |       a00000005.gdbtable
+|   |       |       a00000005.gdbtablx
+|   |       |       a00000006.CatRelsByDestinationID.atx
+|   |       |       a00000006.CatRelsByOriginID.atx
+|   |       |       a00000006.CatRelsByType.atx
+|   |       |       a00000006.FDO_UUID.atx
+|   |       |       a00000006.freelist
+|   |       |       a00000006.gdbindexes
+|   |       |       a00000006.gdbtable
+|   |       |       a00000006.gdbtablx
+|   |       |       a00000007.CatRelTypesByBackwardLabel.atx
+|   |       |       a00000007.CatRelTypesByDestItemTypeID.atx
+|   |       |       a00000007.CatRelTypesByForwardLabel.atx
+|   |       |       a00000007.CatRelTypesByName.atx
+|   |       |       a00000007.CatRelTypesByOriginItemTypeID.atx
+|   |       |       a00000007.CatRelTypesByUUID.atx
+|   |       |       a00000007.gdbindexes
+|   |       |       a00000007.gdbtable
+|   |       |       a00000007.gdbtablx
+|   |       |       a00000009.gdbindexes
+|   |       |       a00000009.gdbtable
+|   |       |       a00000009.gdbtablx
+|   |       |       a0000000a.gdbindexes
+|   |       |       a0000000a.gdbtable
+|   |       |       a0000000a.gdbtablx
+|   |       |       a0000000a.spx
+|   |       |       a0000000b.gdbindexes
+|   |       |       a0000000b.gdbtable
+|   |       |       a0000000b.gdbtablx
+|   |       |       a0000000b.spx
+|   |       |       a0000000c.freelist
+|   |       |       a0000000c.gdbindexes
+|   |       |       a0000000c.gdbtable
+|   |       |       a0000000c.gdbtablx
+|   |       |       a0000000c.spx
+|   |       |       a0000000d.freelist
+|   |       |       a0000000d.gdbindexes
+|   |       |       a0000000d.gdbtable
+|   |       |       a0000000d.gdbtablx
+|   |       |       a0000000d.spx
+|   |       |       a0000000e.gdbindexes
+|   |       |       a0000000e.gdbtable
+|   |       |       a0000000e.gdbtablx
+|   |       |       a0000000e.spx
+|   |       |       a00000010.gdbindexes
+|   |       |       a00000010.gdbtable
+|   |       |       a00000010.gdbtablx
+|   |       |       a00000010.I18AnnotationCla.atx
+|   |       |       a00000010.I18Status.atx
+|   |       |       a00000010.spx
+|   |       |       a00000012.gdbindexes
+|   |       |       a00000012.gdbtable
+|   |       |       a00000012.gdbtablx
+|   |       |       a00000012.spx
+|   |       |       a00000013.gdbindexes
+|   |       |       a00000013.gdbtable
+|   |       |       a00000013.gdbtablx
+|   |       |       a00000013.I24AnnotationCla.atx
+|   |       |       a00000013.I24Status.atx
+|   |       |       a00000013.spx
+|   |       |       a00000014.gdbindexes
+|   |       |       a00000014.gdbtable
+|   |       |       a00000014.gdbtablx
+|   |       |       a00000014.I25AnnotationCla.atx
+|   |       |       a00000014.I25Status.atx
+|   |       |       a00000014.spx
+|   |       |       gdb
+|   |       |       timestamps
+|   |       |       
+|   |       +---GeoAge_Font
+|   |       |       GEOAFA__.TTF
+|   |       |       GeoAge_FullAlpha_Character_Table.pdf
+|   |       |       
+|   |       \---shapefiles
+|   |               GMC_Descripton_of_Map_Units.xls
+|   |               GMC_geo_arc.cpg
+|   |               GMC_geo_arc.dbf
+|   |               GMC_geo_arc.prj
+|   |               GMC_geo_arc.sbn
+|   |               GMC_geo_arc.sbx
+|   |               GMC_geo_arc.shp
+|   |               GMC_geo_arc.shp.xml
+|   |               GMC_geo_arc.shx
+|   |               GMC_geo_poly.cpg
+|   |               GMC_geo_poly.dbf
+|   |               GMC_geo_poly.prj
+|   |               GMC_geo_poly.sbn
+|   |               GMC_geo_poly.sbx
+|   |               GMC_geo_poly.shp
+|   |               GMC_geo_poly.shp.xml
+|   |               GMC_geo_poly.shx
+|   |               GMC_offshore_faults.cpg
+|   |               GMC_offshore_faults.dbf
+|   |               GMC_offshore_faults.prj
+|   |               GMC_offshore_faults.sbn
+|   |               GMC_offshore_faults.sbx
+|   |               GMC_offshore_faults.shp
+|   |               GMC_offshore_faults.shp.xml
+|   |               GMC_offshore_faults.shx
+|   |               GMC_str_arc.cpg
+|   |               GMC_str_arc.dbf
+|   |               GMC_str_arc.prj
+|   |               GMC_str_arc.sbn
+|   |               GMC_str_arc.sbx
+|   |               GMC_str_arc.shp
+|   |               GMC_str_arc.shp.xml
+|   |               GMC_str_arc.shx
+|   |               GMC_str_point.cpg
+|   |               GMC_str_point.dbf
+|   |               GMC_str_point.prj
+|   |               GMC_str_point.sbn
+|   |               GMC_str_point.sbx
+|   |               GMC_str_point.shp
+|   |               GMC_str_point.shp.xml
+|   |               GMC_str_point.shx
+|   |               
+|   +---simcenter
+|   |   |   EQHazard_ngawest2_noIdriss.jar
+|   |   |   OpenSHAInterface.py
+|   |   |   SiteRuptureIntersections.py
+|   |   |   __init__.py
+|   |   |   
+|   |   +---ucerf3_1
+|   |   |       point_source.txt
+|   |   |       rup_seg.json
+|   |   |       src_connect.txt
+|   |   |       
+|   |   \---__pycache__
+|   |           OpenSHAInterface.cpython-37.pyc
+|   |           __init__.cpython-37.pyc
+|   |           
+|   \---slate
+|           Seismic Hazard_CGS_Unit Strengths.csv
+|           
++---src
+|   |   fcn_gen.py
+|   |   file_io.py
+|   |   marc_test_main_pgd.ipynb
+|   |   marc_test_main_pgv.ipynb
+|   |   model.py
+|   |   README.md
+|   |   test_im.ipynb
+|   |   test_main.ipynb
+|   |   test_main_pgd.ipynb
+|   |   test_main_pgv.ipynb
+|   |   test_other.ipynb
+|   |   test_sparse_sample.ipynb
+|   |   test_src.ipynb
+|   |   test_zhu_etal.ipynb
+|   |   __init__.py
+|   |   
+|   +---.ipynb_checkpoints
+|   |       main_v3-checkpoint.ipynb
+|   |       marc_test_main_pgd-checkpoint.ipynb
+|   |       marc_test_main_pgv-checkpoint.ipynb
+|   |       model-checkpoint.py
+|   |       test_im-checkpoint.ipynb
+|   |       test_main-checkpoint.ipynb
+|   |       test_main_pgd-checkpoint.ipynb
+|   |       test_main_pgv-checkpoint.ipynb
+|   |       test_other-checkpoint.ipynb
+|   |       test_sparse_sample-checkpoint.ipynb
+|   |       test_src-checkpoint.ipynb
+|   |       test_zhu_etal-checkpoint.ipynb
+|   |       
+|   +---dm
+|   |   |   README.md
+|   |   |   ts.py
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           dm.cpython-37.pyc
+|   |           rr.cpython-37.pyc
+|   |           __init__.cpython-37.pyc
+|   |           
+|   +---dv
+|   |   |   README.md
+|   |   |   rr.py
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           rr.cpython-37.pyc
+|   |           __init__.cpython-37.pyc
+|   |           
+|   +---edp
+|   |   |   corr_cpt.py
+|   |   |   corr_spt.py
+|   |   |   fcn_liq_land.py
+|   |   |   gs.py
+|   |   |   land.py
+|   |   |   liq.py
+|   |   |   ls.py
+|   |   |   README.md
+|   |   |   subsurf.py
+|   |   |   surf.py
+|   |   |   youd_perkins_1978.ipynb
+|   |   |   __init__.py
+|   |   |   
+|   |   +---superseded
+|   |   |       land_20200614.py
+|   |   |       
+|   |   \---__pycache__
+|   |           corr_cpt.cpython-37.pyc
+|   |           corr_spt.cpython-37.pyc
+|   |           fcn_liq_land.cpython-37.pyc
+|   |           gs.cpython-37.pyc
+|   |           gs2.cpython-37.pyc
+|   |           land.cpython-37.pyc
+|   |           liq.cpython-37.pyc
+|   |           ls.cpython-37.pyc
+|   |           surf.cpython-37.pyc
+|   |           ts.cpython-37.pyc
+|   |           __init__.cpython-37.pyc
+|   |           
+|   +---gm
+|   |   |   get_geo_unit.py
+|   |   |   get_source_gm.py
+|   |   |   
+|   |   \---__pycache__
+|   |           get_geo_unit.cpython-37.pyc
+|   |           get_geo_unit_and_prop.cpython-37.pyc
+|   |           get_source_gm.cpython-37.pyc
+|   |           
+|   +---im
+|   |   |   corr_spatial.py
+|   |   |   corr_spectral.py
+|   |   |   fcn_im.py
+|   |   |   make_EQHaz_input.ipynb
+|   |   |   README.md
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           corr.cpython-37.pyc
+|   |           corr_spatial.cpython-37.pyc
+|   |           corr_spectral.cpython-37.pyc
+|   |           fcn_im.cpython-37.pyc
+|   |           OpenSHAInterface.cpython-37.pyc
+|   |           __init__.cpython-37.pyc
+|   |           
+|   +---misc
+|   |       gwt_data.ipynb
+|   |       json_ds_transform.ipynb
+|   |       lhs.ipynb
+|   |       make_map_visual.ipynb
+|   |       make_map_visual_20200316.ipynb
+|   |       pgv_json_2_txt.ipynb
+|   |       plot_prob.ipynb
+|   |       plot_prob_20200316.ipynb
+|   |       plot_rr.ipynb
+|   |       README.md
+|   |       save_rup_coord.ipynb
+|   |       __init__.py
+|   |       
+|   +---superseded
+|   |       cpt_corr.py
+|   |       cpt_liq_trig.py
+|   |       dm_hazus.py
+|   |       liq_proc_other.py
+|   |       main.py
+|   |       main_v2.ipynb
+|   |       main_v3.ipynb
+|   |       model - Copy.py
+|   |       model.py
+|   |       model_20200613.py
+|   |       README.md
+|   |       
+|   \---__pycache__
+|           fcn_gen.cpython-37.pyc
+|           file_io.cpython-37.pyc
+|           main.cpython-37.pyc
+|           model.cpython-37.pyc
+|           OpenSHAInterface.cpython-37.pyc
+|           __init__.cpython-37.pyc
+|           
++---test
+|   \---ex1
+|           ex_site_data_file.csv
+|           
+\---__pycache__
+        input.cpython-37.pyc
+        opensra_input.cpython-37.pyc
+        

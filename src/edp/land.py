@@ -18,7 +18,7 @@
 import numpy as np
 from scipy import sparse
 from scipy.stats import norm
-import src.edp.fcn_liq_land
+import src.edp.fcn_edp
 #####################################################################################################################
 
 

@@ -33,7 +33,7 @@ from src.fcn_gen import setLogging
 # from src.im import fcn_im
 # from opensra_input import *
 import input
-from src.gm.get_geo_unit import get_geo_unit
+from src.site.get_geo_unit import get_geo_unit
 
 ##### SimCenter modules
 import lib.simcenter.OpenSHAInterface as OpenSHAInterface

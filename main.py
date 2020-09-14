@@ -29,7 +29,7 @@ from scipy import sparse
 
 ##### OpenSRA modules and functions
 from src import model, fcn_gen
-from src.fcn_gen import setLogging
+from src.fcn_gen import setLogging, make_dir
 # from src.im import fcn_im
 # from opensra_input import *
 import input
@@ -41,7 +41,7 @@ import lib.simcenter.OpenSHAInterface as OpenSHAInterface
 
 
 #####################################################################################################################
-## Main function
+##### Main function
 def main(logging_level):
 
 
@@ -50,24 +50,22 @@ def main(logging_level):
     setLogging(logging_level)
     logging.info('===========================================================')
 
-
     #####################################################################################################################
     ##### Additional set up given user inputs
     
     ##### General
     site_dir = os.path.join(input.work_dir, 'site_out') # set full path for site output folder
-    if os.path.isdir(site_dir) is False: # check if directory exists
-        os.mkdir(site_dir) # create folder if it doesn't exist
+    make_dir(site_dir) # create folder if it doesn't exist
     site_file  = os.path.join(input.work_dir,input.site_file_name) # create full path for site data file
     site_data = pd.read_csv(site_file) # read site data file
     flag_update_site_data = False # default
     
-    ## check if segment lengths are given in the file; if not then assume 1 km and add to site_data
+    ## Check if segment lengths are given in the file; if not then assume lengths of 1 km and add to "site_data"
     if not 'l_seg (km)' in site_data.columns:
         site_data['l_seg (km)'] = np.ones(len(site_data))
         flag_update_site_data = True # updated site data
         
-    ## check if start and end locations are given in the file; if not set equal to site locations (i.e., points)
+    ## Check if start and end locations are given in the file; if not set equal to site locations (i.e., points)
     if not 'Lon_start' in site_data.columns:
         site_data['Lon_start'] = site_data['Longitude'].values
         site_data['Lat_start'] = site_data['Latitude'].values    
@@ -75,10 +73,11 @@ def main(logging_level):
         site_data['Lat_end'] = site_data['Latitude'].values
         flag_update_site_data = True # updated site data
         
-    ## pad OpenSRA path to the user-defined relative paths
+    ## Pad OpenSRA path to the user-defined relative paths
     input.geo_shp_file = os.path.join(os.getcwd(),input.geo_shp_file)
     input.geo_unit_param_file = os.path.join(os.getcwd(),input.geo_unit_param_file)
-    ## check if files for site locations and vs30 exist in site_dir
+    
+    ## Check if files for site locations and vs30 exist in "site_dir", these files are exported from "site_data" for easier access by "gm_tool"
     flag_export_site_loc = False # default
     site_loc_file = os.path.join(site_dir,'site_loc.txt')
     if not os.path.exists(site_loc_file):
@@ -92,15 +91,13 @@ def main(logging_level):
 
     ##### Source and ground motion predictions
     gm_dir = os.path.join(input.work_dir, 'gm_out') # set full path for GM output folder
-    if os.path.isdir(gm_dir) is False:
-        os.mkdir(gm_dir) # create folder if it doesn't exist
+    make_dir(gm_dir) # create folder if it doesn't exist
     gm_pred_dir = os.path.join(gm_dir, 'gm_pred') # set full path for GM prediction output folder
-    if os.path.isdir(gm_pred_dir) is False:
-        os.mkdir(gm_pred_dir) # create folder if it doesn't exist
+    make_dir(gm_pred_dir) # create folder if it doesn't exist
     rup_seg_file = os.path.join(os.getcwd(),'lib','simcenter',input.src_model,'rup_seg.json')
     pt_src_file = os.path.join(os.getcwd(),'lib','simcenter',input.src_model,'point_source.txt')
-    rup_meta_file_tr = os.path.join(gm_dir,'rup_meta_'+str(input.tr)+'yr.hdf5') # create full path for rupture metafile, which contains magnitudes and rates for rupture scenarios screened by return period
-    rup_meta_file_tr_rmax = os.path.join(gm_dir,'rup_meta_'+str(input.tr)+'yr_'+str(input.rmax)+'km.hdf5') # create full path for rupture metafile, which contains magnitudes and rates for rupture scenarios screened by return period
+    rup_meta_file_tr = os.path.join(gm_dir,'rup_meta_'+str(input.tr)+'yr.txt') # create full path for rupture metafile, which contains magnitudes and rates for rupture scenarios screened by return period
+    rup_meta_file_tr_rmax = os.path.join(gm_dir,'rup_meta_'+str(input.tr)+'yr_'+str(input.rmax)+'km.txt') # create full path for rupture metafile, which contains magnitudes and rates for rupture scenarios screened by return period
     rup_group_file = os.path.join(gm_dir,'list_rup_group_'+str(input.tr)+'yr_'+str(input.rmax)+'km.txt') # create full path for list of groups of ruptures
     ## check if need to extract geologic units and properties, get the params if not
     if not 'Geologic Unit' in site_data.columns:
@@ -113,21 +110,18 @@ def main(logging_level):
         
     ## load rupture groups
     if os.path.exists(rup_group_file):
-        list_rup_group = np.loadtxt(rup_group_file,dtype=str)
+        list_rup_group = np.loadtxt(rup_group_file,dtype=str,ndmin=1)
     
     ## check for directories for storing fault traces and intersections; create if don't exist
     trace_dir = os.path.join(gm_dir,'src_trace')
-    if os.path.isdir(trace_dir) is False:
-        os.mkdir(trace_dir) # create folder if it doesn't exist
+    make_dir(trace_dir) # create folder if it doesn't exist
     intersect_dir = os.path.join(gm_dir,'src_intersect')
-    if os.path.isdir(intersect_dir) is False:
-        os.mkdir(intersect_dir) # create folder if it doesn't exist
+    make_dir(intersect_dir) # create folder if it doesn't exist
     
     ##### Intensity measures
     im_dir = os.path.join(input.work_dir, 'im_out') # set full path for IM output folder
+    make_dir(im_dir) # create folder if it doesn't exist
     # flag_im_sample_exist = True # default
-    if os.path.isdir(im_dir) is False: # check if directory exists
-        os.mkdir(im_dir) # create folder if it doesn't exist
         # flag_im_sample_exist = False # True if IM samples have been generated, else False
     # else:
         # if len(os.listdir(im_dir)) == 0: # see if IM folder is empty (do samples exist)
@@ -153,8 +147,7 @@ def main(logging_level):
     ##### Engineering demand parameters
     ##### note: OpenSRA currently is not set up to store dm results
     edp_dir = os.path.join(input.work_dir, 'edp_out') # set full path for EDP output folder
-    if os.path.isdir(edp_dir) is False: # check if directory exists
-        os.mkdir(edp_dir) # create folder if it doesn't exist
+    make_dir(edp_dir) # create folder if it doesn't exist
         
     ## if EDP samples exist
     flag_edp_sample_exist = False
@@ -223,15 +216,13 @@ def main(logging_level):
     ##### Damage measures
     ##### note: OpenSRA currently is not set up to store dm results
     dm_dir = os.path.join(input.work_dir, 'dm_out') # set full path for DM output folder
-    if os.path.isdir(im_dir) is False: # check if directory exists
-        os.mkdir(im_dir) # create folder if it doesn't exist
-    ## if EDP samples exist
+    make_dir(dm_dir) # create folder if it doesn't exist
+    ## if DM samples exist
     flag_dm_sample_exist = False
 
     ##### Decision variables
     dv_dir = os.path.join(input.work_dir, 'dv_out') # set full path for DV output folder
-    if os.path.isdir(dv_dir) is False: # check if directory exists
-        os.mkdir(dv_dir) # create folder if it doesn't exist
+    make_dir(dv_dir) # create folder if it doesn't exist
     ## increment to print output messages
     flag_save_dv = True # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     if len(input.dvs) == 0:
@@ -280,7 +271,7 @@ def main(logging_level):
         if flag_save_dv:
             logging.info(f"\tWill save damage outputs every {inc2} groups (each group contains {input.rup_per_group} ruptures)")
     
-    ## for phase 3
+    ## for phases 3+
     if input.phase_to_run >= 3:
         logging.info(f"IMs")
         if input.phase_to_run == 3:
@@ -296,7 +287,7 @@ def main(logging_level):
         ##
         logging.info(f"EDPs")
         logging.info(f"\tRequired EDPs include: {input.edps} (list may be altered based on requested DVs)")
-        logging.info(f"\tNumber of EDP samples = {input.n_samp_edp} (for uniform distributions use only)")
+        # logging.info(f"\tNumber of EDP samples = {input.n_samp_edp} (for uniform distributions use only)")
         logging.info(f"\tFlag for probability of liquefaction = {flag_p_liq}")
         logging.info(f"\tFlag for liquefaction susceptibility = {flag_liq_susc}")
         logging.info(f"\tFlag for probability of landslide = {flag_p_land}")
@@ -328,7 +319,9 @@ def main(logging_level):
     logging.info("===========================================================")
     logging.info(f"Performing phase {input.phase_to_run} analysis")
     
-    ## get list of rupture scenarios filtered by return period and shortest distance
+
+    #####################################################################################################################
+    ## Get rupture scenarios and fault crossings given site
     if input.phase_to_run == 1:
         
         ##
@@ -376,7 +369,9 @@ def main(logging_level):
                     logging.info(f"\tFault crossings exported to:")
                     logging.info(f"\t\t{intersect_dir}")
         
-    ## get GM prediction
+
+    #####################################################################################################################
+    ## Get predictions of IMs from GMMs
     if input.phase_to_run == 2:
         
         ##
@@ -395,8 +390,7 @@ def main(logging_level):
             # rup_group = list_rup_group[0]
                 ## folder to store predictions for current group
                 gm_pred_rup_group_dir = os.path.join(gm_pred_dir,rup_group)
-                if os.path.isdir(gm_pred_rup_group_dir) is False: # check if directory exists
-                    os.mkdir(gm_pred_rup_group_dir) # create folder if it doesn't exist
+                make_dir(gm_pred_rup_group_dir) # create folder if it doesn't exist
                 ## see if files already exist
                 # if len(os.listdir(gm_pred_rup_group_dir)) != 6:
                 ## current range of ruptures for current group
@@ -404,14 +398,16 @@ def main(logging_level):
                 rup_end = int(rup_group[rup_group.find('_')+1:])+1
                 ##
                 # logging.info(f"\tGetting GM predictions for rup_group {rup_group}")
-                OpenSHAInterface.runHazardAnalysis(reg_proc,rup_meta_file_tr_rmax,[rup_start,rup_end],gm_pred_rup_group_dir)
+                OpenSHAInterface.runHazardAnalysis(processor=reg_proc,rup_meta_file=rup_meta_file_tr_rmax,
+                                                    ind_range=[rup_start,rup_end],saveDir=gm_pred_rup_group_dir,
+                                                    store_file_type=input.store_file_type)
                 
             logging.info(f"\tGenerated predictions for all {len(list_rup_group)} groups of ruptures; results stored under:")
             logging.info(f"\t\t{gm_pred_dir}")
     
     
     #####################################################################################################################
-    ##
+    ## Generate realizations of IMs (i.e., sampling); assess EDPs, DMs, DVs
     if input.phase_to_run >= 3:
     
         ##### create assessment class object
@@ -452,7 +448,8 @@ def main(logging_level):
             count += 1
             count_EDP = 0
             logging.debug(f"========================================================")
-            logging.info(f'Count = {count}: rupture group = {rup_group}...')
+            # logging.info(f'\tCount = {count}: rupture group = {rup_group}...')
+            logging.info(f'\t...running rupture group = {rup_group}')
             
             #####################################################################
             #####################################################################
@@ -460,52 +457,61 @@ def main(logging_level):
             #####################################################################
             ## load GM predictions and create random variable
             model_assess.get_src_GM_site(input.phase_to_run, site_data, input.gm_tool, gm_pred_dir,
-                        input.ims, rup_meta_file_tr_rmax, flag_clear_dict=True,
-                        rup_group=rup_group)
+                        input.ims, rup_meta_file_tr_rmax, flag_clear_dict=True, 
+                        store_file_type=input.store_file_type, rup_group=rup_group)
             logging.debug(f'\tIM_rv: Updated "_GM_pred_dict"')
             
             #####################################################################
             ## generate/import samples
             # if flag_get_IM or flag_gen_sample:
             ## directory name for current rupture group
-            path_sample = os.path.join(im_dir,rup_group)
-            if os.path.isdir(path_sample) is False: # check if directory exists
-                os.mkdir(path_sample) # create folder if it doesn't exist
-            ## check if samples exist for current rupture group
+            sample_dir = os.path.join(im_dir,rup_group)
+            make_dir(sample_dir) # create folder if it doesn't exist
+            ## Check if samples exist for current rupture group, default to True (samples exist and will not generate again)
             flag_im_sample_exist = True # default
-            list_dir_im = os.listdir(path_sample)
+            list_dir_im = os.listdir(sample_dir) # get list of files under "sample_dir"
+            ## First check if the number of files in "sample_dir" is consistent with the expected number of files (# of IMs * # of samples per IM)
             if len(list_dir_im) < len(input.ims)*input.n_samp_im:
-                flag_im_sample_exist = False        
+                flag_im_sample_exist = False # if file count is inconsistent, then set flag for IM existing to False such that IM samples will be saved
+            ## Second check to see if sample 0 (first sample) exist for each IM; if not, then set flag to False
             for im in input.ims:
-                if im+'_samp_0' in list_dir_im:
+                im_samp_file_name = im+'_samp_0'+'.'+input.store_file_type
+                if not im_samp_file_name in list_dir_im:
                     flag_im_sample_exist = False
                     break
             ## flag to force resample of IM
             if input.flag_force_resample_im:
                 flag_im_sample_exist = False
             ##
-            model_assess.sim_IM(input.n_samp_im, input.ims, input.flag_spatial_corr, input.flag_cross_corr, 
+            model_assess.sim_IM(n_samp_im=input.n_samp_im, ims=input.ims,
+                    flag_spatial_corr=input.flag_spatial_corr, flag_cross_corr=input.flag_cross_corr, 
                     flag_sample_with_sigma_total=input.flag_sample_with_sigma_total,
                     sigma_aleatory=input.sigma_aleatory,
                     flag_clear_dict=True, flag_im_sample_exist=flag_im_sample_exist,
-                    path_sample=path_sample)
+                    sample_dir=sample_dir, store_file_type=input.store_file_type)
+                    
+           ## If IM samples exist in the  (i.e., phase_to_run == 4), don't 
             if flag_im_sample_exist:
                 logging.debug(f'\tIM_sim: Updated "_IM_dict" using path to samples:')
             else:
-                # if not os.path.isdir(os.path.join(im_dir,rup_group)):
-                    # os.mkdir(os.path.join(im_dir,rup_group))
-                for im in input.ims:
-                    for samp_i in range(input.n_samp_im):
-                        sparse_mat = model_assess._IM_dict[im][samp_i].log1p().tocsc()
-                        sparse_mat.data = np.round(sparse_mat.data,decimals=input.n_decimals)
-                        sparse.save_npz(os.path.join(path_sample,im+'_samp_'+str(samp_i)+'.npz'),sparse_mat)
+                # for im in input.ims:
+                    # for samp_i in range(input.n_samp_im):
+                        # save_name = os.path.join(sample_dir,im+'_samp_'+str(samp_i)+'.'+input.store_file_type)
+                        # samp = model_assess._IM_dict[im][samp_i] # pull sparse matrix for sample from class
+                        # file_io.store_im_samp(save_name, samp, input.store_file_type, input.n_demicals)
+                        # sparse_mat = model_assess._IM_dict[im][samp_i].log1p().tocsc() # pull sparse matrix for sample from class
+                        # sparse_mat = model_assess._IM_dict[im][samp_i] # pull sparse matrix for sample from class
+                        # sparse_mat.data = np.round(sparse_mat.data,decimals=input.n_decimals)
+                        # if input.store_file_type == 'npz':
+                            
+                        # sparse.save_npz(os.path.join(sample_dir,im+'_samp_'+str(samp_i)+'.npz'),sparse_mat)
                 logging.debug(f'\tIM_sim: Updated "_IM_dict" by generating samples and storing to:')
-            logging.debug(f'\t\t{path_sample}')
+                logging.debug(f'\t\t{sample_dir}')
 
-
-        ##
+        
+        #####################################################################################################################
+        ## Assess EDPs, DMs, DVs
         if input.phase_to_run == 4:
-            #####################################################################
             #####################################################################
             logging.debug(f"\t-------------Engineering Demand Parameters-------------")
             #####################################################################
@@ -570,12 +576,10 @@ def main(logging_level):
                     pass
 
             #####################################################################
-            #####################################################################
             logging.debug(f"\t-------------Damage Measures-------------")
             #####################################################################
             ## Nothing here at the moment
 
-            #####################################################################
             #####################################################################
             logging.debug(f"\t-------------Decision Variables-------------")
             #####################################################################
@@ -626,15 +630,17 @@ def main(logging_level):
                                 except:
                                     pass
 
-    
-        #####################################################################
+
+#####################################################################################################################
+##### Messages to print with 
+#####################################################################################################################
+
         #####################################################################
         ## print message for number of groups run
         if input.phase_to_run >= 3 and count % inc1 == 0:
                 logging.info(f"-------------After {count*input.rup_per_group} groups: {np.round(time.time()-time_start,decimals=2)} secs-------------")
                 time_start = time.time()
         
-        #####################################################################
         #####################################################################
         if input.phase_to_run == 4 and flag_save_dv and model_assess._DV_dict is not None:
             if count % inc2 == 0 or count == len(list_rup_group):

@@ -14,15 +14,94 @@
 #####################################################################################################################
 ##### Required packages
 import numpy as np
-import os, h5py, time
+import os, time
 from scipy import sparse
+# import h5py
 #####################################################################################################################
 
 
 #####################################################################################################################
-##### Read EQHazard outputs
+##### load rupture meta information
 #####################################################################################################################
-def read_sha_sparse(gm_dir, rup_group, im_list, src, rup, M, rate):
+def read_rup_meta(file):
+    """
+    Read rupture meta information (source index, rupture index, Mw, rate)
+    """
+    
+    ##
+    out = {}
+    keys = ['src', 'rup', 'M', 'rate']
+    for key in keys:
+        out[key] = None
+
+    ## open file and load in rupture information
+    if 'txt' in file:
+        data = np.loadtxt(file,unpack=True)
+        out['src'] = data[0].astype(np.int32)
+        out['rup'] = data[1].astype(np.int32)
+        out['M'] = data[2]
+        out['rate'] = data[3]
+
+    elif 'hdf5' in file:
+        with h5py.File(file, 'r') as f:
+            out['src'].update = f.get('src')[:].astype(np.int32)
+            out['rup'].update = f.get('rup')[:].astype(np.int32)
+            out['M'].update = f.get('M')[:]
+            out['rate'].update = f.get('rate')[:]
+        f.close()
+
+    ##
+    return out
+
+
+#####################################################################################################################
+##### store IM samples
+#####################################################################################################################
+def store_im_samp(file, sample, store_file_type, n_decimals):
+    """
+    Store generated IM sample
+    """
+    
+    ## round sample to reduce storage size
+    if n_decimals is not None:
+        sample.data = np.round(sample.data,decimals=n_decimals)
+    
+    ## check file format to store
+    if store_file_type == 'npz':
+        sparse.save_npz(file,sample)
+        
+    ##
+    elif store_file_type == 'txt':
+        sample = sparse.coo_matrix(sample) # coo matrix is easier to understand and reconstruct
+        np.savetxt(file,np.transpose([sample.row,sample.col,sample.data]),fmt='%i %i %f')
+
+
+#####################################################################################################################
+##### Read IM samples
+#####################################################################################################################
+def read_im_samp(file_name, store_file_type, n_rup, n_site):
+    """
+    Read generated IM sample
+    """
+    
+    ## check file format to read
+    if store_file_type == 'npz':
+        mat = sparse.coo_matrix(sparse.load_npz(file_name))
+        # self._IM_dict[im].update({i:sparse.coo_matrix(sparse.load_npz(os.path.join(sample_dir,file_name))).expm1()})
+    
+    ##
+    elif store_file_type == 'txt':
+        gm_pred_curr = np.loadtxt(file_name,unpack=True)
+        mat = sparse.coo_matrix((gm_pred_curr[2],(gm_pred_curr[0],gm_pred_curr[1])),shape=(n_rup,n_site))
+    
+    ##
+    return mat
+    
+
+#####################################################################################################################
+##### Read ground motion predictions from OpenSHA computed through OpenSHAInterface
+#####################################################################################################################
+def read_gm_pred(gm_dir, rup_group, im_list, src, rup, M, rate, n_site, store_file_type, phase_to_run):
     """
     Read outputs from OpenSHAInterface wrapper
     
@@ -43,11 +122,8 @@ def read_sha_sparse(gm_dir, rup_group, im_list, src, rup, M, rate):
     """
     
     ## make list of variables
-    param_names = ['median', 'inter', 'intra']
+    param_names = ['mean', 'inter', 'intra']
     var_list = [i+'_'+j for i in im_list for j in param_names]
-    
-    ## number of rupture scenarios
-    nRups = len(rup)
     
     ## starting and ending numbers for rupture scenarios
     # rup_start = int(group_num*100)
@@ -55,6 +131,16 @@ def read_sha_sparse(gm_dir, rup_group, im_list, src, rup, M, rate):
     # folder_name = str(rup_start)+'_'+str(rup_end)
     rup_start = int(rup_group[0:next(i for i,val in enumerate(rup_group) if val=='_')])
     rup_end = int(rup_group[next(i for i,val in enumerate(rup_group) if val=='_')+1:])
+    
+    ## number of rupture scenarios
+    n_rup = rup_end - rup_start + 1
+    
+    ## number of rupture scenarios total
+    n_rup_total = len(rup)
+    
+    ## reduce n_rup for last group, if n_rup is expected to be less than 100 scenarios
+    if rup_end+1 > n_rup_total:
+        n_rup = n_rup_total%n_rup
     
     ## scenario parameters
     src4group = src[rup_start:rup_end+1]
@@ -68,28 +154,53 @@ def read_sha_sparse(gm_dir, rup_group, im_list, src, rup, M, rate):
     ## loop through variables
     for var in var_list:
     
-        start_time = time.time()
-        
-        # if flag_GM_pred_exist is True:
-            # mat = None
-        # else:
-        ## load file, store into im_data, then close
-        mat = sparse.coo_matrix(sparse.load_npz(os.path.join(gm_dir,rup_group,var+'.npz'))) ## load npz
-        # mat = sparse.load_npz(im_dir+'/'+folder_name+'/'+var+'.npz') ## load npz
+        ##
+        if phase_to_run == 4:
+                    
+            ##
+            gm_in.update({var: None})
+
+        else:
+            # start_time = time.time()
             
-        gm_in.update({var: mat})
-        
-        # if 'median' in var:
-            # rup_num_unique = np.unique(mat.row)+rup_start
-            # sites_unique = np.unique(mat.col)
-            # src_unique = src[rup_num_unique]
-            # rup_unique = rup[rup_num_unique]
-            # M_unique = M[rup_num_unique]
-            # rate_unique = rate[rup_num_unique]
+            # if flag_GM_pred_exist is True:
+                # mat = None
+            # else:
+            ## load file, store into im_data, then close
+            file_name = os.path.join(gm_dir,rup_group,var+'.'+store_file_type)
             
-            # src_rup_unique = [str(src_unique[i])+'_'+str(rup_unique[i]) for i in range(len(rup_num_unique))]
+            ##
+            if store_file_type == 'npz':
+                mat = sparse.coo_matrix(sparse.load_npz(file_name)) ## load npz
+                if 'mean' in var:
+                    data = mat.toarray()-10 # remove addition of 10 prior to storage
+                    zero_loc = data<-9.9 # find where values = -10 (cases that exceed rmax cutoff)
+                    data = np.exp(data) # convert to linear scale
+                    data[zero_loc] = 0 # set values to zero
+                    mat = sparse.coo_matrix(data,shape=(n_rup, n_site)) # store as coo_matrix
+                    # mat = sparse.load_npz(im_dir+'/'+folder_name+'/'+var+'.npz') ## load npz
+            elif store_file_type == 'txt':
+                gm_pred_curr = np.loadtxt(file_name,unpack=True)
+                if 'mean' in var:
+                    mat = sparse.coo_matrix((np.exp(gm_pred_curr[2]),(gm_pred_curr[0],gm_pred_curr[1])),shape=(n_rup, n_site)) # load txt and convert to coo
+                    # mat = mat.sum(-10) # -10 is the mean value for sites outside the distance cutoff
+                else:
+                    mat = sparse.coo_matrix((gm_pred_curr[2],(gm_pred_curr[0],gm_pred_curr[1])),shape=(n_rup, n_site)) # load txt and convert to coo
             
-        # print('imported '+var+'--- %10.6f seconds ---' % (time.time() - start_time))
+            ##
+            gm_in.update({var: mat})
+            
+            # if 'median' in var:
+                # rup_num_unique = np.unique(mat.row)+rup_start
+                # sites_unique = np.unique(mat.col)
+                # src_unique = src[rup_num_unique]
+                # rup_unique = rup[rup_num_unique]
+                # M_unique = M[rup_num_unique]
+                # rate_unique = rate[rup_num_unique]
+                
+                # src_rup_unique = [str(src_unique[i])+'_'+str(rup_unique[i]) for i in range(len(rup_num_unique))]
+                
+            # print('imported '+var+'--- %10.6f seconds ---' % (time.time() - start_time))
     
     gm_in.update({'src': src4group,
                     'rup': rup4group,
@@ -368,9 +479,9 @@ def read_OpenSHAInterface_old(im_dir, rup_meta_file, sha_meta_file, rup_num_star
     sha_meta_file : str
         full path for the file containing metadata from OpenSHAInterface
     rup_num_start : int
-        starting rupture number (1 through nRups); default = 1
+        starting rupture number (1 through n_rup); default = 1
     rup_num_end : int
-        ending rupture nubmer (1 through nRups); default = 1e10 (e.g., all ruptures)
+        ending rupture nubmer (1 through n_rup); default = 1e10 (e.g., all ruptures)
         
     Returns
     -------
@@ -390,7 +501,7 @@ def read_OpenSHAInterface_old(im_dir, rup_meta_file, sha_meta_file, rup_num_star
     f.close()
         
     ## number of rupture scenarios
-    nRups = len(rup)
+    n_rup = len(rup)
     
     ## load sha_meta_file and extra information on nonzero IMs (sparse coordinates)
     sha_meta = np.loadtxt(sha_meta_file,delimiter=',',unpack=True)
@@ -485,7 +596,7 @@ def read_sha_hdf5(im_dir, rup_meta_file, sha_meta_file, group_num, num_rups):
     f.close()
         
     ## number of rupture scenarios
-    nRups = len(rup)
+    n_rup = len(rup)
     
     ## load sha_meta_file and extra information on nonzero IMs (sparse coordinates)
     sha_meta = np.loadtxt(sha_meta_file,delimiter=',',unpack=True)

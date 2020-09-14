@@ -14,12 +14,13 @@
 
 #####################################################################################################################
 ##### Python modules
-import jpype, os, h5py, logging, json, sys
+import jpype, os, logging, json, sys
 import jpype.imports
 from jpype.types import *
 import numpy as np
 from scipy import sparse
 from shapely.geometry import LineString
+# import h5py
 
 ##### OpenSRA modules
 from src.fcn_gen import common_member, get_closest_pt, get_haversine_dist
@@ -41,7 +42,7 @@ from org.designsafe.ci.simcenter import EQHazardCalc
 #####################################################################################################################
 def filter_src_by_rmax(site_loc, rmax, rup_meta_file_tr, rup_meta_file_tr_rmax, 
                         rup_seg_file, pt_src_file, rup_group_file, rup_per_group,
-                        flag_include_point_source=True):
+                        flag_include_point_source=True, file_type='txt'):
 
     ## read list of rupture segments in source model
     with open(rup_seg_file, 'r') as read_file:
@@ -92,7 +93,7 @@ def filter_src_by_rmax(site_loc, rmax, rup_meta_file_tr, rup_meta_file_tr_rmax,
             if common_member(listSeg,seg_pass_rmax):
                 rup_meta_tr_rmax.append([src_list[i],rup_list[i],M_list[i],rate_list[i]])
         except:
-             ## check if point sources are needed
+            ## check if point sources are needed
             if flag_include_point_source:
                 ## check source index for point source with those that pass rmax
                 if src_list[i] in pt_src_pass_rmax:
@@ -100,15 +101,23 @@ def filter_src_by_rmax(site_loc, rmax, rup_meta_file_tr, rup_meta_file_tr_rmax,
             else:
                 pass
     logging.info(f"\tObtained list of {len(rup_meta_tr_rmax)} sources indices that are within {rmax} km of site locations")
-  
-    ## store filtered list of rupture metainfo to hdf5 format
-    rup_meta_tr_rmax = np.transpose(np.asarray(rup_meta_tr_rmax))
-    with h5py.File(rup_meta_file_tr_rmax, 'w') as f:
-        dset1 = f.create_dataset('src', data=rup_meta_tr_rmax[0].astype(np.int32))
-        dset2 = f.create_dataset('rup', data=rup_meta_tr_rmax[1].astype(np.int32))
-        dset3 = f.create_dataset('M', data=rup_meta_tr_rmax[2])
-        dset4 = f.create_dataset('rate', data=rup_meta_tr_rmax[3])
-    f.close()
+
+    ## store filtered list of rupture metainfo
+    ## to txt format
+    if '.'+file_type in rup_meta_file_tr_rmax:
+        np.savetxt(rup_meta_file_tr_rmax, rup_meta_tr_rmax, fmt='%i %i %6.4f %6.4e')
+
+    ## to hdf5 format
+    elif '.'+file_type in rup_meta_file_tr_rmax:
+        # rup_meta_tr_rmax = np.transpose(np.asarray(rup_meta_tr_rmax))
+        rup_meta_tr_rmax = np.transpose(rup_meta_tr_rmax)
+        ##
+        with h5py.File(rup_meta_file_tr_rmax, 'w') as f:
+            dset1 = f.create_dataset('src', data=rup_meta_tr_rmax[0].astype(np.int32))
+            dset2 = f.create_dataset('rup', data=rup_meta_tr_rmax[1].astype(np.int32))
+            dset3 = f.create_dataset('M', data=rup_meta_tr_rmax[2])
+            dset4 = f.create_dataset('rate', data=rup_meta_tr_rmax[3])
+        f.close()
     
     ## generate and store list of rupture groups
     n_rup_groups = int(np.ceil(len(rup_meta_tr_rmax[0])/rup_per_group))
@@ -327,8 +336,8 @@ def init_processor(case_to_run, path_siteloc, path_vs30=None, numThreads=1, rmax
     
     
 #####################################################################################################################
-def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, list_out=None, 
-                        list_im=['pga','pgv'], list_param=['median','inter','intra']):
+def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, store_file_type='npz', list_out=None, 
+                        list_im=['pga','pgv'], list_param=['mean','inter','intra']):
     """
     Main entry method to run the hazard analysis
     """
@@ -344,7 +353,7 @@ def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, list_out=Non
     
     ## Load sources, ruptures, rates and mags from pre-run 
     logging.debug(f"get src and rup indices")
-    gm_source_meta = load_src_rup_M_rate(rup_meta_file, ind_range, processor)
+    gm_source_meta = load_src_rup_M_rate(rup_meta_file, processor, ind_range)
     # np.savetxt(r'C:\Users\barry\Desktop\opensra_results_for_chris\src.txt',gm_source_meta['src'])
     # np.savetxt(r'C:\Users\barry\Desktop\opensra_results_for_chris\rup.txt',gm_source_meta['rup'])
     # np.savetxt(r'C:\Users\barry\Desktop\opensra_results_for_chris\M.txt',gm_source_meta['M'])
@@ -360,16 +369,26 @@ def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, list_out=Non
     
     ## convert to sparse matrix and export
     for i in range(len(list_out)):
-        saveName = os.path.join(saveDir,list_out[i]+'.npz')
-        if 'median' in list_out[i]:
+        saveName = os.path.join(saveDir,list_out[i]+'.'+store_file_type)
+        if 'mean' in list_out[i]:
             out_i = np.reshape(out[:,[i][:]],[shape[0],shape[2]])
-            zero_loc = out_i<-9.9 ## find where values = -10 (cases that exceed rmax)
-            out_i = np.round(np.exp(out_i),decimals=4)
-            out_i[zero_loc] = 0
-            sparse.save_npz(saveName, sparse.csc_matrix(out_i))
-            # sparse.save_npz(saveName, sparse.csc_matrix(np.reshape(out[:,[i][:]],[shape[0],shape[2]])+10))
+            ## add 10 to all values to get invalid values (-10) to 0 for conversion to sparse matrix
+            out_i = out_i+10
+            # zero_loc = out_i<-9.9 # find where values = -10 (cases that exceed rmax)
+            # out_i = np.round(np.exp(out_i),decimals=4)
+            # out_i[zero_loc] = 0
+            if store_file_type == 'npz':
+                sparse.save_npz(saveName, sparse.csc_matrix(out_i)) # csc matrix is more efficient for large number of sites, where columns = sites
+                # sparse.save_npz(saveName, sparse.csc_matrix(np.reshape(out[:,[i][:]],[shape[0],shape[2]])+10))
+            elif store_file_type == 'txt':
+                coo_mat = sparse.coo_matrix(out_i) # coo matrix is easier to understand and reconstruct
+                np.savetxt(saveName,np.transpose([coo_mat.row,coo_mat.col,coo_mat.data-10]),fmt='%i %i %5.3f')
         else:
-            sparse.save_npz(saveName, sparse.csc_matrix(np.reshape(out[:,[i][:]],[shape[0],shape[2]])))
+            if store_file_type == 'npz':
+                sparse.save_npz(saveName, sparse.csc_matrix(np.reshape(out[:,[i][:]],[shape[0],shape[2]]))) # csc matrix is more efficient for large number of sites, where columns = sites
+            elif store_file_type == 'txt':
+                coo_mat = sparse.coo_matrix(np.reshape(out[:,[i][:]],[shape[0],shape[2]]))  # coo matrix is easier to understand and reconstruct
+                np.savetxt(saveName,np.transpose([coo_mat.row,coo_mat.col,coo_mat.data]),fmt='%i %i %5.3f')
     
     out = None
     ##
@@ -379,7 +398,7 @@ def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, list_out=Non
 #####################################################################################################################
 def get_IM_from_opensha(proc, src_ind, rup_ind):
     """
-    get PGA and PGV medians and stdevs from OpenSHA
+    get PGA and PGV means and stdevs from OpenSHA
     """
     logging.debug(f"==============src = {src_ind}, rup = {rup_ind}=========================")
     
@@ -398,9 +417,9 @@ def get_IM_from_opensha(proc, src_ind, rup_ind):
     #Calculating intensity measures using GMM
     proc.calculateIMs()
     
-    #Reading the calculated medians
-    # pgaMedian = np.round(proc.getMeans(),decimals=3)
-    pgaMedian = np.round(proc.getMeans(),decimals=6)
+    #Reading the calculated means
+    # pgaMean = np.round(proc.getMeans(),decimals=3)
+    pgaMean = np.round(proc.getMeans(),decimals=6)
     #Reading the calculated Std. Devs.
     pgaInter = np.round(proc.getInterEvStdDevs(),decimals=3)
     pgaIntra = np.round(proc.getIntraEvStdDevs(),decimals=3)
@@ -412,19 +431,20 @@ def get_IM_from_opensha(proc, src_ind, rup_ind):
     #Calculating intensity measures using GMM
     proc.calculateIMs()
     
-    #Reading the calculated medians
-    # pgvMedian = np.round(proc.getMeans(),decimals=3)
-    pgvMedian = np.round(proc.getMeans(),decimals=6)
+    #Reading the calculated means
+    # pgvMean = np.round(proc.getMeans(),decimals=3)
+    pgvMean = np.round(proc.getMeans(),decimals=6)
     #Reading the calculated Std. Devs.
     pgvInter = np.round(proc.getInterEvStdDevs(),decimals=3)
     pgvIntra = np.round(proc.getIntraEvStdDevs(),decimals=3)
     
     ##
-    return pgaMedian, pgaInter, pgaIntra, pgvMedian, pgvInter, pgvIntra
+    return pgaMean, pgaInter, pgaIntra, pgvMean, pgvInter, pgvIntra
     
     
 #####################################################################################################################
-def load_src_rup_M_rate(rup_meta_file, ind_range, proc=None, rate_cutoff=1/10000, rup_group_file=None, rup_per_group=None):
+def load_src_rup_M_rate(rup_meta_file, proc=None, ind_range=['all'], rate_cutoff=1/10000,
+                        rup_group_file=None, rup_per_group=None, file_type='txt'):
     """
     Load sources, ruptures, rates, and mags from pre-run. If **rup_meta_file** doesn't exist, compute and export
     
@@ -445,8 +465,12 @@ def load_src_rup_M_rate(rup_meta_file, ind_range, proc=None, rate_cutoff=1/10000
     """
     
     ## see if extension is provided, if not, add it
-    if not '.hdf5' in rup_meta_file:
-        rup_meta_file = rup_meta_file+'.hdf5'
+    if not '.'+file_type in rup_meta_file:
+        rup_meta_file = rup_meta_file+'.'+file_type
+    # if not '.hdf5' in rup_meta_file:
+        # rup_meta_file = rup_meta_file+'.hdf5'
+    # if not '.txt' in rup_meta_file:
+    #     rup_meta_file = rup_meta_file+'.txt'
     
     ## initialize dictionaries
     gm_source_info = {'src':None,'rup':None,'M':None,'rate':None}
@@ -454,32 +478,32 @@ def load_src_rup_M_rate(rup_meta_file, ind_range, proc=None, rate_cutoff=1/10000
     
     ## see if rup_meta_file already exists
     if os.path.exists(rup_meta_file):
+
         ## load rup_meta_file
-        with h5py.File(rup_meta_file, 'r') as f:
-            if len(ind_range) == 1:
-                if ind_range[0] == 'all':
+
+        ## txt file format
+        if 'txt' in file_type:
+            f = np.loadtxt(rup_meta_file,unpack=True)
+            gm_source_info['src'] = f[0].astype(np.int32)
+            gm_source_info['rup'] = f[1].astype(np.int32)
+            gm_source_info['M'] = f[2]
+            gm_source_info['rate'] = f[3]
+
+        ## hdf5 file format
+        elif 'hdf5' in file_type:
+            with h5py.File(rup_meta_file, 'r') as f:
+                if len(ind_range) == 1:
+                    if ind_range[0] == 'all':
+                        for key in keys:
+                            gm_source_info[key] = f.get(key)[:]
+                    else:
+                        for key in keys:
+                            gm_source_info[key] = f.get(key)[ind_range[0]]
+                elif len(ind_range) == 2:
                     for key in keys:
-                        gm_source_info[key] = f.get(key)[:]
-                # if ind_range[0] == 'all':
-                    # src = f.get('src')[:]
-                    # rup = f.get('rup')[:]
-                    # M = f.get('M')[:]
-                    # rate = f.get('rate')[:]
-                else:
-                    for key in keys:
-                        gm_source_info[key] = f.get(key)[ind_range[0]]
-                    # src = f.get('src')[ind_range[0]]
-                    # rup = f.get('rup')[ind_range[0]]
-                    # M = f.get('M')[ind_range[0]]
-                    # rate = f.get('rate')[ind_range[0]]
-            elif len(ind_range) == 2:
-                for key in keys:
-                    gm_source_info[key] = f.get(key)[ind_range[0]:ind_range[1]]
-                # src = f.get('src')[ind_range[0]:ind_range[1]]
-                # rup = f.get('rup')[ind_range[0]:ind_range[1]]
-                # M = f.get('M')[ind_range[0]:ind_range[1]]
-                # rate = f.get('rate')[ind_range[0]:ind_range[1]]
-        f.close()
+                        gm_source_info[key] = f.get(key)[ind_range[0]:ind_range[1]]
+            f.close()
+
         ##
         return gm_source_info
         # return src, rup, M, rate
@@ -490,37 +514,23 @@ def load_src_rup_M_rate(rup_meta_file, ind_range, proc=None, rate_cutoff=1/10000
         src_rup = [[i, j, get_M_rate(proc,i,j)[1], get_M_rate(proc,i,j)[0]] 
                 for i in range(nSources) for j in range(proc.getNumRuptures(i)) 
                 if get_M_rate(proc, i,j)[0] > rate_cutoff]
-        ## restructure datafile
-        src_rup = np.transpose(np.asarray(src_rup))
-        # src = src_rup[0].astype(np.int32)
-        # rup = src_rup[1].astype(np.int32)
-        # M = src_rup[2]
-        # rate = src_rup[3]
+
+        ## write to txt format
+        if 'txt' in file_type:
+            np.savetxt(rup_meta_file, src_rup, fmt='%i %i %6.4f %6.4e')
+
         ## write to hdf5 format
-        with h5py.File(rup_meta_file, 'w') as f:
-            dset1 = f.create_dataset('src', data=src_rup[0].astype(np.int32))
-            dset2 = f.create_dataset('rup', data=src_rup[1].astype(np.int32))
-            dset3 = f.create_dataset('M', data=src_rup[2])
-            dset4 = f.create_dataset('rate', data=src_rup[3])
-        f.close()
-        ## truncate data to target scenario(s)
-        # if len(ind_range) == 1:
-            # if ind_range[0] == 'all':
-                # src = src
-                # rup = rup
-                # M = M
-                # rate = rate
-            # else:
-                # src = src[ind_range[0]]
-                # rup = rup[ind_range[0]]
-                # M = M[ind_range[0]]
-                # rate = rate[ind_range[0]]
-        # elif len(ind_range) == 2:
-            # src = src[ind_range[0]:ind_range[1]]
-            # rup = rup[ind_range[0]:ind_range[1]]
-            # M = M[ind_range[0]:ind_range[1]]
-            # rate = rate[ind_range[0]:ind_range[1]]
-        
+        elif 'hdf5' in file_type:
+            ## restructure datafile
+            src_rup = np.transpose(src_rup)
+            ##
+            with h5py.File(rup_meta_file, 'w') as f:
+                dset1 = f.create_dataset('src', data=src_rup[0].astype(np.int32))
+                dset2 = f.create_dataset('rup', data=src_rup[1].astype(np.int32))
+                dset3 = f.create_dataset('M', data=src_rup[2])
+                dset4 = f.create_dataset('rate', data=src_rup[3])
+            f.close()
+
         ## generate rupture group file
         if rup_group_file is not None:
             ## generate and store list of rupture groups

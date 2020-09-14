@@ -71,7 +71,7 @@ class assessment(object):
     #############################################################################################################
     ## create intensity measure random variables and store statistical moments
     def get_src_GM_site(self, phase_to_run, site_data, gm_tool, gm_pred_dir, ims, 
-                        rup_meta_file, flag_clear_dict=False, **kwargs):
+                        rup_meta_file, flag_clear_dict=False, store_file_type='npz', **kwargs):
         """
         Read and store IM and rupture data from files.
         
@@ -89,10 +89,12 @@ class assessment(object):
             full path for the file rupture metadata (M, r)
         ims : str, list
             list of **IM** variables to create: **pga** and/or **pgv**
-        flag_sample_exist : boolean, optional
-            **True** if samples are available or **False** to import statistical parameters and create random variables; default = **False**
+        flag_im_sample_exist : boolean, optional
+            **True** if IM samples are available or **False** to import statistical parameters and create random variables; default = **False**
         flag_clear_dict : boolean, optional
             **True** to clear the calculated demands or **False** to keep them; default = **False**
+        store_file_type : str, optional
+            file type used to store the GM predictions (**npz** or **txt**), default = **npz**
     
         Additional parameters for **EventCalc** tool
         rate_min : float, optional
@@ -131,33 +133,52 @@ class assessment(object):
                 logging.debug(f"\t\tLoaded site locations and pipe segment length into '_src_site_dict'")
             else:
                 logging.debug(f"\t\tSite data not provided")
-            
-            ## open rup_meta_file and load in rupture information
-            if rup_meta_file is not None:
-                with h5py.File(rup_meta_file, 'r') as f:
-                    self._src_site_dict.update({'src':f.get('src')[:]})
-                    self._src_site_dict.update({'rup':f.get('rup')[:]})
-                    self._src_site_dict.update({'M':f.get('M')[:]})
-                    self._src_site_dict.update({'rate':f.get('rate')[:]})
-                f.close()
-                logging.debug(f"\t\tLoaded rupture meta data into '_src_site_dict'")
-            else:
+
+            ## initialize dictionary for rupture information
+            keys = ['src','rup','M','rate']
+            for key in keys:
+                self._src_site_dict[key] = None
+            # self._src_site_dict['src'] = None
+            # self._src_site_dict['rup'] = None
+            # self._src_site_dict['M'] = None
+            # self._src_site_dict['rate'] = None
+
+            ## load rupture information (source index, rupture index, Mw, rate)
+            if rup_meta_file is None:
                 logging.debug(f"\t\tRupture metafile not provided")
-                src = None
-                rup = None
-                M = None
-                rate = None
+                # src = None
+                # rup = None
+                # M = None
+                # rate = None
+            
+            else:
+                data = file_io.read_rup_meta(rup_meta_file).copy()
+                for key in keys:
+                    self._src_site_dict[key] = data[key]
+                # with h5py.File(rup_meta_file, 'r') as f:
+                #     self._src_site_dict.update({'src':f.get('src')[:]})
+                #     self._src_site_dict.update({'rup':f.get('rup')[:]})
+                #     self._src_site_dict.update({'M':f.get('M')[:]})
+                #     self._src_site_dict.update({'rate':f.get('rate')[:]})
+                # f.close()
+                logging.debug(f"\t\tLoaded rupture meta data into '_src_site_dict'")
                 
         src = self._src_site_dict['src']
         rup = self._src_site_dict['rup']
         M = self._src_site_dict['M']
         rate = self._src_site_dict['rate']
-                        
+
+        ## get dimensions
+        n_site = len(self._src_site_dict['site_lon'])
+
         ##
+        # if phase_to_run <= 3:
         if 'regionalprocessor' in gm_tool.lower():
             rup_group = kwargs.get('rup_group',0)
-            self._GM_pred_dict.update({'rup':file_io.read_sha_sparse(gm_pred_dir, rup_group, 
-                                                                ims, src, rup, M, rate).copy()})
+            self._GM_pred_dict.update({'rup':file_io.read_gm_pred(gm_pred_dir, rup_group, 
+                                                                    ims, src, rup, M, rate,
+                                                                    n_site, store_file_type,
+                                                                    phase_to_run).copy()})
             logging.debug(f"\t\tLoaded GM predictions for current rupture group into '_GM_pred_dict'")
                                                                 
         elif 'eqhazard' in gm_tool.lower():
@@ -177,9 +198,9 @@ class assessment(object):
     #############################################################################################################
     def sim_IM(self, n_samp_im, ims=['pga,pgv'], flag_spatial_corr=False, flag_cross_corr=True, T_pga=0.01, T_pgv=1.0, 
                     method_d='jayaram_baker_2009', method_T='baker_jayaram_2008', flag_sample_with_sigma_total=False,
-                    sigma_aleatory=None, flag_clear_dict=False, flag_sample_exist=False, path_sample=None, **kwargs):
+                    sigma_aleatory=None, flag_clear_dict=False, flag_im_sample_exist=False, sample_dir=None, store_file_type='npz', n_decimals=None, **kwargs):
         """
-        Perform multivariate random sampling of **PGA** and **PGV** using medians and sigmas for all scenarios. Spatial and spectral orrelations can be applied.
+        Perform multivariate random sampling of **PGA** and **PGV** using means and sigmas for all scenarios. Spatial and spectral orrelations can be applied.
     
         Parameters
         ----------
@@ -201,10 +222,12 @@ class assessment(object):
             method to use for spectral correlation; default = baker_jayaram_2008
         flag_clear_dict : boolean, optional
             **True** to clear the calculated demands or **False** to keep them; default = **False**
-        flag_sample_exist : boolean, optional
-            **True** if samples are available or **False** to import statistical parameters and create random variables; default = **False**
-        path_sample : str, optional
-            path to folder samples; default = None
+        flag_im_sample_exist : boolean, optional
+            **True** if IM samples are available or **False** to import statistical parameters and create random variables; default = **False**
+        sample_dir : str, optional
+            directory with samples; default = None
+        store_file_type : str, optional
+            file type used to store the GM predictions (**npz** or **txt**), default = **npz**
         
         
         For additional parameters, see the respective methods under :func:`im.corr_spatial.py` and :func:`im.corr_spectral.py`
@@ -225,7 +248,7 @@ class assessment(object):
     
         ## dimensions
         if 'event' in gm_tool.lower() or 'calc' in gm_tool.lower():
-            n_site = len(self._GM_pred_dict['rup'][0]['pga_median'])
+            n_site = len(self._GM_pred_dict['rup'][0]['pga_mean'])
             n_rup = len(self._GM_pred_dict['rup'])
     
         ## make period array for spectral correlations
@@ -240,30 +263,31 @@ class assessment(object):
             corr_T = proc(T1=T_pga, T2=T_pgv)
 
         ## make list of variables
-        param_names = ['median', 'inter', 'intra']
+        param_names = ['mean', 'inter', 'intra']
         var_list = [i+'_'+j for i in ims for j in param_names]
         
         ##
         n_site = len(self._src_site_dict['site_lon'])
         n_rup = len(self._GM_pred_dict['rup']['src'])
         n_T = len(ims) # number of periods of interest
-    
+
         ## check if spatial correlation is required
         if flag_spatial_corr is False:
             ## no correlations, random/LHS sampling
             
             self._IM_dict.update({'pgv':{}})
             self._IM_dict.update({'pga':{}})
-            
+
             ## check if samples already exist
-            if flag_sample_exist is True:   # load samples
+            if flag_im_sample_exist is True:   # load samples
             
                 ## loop through ims
                 for im in ims:
                     ## loop through and import all samples
                     for i in range(n_samp_im):
-                        file_name = im+'_samp_'+str(i)+'.npz'
-                        self._IM_dict[im].update({i:sparse.coo_matrix(sparse.load_npz(os.path.join(path_sample,file_name))).expm1()})
+                        file_name = os.path.join(sample_dir,im+'_samp_'+str(i)+'.'+store_file_type)
+                        self._IM_dict[im].update({i:file_io.read_im_samp(file_name, store_file_type, n_rup, n_site)})
+                            
             
             else:   # perform random sampling
 
@@ -272,7 +296,7 @@ class assessment(object):
                 
                     ## first sample pgv
                     eps_pgv = np.random.normal(size=(n_rup,n_site))
-                    samp = self._GM_pred_dict['rup']['pgv'+'_median']
+                    samp = self._GM_pred_dict['rup']['pgv_mean']
                     
                     ## use total sigma or separate into intra- and inter- event sigmas
                     if flag_sample_with_sigma_total:
@@ -287,16 +311,20 @@ class assessment(object):
                             samp = samp.multiply(np.exp(sigma_aleatory*eps_pgv))
                     
                     else:
-                        ## get residuals for intra (epsilon) and inter (eta) (norm dist with median = 0 and sigma = 1)
+                        ## get residuals for intra (epsilon) and inter (eta) (norm dist with mean = 0 and sigma = 1)
                         eta_pgv = np.random.normal(size=n_rup)
                         eta_pgv = np.repeat(eta_pgv[:,np.newaxis],n_site,axis=1) ## eta is constant with site, varies only between rupture
                         
-                        ## correct for predicted median and sigma
+                        ## correct for predicted mean and sigma
                         samp = samp.multiply(self._GM_pred_dict['rup']['pgv_intra'].multiply(eps_pgv).expm1() + np.ones((n_rup,n_site)))
                         samp = samp.multiply(self._GM_pred_dict['rup']['pgv_inter'].multiply(eta_pgv).expm1() + np.ones((n_rup,n_site)))
                 
-                    ## store samples
-                    self._IM_dict['pgv'].update({i:samp})
+                    ## store samples internally
+                    self._IM_dict['pgv'].update({i:samp}) # update class
+                    
+                    ## store samples locally                    
+                    save_name = os.path.join(sample_dir,'pgv_samp_'+str(i)+'.'+store_file_type)
+                    file_io.store_im_samp(save_name, samp, store_file_type, n_decimals)
                     
                     ## see if 'pga' is needed
                     if 'pga' in ims:
@@ -304,10 +332,10 @@ class assessment(object):
                         ## conditional sigma for pga
                         sigma_cond_pga = np.sqrt(1-corr_T**2)
                         
-                        ## conditional median of eps
-                        cond_median_pga_eps = corr_T*eps_pgv
-                        eps_pga = np.random.normal(size=(n_rup,n_site),loc=cond_median_pga_eps,scale=sigma_cond_pga)
-                        samp = self._GM_pred_dict['rup']['pga'+'_median']
+                        ## conditional mean of eps
+                        cond_mean_pga_eps = corr_T*eps_pgv
+                        eps_pga = np.random.normal(size=(n_rup,n_site),loc=cond_mean_pga_eps,scale=sigma_cond_pga)
+                        samp = self._GM_pred_dict['rup']['pga_mean']
                                         
                         ## use total sigma or separate into intra- and inter- event sigmas
                         if flag_sample_with_sigma_total:
@@ -323,15 +351,19 @@ class assessment(object):
                                 
                         else:
                             ## conditional sampling of eta
-                            cond_median_pga_eta = corr_T*eta_pgv
-                            eta_pga = np.random.normal(size=cond_median_pga_eta.shape,loc=cond_median_pga_eta,scale=sigma_cond_pga)
+                            cond_mean_pga_eta = corr_T*eta_pgv
+                            eta_pga = np.random.normal(size=cond_mean_pga_eta.shape,loc=cond_mean_pga_eta,scale=sigma_cond_pga)
                             
-                            ## correct for predicted median and sigma
+                            ## correct for predicted mean and sigma
                             samp = samp.multiply(self._GM_pred_dict['rup']['pga'+'_intra'].multiply(eps_pga).expm1() + np.ones((n_rup,n_site)))
                             samp = samp.multiply(self._GM_pred_dict['rup']['pga'+'_inter'].multiply(eta_pga).expm1() + np.ones((n_rup,n_site)))
                 
-                        ## store samples
-                        self._IM_dict['pga'].update({i:samp})
+                        ## store samples internally
+                        self._IM_dict['pga'].update({i:samp}) # update class
+                    
+                        ## store samples locally
+                        save_name = os.path.join(sample_dir,'pga_samp_'+str(i)+'.'+store_file_type)
+                        file_io.store_im_samp(save_name, samp, store_file_type, n_decimals)
         
         else:
             ## get correlations between sites
@@ -675,7 +707,7 @@ class assessment(object):
             
         ## add number of im samples to kwargs
         kwargs['n_samp_im'] = n_samp_im
-        kwargs['n_samp_edp'] = n_samp_edp
+        # kwargs['n_samp_im'] = n_samp_im
         
         ## initialize dictionary if it is none or if user wishes to clear dict
         if self._DV_dict is None or flag_clear_dict is True:
@@ -793,23 +825,23 @@ class assessment(object):
                     if source_param is not None:
                         for param in source_param:
                             if 'pgd' in param:
-                                ## temporarily store pgd median
-                                pgd_median = param_add[param].copy()
+                                ## temporarily store pgd mean
+                                pgd_mean = param_add[param].copy()
                                 
                                 ## operate on pgd to get realizations based on distribution
                                 if prob_dist_pgd['type'] == 'lognormal':
                                     if eps_epistemic[epi_i] == 999: # lumped uncertainty
-                                        pgd_i_j = pgd_median.muliply(np.exp(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total']))
+                                        pgd_i_j = pgd_mean.muliply(np.exp(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total']))
                                     else:
-                                        pgd_i_j = pgd_median.muliply(np.exp(
+                                        pgd_i_j = pgd_mean.muliply(np.exp(
                                                         eps_aleatory[ale_j]*prob_dist_pgd['sigma_aleatory'] + \
                                                         eps_epistemic[epi_i]*prob_dist_pgd['sigma_epistemic']))
                                 
                                 elif prob_dist_pgd['type'] == 'uniform':
-                                    samp_pgd = np.random.rand(len(pgd_median.data))*(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory']) + \
+                                    samp_pgd = np.random.rand(len(pgd_mean.data))*(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory']) + \
                                                 1/prob_dist_pgd['factor_aleatory']
-                                    samp_pgd = sparse.coo_matrix((samp_pgd,(pgd_median.row,pgd_median.col)),shape=pgd_median.shape)
-                                    pgd_i_j = pgd_median.multiply(samp_pgd)*prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i]
+                                    samp_pgd = sparse.coo_matrix((samp_pgd,(pgd_mean.row,pgd_mean.col)),shape=pgd_mean.shape)
+                                    pgd_i_j = pgd_mean.multiply(samp_pgd)*prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i]
                                 
                                 break
         
@@ -872,18 +904,18 @@ class assessment(object):
                     if source_param is not None:
                         for param in source_param:
                             if 'pgd' in param:
-                                kwargs['n_samp'] = n_samp_edp
-                                ## temporarily store pgd median
-                                pgd_median = param_add[param].copy()
+                                kwargs['n_samp'] = n_samp_im
+                                ## temporarily store pgd mean
+                                pgd_mean = param_add[param].copy()
                                 
-                                ## pgd_median's type is dict if it has more than 1 IM sample
-                                if type(pgd_median) == dict:
+                                ## pgd_mean's type is dict if it has more than 1 IM sample
+                                if type(pgd_mean) == dict:
                                     pgd_i_j = {}
-                                    for k in range(n_samp_edp):
+                                    for k in range(n_samp_im):
                                         ## operate on pgd to get realizations based on distribution
                                         if prob_dist_pgd['type'] == 'lognormal':
                                             if eps_epistemic[epi_i] == 999: # lumped uncertainty
-                                                pgd_k = pgd_median[k].multiply(np.exp(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total'])).tocoo()
+                                                pgd_k = pgd_mean[k].multiply(np.exp(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total'])).tocoo()
                                                 if 'bray_macedo_2019' in source_method:
                                                     d0 = kwargs.get('d0',0.5)
                                                     pgd_k.data[pgd_k.data<=d0] = 0
@@ -892,7 +924,7 @@ class assessment(object):
                                                     # print(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total'])
 
                                             else:
-                                                pgd_k = pgd_median[k].multiply(np.exp(
+                                                pgd_k = pgd_mean[k].multiply(np.exp(
                                                                     eps_aleatory[ale_j]*prob_dist_pgd['sigma_aleatory'] + \
                                                                     eps_epistemic[epi_i]*prob_dist_pgd['sigma_epistemic'])).tocoo()
                                                 if 'bray_macedo_2019' in source_method:
@@ -904,11 +936,12 @@ class assessment(object):
                                                         # eps_epistemic[epi_i]*prob_dist_pgd['sigma_epistemic'])
                                             
                                         elif prob_dist_pgd['type'] == 'uniform':
-                                            # samp_pgd = np.random.rand(len(pgd_median[k].data))*(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory']) + \
+                                            # samp_pgd = np.random.rand(len(pgd_mean[k].data))*(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory']) + \
                                                         # 1/prob_dist_pgd['factor_aleatory'] # interpolate in linear scale
-                                            samp_pgd = prob_dist_pgd['factor_aleatory']**(2*np.random.rand(len(pgd_median[k].data)) - 1) # interpolate in log scale
-                                            samp_pgd = sparse.coo_matrix((samp_pgd,(pgd_median[k].row,pgd_median[k].col)),shape=pgd_median[k].shape)
-                                            pgd_i_j.update({k:pgd_median[k].multiply(samp_pgd).tocoo()*(prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i])})
+                                            # print(2*np.random.rand(len(pgd_mean[k].data)) - 1)
+                                            samp_pgd = prob_dist_pgd['factor_aleatory']**(2*np.random.rand(len(pgd_mean[k].data)) - 1) # interpolate in log scale
+                                            samp_pgd = sparse.coo_matrix((samp_pgd,(pgd_mean[k].row,pgd_mean[k].col)),shape=pgd_mean[k].shape)
+                                            pgd_i_j.update({k:pgd_mean[k].multiply(samp_pgd).tocoo()*(prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i])})
                                             # if k == 0:                                            
                                                 # print(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory'],1/prob_dist_pgd['factor_aleatory'])
                                                 # print(prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i])
@@ -917,21 +950,21 @@ class assessment(object):
                                     ## operate on pgd to get realizations based on distribution
                                     if prob_dist_pgd['type'] == 'lognormal':
                                         if eps_epistemic[epi_i] == 999: # lumped uncertainty
-                                            pgd_i_j = pgd_median.multiply(np.exp(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total']))
+                                            pgd_i_j = pgd_mean.multiply(np.exp(eps_aleatory[ale_j]*prob_dist_pgd['sigma_total']))
                                             # print('a', ale_j, eps_aleatory[ale_j], prob_dist_pgd['sigma_total'], eps_aleatory[ale_j]*prob_dist_pgd['sigma_total'])
                                         else:
-                                            pgd_i_j = pgd_median.multiply(np.exp(
+                                            pgd_i_j = pgd_mean.multiply(np.exp(
                                                         eps_aleatory[ale_j]*prob_dist_pgd['sigma_aleatory'] + \
                                                         eps_epistemic[epi_i]*prob_dist_pgd['sigma_epistemic']))
                                             # print(eps_aleatory[ale_j]*prob_dist_pgd['sigma_aleatory'] + \
                                                         # eps_epistemic[epi_i]*prob_dist_pgd['sigma_epistemic'])
                                 
                                     elif prob_dist_pgd['type'] == 'uniform':
-                                        # samp_pgd = np.random.rand(len(pgd_median.data))*(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory']) + \
+                                        # samp_pgd = np.random.rand(len(pgd_mean.data))*(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory']) + \
                                                     # 1/prob_dist_pgd['factor_aleatory'] # interpolate in linear scale
-                                        samp_pgd = prob_dist_pgd['factor_aleatory']**(2*np.random.rand(len(pgd_median.data)) - 1) # interpolate in log scale
-                                        samp_pgd = sparse.coo_matrix((samp_pgd,(pgd_median.row,pgd_median.col)),shape=pgd_median.shape)
-                                        pgd_i_j = pgd_median.multiply(samp_pgd)*(prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i])
+                                        samp_pgd = prob_dist_pgd['factor_aleatory']**(2*np.random.rand(len(pgd_mean.data)) - 1) # interpolate in log scale
+                                        samp_pgd = sparse.coo_matrix((samp_pgd,(pgd_mean.row,pgd_mean.col)),shape=pgd_mean.shape)
+                                        pgd_i_j = pgd_mean.multiply(samp_pgd)*(prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i])
                                         # print(prob_dist_pgd['factor_aleatory']-1/prob_dist_pgd['factor_aleatory'],1/prob_dist_pgd['factor_aleatory'])
                                         # print(prob_dist_pgd['factor_epistemic']**eps_epistemic[epi_i])
                                     

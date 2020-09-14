@@ -37,17 +37,18 @@ phase_to_run = 4
 if phase_to_run == 1:
 	phase_message = 'get rupture scenarios and fault crossings given site'
 elif phase_to_run == 2:
-    phase_message = 'get GMM predictions of IMs'
+    phase_message = 'get predictions of IMs from GMMs'
 elif phase_to_run == 3:
     phase_message = 'generate realizations of IMs (i.e., sampling)'
 elif phase_to_run == 4:
     phase_message = 'assess EDPs, DMs, DVs'
 
 ## Basic information
-work_dir = r'C:\Users\barry\Desktop\results_for_chris' # working directory with input files and sub-directories
-site_file_name = 'Balboa Blvd_OpenSRA Input File.csv' # file with site locations and site-specific inputs, should be placed under work_dir
+work_dir = r'C:\Users\barry\Desktop\ex3' # working directory with input files and sub-directories
+site_file_name = 'ex_site_data_file.csv' # file with site locations and site-specific inputs, should be placed under work_dir
 geo_shp_file = r'lib\other\GDM_002_GMC_750k_v2_GIS\shapefiles\GMC_geo_poly.shp' # shapefile with geologic units, set path relative to OpenSRA base directory
 geo_unit_param_file = r'lib\slate\Seismic Hazard_CGS_Unit Strengths.csv' # Micaela's file with properties for geologic units, set path relative to OpenSRA base directory
+store_file_type = 'txt' # npz for SciPy data format (more size-efficient for large number of sites) or 'csv' for easier access to results but less efficient
 
 ## Source and ground motion predictions
 tr = 10000 # years, cutoff for return period
@@ -60,7 +61,7 @@ num_thread = 1 # number of threads for gm_tool
 flag_include_point_source = False # include point source in selection of rupture scenarios
 
 ## Intensity measures
-n_samp_im = 4 # number of samples for IM
+n_samp_im = 2 # number of samples for IM
 flag_spatial_corr = False # True to apply spatial correlation
 flag_cross_corr = True # True to apply spectral (cross) correlation
 sample_algorithm = 'random' # choices = 'random' for random sampling, 'lhs' for latin-hypercube sampling
@@ -68,7 +69,7 @@ ims = ['pga','pgv'] # target IMs to get
 flag_sample_with_sigma_total = True # True to sample from total sigma; False to sample intra- and inter-event sigmas separately then add together
 sigma_aleatory = None # set value for uniform aleatory sigma; set to None to use GM predicted total sigma
 n_decimals = 3 # number of decimals in log10 space for export
-flag_force_resample_im = True # sample IM even if samples already exist
+flag_force_resample_im = False # sample IM even if samples already exist
 
 ## Engineering demand parameters
 ## note: for now if EDP distribution is:
@@ -77,7 +78,7 @@ flag_force_resample_im = True # sample IM even if samples already exist
 ##       (3) other distribtions: not implemented
 n_samp_edp = 4 # number of samples for EDP, for uniform distributions for now
 ## note: for list of EDPs, if either ls or gs is specified, must also include liq BEFORE BOTH ls and gs
-edps = ['liq','ls','gs','land','surf'] # checked options = liq, ls, gs, land, surf; other options include subsurf
+edps = ['liq','ls','gs'] # checked options = liq, ls, gs, land, surf; other options include subsurf
 ## note: (1) for each EDP demand, run one procedure at a time for now. The number branches may become too overwhelming
 ##       (2) keep procedures as lists
 edp_procs = {

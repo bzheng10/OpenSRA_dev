@@ -68,7 +68,7 @@ def main(logging_level):
     ## Check if start and end locations are given in the file; if not set equal to site locations (i.e., points)
     if not 'Lon_start' in site_data.columns:
         site_data['Lon_start'] = site_data['Longitude'].values
-        site_data['Lat_start'] = site_data['Latitude'].values    
+        site_data['Lat_start'] = site_data['Latitude'].values
         site_data['Lon_end'] = site_data['Longitude'].values
         site_data['Lat_end'] = site_data['Latitude'].values
         flag_update_site_data = True # updated site data
@@ -330,7 +330,7 @@ def main(logging_level):
             ##
             if not os.path.exists(rup_meta_file_tr) or not os.path.exists(rup_meta_file_tr_rmax) or len(os.listdir(trace_dir)) == 0 or len(os.listdir(intersect_dir)) == 0:
             
-                ## initialize processor            
+                ## initialize processor
                 logging.info(f"\n----------------------------------\n-----Runtime messages from OpenSHA\n")
                 reg_proc = OpenSHAInterface.init_processor(case_to_run=2, path_siteloc=site_loc_file,
                                                         path_vs30=vs30_file, numThreads=input.num_thread,
@@ -376,7 +376,7 @@ def main(logging_level):
         
         ##
         if 'regionalprocessor' in input.gm_tool.lower():
-                
+            
             ## initialize processor
             logging.info(f"\n----------------------------------\n-----Runtime messages from OpenSHA\n")
             reg_proc = OpenSHAInterface.init_processor(case_to_run=2, path_siteloc=site_loc_file,
@@ -430,7 +430,7 @@ def main(logging_level):
 
         ## loop through multipliers
         # for multi in range(multi_start,multi_end):
-            
+        
         ## define range of ruptures for IM
         #range_start = rup_per_group*multi
         #if flag_get_IM or flag_gen_sample:
@@ -457,7 +457,7 @@ def main(logging_level):
             #####################################################################
             ## load GM predictions and create random variable
             model_assess.get_src_GM_site(input.phase_to_run, site_data, input.gm_tool, gm_pred_dir,
-                        input.ims, rup_meta_file_tr_rmax, flag_clear_dict=True, 
+                        input.ims, rup_meta_file_tr_rmax, flag_clear_dict=True,
                         store_file_type=input.store_file_type, rup_group=rup_group)
             logging.debug(f'\tIM_rv: Updated "_GM_pred_dict"')
             
@@ -490,7 +490,7 @@ def main(logging_level):
                     flag_clear_dict=True, flag_im_sample_exist=flag_im_sample_exist,
                     sample_dir=sample_dir, store_file_type=input.store_file_type)
                     
-           ## If IM samples exist in the  (i.e., phase_to_run == 4), don't 
+           ## If IM samples exist in the (i.e., phase_to_run == 4)
             if flag_im_sample_exist:
                 logging.debug(f'\tIM_sim: Updated "_IM_dict" using path to samples:')
             else:
@@ -517,12 +517,12 @@ def main(logging_level):
             #####################################################################
             ## Loop through EDPs
             for edp in input.edps:
-                ## 
+                ##
                 count_EDP += 1 # counter for number of EDP evaluated
                 
                 ## Liquefaction
                 if 'liq' in edp.lower():
-                    ## check 
+                    ## check for need for probability of liquefaction and liquefactino susceptibility
                     if flag_p_liq and 'p_liq' not in input.edp_procs[edp]['return_param']:
                         input.edp_procs[edp]['return_param'].append('p_liq')
                     if flag_liq_susc and 'liq_susc' not in input.edp_procs[edp]['return_param']:
@@ -632,7 +632,7 @@ def main(logging_level):
 
 
 #####################################################################################################################
-##### Messages to print with 
+##### Messages to print
 #####################################################################################################################
 
         #####################################################################

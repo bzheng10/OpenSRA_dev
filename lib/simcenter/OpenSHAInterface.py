@@ -40,7 +40,7 @@ from org.designsafe.ci.simcenter import EQHazardCalc
 
 
 #####################################################################################################################
-def filter_src_by_rmax(site_loc, rmax, rup_meta_file_tr, rup_meta_file_tr_rmax, 
+def filter_src_by_rmax(site_loc, rmax, rup_meta_file_tr, rup_meta_file_tr_rmax,
                         rup_seg_file, pt_src_file, rup_group_file, rup_per_group,
                         flag_include_point_source=True, file_type='txt'):
 
@@ -85,7 +85,7 @@ def filter_src_by_rmax(site_loc, rmax, rup_meta_file_tr, rup_meta_file_tr_rmax,
     ## compare list of rupture segments that are wihtin rmax and with the rupture segments in each source
     rup_meta_tr_rmax = []
     for i in range(len(src_list)):
-        try:        
+        try:
             ## get list of rupture segments for current source index
             listSeg = list(rupSourceSections[src_list[i]].toArray())
 
@@ -120,7 +120,9 @@ def filter_src_by_rmax(site_loc, rmax, rup_meta_file_tr, rup_meta_file_tr_rmax,
         f.close()
     
     ## generate and store list of rupture groups
-    n_rup_groups = int(np.ceil(len(rup_meta_tr_rmax[0])/rup_per_group))
+    n_rup_groups = int(np.ceil(len(rup_meta_tr_rmax)/rup_per_group))
+    print(len(rup_meta_tr_rmax),rup_per_group)
+    print(n_rup_groups)
     list_rup_group = [str(rup_per_group*i)+'_'+str(rup_per_group*(i+1)-1) for i in range(n_rup_groups)]
     np.savetxt(rup_group_file,list_rup_group,fmt='%s')
     logging.info(f"\tNumber of rupture groups = {n_rup_groups}")
@@ -158,7 +160,7 @@ def check_rmax(site_loc,seg_trace,seg_type,rmax):
             ##
             if dist <= rmax:
                 ##
-                return True         
+                return True
         ##
         return False
     
@@ -181,7 +183,7 @@ def set_up_get_rup():
     #Get the number of section
     numSections = rupSet.getNumSections()
 
-    #Map rupture sources to sections 
+    #Map rupture sources to sections
     rupSourceSections = rupSet.getSectionIndicesForAllRups()
     
     return rupSet, rupSourceSections
@@ -208,10 +210,10 @@ def get_fault_xing(processor, start_loc, end_loc, trace_dir, intersect_dir, rup_
     #Get the number of section
     numSections = rupSet.getNumSections()
 
-    #Map rupture sources to sections 
+    #Map rupture sources to sections
     rupSourceSections = rupSet.getSectionIndicesForAllRups()
 
-    ## 
+    ##
     gm_source_info = load_src_rup_M_rate(rup_meta_file, ind_range)
     
     ##
@@ -250,8 +252,8 @@ def get_trace(processor, rupSet, rupSourceSections, src_unique_i, saveDir):
         processor.setCurrentRupture(src_unique_i,0)
         rupture = processor.getRupture()
         surface = rupture.getRuptureSurface()
-        nodes = np.asarray([[surface.getLocation().getLongitude(), 
-                            surface.getLocation().getLatitude(), 
+        nodes = np.asarray([[surface.getLocation().getLongitude(),
+                            surface.getLocation().getLatitude(),
                             surface.getLocation().getDepth()]])
     
     ## pull lon lat
@@ -280,7 +282,7 @@ def get_intersect(src_unique_i, coords, lines, saveDir):
         ## create linestring shape using coordinates of segments
         rup_shape = LineString(coords)
         
-        ## 
+        ##
         intersect = [j for j, line in enumerate(lines) if line.intersects(rup_shape)]
 
     ## save intersections into file
@@ -336,7 +338,7 @@ def init_processor(case_to_run, path_siteloc, path_vs30=None, numThreads=1, rmax
     
     
 #####################################################################################################################
-def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, store_file_type='npz', list_out=None, 
+def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, store_file_type='npz', list_out=None,
                         list_im=['pga','pgv'], list_param=['mean','inter','intra']):
     """
     Main entry method to run the hazard analysis
@@ -351,7 +353,7 @@ def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, store_file_t
             for param_j in list_param:
                 list_out.append(im_i+'_'+param_j)
     
-    ## Load sources, ruptures, rates and mags from pre-run 
+    ## Load sources, ruptures, rates and mags from pre-run
     logging.debug(f"get src and rup indices")
     gm_source_meta = load_src_rup_M_rate(rup_meta_file, processor, ind_range)
     # np.savetxt(r'C:\Users\barry\Desktop\opensra_results_for_chris\src.txt',gm_source_meta['src'])
@@ -484,10 +486,22 @@ def load_src_rup_M_rate(rup_meta_file, proc=None, ind_range=['all'], rate_cutoff
         ## txt file format
         if 'txt' in file_type:
             f = np.loadtxt(rup_meta_file,unpack=True)
-            gm_source_info['src'] = f[0].astype(np.int32)
-            gm_source_info['rup'] = f[1].astype(np.int32)
-            gm_source_info['M'] = f[2]
-            gm_source_info['rate'] = f[3]
+            if len(ind_range) == 1:
+                if ind_range[0] == 'all':
+                    gm_source_info['src'] = f[0].astype(np.int32)
+                    gm_source_info['rup'] = f[1].astype(np.int32)
+                    gm_source_info['M'] = f[2]
+                    gm_source_info['rate'] = f[3]
+                else:
+                    gm_source_info['src'] = f[0,ind_range[0]].astype(np.int32)
+                    gm_source_info['rup'] = f[1,ind_range[0]].astype(np.int32)
+                    gm_source_info['M'] = f[2,ind_range[0]]
+                    gm_source_info['rate'] = f[3,ind_range[0]]
+            elif len(ind_range) == 2:
+                gm_source_info['src'] = f[0,ind_range[0]:ind_range[1]].astype(np.int32)
+                gm_source_info['rup'] = f[1,ind_range[0]:ind_range[1]].astype(np.int32)
+                gm_source_info['M'] = f[2,ind_range[0]:ind_range[1]]
+                gm_source_info['rate'] = f[3,ind_range[0]:ind_range[1]]
 
         ## hdf5 file format
         elif 'hdf5' in file_type:
@@ -509,11 +523,11 @@ def load_src_rup_M_rate(rup_meta_file, proc=None, ind_range=['all'], rate_cutoff
         # return src, rup, M, rate
     
     else:
-        ## get and store rates and 
+        ## get and store rates and Mw
         nSources = proc.getNumSources()
-        src_rup = [[i, j, get_M_rate(proc,i,j)[1], get_M_rate(proc,i,j)[0]] 
-                for i in range(nSources) for j in range(proc.getNumRuptures(i)) 
-                if get_M_rate(proc, i,j)[0] > rate_cutoff]
+        src_rup = [[i, j, get_M_rate(proc,i,j)[1], get_M_rate(proc,i,j)[0]]
+                    for i in range(nSources) for j in range(proc.getNumRuptures(i))
+                    if get_M_rate(proc, i,j)[0] > rate_cutoff]
 
         ## write to txt format
         if 'txt' in file_type:
@@ -538,9 +552,6 @@ def load_src_rup_M_rate(rup_meta_file, proc=None, ind_range=['all'], rate_cutoff
             list_rup_group = [str(rup_per_group*i)+'_'+str(rup_per_group*(i+1)-1) for i in range(n_rup_groups)]
             np.savetxt(rup_group_file,list_rup_group,fmt='%s')
             logging.info(f"\tNumber of rupture groups = {n_rup_groups} (each group contains {rup_per_group} ruptures)")
-
-        ##
-        
     
     
 #####################################################################################################################

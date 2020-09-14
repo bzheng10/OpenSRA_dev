@@ -44,7 +44,7 @@ elif phase_to_run == 4:
     phase_message = 'assess EDPs, DMs, DVs'
 
 ## Basic information
-work_dir = r'C:\Users\barry\Desktop\ex3' # working directory with input files and sub-directories
+work_dir = r'C:\Users\BarryZheng\Desktop\ex2' # working directory with input files and sub-directories
 site_file_name = 'ex_site_data_file.csv' # file with site locations and site-specific inputs, should be placed under work_dir
 geo_shp_file = r'lib\other\GDM_002_GMC_750k_v2_GIS\shapefiles\GMC_geo_poly.shp' # shapefile with geologic units, set path relative to OpenSRA base directory
 geo_unit_param_file = r'lib\slate\Seismic Hazard_CGS_Unit Strengths.csv' # Micaela's file with properties for geologic units, set path relative to OpenSRA base directory
@@ -61,7 +61,7 @@ num_thread = 1 # number of threads for gm_tool
 flag_include_point_source = False # include point source in selection of rupture scenarios
 
 ## Intensity measures
-n_samp_im = 2 # number of samples for IM
+n_samp_im = 3 # number of samples for IM
 flag_spatial_corr = False # True to apply spatial correlation
 flag_cross_corr = True # True to apply spectral (cross) correlation
 sample_algorithm = 'random' # choices = 'random' for random sampling, 'lhs' for latin-hypercube sampling

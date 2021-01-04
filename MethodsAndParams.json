@@ -1,0 +1,103 @@
+{
+    "IntensityMeasure": {
+        "SeismicSource": {
+            "Mean UCERF3": {
+            },
+            "Mean UCERF3 FM3.1":{
+            },
+            "Mean UCERF3 FM3.2":{
+            }
+        },
+        "GroundMotion": {
+            "Abrahamson, Silva & Kamai (2014)":{
+            },
+            "Boore, Stewart, Seyhan & Atkinson (2014)":{
+            },
+            "Campbell & Bozorgnia (2014)":{
+            },
+            "Chiou & Youngs (2014)":{
+            },
+            "NGAWest2 2014 Averaged Attenuation Relationship":{
+            },
+            "NGAWest2 2014 Averaged No Idriss":{
+            }
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Liquefaction": {
+            "ZhuEtal2017": {
+                "wtd": {
+					"description": "depth to water table (m)",
+					"default": null
+				},
+                "dr": {
+					"description": "distance to nearest river (km)",
+					"default": null
+				},
+                "dc": {
+					"description": "distance to nearest coast (km)",
+					"default": null
+				},
+                "dw": {
+					"description": "distance to nearest water body (km)",
+					"default": null
+				},
+                "precip": {
+					"description": "mean annual precipitation (mm)",
+					"default": null
+				},
+                "vs30": {
+					"description": "vs30 (m/s)",
+					"default": null
+				}
+            }
+        },
+        "LateralSpread": {
+            "Hazus2014": {
+                "dwWB": {
+					"description": "closest distance to any water body (km)"
+				}
+            },
+			"GrantEtal2016": {
+			}
+        },
+        "GroundSettlement": {
+            "Hazus2014": {
+            }
+        },
+        "Landslide": {
+            "BrayMacedo2019": {
+            },
+			"Jibson2007": {
+			}
+        },
+        "SurfaceFaultRupture": {
+			"WellsCoppersmith1994": {
+			}
+        },
+        "SubsurfaceFaultRupture": {
+        },
+        "TransientGroundStrain": {
+        }
+    },
+    "DamageMeasure": {
+    },
+    "DecisionVariable": {
+		"RepairRatePGV": {
+			"ORourke2020": {
+			},
+			"ALA2001": {
+			},
+			"Hazus2014": {
+			}
+		},
+		"RepairRatePGD": {
+			"ORourke2020": {
+			},
+			"ALA2001": {
+			},
+			"Hazus2014": {
+			}
+		}
+    }
+}

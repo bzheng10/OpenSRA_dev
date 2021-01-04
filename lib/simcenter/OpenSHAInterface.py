@@ -1,181 +1,257 @@
-#####################################################################################################################
-##### Open-Source Seismic Risk Assessment, OpenSRA(TM)
-#####
-##### Copyright(c) 2020-2022 The Regents of the University of California and
-##### Slate Geotechnical Consultants. All Rights Reserved.
-#####
-##### Python wrapper for RegionalProcessor
-#####
-##### Created: August 5, 2020
-##### @author: Wael Elhaddad (formerly SimCenter)
-##### modified: Barry Zheng
-#####################################################################################################################
+# -----------------------------------------------------------
+# Open-Source Seismic Risk Assessment, OpenSRA(TM)
+#
+# Copyright(c) 2020-2022 The Regents of the University of California and
+# Slate Geotechnical Consultants. All Rights Reserved.
+#
+# Python interface to OpenSHA
+#
+# Created: December 10, 2020
+# @author: Wael Elhaddad (SimCenter)
+#          Kuanshi Zhong (Stanford University)
+#          Barry Zheng (Slate Geotechnical Consultants)
+# -----------------------------------------------------------
 
 
-#####################################################################################################################
-##### Python modules
-import jpype, os, logging, json, sys
-import jpype.imports
-from jpype.types import *
+# -----------------------------------------------------------
+# Python modules
+import os
+import logging
+import json
+import sys
 import numpy as np
+import jpype
+from jpype import imports
+from jpype.types import *
 from scipy import sparse
-from shapely.geometry import LineString
-# import h5py
 
-##### OpenSRA modules
-from src.fcn_gen import common_member, get_closest_pt, get_haversine_dist
+# OpenSRA modules
+from src.Fcn_Common import check_common_member, get_closest_pt, get_haversine_dist
 
-##### Using JPype to load EQHazard in JVM
-jpype.addClassPath('EQHazard_ngawest2_noIdriss.jar')
+# Using JPype to load OpenSHA in JVM
+jpype.addClassPath('./opensha/OpenSHA-1.5.2.jar')
 if not jpype.isJVMStarted():
     jpype.startJVM("-Xmx8G", convertStrings=False)
 
-##### Importing needed EQHazard and OpenSHA classes from Java
-from org.opensha.commons.geo import Location
-from org.opensha.sha.earthquake import ProbEqkRupture
-from org.designsafe.ci.simcenter import RegionalProcessor
-from org.opensha.sha.faultSurface import RuptureSurface
-from org.designsafe.ci.simcenter import EQHazardCalc
+from java.io import *
+from java.lang import *
+from java.lang.reflect import *
+from java.util import ArrayList
+
+from org.opensha.commons.data import *
+from org.opensha.commons.data.siteData import *
+from org.opensha.commons.data.function import *
+from org.opensha.commons.exceptions import ParameterException
+from org.opensha.commons.geo import *
+from org.opensha.commons.param import *
+from org.opensha.commons.param.event import *
+from org.opensha.commons.param.constraint import *
+from org.opensha.commons.util import ServerPrefUtils
+
+from org.opensha.sha.earthquake import *
+from org.opensha.sha.earthquake.param import *
+from org.opensha.sha.earthquake.rupForecastImpl.Frankel02 import Frankel02_AdjustableEqkRupForecast
+from org.opensha.sha.earthquake.rupForecastImpl.WGCEP_UCERF1 import WGCEP_UCERF1_EqkRupForecast
+from org.opensha.sha.earthquake.rupForecastImpl.WGCEP_UCERF_2_Final import UCERF2
+from org.opensha.sha.earthquake.rupForecastImpl.WGCEP_UCERF_2_Final.MeanUCERF2 import MeanUCERF2
+from org.opensha.sha.faultSurface import *
+from org.opensha.sha.imr import *
+from org.opensha.sha.imr.attenRelImpl import *
+from org.opensha.sha.imr.attenRelImpl.ngaw2 import *
+from org.opensha.sha.imr.attenRelImpl.ngaw2.NGAW2_Wrappers import *
+from org.opensha.sha.imr.param.IntensityMeasureParams import *
+from org.opensha.sha.imr.param.OtherParams import *
+from org.opensha.sha.imr.param.SiteParams import Vs30_Param
+from org.opensha.sha.calc import *
+from org.opensha.sha.util import *
+from scratch.UCERF3.erf.mean import MeanUCERF3
+
+from org.opensha.sha.gcim.imr.attenRelImpl import *
+from org.opensha.sha.gcim.imr.param.IntensityMeasureParams import *
+from org.opensha.sha.gcim.imr.param.EqkRuptureParams import *
+from org.opensha.sha.gcim.calc import *
 
 
-
-#####################################################################################################################
-def filter_src_by_rmax(site_loc, rmax, rup_meta_file_tr, rup_meta_file_tr_rmax,
-                        rup_seg_file, pt_src_file, rup_group_file, rup_per_group,
-                        flag_include_point_source=True, file_type='txt'):
-
-    ## read list of rupture segments in source model
-    with open(rup_seg_file, 'r') as read_file:
-        list_rup_seg = json.load(read_file)
-    read_file.close()
+# -----------------------------------------------------------
+def setup_opensha(setup_config, other_config_param, site_data):
+    """
+    Sets up interface to OpenSHA to retrieve GM predictions
     
-    ## read list of point sources in source model
-    list_pt_src = np.loadtxt(pt_src_file)
+    """
     
-    ## check site locations against all rupture segments and see if shortest distance is within rmax
-    seg_pass_rmax = []
-    for seg in list_rup_seg:
-        flag_rmax = check_rmax(site_loc,list_rup_seg[seg]['trace'],'seg',rmax)
-        if flag_rmax == True:
-            seg_pass_rmax.append(int(seg))
-    logging.info(f"\tObtained list of {len(seg_pass_rmax)} segments that are within {rmax} km of site locations")
+    # Get Locations
+    locs = site_data[['Latitude','Longitude']].values
+    vs30 = site_data['VS30 (m/s)'].values
     
-    ## check if point sources are needed
-    if flag_include_point_source:
-        ## check site locations against all point sources and see if shortest distance is within rmax
-        pt_src_pass_rmax = []
-        for pt_src in list_pt_src:
-            flag_rmax = check_rmax(site_loc,pt_src[1:3],'pt',rmax)
-            if flag_rmax == True:
-                pt_src_pass_rmax.append(int(pt_src[0]))
-        logging.info(f"\tObtained list of {len(pt_src_pass_rmax)} point sources that are within {rmax} km of site locations")
+    # Initialize ERF
+    logging.info(f"\n\n     *****Runtime messages from OpenSHA*****\n")
+    erf_name = setup_config['IntensityMeasure']['SourceParameters']['SeismicSourceModel']
+    erf = getERF(erf_name, update_flag=True)
+    logging.info(f"\n\n     *****Runtime messages from OpenSHA*****\n")
+    logging.info(f'\t... initialized ERF "{erf_name}"')
+    
+    # Initialize IMR
+    gmpe_name = setup_config['IntensityMeasure']['SourceParameters']['GroundMotionModel']
+    try:
+        imr = CreateIMRInstance(gmpe_name)
+        logging.info(f'\t... created instance of IMR "{gmpe_name}"')
+    except:
+        print('Please check GMPE name.')
+        return 1, station_info
+    
+    # Set user-defined Vs30
+    siteSpec = [{
+        'Location': {
+            'Latitude': locs[i,0],
+            'Longitude': locs[i,1]
+        },
+        'Vs30': vs30[i]
+    } for i in range(len(locs))]
+    sites = get_site_prop(imr, siteSpec)
+    logging.info(f"\t... set Vs30 to sites")
+    
+    # Set max distance
+    if setup_config['IntensityMeasure']['SourceParameters']['Filter']['Distance']['ToInclude']:
+        r_max = setup_config['IntensityMeasure']['SourceParameters']['Filter']['Distance']['Maximum']
+        imr.setUserMaxDistance(r_max)
+        logging.info(f"\t... set max distance to {r_max} km")
+    
+    #
+    return erf, imr, sites
+
+
+# -----------------------------------------------------------
+def filter_ruptures(erf, locs, filter_criteria, rupture_list, save_name,
+                    rup_seg_file, pt_src_file):
+    """
+    Filter rupture scenarios; locs should be in [lon,lat] order
+    
+    """
+    
+    # convert to np array
+    rupture_list = np.asarray(rupture_list)
+
+    # filter by rate_cutoff (or return period)
+    if 'ReturnPeriod' in filter_criteria:
+        rate_cutoff = 1/filter_criteria['ReturnPeriod']['Maximum']
+        # rupture_list = np.asarray([row for row in rupture_list if row[3] >= rate_cutoff])
+        rupture_list = rupture_list[rupture_list[:,3]>=rate_cutoff]
+        logging.info(f"\t\t... filtered scenarios with mean annual rates less than {rate_cutoff}")
+        logging.info(f"\t\t\t  length after filter by rate = {len(rupture_list)}")
+
+    # filter by magnitude range
+    if 'Magnitude' in filter_criteria:
+        mag_min = filter_criteria['Magnitude']['Minimum']
+        mag_max = filter_criteria['Magnitude']['Maximum']
+        # rupture_list = np.asarray([row for row in rupture_list if row[2] >= mag_min and row[2] <= mag_max])
+        rupture_list = rupture_list[np.where(logical_and(rupture_list[:,2]>=mag_min,rupture_list[:,2]<=mag_max))]
+        logging.info(f"\t\t... filtered scenarios with moment magnitudes outside of {mag_min} and {mag_max}")
+        logging.info(f"\t\t\t  length after filter by mag = {len(rupture_list)}")
+
+    # filter by point source
+    list_pt_src = np.loadtxt(pt_src_file) # read list of point sources in source model
+    if not 'PointSource' in filter_criteria:
+        rupture_list = rupture_list[np.where(np.in1d(rupture_list[:,0], list_pt_src[:,0],invert=True))[0]]
+        logging.info(f"\t\t... point sources removed from list of scenarios")
+        logging.info(f"\t\t\t  length after filter by pt src = {len(rupture_list)}")
+
+    # read list of rupture segments in source model
+    if 'Distance' in filter_criteria:
+        #
+        r_max = filter_criteria['Distance']['Maximum']
+        with open(rup_seg_file, 'r') as read_file:
+            list_rup_seg = json.load(read_file)
+        read_file.close()
+        # check site locations against all rupture segments and see if shortest distance is within r_max
+        seg_pass_r_max = []
+        for seg in list_rup_seg:
+            flag_r_max = check_r_max(locs,list_rup_seg[seg]['trace'],'seg',r_max)
+            if flag_r_max == True:
+                seg_pass_r_max.append(int(seg))
+        logging.info(f"\t\t... obtained list of {len(seg_pass_r_max)} segments that are within {r_max} km of site locations")
+    
+        # check if point sources are needed
+        pt_src_pass_r_max = []
+        if 'PointSource' in filter_criteria:
+            # check site locations against all point sources and see if shortest distance is within r_max
+            for pt_src in list_pt_src:
+                flag_r_max = check_r_max(locs,pt_src[1:3],'pt',r_max)
+                if flag_r_max == True:
+                    pt_src_pass_r_max.append(int(pt_src[0]))
+            logging.info(f"\t\t... obtained list of {len(pt_src_pass_r_max)} point sources that are within {r_max} km of site locations")
+
+        # get rupture section class from OpenSHA through EQHazard
+        _, rupSourceSections = get_rupture_set(erf)
+        
+        # compare list of rupture segments that are wihtin r_max and with the rupture segments in each source
+        rupture_list_temp = []
+        for i in range(len(rupture_list)):
+            try:
+                # get list of rupture segments for current source index
+                listSeg = list(rupSourceSections[int(rupture_list[i,0])].toArray())
+                # check for common members of rupture segments
+                if check_common_member(listSeg,seg_pass_r_max):
+                    rupture_list_temp.append(rupture_list[i])
+            except:
+                # check source index for point source with those that pass r_max
+                if rupture_list[i,0] in pt_src_pass_r_max:
+                    rupture_list_temp.append(rupture_list[i])
+        rupture_list = np.asarray(rupture_list_temp)
+        logging.info(f"\t\t... filtered scenarios that are more than {r_max} km from sites")
+        logging.info(f"\t\t\t  length after filter by rmax = {len(rupture_list)}")
+    
+    # store filtered list of rupture metainfo
+    if '.txt' in save_name:
+        if len(rupture_list) > 0:
+            np.savetxt(save_name, rupture_list, fmt='%i %i %6.3f %6.3e')
+        else:
+            np.savetxt(save_name, rupture_list)
     else:
-        logging.info(f"\tPoint sources not included")
+        logging.info('\t\tlimited to ".txt" output file type only')
+
+    logging.info(f"\t... filtered rupture scenarios by rmax and exported to:")
+    logging.info(f"\t\t{save_name,}")
     
-    ## import list of source indices filtered by return period only
-    gm_source_info = load_src_rup_M_rate(rup_meta_file_tr, ['all'], None)
-    src_list = gm_source_info['src']
-    rup_list = gm_source_info['rup']
-    M_list = gm_source_info['M']
-    rate_list = gm_source_info['rate']
+    # create return dictionary
+    output = {
+        'src':rupture_list[:,0].astype(np.int32),
+        'rup':rupture_list[:,1].astype(np.int32),
+        'mag':rupture_list[:,2],
+        'rate':rupture_list[:,3]}
+        
+    #
+    return output
     
-    ## get rupture section class from OpenSHA through EQHazard
-    _, rupSourceSections = set_up_get_rup()
-    
-    ## compare list of rupture segments that are wihtin rmax and with the rupture segments in each source
-    rup_meta_tr_rmax = []
-    for i in range(len(src_list)):
-        try:
-            ## get list of rupture segments for current source index
-            listSeg = list(rupSourceSections[src_list[i]].toArray())
 
-            ## check for common members of rupture segments
-            if common_member(listSeg,seg_pass_rmax):
-                rup_meta_tr_rmax.append([src_list[i],rup_list[i],M_list[i],rate_list[i]])
-        except:
-            ## check if point sources are needed
-            if flag_include_point_source:
-                ## check source index for point source with those that pass rmax
-                if src_list[i] in pt_src_pass_rmax:
-                    rup_meta_tr_rmax.append([src_list[i],rup_list[i],M_list[i],rate_list[i]])
-            else:
-                pass
-    logging.info(f"\tObtained list of {len(rup_meta_tr_rmax)} sources indices that are within {rmax} km of site locations")
-
-    ## store filtered list of rupture metainfo
-    ## to txt format
-    if '.'+file_type in rup_meta_file_tr_rmax:
-        np.savetxt(rup_meta_file_tr_rmax, rup_meta_tr_rmax, fmt='%i %i %6.4f %6.4e')
-
-    ## to hdf5 format
-    elif '.'+file_type in rup_meta_file_tr_rmax:
-        # rup_meta_tr_rmax = np.transpose(np.asarray(rup_meta_tr_rmax))
-        rup_meta_tr_rmax = np.transpose(rup_meta_tr_rmax)
-        ##
-        with h5py.File(rup_meta_file_tr_rmax, 'w') as f:
-            dset1 = f.create_dataset('src', data=rup_meta_tr_rmax[0].astype(np.int32))
-            dset2 = f.create_dataset('rup', data=rup_meta_tr_rmax[1].astype(np.int32))
-            dset3 = f.create_dataset('M', data=rup_meta_tr_rmax[2])
-            dset4 = f.create_dataset('rate', data=rup_meta_tr_rmax[3])
-        f.close()
-    
-    ## generate and store list of rupture groups
-    n_rup_groups = int(np.ceil(len(rup_meta_tr_rmax)/rup_per_group))
-    print(len(rup_meta_tr_rmax),rup_per_group)
-    print(n_rup_groups)
-    list_rup_group = [str(rup_per_group*i)+'_'+str(rup_per_group*(i+1)-1) for i in range(n_rup_groups)]
-    np.savetxt(rup_group_file,list_rup_group,fmt='%s')
-    logging.info(f"\tNumber of rupture groups = {n_rup_groups}")
-
-
-#####################################################################################################################
-##### check for list of rupture segments that are within rmax
-#####################################################################################################################
-def check_rmax(site_loc,seg_trace,seg_type,rmax):
+# -----------------------------------------------------------
+def check_r_max(locs, seg_trace, seg_type, r_max):
     """
-    check for list of rupture segments that are within rmax
+    check for list of rupture segments that are within r_max; locs in (lon, lat)
     
     """
-    ##
-    if seg_type == 'seg':
-        ##
+
+    #
+    if seg_type == 'seg': # finite source
         for i in range(len(seg_trace)-1):
             seg_sub = [seg_trace[i][:2],seg_trace[i+1][:2]]
-            ##
-            for site_j in site_loc:
-                ##
+            for site_j in locs:
                 _,dist = get_closest_pt(site_j,seg_sub)
-                ##
-                if dist <= rmax:
-                    ##
+                if dist <= r_max:
                     return True
-        ##
         return False
 
-    elif seg_type == 'pt':
-        ##
-        for site_j in site_loc:
-            ##
+    elif seg_type == 'pt': # point source
+        for site_j in locs:
             dist = get_haversine_dist(site_j[0],site_j[1],seg_trace[0],seg_trace[1])
-            ##
-            if dist <= rmax:
-                ##
+            if dist <= r_max:
                 return True
-        ##
         return False
     
 
-#####################################################################################################################
-def set_up_get_rup():
-
-    #Initializing the interface to EQHazardCalc
-    calc = EQHazardCalc()
-
-    #Create UCERF3 instance
-    ucerf3 = calc.getERF("Mean UCERF3 FM3.1")
-
+# -----------------------------------------------------------
+def get_rupture_set(erf):
     #Read the fault system solution
-    sol = ucerf3.getSolution()
+    sol = erf.getSolution()
 
     #Read the rupture set
     rupSet = sol.getRupSet()
@@ -189,273 +265,18 @@ def set_up_get_rup():
     return rupSet, rupSourceSections
 
 
-#####################################################################################################################
-def get_fault_xing(processor, start_loc, end_loc, trace_dir, intersect_dir, rup_meta_file, ind_range=['all']):
-
-    ## create line shapes with start-end locations
-    lines = [LineString([start_loc[i],end_loc[i]]) for i in range(len(start_loc))]
-
-    #Initializing the interface to EQHazardCalc
-    calc = EQHazardCalc()
-
-    #Create UCERF3 instance
-    ucerf3 = calc.getERF("Mean UCERF3 FM3.1")
-
-    #Read the fault system solution
-    sol = ucerf3.getSolution()
-
-    #Read the rupture set
-    rupSet = sol.getRupSet()
-
-    #Get the number of section
-    numSections = rupSet.getNumSections()
-
-    #Map rupture sources to sections
-    rupSourceSections = rupSet.getSectionIndicesForAllRups()
-
-    ##
-    gm_source_info = load_src_rup_M_rate(rup_meta_file, ind_range)
-    
-    ##
-    for src_unique_i in np.unique(gm_source_info['src']):
-    
-        ## get traces
-        coords = get_trace(processor, rupSet, rupSourceSections, src_unique_i, trace_dir)
-    
-        ## get intersections
-        get_intersect(src_unique_i, coords, lines, intersect_dir)
-
-
-#####################################################################################################################
-def get_trace(processor, rupSet, rupSourceSections, src_unique_i, saveDir):
-    """
-    """
-    
-    ## define save file
-    saveFile = os.path.join(saveDir,'src_'+str(src_unique_i)+'.txt')
-    
-    try:
-        ## get list of segments
-        listSeg = np.asarray(rupSourceSections[src_unique_i].toArray())
-
-        ## get list of nodes for all segments in current source
-        nodes = []
-        for j in range(len(listSeg)):
-            section = rupSet.getFaultSectionData(listSeg[j])
-            trace = section.getFaultTrace()
-            for point in trace:
-                nodes.append([point.getLongitude(),point.getLatitude(),point.getDepth()])
-        nodes = np.asarray(nodes)
-        
-    except:
-        ## point sources
-        processor.setCurrentRupture(src_unique_i,0)
-        rupture = processor.getRupture()
-        surface = rupture.getRuptureSurface()
-        nodes = np.asarray([[surface.getLocation().getLongitude(),
-                            surface.getLocation().getLatitude(),
-                            surface.getLocation().getDepth()]])
-    
-    ## pull lon lat
-    coords = np.transpose([nodes[:,0],nodes[:,1]])
-    
-    ## save trace into file
-    np.savetxt(saveFile,nodes,fmt='%10.8f')
-    
-    ##
-    return coords
-    
-    
-#####################################################################################################################
-def get_intersect(src_unique_i, coords, lines, saveDir):
-    """
-    """
-    
-    ## define save file
-    saveFile = os.path.join(saveDir,'src_'+str(src_unique_i)+'.txt')
-
-    if len(coords) == 1:
-        ## point source, no intersection
-        intersect = np.array([])
-
-    else:
-        ## create linestring shape using coordinates of segments
-        rup_shape = LineString(coords)
-        
-        ##
-        intersect = [j for j, line in enumerate(lines) if line.intersects(rup_shape)]
-
-    ## save intersections into file
-    np.savetxt(saveFile,intersect,fmt='%i')
-
-
-#####################################################################################################################
-##
-def init_processor(case_to_run, path_siteloc, path_vs30=None, numThreads=1, rmax_cutoff=100):
-    """
-    Setup processor to save run time
-    
-    multiple cases to run:
-    1 = get vs30 from OpenSHA
-    2 = get list of rupture scenarios passing criteria
-    3 = get GM predictions from OpenSHA
-    
-    """
-    
-    #locations = ReadLocations()#Read a specific number of locations
-    logging.debug(f"read locations")
-    locations = ReadLocations(path_siteloc)
-    
-    #Initializing the interface to EQHazard
-    logging.debug(f"initialize processor")
-    processor = initEQHazardInterface(numThreads) #Using 4 threads
-    
-    #Setting locations
-    logging.debug(f"set locations")
-    processor.setLocations(locations)
-
-    ##
-    if case_to_run == 1:
-        #Calculate Vs30 and save it, if needed (e.g. new set of nodes)
-        processor.obtainVs30()
-        vs30 = processor.getVs30()
-        saveJArray(vs30, path_vs30)
-        
-    ##
-    else:
-        #Load Vs30 from a file if we had it saved to save time
-        logging.debug(f"load Vs30 into OpenSHA")
-        vs30 = loadJArray(path_vs30)
-        processor.setVs30(vs30)
-        logging.debug("Vs30: {}....".format(vs30[0:5]))
-        
-        #Setting max distance (cut-off)
-        logging.debug(f"set rmax")
-        processor.setMaxDistance(rmax_cutoff)
-            
-        ##
-        return processor
-    
-    
-#####################################################################################################################
-def runHazardAnalysis(processor, rup_meta_file, ind_range, saveDir, store_file_type='npz', list_out=None,
-                        list_im=['pga','pgv'], list_param=['mean','inter','intra']):
-    """
-    Main entry method to run the hazard analysis
-    """
-    #Setting logging level (e.g. DEBUG or INFO)
-    # setLogging(logging.DEBUG)
-    
-    ## get list of outputs
-    if list_out is None:
-        list_out = []
-        for im_i in list_im:
-            for param_j in list_param:
-                list_out.append(im_i+'_'+param_j)
-    
-    ## Load sources, ruptures, rates and mags from pre-run
-    logging.debug(f"get src and rup indices")
-    gm_source_meta = load_src_rup_M_rate(rup_meta_file, processor, ind_range)
-    # np.savetxt(r'C:\Users\barry\Desktop\opensra_results_for_chris\src.txt',gm_source_meta['src'])
-    # np.savetxt(r'C:\Users\barry\Desktop\opensra_results_for_chris\rup.txt',gm_source_meta['rup'])
-    # np.savetxt(r'C:\Users\barry\Desktop\opensra_results_for_chris\M.txt',gm_source_meta['M'])
-    # np.savetxt(r'C:\Users\barry\Desktop\opensra_results_for_chris\rate.txt',gm_source_meta['rate'])
-    # sys.exit()
-    
-    ## get IM predictions
-    out = np.asarray([get_IM_from_opensha(processor, gm_source_meta['src'][i],
-                                        gm_source_meta['rup'][i]) for i in range(len(gm_source_meta['src']))])
-
-    ## get shape of output file
-    shape = out.shape
-    
-    ## convert to sparse matrix and export
-    for i in range(len(list_out)):
-        saveName = os.path.join(saveDir,list_out[i]+'.'+store_file_type)
-        if 'mean' in list_out[i]:
-            out_i = np.reshape(out[:,[i][:]],[shape[0],shape[2]])
-            ## add 10 to all values to get invalid values (-10) to 0 for conversion to sparse matrix
-            out_i = out_i+10
-            # zero_loc = out_i<-9.9 # find where values = -10 (cases that exceed rmax)
-            # out_i = np.round(np.exp(out_i),decimals=4)
-            # out_i[zero_loc] = 0
-            if store_file_type == 'npz':
-                sparse.save_npz(saveName, sparse.csc_matrix(out_i)) # csc matrix is more efficient for large number of sites, where columns = sites
-                # sparse.save_npz(saveName, sparse.csc_matrix(np.reshape(out[:,[i][:]],[shape[0],shape[2]])+10))
-            elif store_file_type == 'txt':
-                coo_mat = sparse.coo_matrix(out_i) # coo matrix is easier to understand and reconstruct
-                np.savetxt(saveName,np.transpose([coo_mat.row,coo_mat.col,coo_mat.data-10]),fmt='%i %i %5.3f')
-        else:
-            if store_file_type == 'npz':
-                sparse.save_npz(saveName, sparse.csc_matrix(np.reshape(out[:,[i][:]],[shape[0],shape[2]]))) # csc matrix is more efficient for large number of sites, where columns = sites
-            elif store_file_type == 'txt':
-                coo_mat = sparse.coo_matrix(np.reshape(out[:,[i][:]],[shape[0],shape[2]]))  # coo matrix is easier to understand and reconstruct
-                np.savetxt(saveName,np.transpose([coo_mat.row,coo_mat.col,coo_mat.data]),fmt='%i %i %5.3f')
-    
-    out = None
-    ##
-    # return out
-    
-    
-#####################################################################################################################
-def get_IM_from_opensha(proc, src_ind, rup_ind):
-    """
-    get PGA and PGV means and stdevs from OpenSHA
-    """
-    logging.debug(f"==============src = {src_ind}, rup = {rup_ind}=========================")
-    
-    #Setting the current rupture
-    logging.debug(f"set current scenario")
-    proc.setCurrentRupture(src_ind, rup_ind)
-    
-    #Calculating distances for all sites from the current rupture surface
-    logging.debug(f"calculate distances")
-    proc.calculateDistances()
-
-    #Setting the Intensity measured needed
-    logging.debug(f"calculate PGA")
-    proc.setIM('PGA')
-    
-    #Calculating intensity measures using GMM
-    proc.calculateIMs()
-    
-    #Reading the calculated means
-    # pgaMean = np.round(proc.getMeans(),decimals=3)
-    pgaMean = np.round(proc.getMeans(),decimals=6)
-    #Reading the calculated Std. Devs.
-    pgaInter = np.round(proc.getInterEvStdDevs(),decimals=3)
-    pgaIntra = np.round(proc.getIntraEvStdDevs(),decimals=3)
-    
-    #Setting the Intensity measured needed
-    logging.debug(f"calculate PGV")
-    proc.setIM('PGV')
-    
-    #Calculating intensity measures using GMM
-    proc.calculateIMs()
-    
-    #Reading the calculated means
-    # pgvMean = np.round(proc.getMeans(),decimals=3)
-    pgvMean = np.round(proc.getMeans(),decimals=6)
-    #Reading the calculated Std. Devs.
-    pgvInter = np.round(proc.getInterEvStdDevs(),decimals=3)
-    pgvIntra = np.round(proc.getIntraEvStdDevs(),decimals=3)
-    
-    ##
-    return pgaMean, pgaInter, pgaIntra, pgvMean, pgvInter, pgvIntra
-    
-    
-#####################################################################################################################
-def load_src_rup_M_rate(rup_meta_file, proc=None, ind_range=['all'], rate_cutoff=1/10000,
+# -----------------------------------------------------------
+def get_src_rup_M_rate(erf=None, rupture_list_file=None, ind_range=['all'], rate_cutoff=None,
                         rup_group_file=None, rup_per_group=None, file_type='txt'):
     """
-    Load sources, ruptures, rates, and mags from pre-run. If **rup_meta_file** doesn't exist, compute and export
+    Gets sources, ruptures, rates, and mags from OpenSHA and metadata exported. If metadata file already exists, use existing.
     
     Parameters
     ----------
-    rup_meta_file : str
-        file name of the hdf5 file containing the information
+    rupture_list_file : str
+        file name of the file containing rupture metadata
     proc : object
-        OpenSHA processor object; used if **rup_meta_file** does not exist to obtain source parameters
+        OpenSHA processor object; used if **rupture_list_file** does not exist to obtain source parameters
     ind_range : str/list, optional
         define indices to extract source parameters for: options are **['all']**, **[index]** or **[low, high]** (brackets are required; replace index, low, and high with integers)
     
@@ -466,103 +287,59 @@ def load_src_rup_M_rate(rup_meta_file, proc=None, ind_range=['all'], rate_cutoff
     
     """
     
-    ## see if extension is provided, if not, add it
-    if not '.'+file_type in rup_meta_file:
-        rup_meta_file = rup_meta_file+'.'+file_type
-    # if not '.hdf5' in rup_meta_file:
-        # rup_meta_file = rup_meta_file+'.hdf5'
-    # if not '.txt' in rup_meta_file:
-    #     rup_meta_file = rup_meta_file+'.txt'
-    
-    ## initialize dictionaries
-    gm_source_info = {'src':None,'rup':None,'M':None,'rate':None}
-    keys = list(gm_source_info)
-    
-    ## see if rup_meta_file already exists
-    if os.path.exists(rup_meta_file):
+    # see rupture_list_file is given
+    if rupture_list_file is None:
+        # get and store rates and Mw
+        nSources = erf.getNumSources()
+        if rate_cutoff is None: # no cutoff on rate
+            src_rup = [[i, j]+get_mag_rate(erf,i,j)
+                        for i in range(nSources) for j in range(erf.getNumRuptures(i))]
+        else: # apply rate_cutoff
+            src_rup = [[i, j]+get_mag_rate(erf,i,j)
+                        for i in range(nSources) for j in range(erf.getNumRuptures(i))
+                        if get_mag_rate(erf, i,j)[1] > rate_cutoff]
+        #
+        return src_rup
+    else:
+        # see if extension is provided, if not, add it
+        if not '.'+file_type in rupture_list_file:
+            rupture_list_file = rupture_list_file+'.'+file_type
 
-        ## load rup_meta_file
-
-        ## txt file format
+        # initialize dictionaries
+        src_rup = {'src':None,'rup':None,'mag':None,'rate':None}
+        # load rupture_list_file
+        # txt file format
         if 'txt' in file_type:
-            f = np.loadtxt(rup_meta_file,unpack=True)
+            f = np.loadtxt(rupture_list_file,unpack=True)
             if len(ind_range) == 1:
                 if ind_range[0] == 'all':
-                    gm_source_info['src'] = f[0].astype(np.int32)
-                    gm_source_info['rup'] = f[1].astype(np.int32)
-                    gm_source_info['M'] = f[2]
-                    gm_source_info['rate'] = f[3]
+                    src_rup['src'] = f[0].astype(np.int32)
+                    src_rup['rup'] = f[1].astype(np.int32)
+                    src_rup['mag'] = f[2]
+                    src_rup['rate'] = f[3]
                 else:
-                    gm_source_info['src'] = f[0,ind_range[0]].astype(np.int32)
-                    gm_source_info['rup'] = f[1,ind_range[0]].astype(np.int32)
-                    gm_source_info['M'] = f[2,ind_range[0]]
-                    gm_source_info['rate'] = f[3,ind_range[0]]
+                    src_rup['src'] = f[0,ind_range[0]].astype(np.int32)
+                    src_rup['rup'] = f[1,ind_range[0]].astype(np.int32)
+                    src_rup['mag'] = f[2,ind_range[0]]
+                    src_rup['rate'] = f[3,ind_range[0]]
             elif len(ind_range) == 2:
-                gm_source_info['src'] = f[0,ind_range[0]:ind_range[1]].astype(np.int32)
-                gm_source_info['rup'] = f[1,ind_range[0]:ind_range[1]].astype(np.int32)
-                gm_source_info['M'] = f[2,ind_range[0]:ind_range[1]]
-                gm_source_info['rate'] = f[3,ind_range[0]:ind_range[1]]
-
-        ## hdf5 file format
-        elif 'hdf5' in file_type:
-            with h5py.File(rup_meta_file, 'r') as f:
-                if len(ind_range) == 1:
-                    if ind_range[0] == 'all':
-                        for key in keys:
-                            gm_source_info[key] = f.get(key)[:]
-                    else:
-                        for key in keys:
-                            gm_source_info[key] = f.get(key)[ind_range[0]]
-                elif len(ind_range) == 2:
-                    for key in keys:
-                        gm_source_info[key] = f.get(key)[ind_range[0]:ind_range[1]]
-            f.close()
-
-        ##
-        return gm_source_info
-        # return src, rup, M, rate
+                src_rup['src'] = f[0,ind_range[0]:ind_range[1]].astype(np.int32)
+                src_rup['rup'] = f[1,ind_range[0]:ind_range[1]].astype(np.int32)
+                src_rup['mag'] = f[2,ind_range[0]:ind_range[1]]
+                src_rup['rate'] = f[3,ind_range[0]:ind_range[1]]
+        #
+        return src_rup
+ 
     
-    else:
-        ## get and store rates and Mw
-        nSources = proc.getNumSources()
-        src_rup = [[i, j, get_M_rate(proc,i,j)[1], get_M_rate(proc,i,j)[0]]
-                    for i in range(nSources) for j in range(proc.getNumRuptures(i))
-                    if get_M_rate(proc, i,j)[0] > rate_cutoff]
-
-        ## write to txt format
-        if 'txt' in file_type:
-            np.savetxt(rup_meta_file, src_rup, fmt='%i %i %6.4f %6.4e')
-
-        ## write to hdf5 format
-        elif 'hdf5' in file_type:
-            ## restructure datafile
-            src_rup = np.transpose(src_rup)
-            ##
-            with h5py.File(rup_meta_file, 'w') as f:
-                dset1 = f.create_dataset('src', data=src_rup[0].astype(np.int32))
-                dset2 = f.create_dataset('rup', data=src_rup[1].astype(np.int32))
-                dset3 = f.create_dataset('M', data=src_rup[2])
-                dset4 = f.create_dataset('rate', data=src_rup[3])
-            f.close()
-
-        ## generate rupture group file
-        if rup_group_file is not None:
-            ## generate and store list of rupture groups
-            n_rup_groups = int(np.ceil(len(src_rup[0])/rup_per_group))
-            list_rup_group = [str(rup_per_group*i)+'_'+str(rup_per_group*(i+1)-1) for i in range(n_rup_groups)]
-            np.savetxt(rup_group_file,list_rup_group,fmt='%s')
-            logging.info(f"\tNumber of rupture groups = {n_rup_groups} (each group contains {rup_per_group} ruptures)")
-    
-    
-#####################################################################################################################
-def get_M_rate(proc, src, rup):
+# -----------------------------------------------------------
+def get_mag_rate(erf, src, rup):
     """
-    This extracts the mean annual rate and moment magnitude for a given scenario (source + rupture index)
+    This extracts the mean annual rate and moment magnitude for target scenario (source + rupture index)
     
     Parameters
     ----------
-    proc : object
-        OpenSHA processor object
+    erf : object
+        OpenSHA ERF object
     src : int
         source index used by OpenSHA
     rup : int
@@ -570,80 +347,294 @@ def get_M_rate(proc, src, rup):
         
     Returns
     -------
-    M : float
+    mag : float
         moment magnitude of scenario
     rate : float
         mean annual rate for scenario
     
     """
-    #Setting the current rupture
-    proc.setCurrentRupture(src, rup)
-    #Get the current rupture and reading magnitude and rate
-    rup = proc.getRupture()
-    return [rup.getMeanAnnualRate(1), rup.getMag()]
-    
-    
-#####################################################################################################################
-def saveJArray(array, filename):
+    # Set current scenario
+    rup = erf.getSource(src).getRupture(rup)
+    # Return mean annual rate and moment magnitude
+    return [rup.getMag(), rup.getMeanAnnualRate(1)]
+
+
+# -----------------------------------------------------------
+def get_IM(erf, imr, sites, src_list, rup_list, list_im=['PGA','PGV'],
+    saveDir=None, store_file_type='txt', r_max=10000):
     """
-    Save Java array to a text file one value per line
+    Get IM from OpenSHA; developed by Kuanshi Zhong (SimCenter), modified by Barry Zheng
+    
     """
-    values = []
-    for value in array:
-        values.append(str(value) + '\n')
     
-    with open(filename, 'w+') as arrayFile:
-        arrayFile.writelines(values)
+    # IM param map to save name
+    list_param = {
+        'Mean': 'mean',
+        'InterEvStdDev': 'stdev_inter',
+        'IntraEvStdDev': 'stdev_intra',
+        'TotalStdDev': 'stdev_total'}
+    # Get available stdDev options
+    try:
+        stdDevParam = imr.getParameter(StdDevTypeParam.NAME)
+        hasIEStats = stdDevParam.isAllowed(StdDevTypeParam.STD_DEV_TYPE_INTER) and \
+            stdDevParam.isAllowed(StdDevTypeParam.STD_DEV_TYPE_INTRA)
+    except:
+        stdDevParam = None
+        hasIEStats = False
+    # Set up output
+    shape = (len(src_list),len(sites))
+    output = {}
+    for im in list_im:
+        output[im] = {'Mean': np.zeros(shape)}
+        output[im].update({'TotalStdDev': np.zeros(shape)})
+        if hasIEStats:
+            output[im].update({'InterEvStdDev': np.zeros(shape)})
+            output[im].update({'IntraEvStdDev': np.zeros(shape)})
+    # Loop through scenarios
+    for i in range(len(src_list)):
+        # Setting up imr
+        currentRupture = erf.getSource(src_list[i]).getRupture(rup_list[i])
+        imr.setEqkRupture(currentRupture)
+        # Looping over sites
+        for j in range(len(sites)):
+            # Set up the site in the imr
+            imr.setSite(sites[j])
+            # Get distance with rupture
+            DistanceRup = imr.getStdDevIndependentParams().getValue('DistanceRup')
+            DistanceJB = imr.getStdDevIndependentParams().getValue('DistanceJB')
+            # loop through IM
+            for im in list_im:
+                # Check if distances are within r_max, and get value only if true
+                if DistanceRup <= r_max and DistanceJB <= r_max:                    
+                    imr.setIntensityMeasure(im)
+                    output[im]['Mean'][i,j] = float(np.exp(imr.getMean()))
+                    output[im]['TotalStdDev'][i,j] = float(imr.getStdDev())
+                    if hasIEStats:
+                        stdDevParam.setValue(StdDevTypeParam.STD_DEV_TYPE_INTER)
+                        output[im]['InterEvStdDev'][i,j] = float(imr.getStdDev())
+                        stdDevParam.setValue(StdDevTypeParam.STD_DEV_TYPE_INTRA)
+                        output[im]['IntraEvStdDev'][i,j] = float(imr.getStdDev())
+    # Convert to COO matrix and export if saveDir is given
+    for im_i in list_im:
+        for param_j in output[im_i].keys():
+            output[im_i][param_j] = sparse.coo_matrix(output[im_i][param_j])
+            if saveDir is not None:
+                saveName = os.path.join(saveDir,im_i,list_param[param_j]+'.'+store_file_type)
+                np.savetxt(saveName,output[im_i][param_j].toarray(),fmt='%5.3f')
+    #
+    return output
     
     
-#####################################################################################################################
-def loadJArray(filename):
+# -----------------------------------------------------------
+def get_site_prop(imr, siteSpec):
     """
-    Load Java array from a text file
-    """
-    with open(filename, 'r') as arrayFile:
-        lines = arrayFile.readlines()
-        array = JArray(JDouble)(len(lines))
-        
-        for i in range(len(lines)):
-            array[i] = float(lines[i])
-        
-        return array
+    Get and update site properties; developed by Kuanshi Zhong (SimCenter), modified by Barry Zheng
     
-    
-#####################################################################################################################
-def ReadLocations(path_siteloc,count=None):
     """
-    This method reads the locations from the csv file
+
+    # GMPE
+    # try:
+        # imr = CreateIMRInstance(gmpe_name)
+    # except:
+        # print('Please check GMPE name.')
+        # return 1
+    # Site data
+    sites = ArrayList()
+    for cur_site in siteSpec:
+        cur_loc = Location(cur_site['Location']['Latitude'], cur_site['Location']['Longitude'])
+        sites.add(Site(cur_loc))
+    siteDataProviders = OrderedSiteDataProviderList.createSiteDataProviderDefaults()
+    try:
+        availableSiteData = siteDataProviders.getAllAvailableData(sites)
+    except:
+        print('Error in getAllAvailableData')
+        return 1
+    siteTrans = SiteTranslator()
+    # Looping over all sites
+    # site_prop = []
+    for i in range(len(siteSpec)):
+        site_tmp = dict()
+        # Current site
+        site = sites.get(i)
+        # Location
+        cur_site = siteSpec[i]
+        locResults = {'Latitude': cur_site['Location']['Latitude'],
+                      'Longitude': cur_site['Location']['Longitude']}
+        cur_loc = Location(cur_site['Location']['Latitude'], cur_site['Location']['Longitude'])
+        siteDataValues = ArrayList()
+        for j in range(len(availableSiteData)):
+            siteDataValues.add(availableSiteData.get(j).getValue(i))
+        imrSiteParams = imr.getSiteParams()
+        siteDataResults = []
+        # Setting site parameters
+        for j in range(imrSiteParams.size()):
+            siteParam = imrSiteParams.getByIndex(j)
+            newParam = Parameter.clone(siteParam)
+            siteDataFound = siteTrans.setParameterValue(newParam, siteDataValues)
+            if (str(newParam.getName())=='Vs30' and bool(cur_site.get('Vs30', None))):
+                newParam.setValue(Double(cur_site['Vs30']))
+                siteDataResults.append({'Type': 'Vs30',
+                                        'Value': float(newParam.getValue()),
+                                        'Source': 'User Defined'})
+            elif (str(newParam.getName())=='Vs30 Type' and bool(cur_site.get('Vs30', None))):
+                newParam.setValue("Measured")
+                siteDataResults.append({'Type': 'Vs30 Type',
+                                        'Value': 'Measured',
+                                        'Source': 'User Defined'})
+            elif siteDataFound:
+                provider = "Unknown"
+                provider = get_DataSource(newParam.getName(), siteDataValues)
+                if 'String' in str(type(newParam.getValue())):
+                    tmp_value = str(newParam.getValue())
+                elif 'Double' in str(type(newParam.getValue())):
+                    tmp_value = float(newParam.getValue())
+                    if str(newParam.getName())=='Vs30':
+                            cur_site.update({'Vs30': tmp_value})
+                else:
+                    tmp_value = str(newParam.getValue())
+                siteDataResults.append({'Type': str(newParam.getName()),
+                                        'Value': tmp_value,
+                                        'Source': str(provider)})
+            else:
+                newParam.setValue(siteParam.getDefaultValue())
+                siteDataResults.append({'Type': str(siteParam.getName()),
+                                        'Value': float(siteParam.getDefaultValue()),
+                                        'Source': 'Default'})
+            site.addParameter(newParam)
+            # End for j
+        # Updating site specifications
+        # siteSpec[i] = cur_site
+        site_tmp.update({'Location': locResults,
+                         'SiteData': siteDataResults})
+        # site_prop.append(site_tmp)
+
+    # Return
+    # return siteSpec, sites, site_prop
+    return sites
+
+
+# -----------------------------------------------------------
+def get_DataSource(paramName, siteData):
     """
-    lines = []
+    Fetch data source; developed by Kuanshi Zhong (SimCenter)
     
-    # Reading all lines in the file
-    with open(path_siteloc, 'r') as locationsFile:
-    # with open('seg_node_full_1k.txt', 'r') as locationsFile:
-        lines = locationsFile.readlines()
-    if count:
-        locations = JArray(Location)(count)
+    """
+    
+    typeMap = SiteTranslator.DATA_TYPE_PARAM_NAME_MAP
+    for dataType in typeMap.getTypesForParameterName(paramName):
+        if dataType == SiteData.TYPE_VS30:
+            for dataValue in siteData:
+                if dataValue.getDataType() != dataType:
+                    continue
+                vs30 = Double(dataValue.getValue())
+                if (not vs30.isNaN()) and (vs30 > 0.0):
+                    return dataValue.getSourceName()
+        elif (dataType == SiteData.TYPE_DEPTH_TO_1_0) or (dataType == SiteData.TYPE_DEPTH_TO_2_5):
+             for dataValue in siteData:
+                if dataValue.getDataType() != dataType:
+                    continue
+                depth = Double(dataValue.getValue())
+                if (not depth.isNaN()) and (depth > 0.0):
+                    return dataValue.getSourceName()
+    return 1
+
+
+# -----------------------------------------------------------
+def getERF(erf_name, update_flag):
+    """
+    get ERF; developed by Kuanshi Zhong (SimCenter); modified by Barry Zheng
+    
+    """
+    
+    # Available SSC and names to use in setup configuration:
+    #     WGCEP (2007) UCERF2 - Single Branch
+    #     USGS/CGS 2002 Adj. Cal. ERF
+    #     WGCEP UCERF 1.0 (2005)
+    #     Mean UCERF3
+    #     Mean UCERF3 FM3.1
+    #     Mean UCERF3 FM3.2
+    #     WGCEP Eqk Rate Model 2 ERF
+    
+    # Initialization
+    erf = None
+    # ERF model options
+    if erf_name == 'WGCEP (2007) UCERF2 - Single Branch':
+        erf = MeanUCERF2()
+    elif erf_name == 'USGS/CGS 2002 Adj. Cal. ERF':
+        erf = Frankel02_AdjustableEqkRupForecast()
+    elif erf_name == 'WGCEP UCERF 1.0 (2005)':
+        erf = WGCEP_UCERF1_EqkRupForecast()
+    elif erf_name == 'Mean UCERF3':
+        tmp = MeanUCERF3()
+        tmp.setPreset(MeanUCERF3.Presets.BOTH_FM_BRANCH_AVG)
+        erf = tmp
+        del tmp
+    elif erf_name == 'Mean UCERF3 FM3.1':
+        tmp = MeanUCERF3()
+        tmp.setPreset(MeanUCERF3.Presets.FM3_1_BRANCH_AVG)
+        erf = tmp
+        del tmp
+    elif erf_name == 'Mean UCERF3 FM3.2':
+        tmp = MeanUCERF3()
+        tmp.setPreset(MeanUCERF3.Presets.FM3_2_BRANCH_AVG)
+        erf = tmp
+        del tmp
+    elif erf_name == 'WGCEP Eqk Rate Model 2 ERF':
+        erf = UCERF2()
     else:
-        locations = JArray(Location)(len(lines))
+        print('Please check the ERF model name.')
+
+    if erf_name and update_flag:
+        erf.updateForecast()
+    # return
+    return erf
     
-    i = 0
-    for line in lines:
-        if count and i >= count:
-            break
-        tokens = line.split(',')
-        latitude = float(tokens[1])
-        longitude = float(tokens[0])
-        locations[i] = Location(latitude, longitude)
-        i = i + 1
-    
-    return locations
-    
-    
-#####################################################################################################################
-def initEQHazardInterface(numThreads):
+
+# -----------------------------------------------------------
+def CreateIMRInstance(gmpe_name):
     """
-    This method creates and returns an instance of the RegionalProcessor class
+    create IMR instance; developed by Kuanshi Zhong (SimCenter); modified by Barry Zheng
+    
     """
-    processor = RegionalProcessor(numThreads)
-    return processor
+    
+    # Available GMMs and names to use in setup configuration:
+    #     Abrahamson, Silva & Kamai (2014)
+    #     Boore, Stewart, Seyhan & Atkinson (2014)
+    #     Campbell & Bozorgnia (2014)
+    #     Chiou & Youngs (2014)
+    #     Bommer et al. (2009)
+    #     Afshari & Stewart (2016)
+    #     NGAWest2 2014 Averaged Attenuation Relationship
+    #     NGAWest2 2014 Averaged No Idriss
+    
+    # GMPE name map
+    gmpe_map = {str(ASK_2014.NAME): ASK_2014_Wrapper.class_.getName(),
+                str(BSSA_2014.NAME): BSSA_2014_Wrapper.class_.getName(),
+                str(CB_2014.NAME): CB_2014_Wrapper.class_.getName(),
+                str(CY_2014.NAME): CY_2014_Wrapper.class_.getName(),
+                str(KS_2006_AttenRel.NAME): KS_2006_AttenRel.class_.getName(),
+                str(BommerEtAl_2009_AttenRel.NAME): BommerEtAl_2009_AttenRel.class_.getName(),
+                str(AfshariStewart_2016_AttenRel.NAME): AfshariStewart_2016_AttenRel.class_.getName(),
+                str(NGAWest_2014_Averaged_AttenRel.NAME): NGAWest_2014_Averaged_AttenRel.class_.getName(),
+                str(NGAWest_2014_Averaged_AttenRel.NGAWest_2014_Averaged_AttenRel_NoIdriss.NAME): NGAWest_2014_Averaged_AttenRel.NGAWest_2014_Averaged_AttenRel_NoIdriss.class_.getName()}
+    # Check if NGAWest2 average relationship is required
+    if 'NGAWest2 2014 Averaged' in gmpe_name:
+        # Different initialization for NGAWest2 Average IMR
+        # Second arg in class call = boolean for Idriss
+        if 'No Idriss' in gmpe_name:
+            imr = NGAWest_2014_Averaged_AttenRel(None, False)
+        else:
+            imr = NGAWest_2014_Averaged_AttenRel(None, True)
+    else:
+        # Mapping GMPE name
+        imrClassName = gmpe_map.get(gmpe_name, None)
+        if imrClassName is None:
+            return imrClassName
+        # Getting the java class
+        imrClass = Class.forName(imrClassName)
+        ctor = imrClass.getConstructor()
+        imr = ctor.newInstance()
+    # Setting default parameters
+    imr.setParamDefaults()
+    # return
+    return imr

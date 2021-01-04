@@ -16,4 +16,8 @@ __pycache__/
 **/superseded
 # src/.ipynb_checkpoints
 # src/__pycache__	
+**/temp
 
+test_arg.py
+
+lib/simcenter/opensha/erf/fault_source_connectivity.txt

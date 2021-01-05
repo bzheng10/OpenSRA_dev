@@ -1,21 +1,21 @@
 **Builds Status**
 
 | **Windows** | **Mac** |
-|---|---|---|
+|---|---|
 [![Build Status]()]()|[![Build Status]()]()
 
 # OpenSRA
-This repository contains the source code to OpenSRA_backend, developed by [Slate Geotechnical Consultants](http://slategeotech.com/), with assistance from [SimCenter @ DesignSafe](https://simcenter.designsafe-ci.org/) and [UC Berkeley](https://ce.berkeley.edu/).
+This repository contains the source code to OpenSRA_backend, developed by [Slate Geotechnical Consultants](http://slategeotech.com/), with assistance from [SimCenter@DesignSafe](https://simcenter.designsafe-ci.org/) and [UC Berkeley](https://ce.berkeley.edu/).
 
 ## User's Guide
 To run OpenSRA, nagivate to the root folder and run the command:
 ```
-Python OpenSRA.py -s PATH_TO_INPUT_FOLDER
+python OpenSRA.py -i PATH_TO_INPUT_FOLDER
 ```
 
 To clean outputs from the previous run, run the command:
 ```
-Python OpenSRA.py -s PATH_TO_INPUT_FOLDER -c yes
+python OpenSRA.py -i PATH_TO_INPUT_FOLDER -c yes
 ```
 
 ## Developer's Guide

@@ -23,7 +23,11 @@
         },
         "SourceForIM": "ShakeMap",
         "SourceParameters": {
-			"Directory": "C:/Users/BarryZheng/Desktop/Ex2_ShakeMap/Input/ShakeMap"
+			"Directory": "C:/Users/BarryZheng/Desktop/Ex2_ShakeMap/Input/ShakeMap",
+            "Events": [
+                "1989_LomaPrieta",
+                "1994_Northridge"
+            ]
 		},
         "Correlation": {
             "Spatial": {

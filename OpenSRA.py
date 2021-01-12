@@ -87,8 +87,8 @@ def main(input_dir, clean_prev_run, logging_level):
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # List of inputs that are fixed currently
-    other_config_param['Shp_GeologicUnit'] = r'lib\other\GDM_002_GMC_750k_v2_GIS\shapefiles\GMC_geo_poly.shp' # shapefile with geologic units, set path relative to OpenSRA base directory
-    other_config_param['File_GeologicUnitParam'] = r'lib\slate\Seismic_Hazard_CGS_Unit Strengths.csv' # Micaela's file with properties for geologic units, set path relative to OpenSRA base directory
+    other_config_param['Shp_GeologicUnit'] = r'lib/other/GDM_002_GMC_750k_v2_GIS/shapefiles/GMC_geo_poly.shp' # shapefile with geologic units, set path relative to OpenSRA base directory
+    other_config_param['File_GeologicUnitParam'] = r'lib/slate/Seismic_Hazard_CGS_Unit Strengths.csv' # Micaela's file with properties for geologic units, set path relative to OpenSRA base directory
     # other_config_param['im_model'] = 'mean_ngawest2' # method for ground motion prediction; Mean NGAWest2 (without I-14)
     other_config_param['Flag_SampleWithStDevTotal'] = False # True to sample from total sigma; False to sample intra- and inter-event sigmas separately then add together
     other_config_param['UniformSigmaAleatory'] = None # set value for uniform aleatory sigma; set to None to use GM predicted total sigma

@@ -59,7 +59,7 @@ def read_rup_meta(file):
 #####################################################################################################################
 ##### store IM samples
 #####################################################################################################################
-def store_im_samp(file, sample, store_file_type, n_decimals):
+def store_IM_sample(file, sample, store_file_type, n_decimals=None):
     """
     Store generated IM sample
     """
@@ -74,14 +74,15 @@ def store_im_samp(file, sample, store_file_type, n_decimals):
         
     ##
     elif store_file_type == 'txt':
-        sample = sparse.coo_matrix(sample) # coo matrix is easier to understand and reconstruct
-        np.savetxt(file,np.transpose([sample.row,sample.col,sample.data]),fmt='%i %i %f')
+        np.savetxt(file,sample.toarray(),fmt='%.3f')
+        # sample = sparse.coo_matrix(sample) # coo matrix is easier to understand and reconstruct
+        # np.savetxt(file,np.transpose([sample.row,sample.col,sample.data]),fmt='%i %i %f')
 
 
 #####################################################################################################################
 ##### Read IM samples
 #####################################################################################################################
-def read_im_samp(file_name, store_file_type, n_rup, n_site):
+def read_IM_sample(file_name, store_file_type, n_rup, n_site):
     """
     Read generated IM sample
     """

@@ -1,0 +1,179 @@
+{
+    "General": {
+		"Directory": {
+			"Working": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex2_ShakeMap_FixedResidualsForSample_noEDP_noDV"
+		},
+        "OutputFileType": "csv"
+    },
+	"UncertaintyQuantification": {
+		"Type": "MonteCarlo",
+		"Algorithm": "FixedResiduals",
+		"ListOfResiduals": [
+			-1.65,
+			0,
+			1.65
+		],
+		"Weights": [
+			0.2,
+			0.6,
+			0.2
+		]
+	},
+    "Infrastructure": {
+        "SiteDataFile": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex2_ShakeMap_FixedResidualsForSample_noEDP_noDV/Input/SiteData.csv"
+    },
+    "IntensityMeasure": {
+        "Type": {
+            "PGA": {
+                "ToAssess": true
+            },
+            "PGV": {
+                "ToAssess": true
+            }
+        },
+        "SourceForIM": "ShakeMap",
+        "SourceParameters": {
+			"Directory": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex2_ShakeMap_FixedResidualsForSample_noEDP_noDV/Input/ShakeMap",
+			"Events": [ 
+				"1989_LomaPrieta",
+				"1994_Northridge"
+			],
+			"SourceForVs30": "Wills et al. (2015)"
+		},
+        "Correlation": {
+            "Spatial": {
+                "ToInclude": false,
+                "Method": "JayaramBaker2009"
+            },
+            "Spectral": {
+                "ToInclude": false,
+                "Method": "BakerJayaram2008"
+            }
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "Liquefaction": {
+                "ToAssess": false,
+                "ListOfMethods": [
+                    "ZhuEtal2017"
+                ],
+                "ListOfWeights": [
+                    1
+                ],
+                "OtherParameters": {
+                    "dc_cutoff": 20
+                }
+            },
+            "LateralSpread": {
+                "ToAssess": false,
+                "ListOfMethods": [
+                    "Hazus2014"
+                ],
+                "ListOfWeights": [
+                    1
+                ],
+                "OtherParameters": {
+                    "dw_cutoff": 50
+                }
+            },
+            "GroundSettlement": {
+                "ToAssess": false,
+                "ListOfMethods": [
+                    "Hazus2014"
+                ],
+                "ListOfWeights": [
+                    1
+                ],
+                "OtherParameters": {}
+            },
+            "Landslide": {
+                "ToAssess": false,
+                "ListOfMethods": [
+                    "BrayMacedo2019"
+                ],
+                "ListOfWeights": [
+                    1
+                ],
+                "OtherParameters": {
+                    "SourceParametersForKy": "Preferred",
+                    "gm_type": "General"
+                }
+            },
+            "SurfaceFaultRupture": {
+                "ToAssess": false,
+                "ListOfMethods": [
+                    "WellsCoppersmith1994"
+                ],
+                "ListOfWeights": [
+                    1
+                ],
+                "OtherParameters": {
+                }
+            },
+            "SubsurfaceFaultRupture": {
+                "ToAssess": false,
+                "ListOfMethods": [
+                ],
+                "ListOfWeights": [
+                ],
+                "OtherParameters": {
+                }
+            },
+            "TransientGroundStrain": {
+                "ToAssess": false,
+                "ListOfMethods": [
+                ],
+                "ListOfWeights": [
+                ],
+                "OtherParameters": {
+                }
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "TransientPipeStrain": {
+                "ToAssess": false,
+                "ListOfMethods": [
+                ],
+                "ListOfWeights": [
+                ],
+                "OtherParameters": {
+                }
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "RepairRatePGV": {
+                "ToAssess": false,
+                "ListOfMethods": [
+                    "ORourke2020"
+                ],
+                "ListOfWeights": [
+                    1
+                ],
+                "OtherParameters": {}
+            },
+            "RepairRatePGD": {
+                "ToAssess": false,
+                "ListOfMethods": [
+                    "ORourke2020"
+                ],
+                "ListOfWeights": [
+                    1
+                ],
+                "OtherParameters": {
+                    "pgd_cutoff": 10.16
+                }
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    }
+}

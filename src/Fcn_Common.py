@@ -16,9 +16,89 @@
 import logging
 import os
 import numpy as np
+import rasterio as rio
+from scipy import sparse, stats
+from scipy.interpolate import interp2d
+
+
 # -----------------------------------------------------------
+def lhs(n_var, n_samp, dist='normal', low=None, high=None, return_prob=False):
+    """
+    Performs Latin-Hypercube Sampling and returns both the cdfs and the residuals for the user-specified distribution.
+    
+    Allowed distribution types: **normal**(default), **truncated_normal**, **uniform**
+    
+    """
+    
+    # permutation of bins
+    boxes = np.transpose([np.random.permutation(n_samp) for i in range(n_var)])
+    # draw uniform samples from 0 to 1, add to bin permutations, and normalize by sample size to get cdfs
+    norm_uniform_samples = np.random.uniform(size=(n_samp,n_var))
+    cdfs = (boxes+norm_uniform_samples)/n_samp
+    # residuals
+    if 'norm' in dist.lower() and not 'trunc' in dist.lower():
+        res = stats.norm.ppf(cdfs)
+        # if return_prob:
+            # probs = stats.norm.pdf(res)
+    elif 'trunc' in dist.lower():
+        if low is None:
+            low = -np.inf
+        if high is None:
+            high = np.inf
+        res = stats.truncnorm.ppf(cdfs,low,high)
+        # if return_prob:
+            # probs = stats.truncnorm.pdf(res,low,high)
+    elif 'uniform' in dist.lower():
+        if low is None:
+            low = 0
+        if high is None:
+            high = 1
+        res = cdfs*(high-low)+low
+        # if return_prob:
+            # probs = np.ones(res.shape)/n_samp
+    #
+    # if return_prob:
+        # return res, probs
+    # else:
+    return res
 
 
+# -----------------------------------------------------------
+def interp_from_raster(raster_path, x, y,
+    interp_scheme='linear', out_of_bound_value=0, invalid_value=9999):
+    """
+    Imports a raster and performs 2D interpolation at (x,y) pairs. Accepted interp_scheme = 'nearest', 'linear', 'cubic', and 'quintic'
+    
+    """
+    if os.path.exists(raster_path):
+        # read raster
+        ras = rio.open(raster_path)
+        # get gridded data and make x and y grid vectors
+        data = ras.read(1)
+        # if user wants 'nearest':
+        if interp_scheme == 'nearest':
+            samples = np.array([x[0] for x in ras.sample(np.vstack(x,y).T)])
+        else:
+            x_vect = np.linspace(ras.bounds.left, ras.bounds.right, ras.width, endpoint=False)
+            y_vect = np.linspace(ras.bounds.bottom, ras.bounds.top, ras.height, endpoint=False)
+            # create interp2d function
+            interp_function = interp2d(
+                x_vect, y_vect, np.flipud(data),
+                kind=interp_scheme, fill_value=out_of_bound_value)
+            # get samples
+            samples = np.transpose([interp_function(x[i],y[i]) for i in range(len(x))])[0]
+        ras.close()
+        # clean up invalid values (returned as 1e38 by NumPy)
+        # samples[abs(samples)>1e10] = np.nan
+        samples[abs(samples)>1e10] = -9999
+        # return
+        logging.info(f'\t\t{os.path.basename(raster_path)}')
+        return samples
+    else:
+        logging.info(f'\t\t{os.path.basename(raster_path)} does not exist')
+        return None
+        
+        
 # -----------------------------------------------------------
 def make_dir(target_dir):
     """
@@ -30,7 +110,7 @@ def make_dir(target_dir):
         
         
 # -----------------------------------------------------------
-def set_logging(level,file=None):
+def set_logging(level, file=None):
     """
     This method sets the logging level and formatting of the logs
     """
@@ -69,7 +149,7 @@ def check_common_member(a, b):
     
 
 # -----------------------------------------------------------
-def get_closest_pt(loc,line):
+def get_closest_pt(loc, line):
     """
     returns the closest location and shortest distance between a location and a line segment
 
@@ -129,7 +209,7 @@ def get_closest_pt(loc,line):
 
 
 # -----------------------------------------------------------
-def get_haversine_dist(lon1,lat1,lon2,lat2,unit='km'):
+def get_haversine_dist(lon1, lat1, lon2, lat2, unit='km'):
 	"""
 	calculates the Haversine distance between two sets of coordinates
 	
@@ -174,7 +254,7 @@ def get_haversine_dist(lon1,lat1,lon2,lat2,unit='km'):
 
 
 # -----------------------------------------------------------
-def get_integration(y,x=None):
+def get_integration(y, x=None):
 	"""
 	computes integration of a vector; currently performed with trapezoidal integration
 	
@@ -213,13 +293,13 @@ def get_integration(y,x=None):
 
 
 # -----------------------------------------------------------
-def count_in_range(list, a=-np.inf, b=np.inf, flag_include_a=True, flag_include_b=True):
+def count_in_range(list_to_count, a=-np.inf, b=np.inf, flag_include_a=True, flag_include_b=True):
 	"""
 	counts the number of instances in a list between lower and upper limits, inclusive or exclusive
 	
 	Parameters
 	----------
-	list : float, array
+	list_to_count : float, array
 		list of values
 	a : float, optional
 		lower limit; default to **-inf**
@@ -240,28 +320,28 @@ def count_in_range(list, a=-np.inf, b=np.inf, flag_include_a=True, flag_include_
 	
 	# upper limit
 	if flag_include_a is True:
-		count_a = sum([1 if i >= a else 0 for i in list])
+		count_a = sum([1 if i >= a else 0 for i in list_to_count])
 	else:
-		count_a = sum([1 if i > a else 0 for i in list])
+		count_a = sum([1 if i > a else 0 for i in list_to_count])
 		
 	# lower limit
 	if flag_include_b is True:
-		count_b = sum([1 if i > b else 0 for i in list])
+		count_b = sum([1 if i > b else 0 for i in list_to_count])
 	else:
-		count_b = sum([1 if i >= b else 0 for i in list])
+		count_b = sum([1 if i >= b else 0 for i in list_to_count])
 		
 	#
 	return count_a-count_b
 
 
 # -----------------------------------------------------------
-def sort_list(list,col):
+def sort_list(list_to_sort, col):
 	"""
 	Sorts a list of **m** entries and each entry with **n** values and sort by the column **col** relative to **m**
 	
 	Parameters
 	----------
-	list : float, array
+	list_to_sort : float, array
 		list of values
 	col : int
 		column to sort
@@ -275,7 +355,7 @@ def sort_list(list,col):
 	"""
 	
 	#
-	return(sorted(list, key = lambda x: x[col]))
+	return(sorted(list_to_sort, key = lambda x: x[col]))
 
 
 # -----------------------------------------------------------
@@ -304,37 +384,46 @@ def generate_randon_combinations(nBin,nVar):
 
 
 # -----------------------------------------------------------
-def convert_triu_to_sym_mat(x,n):
-	"""
-	Converts a 1D array of TriU elements to a symmetric matrix, e.g., 3 elements -> 2x2 matrix, 6 elements -> 3x3 matrix
-	
-	Parameters
-	----------
-	x : float, array
-		1D array of n! elements, where elements should be ordered left-right, top-down, e.g., for a 3x3 matrix, 1D array consists of components (1,1), (1,2), (1,3), (2,2), (2,3), (3,3)
-		
-	n : int
-		dimension of the symmetric matrix
-		
-	Returns
-	-------
-	mat : float, matrix
-		symmetric matrix
-	
-	"""
-	
-	# initialize mat
-	mat = np.zeros((n,n))
-	# set upper triangle to values in x
-	mat[np.triu_indices(n)] = x
-	# add transpose of matrix and subtract diagonal to get symmetric matrix
-	mat = mat + mat.T - np.diag(np.diag(mat))
-	
-	#
-	return mat
-
-
-# -----------------------------------------------------------
+def convert_triu_to_sym_mat(x, n, matrix_type='sparse'):
+    """
+    Converts a 1D array of TriU elements to a symmetric matrix, e.g., 3 elements -> 2x2 matrix, 6 elements -> 3x3 matrix
+    
+    Parameters
+    ----------
+    x : float, array
+        1D array of n! elements, where elements should be ordered left-right, top-down, e.g., for a 3x3 matrix, 1D array consists of components (1,1), (1,2), (1,3), (2,2), (2,3), (3,3)
+    n : int
+        dimension of the symmetric matrix
+    matrix_type : str, optional
+        format to store matrix; **sparse** (default) or **ndarray**
+        
+    Returns
+    -------
+    mat : float, matrix
+        symmetric matrix
+    
+    """
+    
+    if matrix_type == 'ndarray':
+        # initialize mat
+        mat = np.zeros((n,n))
+        # set upper triangle to values in x
+        mat[np.triu_indices(n)] = x
+        # add transpose of matrix and subtract diagonal to get symmetric matrix
+        mat = mat + mat.T - np.diag(np.diag(mat))
+    else:
+        # get indices for triu order
+        ind1,ind2 = fast_triu_indices(n)
+        # set upper triangle to values in x
+        mat = sparse.coo_matrix((x, (ind1,ind2)))
+        # add transpose of matrix and subtract diagonal to get symmetric matrix
+        mat = mat + mat.transpose() - sparse.diags(mat.diagonal())
+    
+    #
+    return mat
+    
+    
+    # -----------------------------------------------------------
 def get_prob_exceed(x, y):
 	"""
 	Count the number of instances in **y** where **y** > **i** for every **i** in **x**. Probability = count/total. 
@@ -467,7 +556,7 @@ def get_cond_prob_exceed(xbins, x, y, ycriteria):
 
 
 # -----------------------------------------------------------
-def fast_triu_indices(dim,k=0):
+def fast_triu_indices(dim, k=0):
 	"""
 	faster algorithm to get triu_indices (over numpy.triu_indices)
     
@@ -478,7 +567,7 @@ def fast_triu_indices(dim,k=0):
     -------
 
 	"""
-
+    
 	tmp_range = np.arange(dim-k)
 	rows = np.repeat(tmp_range,(tmp_range+1)[::-1])
 	cols = np.ones(rows.shape[0],dtype=np.int)
@@ -487,4 +576,4 @@ def fast_triu_indices(dim,k=0):
 	cols[0] = k
 	np.cumsum(cols,out=cols)
 	#
-	return np.vstack([rows,cols])
+	return rows, cols

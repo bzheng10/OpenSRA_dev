@@ -1,0 +1,137 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  EXCEPTION_UNCAUGHT_CXX_EXCEPTION (0xe06d7363) at pc=0x00007ff8a50e3b29, pid=13692, tid=12092
+#
+# JRE version: OpenJDK Runtime Environment (15.0.1+9) (build 15.0.1+9-18)
+# Java VM: OpenJDK 64-Bit Server VM (15.0.1+9-18, mixed mode, sharing, tiered, compressed oops, g1 gc, windows-amd64)
+# Problematic frame:
+# C  [KERNELBASE.dll+0x43b29]
+#
+# No core dump will be written. Minidumps are not enabled by default on client versions of Windows
+#
+# If you would like to submit a bug report, please visit:
+#   https://bugreport.java.com/bugreport/crash.jsp
+# The crash happened outside the Java Virtual Machine in native code.
+# See problematic frame for where to report the bug.
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -Xmx8G 
+
+Host: Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz, 8 cores, 15G,  Windows 10 , 64 bit Build 18362 (10.0.18362.1316)
+Time: Wed Jan 20 18:44:31 2021 Pacific Standard Time elapsed time: 0.801047 seconds (0d 0h 0m 0s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00000179e5eb2a30):  JavaThread "main" [_thread_in_native, id=12092, stack(0x00000051a0600000,0x00000051a07f0000)]
+
+Stack: [0x00000051a0600000,0x00000051a07f0000],  sp=0x00000051a07e8950,  free space=1954k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+C  [KERNELBASE.dll+0x43b29]
+C  [VCRUNTIME140.dll+0x4411]
+C  [ntdll.dll+0xa0c96]
+C  0x00007ff8305292de
+C  0x00007ff83052d3d2
+C  0x00007ff830522585
+C  0x000001798000f177
+
+Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+j  org.jpype.manager.TypeFactoryNative.newWrapper(JJ)V+0
+j  org.jpype.JPypeContext.newWrapper(J)V+16
+v  ~StubRoutines::call_stub
+
+siginfo: EXCEPTION_UNCAUGHT_CXX_EXCEPTION (0xe06d7363), ExceptionInformation=0x0000000019930520 0x00000051a07eac80 0x00007ff83056e7d0 0x00007ff8304f0000 
+
+
+Register to memory mapping:
+
+RIP=0x00007ff8a50e3b29 KERNELBASE.dll
+RAX=0x0000017980009f00 is at code_begin+1664 in an Interpreter codelet
+invoke return entry points  [0x0000017980009880, 0x000001798000a280]  2560 bytes
+RBX=0x00000051a07ea2a0 is pointing into the stack for thread: 0x00000179e5eb2a30
+RCX=0x0000017980008a90 is at code_begin+-112 in 
+[CodeBlob (0x0000017980008a90)]
+Framesize: 0
+BufferBlob (0x0000017980008a90) used for Interpreter
+RDX=0x00000000ff6f28f0 is an unknown value
+RSP=0x00000051a07e8950 is pointing into the stack for thread: 0x00000179e5eb2a30
+RBP=0x00000051a07e8fe0 is pointing into the stack for thread: 0x00000179e5eb2a30
+RSI=0x00000051a07eaaf0 is pointing into the stack for thread: 0x00000179e5eb2a30
+RDI=0x00000051a07e9770 is pointing into the stack for thread: 0x00000179e5eb2a30
+R8 =0x00000000ffa8bd48 is an unknown value
+R9 =0x00000051a07e9500 is pointing into the stack for thread: 0x00000179e5eb2a30
+R10=0x00000179e5eb2a30 is a thread
+R11=0x00000179e5eb2a00 points into unknown readable memory: 0x001817640e7c0e74 | 74 0e 7c 0e 64 17 18 00
+R12=0x00000051a07e8a90 is pointing into the stack for thread: 0x00000179e5eb2a30
+R13=0x0 is NULL
+R14=0x00000051a07e98d8 is pointing into the stack for thread: 0x00000179e5eb2a30
+R15=0x0 is NULL
+
+
+Registers:
+RAX=0x0000017980009f00, RBX=0x00000051a07ea2a0, RCX=0x0000017980008a90, RDX=0x00000000ff6f28f0
+RSP=0x00000051a07e8950, RBP=0x00000051a07e8fe0, RSI=0x00000051a07eaaf0, RDI=0x00000051a07e9770
+R8 =0x00000000ffa8bd48, R9 =0x00000051a07e9500, R10=0x00000179e5eb2a30, R11=0x00000179e5eb2a00
+R12=0x00000051a07e8a90, R13=0x0000000000000000, R14=0x00000051a07e98d8, R15=0x0000000000000000
+RIP=0x00007ff8a50e3b29, EFLAGS=0x0000000000000206
+
+Top of Stack: (sp=0x00000051a07e8950)
+0x00000051a07e8950:   0000000000000000 00000051a07ea2a0
+0x00000051a07e8960:   00000051a07eaaf0 00007ff8304f9290
+0x00000051a07e8970:   00000001e06d7363 0000000000000000
+0x00000051a07e8980:   00007ff8a50e3b29 0000005100000004
+0x00000051a07e8990:   0000000019930520 00000051a07eac80
+0x00000051a07e89a0:   00007ff83056e7d0 00007ff8304f0000
+0x00000051a07e89b0:   00000c49eeaad98a 00007ff83053f8a3
+0x00000051a07e89c0:   00000051a07ea2a0 00007ff89b36656a
+0x00000051a07e89d0:   0000005100000000 00007ff89b374280
+0x00000051a07e89e0:   0000000000000001 00000179e5eb2a30
+0x00000051a07e89f0:   00000051a07e9770 00007ff89b3664a9
+0x00000051a07e8a00:   00000051a07ea2a0 00000051a07eaaf0
+0x00000051a07e8a10:   00009813d973a249 7475706e4965636e
+0x00000051a07e8a20:   00000051a07ea2a0 00007ff89b364411
+0x00000051a07e8a30:   00007ff83053f864 00000051a07e98d8
+0x00000051a07e8a40:   0000000000000100 0000000000000002 
+
+Instructions: (pc=0x00007ff8a50e3b29)
+0x00007ff8a50e3a29:   fe ff ff 4c 8d 05 55 d9 1f 00 33 d2 8d 4a 02 e8
+0x00007ff8a50e3a39:   83 2f 01 00 48 8b f8 48 89 44 24 58 e9 ef fd ff
+0x00007ff8a50e3a49:   ff 45 33 c0 49 8b d7 48 83 c9 ff e8 77 64 02 00
+0x00007ff8a50e3a59:   e9 09 ff ff ff 48 8b 0d 03 9d 22 00 e8 06 f2 ff
+0x00007ff8a50e3a69:   ff 48 8b cf e8 4e a2 fe ff e9 f9 fe ff ff 49 8b
+0x00007ff8a50e3a79:   ce e8 41 a2 fe ff e9 f5 fe ff ff 48 8b ce e8 34
+0x00007ff8a50e3a89:   a2 fe ff e9 f1 fe ff ff cc cc cc cc cc cc cc cc
+0x00007ff8a50e3a99:   cc cc cc cc cc cc cc 65 48 8b 04 25 30 00 00 00
+0x00007ff8a50e3aa9:   8b 40 68 c3 cc cc cc cc cc cc cc cc cc cc cc cc
+0x00007ff8a50e3ab9:   cc cc cc cc cc cc cc 48 81 ec d8 00 00 00 48 8b
+0x00007ff8a50e3ac9:   05 62 73 22 00 48 33 c4 48 89 84 24 c0 00 00 00
+0x00007ff8a50e3ad9:   48 83 64 24 28 00 48 8d 05 da ff ff ff 83 e2 01
+0x00007ff8a50e3ae9:   89 4c 24 20 89 54 24 24 48 89 44 24 30 4d 85 c9
+0x00007ff8a50e3af9:   74 4b b8 0f 00 00 00 48 8d 4c 24 40 44 3b c0 49
+0x00007ff8a50e3b09:   8b d1 44 0f 47 c0 44 89 44 24 38 49 c1 e0 03 e8
+0x00007ff8a50e3b19:   4a d3 04 00 48 8d 4c 24 20 48 ff 15 ff 44 16 00
+0x00007ff8a50e3b29:   0f 1f 44 00 00 48 8b 8c 24 c0 00 00 00 48 33 cc
+0x00007ff8a50e3b39:   e8 a2 5e 04 00 48 81 c4 d8 00 00 00 c3 83 64 24
+0x00007ff8a50e3b49:   38 00 eb d0 cc cc cc cc cc cc cc 48 89 5c 24 08
+0x00007ff8a50e3b59:   48 89 74 24 10 57 48 83 ec 20 8b da 48 8b f9 e8
+0x00007ff8a50e3b69:   f3 d6 ff ff 33 f6 85 c0 0f 84 29 31 06 00 85 db
+0x00007ff8a50e3b79:   0f 84 21 31 06 00 44 8d 4e 02 ba 09 10 00 20 4c
+0x00007ff8a50e3b89:   8d 44 24 40 48 8b cf e8 7b b5 ff ff 85 c0 0f 84
+0x00007ff8a50e3b99:   03 31 06 00 39 5c 24 40 0f 85 f9 30 06 00 0f b7
+0x00007ff8a50e3ba9:   c3 48 8b 5c 24 30 48 8b 74 24 38 48 83 c4 20 5f
+0x00007ff8a50e3bb9:   c3 cc cc cc cc cc cc 48 89 5c 24 08 48 89 74 24
+0x00007ff8a50e3bc9:   10 57 48 83 ec 40 48 8b c2 48 8b f1 48 8b c8 33
+0x00007ff8a50e3bd9:   d2 49 8b d9 41 8b f8 e8 5b 6c ff ff 48 8b d0 48
+0x00007ff8a50e3be9:   85 db 0f 85 e3 30 06 00 48 8b 44 24 78 44 8b c7
+0x00007ff8a50e3bf9:   44 8b 4c 24 70 48 8b ce 48 89 44 24 38 8d 43 01
+0x00007ff8a50e3c09:   89 44 24 30 89 44 24 28 89 44 24 20 e8 16 00 00
+0x00007ff8a50e3c19:   00 48 8b 5c 24 50 48 8b 74 24 58 48 83 c4 40 5f 
+
+
+Stack slot to memory mapping:
+stack at sp + 0 slots: 0x0 is NULL
+stack at sp + 1 slots: 0x00000051a07ea2a0 is pointing into the stack for thread: 0x00000179e5eb2a30
+stack at sp + 2 slots: 0x00000051a07eaaf0 is pointing into the stack for thread: 0x00000179e5eb2a30
+stack at sp + 3 slots: 

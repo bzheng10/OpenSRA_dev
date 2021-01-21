@@ -1,7 +1,7 @@
 {
     "General": {
 		"Directory": {
-			"Working": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex5_RepairRatePGD_Multiple_Methods"
+			"Working": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex5_RepairRatePGD_MultipleMethods"
 		},
         "OutputFileType": "csv"
     },
@@ -20,7 +20,7 @@
 		]
 	},
     "Infrastructure": {
-        "SiteDataFile": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex5_RepairRatePGD_Multiple_Methods/Input/SiteData.csv"
+        "SiteDataFile": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex5_RepairRatePGD_MultipleMethods/Input/SiteData.csv"
     },
     "IntensityMeasure": {
         "Type": {

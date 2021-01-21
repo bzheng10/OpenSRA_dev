@@ -15,7 +15,7 @@
 # Python modules
 import os
 import json
-import sys
+# import sys
 import logging
 import numpy as np
 import xml.etree.ElementTree as ET
@@ -25,10 +25,108 @@ from scipy import sparse
 from scipy.interpolate import interp2d
 
 # OpenSRA modules and functions
+from src import Fcn_Common
 
 
 # -----------------------------------------------------------
-def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, trace_dir, store_events_file, 
+def store_IM_sample(file, sample, store_file_type, n_decimals=None):
+    """
+    Store generated IM sample
+    """
+    
+    # round sample to reduce storage size
+    # if n_decimals is not None:
+        # sample.data = np.round(sample.data,decimals=n_decimals)
+    # check file format to store
+    if store_file_type == 'npz':
+        sparse.save_npz(file,sample)
+    #
+    elif store_file_type == 'txt':
+        np.savetxt(file,sample.toarray(),fmt='%.3e')
+        # sample = sparse.coo_matrix(sample) # coo matrix is easier to understand and reconstruct
+        # np.savetxt(file,np.transpose([sample.row,sample.col,sample.data]),fmt='%i %i %f')
+
+
+# -----------------------------------------------------------
+def read_IM_sample(file, store_file_type, n_event=None, n_site=None):
+    """
+    Read generated IM sample
+    """
+    
+    # check file format to read
+    if store_file_type == 'npz':
+        data = sparse.coo_matrix(sparse.load_npz(file))
+    #
+    elif store_file_type == 'txt':
+        if n_event is None or n_site is None:
+            data = sparse.coo_matrix(np.loadtxt(file))
+        else:
+            data = sparse.coo_matrix(np.loadtxt(file),shape=(n_event,n_site))
+        # data_import = np.loadtxt(file,unpack=True)
+        # if len(data_import.shape) == 1:
+            # data_import = data_import[:,np.newaxis]
+        # data = sparse.coo_matrix((data_import[2],(data_import[0],data_import[1])),shape=(n_event,n_site))
+    #
+    return data
+        
+
+# -----------------------------------------------------------
+def get_correlated_residuals(chol_mat, n_sample, n_event, dim3, 
+    cross_corr=0, prev_residuals=None, algorithm='random'):
+    """
+    Get n_sample of correlated residuals using cholesky matrix. **dim3** = **n_site** for spatial and **n_IM** for spectral.
+    
+    For conditioned residuals of second IM, provide the cross-correlation and residuals of the first IM
+    
+    Algorithms include: "Random" and "LHS".
+    
+    """
+    
+    # get uncorrelated residuals
+    if 'random' in algorithm.lower():
+        residuals = np.random.normal(size=(n_sample,n_event,dim3))
+    elif 'lhs' in algorithm.lower() or 'latin' in algorithm.lower():
+        residuals = np.zeros((n_sample,n_event,dim3))
+        for i in range(n_event):
+            residuals[:,i,:] = Fcn_Common.lhs(dim3, n_sample, 'normal')
+    # get correlated residuals
+    if cross_corr == 0:
+        # loop through each sample
+        for i in range(n_sample):
+            residuals[i,:,:] = (chol_mat @ residuals[i,:,:].T).T
+    else:
+        for i in range(n_sample):
+            # part 1/2 of eq.
+            residuals[i,:,:] = cross_corr * \
+                (chol_mat @ prev_residuals[i,:,:].T).T
+            # part 2/2 of eq.
+            residuals[i,:,:] = np.sqrt(1-cross_corr**2) * \
+                (chol_mat @ residuals[i,:,:].T).T
+    
+    # initialize
+    # residuals = np.zeros((n_sample, n_event, dim3))
+    # sample for index in dim3
+    #if 'random' in algorithm.lower():
+    #    residuals[:,:,0] = np.random.normal(size=(n_sample,n_event))
+    #elif 'lhs' in algorithm.lower() or 'latin' in algorithm.lower():
+    #    # -----------------------------------------------------------
+    #    # need to replace with LHS
+    #    residuals[:,:,0] = np.random.normal(size=(n_sample,n_event))
+    #    # -----------------------------------------------------------
+    ## loop through rest of indices in dim3, get conditional distribution and sample
+    #for i in range(dim3):
+    #    cond_mean = corr_mat[i-1,i]*residuals[:,:,i-1]
+    #    cond_stdev = np.sqrt((1-corr_mat[i-1,i]**2))
+    #    if 'random' in algorithm.lower():
+    #        residuals[:,:,i] = np.random.normal(size=(n_sample,n_event))*cond_stdev + cond_mean
+    #    elif 'lhs' in algorithm.lower() or 'latin' in algorithm.lower():
+    #        pass
+    #
+    return residuals
+
+
+# -----------------------------------------------------------
+def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, store_events_file, trace_dir=None, 
     list_im=['PGA','PGV'], interp_scheme='linear', out_of_bound_value=0, stdev_default=0.5, flag_export_metadata=True):
     """
     Reads ShakeMap data, gets IM values at sites, and exports. Option to export metadata to JSON and grid_data to txt file for easier access.
@@ -105,7 +203,7 @@ def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, trace_dir, store_even
             gm_dict = dict.fromkeys(grid_xml_unique_tag)
             # update dictionary with root attributes
             gm_dict['root'] = root.attrib
-            for key in gm_dict['root']:
+            for key in list(gm_dict['root']):
                 if '}' in key:
                     new_key = key[key.find('}')+1:]
                     gm_dict['root'][new_key] = gm_dict['root'][key]
@@ -186,7 +284,7 @@ def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, trace_dir, store_even
                 # multiply by 100 if IM values are in %
                 for pct_str in ['%','pct']:
                     if pct_str in gm_dict['grid_field'][str(index_for_ims[i]+1)]['units']:
-                        site_gm = site_gm*100
+                        site_gm = site_gm/100
                         gm_dict['grid_field'][str(index_for_ims[i]+1)]['units'] = \
                             gm_dict['grid_field'][str(index_for_ims[i]+1)]['units'].replace(pct_str,'')
                         break
@@ -297,8 +395,8 @@ def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, trace_dir, store_even
     # -----------------------------------------------------------
     # export IMs and stdevs
     for im_i in list_im:
-        file_IM = os.path.join(IM_dir,im_i,'mean.txt')
-        file_stdev = os.path.join(IM_dir,im_i,'stdev_total.txt')
+        file_IM = os.path.join(IM_dir,im_i,'Mean.txt')
+        file_stdev = os.path.join(IM_dir,im_i,'TotalStdDev.txt')
         np.savetxt(file_IM, export_IM[im_i], fmt='%5.3f')
         np.savetxt(file_stdev, export_stdev[im_i], fmt='%5.3f')
         # np.savetxt(os.path.join(IM_dir,im_i,'stdev_inter.txt'), np.zeros(export_stdev[im_i].shape))
@@ -372,66 +470,83 @@ def read_IM_means(im_pred_dir, list_im, list_param, store_file_type='txt', n_sit
 
 
 # -----------------------------------------------------------
-def get_cov(corr_d_pga, corr_d_pgv, corr_T, pga_sigma, pgv_sigma, dim_d, dim_T=2):
-	"""
-	Compute correlation and covariance matrices for PGA and PGV over a list of sites
-	
-	Parameters
-	----------
-	corr_d_pga : float, array
-		list of spatial correlations across sites for **PGA**
-	corr_d_pgv : float, array
-		list of spatial correlations across sites for **PGV**
-	corr_T : float, array
-		list of spectral correlation between PGA (T ~ 0.01sec) and PGV (T ~ 1sec)
-	pga_sigma : float, array
-		sigmas for **PGA** for the list of sites
-	pgv_sigma : float, array
-		sigmas for **PGV** for the list of sites
-	dim_d : int
-		number of sites
-	dim_T : int, optional
-		number of periods (fixed to 2 for now)
-		
-	Returns
-	-------
-	cov_mat_corr : float, arry
-		correlated covariance matrix
-	
-	"""
-	
-	# cross of spatial correlations between PGA and PGV
-	corr_d_cross = np.sqrt(np.multiply(corr_d_pga,corr_d_pgv))
-	
-	# convert arrays to symmetric matrices
-	corr_T_mat = convert_triu_to_sym_mat(corr_T,dim_T) # convert spectral correlations to symmetric matrix
-	corr_d_pga_mat = convert_triu_to_sym_mat(corr_d_pga,dim_d) # convert PGA spatial correlations to symmetric matrix
-	corr_d_pgv_mat = convert_triu_to_sym_mat(corr_d_pgv,dim_d) # convert PGV spatial correlations to symmetric matrix
-	corr_d_cross_mat = convert_triu_to_sym_mat(corr_d_cross,dim_d) # convert PGAxPGV correlations to symmetric matrix
-	
-	# full correlation matrix
-	corr_quad11 = corr_d_pga_mat*corr_T_mat[0][0] # upper-left quadrant, PGA x PGA
-	corr_quad12 = corr_d_cross_mat*corr_T_mat[0][1] # upper-right quadrant, PGV x PGA
-	corr_quad21 = np.transpose(corr_quad12) # lower-left quadrant, PGA x PGV
-	corr_quad22 = corr_d_pgv_mat*corr_T_mat[1][1] # lower-right quadrant, PGV x PGV
-	# corr_mat = np.bmat([[corr_quad11, corr_quad12], [corr_quad21, corr_quad22]])
-	corr_mat = np.vstack([np.hstack([corr_quad11,corr_quad12]),np.hstack([corr_quad21,corr_quad22])])
-
-	# joint uncorrelated covariance matrix
-	cov_quad11 = np.outer(pga_sigma,pga_sigma) # upper-left quadrant, PGA x PGA
-	cov_quad12 = np.outer(pga_sigma,pgv_sigma) # upper-right quadrant, PGV x PGA
-	cov_quad21 = np.transpose(cov_quad12) # lower-left quadrant, PGA x PGV
-	cov_quad22 = np.outer(pgv_sigma,pgv_sigma) # lower-right quadrant, PGV x PGV
-	# cov_mat_uncorr = np.bmat([[cov_quad11, cov_quad12], [cov_quad21, cov_quad22]])
-	cov_mat_uncorr = np.vstack([np.hstack([cov_quad11,cov_quad12]),np.hstack([cov_quad21,cov_quad22])])
-	
-	# joint correlated covariance matrix
-	cov_mat_corr = np.multiply(cov_mat_uncorr,corr_mat)
-	
-	#
-	return cov_mat_corr
-	
-	
+def get_cov(corr_spatial_pga, corr_spatial_pgv, corr_spectral, pga_stdev, pgv_stdev, n_site, n_period=2):
+    """
+    Compute correlation and covariance matrices for PGA and PGV over a list of sites
+    
+    Parameters
+    ----------
+    corr_spatial_pga : float, array
+        list of spatial correlations across sites for **PGA**
+    corr_spatial_pgv : float, array
+        list of spatial correlations across sites for **PGV**
+    corr_spectral : float, array
+        list of spectral correlation between PGA (T ~ 0.01sec) and PGV (T ~ 1sec)
+    pga_stdev : float, array
+        sigmas for **PGA** for the list of sites
+    pgv_stdev : float, array
+        sigmas for **PGV** for the list of sites
+    n_site : int
+        number of sites
+    n_period : int, optional
+        number of periods (fixed to 2 for now)
+        
+    Returns
+    -------
+    cov_mat_corr : float, arry
+        correlated covariance matrix
+    
+    """
+    
+    # initialize storage dictionary
+    cov_dict = {}
+    
+    # cross of spatial correlations between PGA and PGV
+    corr_spatial_spectral = np.sqrt(np.multiply(corr_spatial_pga,corr_spatial_pgv))
+    
+    # convert arrays to symmetric matrices
+    # corr_spectral_mat = convert_triu_to_sym_mat(corr_spectral,n_period) # convert spectral correlations to symmetric matrix
+    # corr_spatial_pga_mat = convert_triu_to_sym_mat(corr_spatial_pga,n_site) # convert PGA spatial correlations to symmetric matrix
+    # corr_spatial_pgv_mat = convert_triu_to_sym_mat(corr_spatial_pgv,n_site) # convert PGV spatial correlations to symmetric matrix
+    # corr_spatial_spectral_mat = convert_triu_to_sym_mat(corr_spatial_spectral,n_site) # convert PGAxPGV correlations to symmetric matrix
+    corr_spectral_mat = corr_spectral # convert spectral correlations to symmetric matrix
+    corr_spatial_pga_mat = corr_spatial_pga # convert PGA spatial correlations to symmetric matrix
+    corr_spatial_pgv_mat =corr_spatial_pgv # convert PGV spatial correlations to symmetric matrix
+    corr_spatial_spectral_mat = corr_spatial_spectral # convert PGAxPGV correlations to symmetric matrix
+    
+    # full correlation matrix
+    corr_quad11 = corr_spatial_pga_mat*corr_spectral_mat[0][0] # upper-left quadrant, PGA x PGA
+    corr_quad12 = corr_spatial_spectral_mat*corr_spectral_mat[0][1] # upper-right quadrant, PGV x PGA
+    # corr_quad21 = np.transpose(corr_quad12) # lower-left quadrant, PGA x PGV
+    corr_quad22 = corr_spatial_pgv_mat*corr_spectral_mat[1][1] # lower-right quadrant, PGV x PGV
+    # corr_mat = np.bmat([[corr_quad11, corr_quad12], [corr_quad21, corr_quad22]])
+    # corr_mat = np.vstack([np.hstack([corr_quad11,corr_quad12]),np.hstack([corr_quad21,corr_quad22])])
+    
+    # joint uncorrelated covariance matrix
+    cov_quad11 = np.outer(pga_stdev,pga_stdev) # upper-left quadrant, PGA x PGA
+    cov_quad12 = np.outer(pga_stdev,pgv_stdev) # upper-right quadrant, PGV x PGA
+    # cov_quad21 = np.transpose(cov_quad12) # lower-left quadrant, PGA x PGV
+    cov_quad22 = np.outer(pgv_stdev,pgv_stdev) # lower-right quadrant, PGV x PGV
+    # cov_mat_uncorr = np.bmat([[cov_quad11, cov_quad12], [cov_quad21, cov_quad22]])
+    # cov_mat_uncorr = np.vstack([np.hstack([cov_quad11,cov_quad12]),np.hstack([cov_quad21,cov_quad22])])
+    
+    # joint correlated covariance matrix
+    cov_quad11_corr = np.multiply(corr_quad11,cov_quad11)
+    cov_quad12_corr = np.multiply(corr_quad12,cov_quad12)
+    cov_quad22_corr = np.multiply(corr_quad22,cov_quad22)
+    # cov_mat_corr = np.multiply(cov_mat_uncorr,corr_mat)
+    
+    # store into dictionary for return
+    cov_dict = {
+        'cov_quad11_corr': cov_quad11_corr,
+        'cov_quad12_corr': cov_quad12_corr,
+        'cov_quad22_corr': cov_quad22_corr,
+    }
+    
+    #
+    return cov_dict
+    
+    
 # -----------------------------------------------------------
 def get_RV_sims(mean, cov, nsamp, nsite=1, var_list=['PGA','PGV']):
 	"""

@@ -537,7 +537,8 @@ def get_ky(slope_type,**kwargs):
 		gamma_w = kwargs.get('gamma_w',9.81) # kN/m3, unit weight of water
 		
 		# avoid tan(0 deg)
-		beta[beta==0] = 0.001
+		beta[beta==0] = 0.1
+		# beta[beta==9999] = 0.1
 		
 		if 'bray' in method.lower():
 			ky = np.tan(np.radians(phi-beta)) + c/(gamma*t*(np.cos(np.radians(beta))**2*(1+np.tan(np.radians(phi))*np.tan(np.radians(beta)))))

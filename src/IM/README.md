@@ -1,0 +1,1 @@
+# Methods for intensity measures

@@ -1,23 +1,30 @@
 $ cat .gitignore
 
+
+# root level
 .ipynb_checkpoints/
 .vscode/
 __pycache__/
+superseded/
+*.ipynb
+test_arg.py
+test.json
 
+# src level
+src/PreProcess_Combine_RRPGV_RRPGD.py
+
+
+# all subdirectories
 **/.ipynb_checkpoints
 **/.vscode
 **/__pycache__
-
-*.ipynb
-
-# **/*.ipynb
 **/**/*.ipynb
+# **/*.ipynb
 
 **/superseded
 # src/.ipynb_checkpoints
 # src/__pycache__	
 **/temp
 
-test_arg.py
-
-lib/simcenter/opensha/erf/fault_source_connectivity.txt
+# lib level
+# lib/SimCenter/opensha/erf/fault_source_connectivity.txt

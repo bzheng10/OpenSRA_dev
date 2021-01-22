@@ -8,9 +8,11 @@
 This repository contains the source code to OpenSRA_backend, developed by [Slate Geotechnical Consultants](http://slategeotech.com/), with assistance from [NHERI SimCenter](https://simcenter.designsafe-ci.org/) and [UC Berkeley](https://ce.berkeley.edu/).
 
 ## Developers
-Barry Zheng, PhD, [Slate](http://slategeotech.com/)
-Steve Gavrilovic, PhD, [NHERI SimCenter](https://simcenter.designsafe-ci.org/about/people/)
-Maxime Lacour, PhD, [UC Berkeley](https://www.linkedin.com/in/maxime-lacour-637a8b79)
+[Barry Zheng, PhD, @ Slate](http://slategeotech.com/)
+
+[Steve Gavrilovic, PhD, @ NHERI SimCenter](https://simcenter.designsafe-ci.org/about/people/)
+
+[Maxime Lacour, PhD, @ UC Berkeley](https://www.linkedin.com/in/maxime-lacour-637a8b79)
 
 ## Dependencies
 
@@ -61,7 +63,7 @@ python OpenSRA.py -i PATH_TO_INPUT_FOLDER -c yes
 Under development
 
 ## Acknowledgments
-The OpenSRA development team would like to acknowledge Dr. Wael Elhaddad and Dr. Kuanshi Zhong from [NHERI SimCenter](https://simcenter.designsafe-ci.org/about/people/) for providing developmental support on the OpenSHA interface, and Dr. Simon Kwong from [USGS](https://www.usgs.gov/staff-profiles/neal-simon-kwong for providing technical feedback on seismic and performance-based hazard analysis.
+The OpenSRA development team would like to acknowledge [Dr. Wael Elhaddad and Dr. Kuanshi Zhong @ NHERI SimCenter](https://simcenter.designsafe-ci.org/about/people/) for providing developmental support on the OpenSHA interface, and [Dr. Simon Kwong @ USGS](https://www.usgs.gov/staff-profiles/neal-simon-kwong) for providing technical feedback on seismic and performance-based hazard analysis.
 
 ## License
 Please check the license file in the root folder.

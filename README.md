@@ -13,12 +13,17 @@ This repository contains the source code to OpenSRA_backend, developed by [Slate
 The Python packages required for the current version of OpenSRA are listed below, along with the versions used in development. Packages from the "conda-forge" channel were used. If experiencing difficulty with package installation, consider working in a clean environment.
 
 jpype1 (1.2.1) - please first install this package first; incompatibility was observed when trying to install this package after the rest
+
 NumPy (1.19.5)
+
 pandas (1.2.1)
+
 SciPy (1.6.0)
 
 GeoPandas (0.8.1) - dependency will be removed in the future
+
 rasterio (1.1.8) - dependency will be removed in the future
+
 shapely (1.7.1) - dependency will be removed in the future
 
 ### Java

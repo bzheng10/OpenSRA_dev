@@ -125,7 +125,7 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
     # other_config_param['SourceForVs30'] = setup_config['Infrastructure']['SourceForVs30']
     other_config_param['SourceForVs30'] = setup_config['IntensityMeasure']['SourceParameters']['SourceForVs30']
     
-    
+
     # -----------------------------------------------------------
     # PEER categories
     peer_categories = other_config_param['PEERCategories']
@@ -136,7 +136,11 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
         method_assess_param[peer_categories[category]] = {}
         
         # Get the types of hazard to assess:
-        for hazard in setup_config[category]['Type'].keys():
+        if category == 'EngineeringDemandParameter':
+            hazard_list = list(other_config_param['ID_EDP'])
+        else:
+            hazard_list = list(setup_config[category]['Type'])
+        for hazard in hazard_list:
             # Get flag for 'ToAssess'
             Flag_ToAssess = setup_config[category]['Type'][hazard]['ToAssess']
             # For Liquefaction force True if either LateralSpread or GroundSettlement is requested
@@ -168,8 +172,8 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
                                 param: setup_config[category]['Type'][hazard]['OtherParameters'][param]})
                         count+=1
         other_config_param['Num_'+peer_categories[category]] = len(other_config_param[peer_categories[category]])
-    
-    
+       
+       
     # -----------------------------------------------------------
     # Intensity measures
     # Create additional parameters for use of source model

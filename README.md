@@ -8,11 +8,11 @@
 This repository contains the source code to OpenSRA_backend, developed by [Slate Geotechnical Consultants](http://slategeotech.com/), with assistance from [NHERI SimCenter](https://simcenter.designsafe-ci.org/) and [UC Berkeley](https://ce.berkeley.edu/).
 
 ## Developers
-[Barry Zheng, PhD, @ Slate](http://slategeotech.com/)
+Barry Zheng, PhD, @ Slate: (http://slategeotech.com/)
 
-[Steve Gavrilovic, PhD, @ NHERI SimCenter](https://simcenter.designsafe-ci.org/about/people/)
+Steve Gavrilovic, PhD, @ NHERI SimCenter: https://simcenter.designsafe-ci.org/about/people/
 
-[Maxime Lacour, PhD, @ UC Berkeley](https://www.linkedin.com/in/maxime-lacour-637a8b79)
+Maxime Lacour, PhD, @ UC Berkeley: [LinkedIn]https://www.linkedin.com/in/maxime-lacour-637a8b79)
 
 ## Dependencies
 

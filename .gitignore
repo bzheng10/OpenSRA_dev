@@ -33,4 +33,4 @@ src/PreProcess_Combine_RRPGV_RRPGD.py
 lib/SimCenter/
 # lib/OpenSHA/ERF/**
 # ScenarioConnectivity.csv
-lib/OpenSHA/*
+lib/OpenSHA/**

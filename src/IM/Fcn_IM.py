@@ -18,6 +18,7 @@ import json
 # import sys
 import logging
 import numpy as np
+import pandas as pd
 import xml.etree.ElementTree as ET
 from scipy import sparse
 # from scipy.linalg import cholesky
@@ -72,7 +73,7 @@ def read_IM_sample(file, store_file_type, n_event=None, n_site=None):
 
 # -----------------------------------------------------------
 def get_correlated_residuals(chol_mat, n_sample, n_event, dim3, 
-    cross_corr=0, prev_residuals=None, algorithm='random'):
+    cross_corr=0, prev_residuals=None, algorithm='random', ):
     """
     Get n_sample of correlated residuals using cholesky matrix. **dim3** = **n_site** for spatial and **n_IM** for spectral.
     
@@ -126,7 +127,7 @@ def get_correlated_residuals(chol_mat, n_sample, n_event, dim3,
 
 
 # -----------------------------------------------------------
-def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, store_events_file, trace_dir=None, 
+def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, store_events_file, trace_save_name=None, 
     list_im=['PGA','PGV'], interp_scheme='linear', out_of_bound_value=0, stdev_default=0.5, flag_export_metadata=True):
     """
     Reads ShakeMap data, gets IM values at sites, and exports. Option to export metadata to JSON and grid_data to txt file for easier access.
@@ -170,6 +171,7 @@ def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, store_events_file, tr
     export_listOfScenarios = np.zeros((len(event_names),4)) # stick to format used for OpenSHA: [source ID, rupture ID, mag, rate]
     export_listOfScenarios[:,3] = 1 # set rates to 1 for ShakeMap events
     output = {}
+    trace_set = []
     
     # loop through all events
     counter = 0
@@ -370,18 +372,24 @@ def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, store_events_file, tr
                     site_stdev[:,i] = np.transpose([interp_function(sites[j,0],sites[j,1]) for j in range(sites.shape[0])])
 
             # -----------------------------------------------------------
-            # section for rupture traces in progress
-            # parse "uncertainty.xml"
+            # compile rupture traces in a single file
             if not 'rupture.json' in files:
-                logging.info(f'\t"rupture.json.xml" is not available, use epicenter from "grid.xml" as trace')
-                # traces = [
-                    # [gm_dict['event']['lon'],gm_dict['event']['lat'],gm_dict['event']['depth']]
-                # ]
+                logging.info(f'\t"rupture.json" is not available; default to event epicenter')
+                trace_set.append([
+                    gm_dict['event']['lon'],
+                    gm_dict['event']['lat'],
+                    gm_dict['event']['depth']
+                ])
             else:
-                # traces = [
-                    # [gm_dict['event']['lon'],gm_dict['event']['lat'],gm_dict['event']['depth']]
-                # ]
-                logging.info(f'\tcode on processing of rupture.json not ready')
+                logging.info(f'\t"rupture.json" exists; reading fault traces')
+                with open(os.path.join(curr_sm_dir,'rupture.json'),'r') as file:
+                    sm_rupture = json.load(file)
+                coords_to_read = sm_rupture['features'][0]['geometry']['coordinates'][0][0]
+                trace_set_i = []
+                for coord_i in coords_to_read:
+                    trace_set_i.append(coord_i)
+                trace_set.append(trace_set_i)
+                # logging.info(f'\tcode on processing of rupture.json not ready')
                 
             # -----------------------------------------------------------
             # update export params
@@ -412,6 +420,16 @@ def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, store_events_file, tr
             json.dump(export_metadata, outfile, indent=4, separators=(',', ': '))
     logging.info('\t... ShakeMap event metadata exported to:')
     logging.info(f"\t\t{os.path.dirname(store_events_file)}")
+
+    # export traces
+    dict_out = {
+        'SourceIndex': np.arange(num_events)+1,
+        'ListOfTraces': trace_set
+    }
+    df = pd.DataFrame.from_dict(dict_out)
+    df.to_csv(trace_save_name,index=False)
+    logging.info(f"\t... list of traces for rupture scenarios exported to:")
+    logging.info(f"\t\t{trace_save_name}")
 
     #
     return None

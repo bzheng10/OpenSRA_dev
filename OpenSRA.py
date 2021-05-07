@@ -335,7 +335,7 @@ def main(input_dir, clean_prev_run, logging_level):
     
     # -----------------------------------------------------------
     # Exit Program
-    logging.info("\t------------- OpenSRA Analysis -------------')")
+    logging.info("\t------------- OpenSRA Analysis -------------")
     logging.info('---------------')
     
 

@@ -65,10 +65,14 @@
                 "NameToReturn": "Chiou & Youngs (2014)"
             },
             "Model5": {
-                "NameToDisplay": "NGAWest2 2014 Averaged Attenuation Relationship",
-                "NameToReturn": "NGAWest2 2014 Averaged Attenuation Relationship"
+                "NameToDisplay": "Idriss (2014) - PGV unavailable",
+                "NameToReturn": "Idriss (2014)"
             },
             "Model6": {
+                "NameToDisplay": "NGAWest2 2014 Averaged - PGV unavailable",
+                "NameToReturn": "NGAWest2 2014 Averaged Attenuation Relationship"
+            },
+            "Model7": {
                 "NameToDisplay": "NGAWest2 2014 Averaged, No Idriss",
                 "NameToReturn": "NGAWest2 2014 Averaged No Idriss"
             }
@@ -111,7 +115,7 @@
         },
         "LateralSpread": {
             "Model1": {
-                "NameToDisplay": "Grant et al. (2016)",
+                "NameToDisplay": "Grant et al. (2016) - same as Hazus (FEMA, 2013)",
                 "NameToReturn": "GrantEtal2016",
                 "NotesForModel": "Values for model parameters will be extracted from available datasets",
                 "Params": {
@@ -155,6 +159,13 @@
             "Model2": {
                 "NameToDisplay": "Wells and Coppersmith (1994)",
                 "NameToReturn": "WellsCoppersmith1994",
+                "NotesForModel": null,
+                "Params": {
+                }
+            },
+            "Model3": {
+                "NameToDisplay": "Hazus (FEMA, 2013)",
+                "NameToReturn": "Hazus2014",
                 "NotesForModel": null,
                 "Params": {
                 }

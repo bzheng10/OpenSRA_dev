@@ -31,3 +31,4 @@ src/PreProcess_Combine_RRPGV_RRPGD.py
 # lib level
 # lib/SimCenter/opensha/erf/fault_source_connectivity.txt
 lib/SimCenter/
+lib/OpenSHA/ERF/

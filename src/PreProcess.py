@@ -46,6 +46,8 @@ def setup_other_method_param(other_config_param, method_assess_param):
                         if other_config_param['Flag_PLand']:
                             method_assess_param[category][hazard]['ReturnParameter'].append('p_land')
                     if 'surf' in hazard.lower():
+                        # if other_config_param['Flag_PSurf']:
+                            # method_assess_param[category][hazard]['ReturnParameter'].append('p_surf')
                         pass
                         # -----------------------------------------------------------
                         # -----------------------------------------------------------                    
@@ -190,13 +192,16 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
     other_config_param['File_ListOfScenarios'] = os.path.join(other_config_param['Dir_IM_SeismicSource'],'ListOfScenarios')
     # Add extension
     other_config_param['File_ListOfScenarios'] = other_config_param['File_ListOfScenarios'] + '.txt'
+    # File with scenario traces
+    other_config_param['File_ScenarioTraces'] = os.path.join(other_config_param['Dir_IM_SeismicSource'],'ScenarioTraces.csv')
     
     # Check the source for intensity measures
     if setup_config['IntensityMeasure']['SourceForIM'] == 'OpenSHA':
         # Create additional parameters for use of source model
         src_model = setup_config['IntensityMeasure']['SourceParameters']['SeismicSourceModel']
-        other_config_param['Path_RuptureSegment'] = os.path.join(dir_opensra,'lib','OpenSHA','ERF',src_model,'rupture_segments.json')
-        other_config_param['Path_PointSource'] = os.path.join(dir_opensra,'lib','OpenSHA','ERF',src_model,'point_sources.txt')
+        other_config_param['Path_FaultConnectivity'] = os.path.join(dir_opensra,'lib','OpenSHA','ERF',src_model,'ScenarioConnectivity.csv')
+        other_config_param['Path_RuptureSegment'] = os.path.join(dir_opensra,'lib','OpenSHA','ERF',src_model,'RuptureSegments.csv')
+        other_config_param['Path_PointSource'] = os.path.join(dir_opensra,'lib','OpenSHA','ERF',src_model,'PointSources.csv')
         
         # Check for filters to use
         other_config_param['Flag_IncludeFilter_TrMax'] = setup_config['IntensityMeasure']['SourceParameters']['Filter']['ReturnPeriod']['ToInclude']
@@ -285,6 +290,12 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
         'RepairRatePGD' in other_config_param['DV']:
         other_config_param['Flag_PLand'] = True
     
+    # Check if probability of landslide is needed
+    # other_config_param['Flag_PSurf'] = False # default
+    # if 'SurfaceFaultRupture' in other_config_param['EDP'] and \
+        # 'RepairRatePGD' in other_config_param['DV']:
+        # other_config_param['Flag_PSurf'] = True
+        
     # -----------------------------------------------------------
     # Damage measures
     # Note: OpenSRA currently is not set up to store DM results
@@ -343,12 +354,13 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
     # Create directories for storing fault traces and intersections if fault ruptures are to be assessed
     if 'SurfaceFaultRupture' in other_config_param['EDP'] or \
         'SubsurfaceFaultRupture' in other_config_param['EDP']:
-        other_config_param['Dir_FaultCrossing'] = os.path.join(other_config_param['Dir_IM'],'FaultSource')
-        other_config_param['Dir_FaultTrace'] = os.path.join(other_config_param['Dir_FaultCrossing'],'Trace')
-        other_config_param['Dir_Intersection'] = os.path.join(other_config_param['Dir_FaultCrossing'],'Intersection')
-        folders_to_create.append(other_config_param['Dir_FaultCrossing'])
-        folders_to_create.append(other_config_param['Dir_FaultTrace'])
-        folders_to_create.append(other_config_param['Dir_Intersection'])
+        other_config_param['File_FaultCrossing'] = os.path.join(other_config_param['Dir_IM_SeismicSource'],'FaultCrossings.csv')
+        # other_config_param['Dir_FaultCrossing'] = os.path.join(other_config_param['Dir_IM'],'FaultSource')
+        # other_config_param['Dir_FaultTrace'] = os.path.join(other_config_param['Dir_FaultCrossing'],'Trace')
+        # other_config_param['Dir_Intersection'] = os.path.join(other_config_param['Dir_FaultCrossing'],'Intersection')
+        # folders_to_create.append(other_config_param['Dir_FaultCrossing'])
+        # folders_to_create.append(other_config_param['Dir_FaultTrace'])
+        # folders_to_create.append(other_config_param['Dir_Intersection'])
     
     # Export other_config_param dictionary to JSON for checks
     other_config_param = {key:other_config_param[key] for key in sorted(other_config_param)} # sort for export
@@ -406,6 +418,12 @@ def update_site_data_file(site_data, setup_config, other_config_param):
                     raster_interp_data[raster_interp_data<=0] = 0.1
                 elif 'vs30' in column_id.lower():
                     raster_interp_data[raster_interp_data<=0] = 999
+                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    # OpenSHA sets a check for minimum Vs30
+                    # if Vs30 sampled < 150, OpenSHA raises warning and ends
+                    # opensha-core/src/org/opensha/sha/imr/attenRelImpl/ngaw2/NGAW2_WrapperFullParam.java
+                    raster_interp_data[raster_interp_data<150] = 150
+                    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 site_data[column_id] = raster_interp_data
             other_config_param['ColumnsAppended'].append(column_id)
             flag_update_site_data_file = True # updated site data
@@ -564,6 +582,19 @@ def add_site_data_to_method_param(setup_config, site_data, other_config_param, m
             method_assess_param[category][hazard]['Method'][method]['Flags']['PGV'] = True
             method_assess_param[category][hazard]['Method'][method]['Flags']['mag'] = True
         
+        # For Bray & Macedo (2019)
+        if 'Jibson2007' in setup_config['EngineeringDemandParameter']['Type'][hazard]['ListOfMethods']:
+            method = 'Jibson2007'
+            # Update method_assess_param with parameters
+            # setup_config['EngineeringDemandParameter']['Type']['Landslide']['OtherParameters'].update({
+            method_assess_param[category][hazard]['Method'][method]['InputParameters'].update({
+                # 'ky': np.asarray(site_data.get('Ky for Infinite Slope_Bray', sub_value)),
+                'ky': site_data.get('Ky for Infinite Slope_Grant', sub_value).to_numpy(),
+            })
+            method_assess_param[category][hazard]['Method'][method]['Flags']['PGA'] = True
+            method_assess_param[category][hazard]['Method'][method]['Flags']['PGV'] = False
+            method_assess_param[category][hazard]['Method'][method]['Flags']['mag'] = True
+        
     # Surface fault rupture
     if 'SurfaceFaultRupture' in other_config_param['EDP']:
         category = 'EDP'
@@ -711,6 +742,7 @@ def print_setup_config_to_logging(arr,find_val,set_val):
         logging.info(f"\tFlag for probability of liquefaction = {Flag_PLiq}")
         logging.info(f"\tFlag for liquefaction susceptibility = {Flag_LiqSusc}")
         logging.info(f"\tFlag for probability of landslide = {Flag_PLand}")
+        # logging.info(f"\tFlag for probability of surface fault rupture = {Flag_PSurf}")
         # if Flag_PLiq or Flag_LiqSusc:
             # logging.info(f"\tLoaded site parameters for liquefaction into 'edp_OtherParameterss'")
         # if flag_calc_ky:

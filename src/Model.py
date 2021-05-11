@@ -21,6 +21,7 @@ import logging
 import numpy as np
 # import pandas as pd
 from scipy import sparse
+import json
 
 # OpenSRA modules and functions
 from src import Fcn_Common
@@ -105,9 +106,13 @@ class assessment(object):
         self._EVENT_dict['Scenarios'] = {}
         event_keys = ['src','rup','mag','rate']
 
+        # Initialize variables to be used
+        trace_set = None
+
         # Check if files are present before interfacing with IM sources
         exist_ListOfScenarios = False
         exist_Predictions = False
+        exist_FaultCrossings = False
         # Check if file with list of ruptures exists, if so, load and store into _EVENT_dict
         if os.path.exists(other_config_param['File_ListOfScenarios']):
             logging.info(f"File with list of rupture scenarios exist in:")
@@ -178,7 +183,8 @@ class assessment(object):
                         locs = site_data[['LONG_MIDDLE','LAT_MIDDLE']].values,
                         filter_criteria = filters_to_perform,
                         rupture_list = rupture_list,
-                        save_name = other_config_param['File_ListOfScenarios'],
+                        rup_save_name = other_config_param['File_ListOfScenarios'],
+                        # trace_save_name = other_config_param['File_ScenarioTraces'],
                         rup_seg_file = other_config_param['Path_RuptureSegment'],
                         pt_src_file = other_config_param['Path_PointSource'])
                     # Store into _EVENT_dict
@@ -187,6 +193,14 @@ class assessment(object):
                             self._EVENT_dict['Scenarios'][key] = np.expand_dims(rupture_list[key],axis=0)
                         else:
                             self._EVENT_dict['Scenarios'][key] = rupture_list[key]
+                    # Get list of traces for each source scenario
+                    trace_set = OpenSHAInterface.get_trace_opensha(
+                        src_list = np.unique(rupture_list['src']),
+                        src_connect_file = other_config_param['Path_FaultConnectivity'],
+                        rup_seg_file = other_config_param['Path_RuptureSegment'],
+                        pt_src_file = other_config_param['Path_PointSource'],
+                        save_name = other_config_param['File_ScenarioTraces']
+                    )
                 
                 # Get IM predictions
                 if exist_Predictions is False:
@@ -204,23 +218,7 @@ class assessment(object):
                     )
                     logging.info(f"... generated predictions for ruptures; results stored under:")
                     logging.info(f"\t{other_config_param['Dir_IM_GroundMotion_Prediction']}")
-                    
-                # Get fault crossings
-                if setup_config['EngineeringDemandParameter']['Type']['SurfaceFaultRupture']['ToAssess'] and \
-                    (len(os.listdir(other_config_param['Dir_FaultTrace'])) == 0 or len(os.listdir(other_config_param['Dir_Intersection'])) == 0):
-                    
-                    logging.info(f"Getting fault crossing function is outdated")
-        #            logging.info(f"\n----------------------------------\n-----Runtime messages from OpenSHA\n")
-        #            OpenSHAInterface.get_fault_xing(reg_proc, site_data.loc[:,['Lon_start','Lat_start']].values,
-        #                                            site_data.loc[:,['Lon_end','Lat_end']].values,
-        #                                            trace_dir, intersect_dir, rup_meta_file_tr_rmax,
-        #                                            src_model=input.src_model)
-        #            logging.info(f"\n")
-        #            logging.info(f"\tRupture (segment) traces exported to:")
-        #            logging.info(f"\t\t{trace_dir}")
-        #            logging.info(f"\tFault crossings exported to:")
-        #            logging.info(f"\t\t{intersect_dir}")
-            
+        
                 logging.info(f"\n\n-----Interfacing with OpenSHA for GMs\n------------------------------------------------------")
                 
             elif setup_config['IntensityMeasure']['SourceForIM'] == 'ShakeMap':
@@ -232,7 +230,7 @@ class assessment(object):
                     sites = site_data[['LONG_MIDDLE','LAT_MIDDLE']].values,
                     IM_dir = other_config_param['Dir_IM_GroundMotion_Prediction'],
                     store_events_file = other_config_param['File_ListOfScenarios'],
-                    trace_dir = other_config_param.get('Dir_FaultTrace',None)
+                    trace_save_name = other_config_param.get('File_ScenarioTraces',None)
                 )
                 #
                 self._IM_dict.update({
@@ -246,7 +244,7 @@ class assessment(object):
                 })
                 #
                 rupture_list = OpenSHAInterface.get_src_rup_M_rate(
-                    erf=None, rupture_list_file=other_config_param['File_ListOfScenarios'], ind_range=['all'])
+                    erf=None, rupture_list_file=other_config_param['File_ListOfScenarios'])
                 for key in event_keys:
                     if np.ndim(rupture_list[key]) < 1:
                         self._EVENT_dict['Scenarios'][key] = np.expand_dims(rupture_list[key],axis=0)
@@ -254,8 +252,45 @@ class assessment(object):
                         self._EVENT_dict['Scenarios'][key] = rupture_list[key]
                 self._EVENT_dict['Scenarios']['Num_Events'] = len(self._EVENT_dict['Scenarios']['src'])
                 logging.info(f"\n\n-----Getting GMs from ShakeMap\n------------------------------------------------------")
-    
+        
+        #
         logging.info(f'Added listOfRuptures to "model._EVENT_dict" and IM Means and StdDevs to "model._IM_dict"\n')
+        
+        # Get Fault Crossings
+        if setup_config['EngineeringDemandParameter']['Type']['SurfaceFaultRupture']['ToAssess']:
+            logging.info(f"SurfaceFaultRupture is requested; getting fault crossings...")
+            if os.path.exists(other_config_param['File_FaultCrossing']):
+                logging.info(f"\tFile with fault crossings exists:")
+                logging.info(f"\t\t{other_config_param['File_FaultCrossing']}")
+                # exist_FaultCrossings = True
+                self._EVENT_dict['FaultCrossings'] = OpenSHAInterface.get_fault_xing_opensha(
+                    src_list = None,
+                    start_loc = None,
+                    end_loc = None,
+                    trace_set = None,
+                    save_name = other_config_param['File_FaultCrossing'],
+                    to_write = False,
+                )
+            else:
+                # exist_FaultCrossings is False:
+                logging.info(f"\tFile with fault crossings does not exist, computing now...")
+                if trace_set is None:
+                    # Get list of traces for each source scenario
+                    trace_set = OpenSHAInterface.get_trace_opensha(
+                        src_list = None,
+                        src_connect_file = None,
+                        rup_seg_file = None,
+                        pt_src_file = None,
+                        save_name = other_config_param['File_ScenarioTraces'],
+                        to_write = False
+                    )
+                self._EVENT_dict['FaultCrossings'] = OpenSHAInterface.get_fault_xing_opensha(
+                    src_list = np.unique(rupture_list['src']),
+                    start_loc = site_data[['LONG_BEGIN','LAT_BEGIN']].values,
+                    end_loc = site_data.loc[:,['LONG_END','LAT_END']].values,
+                    trace_set = trace_set,
+                    save_name = other_config_param['File_FaultCrossing']
+                )
         
         
     # -----------------------------------------------------------
@@ -563,7 +598,7 @@ class assessment(object):
             self._IM_dict['Prediction'][key] = {}
         
         #
-        logging.info(f'Added IM simulations to "model._IM_dict"\n')
+        logging.info(f'Added IM simulations to "model._IM_dict\n')
     
     # -----------------------------------------------------------
     def assess_EDP(self, setup_config, other_config_param, site_data, method_assess_param):
@@ -641,6 +676,7 @@ class assessment(object):
         
         # loop through list of EDPs
         edp_counter = 0
+        temp_out = {}
         for edp_i in curr_peer_category:
             logging.info(f"Current EDP: {edp_i}")
             # initialize storage for hazard
@@ -667,7 +703,12 @@ class assessment(object):
                 param_computed_in_run_to_add[edp_i].update({
                     'liq_susc': self._EDP_dict['Liquefaction']['liq_susc']['Value']
                 })
-            
+            # for SurfaceFaultRupture, add list of fault crossings
+            if edp_i == 'SurfaceFaultRupture':
+                param_computed_in_run_to_add[edp_i].update({
+                    'fault_crossings': self._EVENT_dict['FaultCrossings']
+                })
+            # add uncertainty information
             if dist_type == 'Uniform':
                 self._EDP_dict[edp_i]['Uncertainty'] = {
                     'DistributionType': dist_type,
@@ -677,7 +718,7 @@ class assessment(object):
                     'Epistemic': {
                         'ScaleFactor': 1,
                         'Branches': epistemic_branch,
-                        'Branches': epistemic_weight,
+                        'Weights': epistemic_weight,
                     }
                 }
             elif dist_type == 'Lognormal':
@@ -689,7 +730,7 @@ class assessment(object):
                     'Epistemic': {
                         'StdDev': 0,
                         'Branches': epistemic_branch,
-                        'Branches': epistemic_weight,
+                        'Weights': epistemic_weight,
                     },
                     'Total': {
                         'StdDev': 0,
@@ -715,6 +756,14 @@ class assessment(object):
                 for param_k in curr_peer_category[edp_i]['Method'][method_j]['InputParameters']:
                     kwargs[param_k] = curr_peer_category[edp_i]['Method'][method_j]['InputParameters'][param_k]
                 
+                # if edp_i == 'SurfaceFaultRupture':
+                    # temp_file = os.path.join(r'C:\Users\barry\Desktop\New folder\test2','input_param.json')
+                    # keys = curr_peer_category[edp_i]['Method'][method_j]['Flags'].keys()
+                    # print(curr_peer_category[edp_i]['Method'][method_j]['Flags'])
+                    # np.savetxt(temp_file, keys)
+                    # with open(os.path.join(r'C:\Users\barry\Desktop\New folder\test2','input_param.json'),'w') as f:
+                        # json.dump(curr_peer_category[edp_i],f,indent=4)
+                
                 # import procedure and run method
                 proc_for_method = getattr(
                     importlib.import_module('src.EDP.'+edp_i), method_j)
@@ -722,6 +771,10 @@ class assessment(object):
                 # with warnings.catch_warnings():
                     # warnings.simplefilter("ignore")
                 output = proc_for_method(**kwargs)
+
+                
+                # if edp_i == 'Landslide':
+                    # temp_out[method_j] = output
                 
                 # store outputs
                 weight = curr_peer_category[edp_i]['Method'][method_j]['Weight']
@@ -731,8 +784,12 @@ class assessment(object):
                         logging.info(f"\t\tGetting return parameter: {param_k}")
                         # specific to liq_susc, which is a category
                         if param_k == 'liq_susc':
-                            self._EDP_dict[edp_i][param_k]['Value'] = \
-                                output[param_k]
+                            self._EDP_dict[edp_i][param_k]['Value'] = output[param_k]
+                        # for p_land, only rely on BrayMacedo2007 for now
+                        elif param_k == 'p_land':
+                            # loop through samples
+                            for sample_l in range(n_sample):
+                                    self._EDP_dict[edp_i][param_k]['Value'][sample_l] = output[param_k][sample_l]
                         else:
                             # loop through samples
                             for sample_l in range(n_sample):
@@ -793,10 +850,11 @@ class assessment(object):
             
         #
         if len(method_assess_param['EDP']) == 0:
-            logging.info(f'No EDP requested for this analysis"\n')
+            logging.info(f'No EDP requested for this analysis\n')
         else:
-            logging.info(f'Added EDP results to "model._EDP_dict"\n')
+            logging.info(f'Added EDP results to "model._EDP_dict\n')
 
+        # return temp_out
 
     # -----------------------------------------------------------
     def assess_DM(self, setup_config, other_config_param, site_data, method_assess_param):
@@ -821,9 +879,9 @@ class assessment(object):
     
         #
         if len(method_assess_param['DM']) == 0:
-            logging.info(f'No DM requested for this analysis"\n')
+            logging.info(f'No DM requested for this analysis\n')
         else:
-            logging.info(f'Added DM results to "model._DM_dict"\n')
+            logging.info(f'Added DM results to "model._DM_dict\n')
     
     
     # -----------------------------------------------------------
@@ -970,14 +1028,36 @@ class assessment(object):
                         demand_dict[dv_i][edp_j]['Prob'] = {
                             'Label': 'p_land',
                             'Value': self._EDP_dict['Landslide']['p_land']['Value'],
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            # Probability of landslide deformation is set to be uniformly distributed for now
                             'DistType': 'Uniform',
                             'EpiBranch': other_config_param['DistributionType']['Uniform']['Epistemic']['Branch'],
                             'EpiWgt': other_config_param['DistributionType']['Uniform']['Epistemic']['Weight'],
                             'ScaleFactorAle': self._EDP_dict['Liquefaction']['Uncertainty']['Aleatory']['ScaleFactor'],
                             'ScaleFactorEpi': self._EDP_dict['Liquefaction']['Uncertainty']['Epistemic']['ScaleFactor']
+                            # 'DistType': 'Lognormal',
+                            # 'EpiBranch': other_config_param['DistributionType']['Lognormal']['Epistemic']['Branch'],
+                            # 'EpiWgt': other_config_param['DistributionType']['Lognormal']['Epistemic']['Weight'],
+                            # 'StdDevAle': self._EDP_dict['Landslide']['Uncertainty']['Aleatory']['StdDev'],
+                            # 'StdDevEpi': self._EDP_dict['Landslide']['Uncertainty']['Epistemic']['StdDev'],
+                            # 'StdDevTotal': self._EDP_dict['Landslide']['Uncertainty']['Total']['StdDev']
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                        }
+                    elif edp_j == 'SurfaceFaultRupture':
+                        demand_dict[dv_i][edp_j]['Prob'] = {
+                            'Label': 'p_surf',
+                            'Value': None,
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            'DistType': 'Uniform',
+                            'EpiBranch': [1],
+                            'EpiWgt': [1],
+                            'ScaleFactorAle': 1,
+                            'ScaleFactorEpi': 1
+                            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                         }
                     else:
                         demand_dict[dv_i][edp_j]['Prob'] = None
+                        
         # -----------------------------------------------------------
         # think about how to loop this with more random variables
         # -----------------------------------------------------------
@@ -1031,6 +1111,7 @@ class assessment(object):
                 for demand_k in curr_demand_dict:
                     logging.info(f"\t\tCurrent demand for DV: {demand_k}")
                     self._DV_dict[dv_i][demand_k] = {}
+                    # self._DV_dict[dv_i][demand_k] = None
                 
                     # get info for current demand
                     demand_dist_type = curr_demand_dict[demand_k]['Demand']['DistType']
@@ -1129,6 +1210,7 @@ class assessment(object):
                                 # -----------------------------------------------------------
                                 # see if using specific aleatory cases for probability
                                 if curr_demand_dict[demand_k]['Prob'] is None:
+                                    prob_dist_type = 'Uniform'
                                     #
                                     prob_epi_sf = 1
                                     prob_epi_branch = [1]
@@ -1137,8 +1219,9 @@ class assessment(object):
                                     prob_ale_sf = 1
                                     prob_ale_case = [1]
                                     prob_ale_wgt = [1]
-                                else:
-                                    # get info for current demand
+                                else:                                        
+                                    # get info for current demand probability
+                                    prob_dist_type = curr_demand_dict[demand_k]['Prob']['DistType']
                                     prob_epi_sf = curr_demand_dict[demand_k]['Prob']['ScaleFactorEpi']
                                     prob_epi_branch = curr_demand_dict[demand_k]['Prob']['EpiBranch']
                                     prob_epi_wgt = curr_demand_dict[demand_k]['Prob']['EpiWgt']
@@ -1166,7 +1249,14 @@ class assessment(object):
                                         for sample_n in range(n_sample):
                                             # logging.info(f"\t\t\t\t\tSample {sample_n} of demand")
                                             # get demand for current sample
-                                            prob_epi_ale_val[sample_n] = curr_demand_dict[demand_k]['Prob']['Value'][sample_n]
+                                            if curr_demand_dict[demand_k]['Prob']['Value'] is None:
+                                                ref_sparse_mat = demand_epi_ale_val[sample_n].tocoo()
+                                                prob_epi_ale_val[sample_n] = sparse.coo_matrix(
+                                                    (np.ones(len(ref_sparse_mat.data)),(ref_sparse_mat.row,ref_sparse_mat.col)),
+                                                    shape=ref_sparse_mat.shape
+                                                )
+                                            else:
+                                                prob_epi_ale_val[sample_n] = curr_demand_dict[demand_k]['Prob']['Value'][sample_n]
                                             # adjust for epistemic
                                             scale_factor = prob_epi_sf**prob_epi_l
                                             # adjust for aleatory
@@ -1182,9 +1272,6 @@ class assessment(object):
                                         # run method
                                         output = proc_for_method(**kwargs)
                                         # -----------------------------------------------------------
-
-                                        # if prob_ale_counter == 1:
-                                            # return prob_epi_ale
 
                                         # for probability, loop through PGV branches and scale by prob_ale_wgt
                                         for sample_n in range(n_sample):
@@ -1300,7 +1387,7 @@ class assessment(object):
                     # remove demand specific input parameters from kwargs for next iteration
                     kwargs.pop('pgd_label',None)
             
-            # combine samples and events and update _DV_dict
+            # combine events and update _DV_dict
             for demand_k in self._DV_dict[dv_i]:
                 # -----------------------------------------------------------
                 # for without combining epistemic uncertainty
@@ -1338,11 +1425,38 @@ class assessment(object):
                     self._DV_dict[dv_i][demand_k][sample_n] = sparse.coo_matrix(
                         np.sum(self._DV_dict[dv_i][demand_k][sample_n].multiply(rate).toarray(),axis=0))
                     
+                # combine samples and split into breaks and leaks if requesting "RepairRate"
+                for sample_n in range(n_sample):
+                    if sample_n == 0:
+                        temp_sample = self._DV_dict[dv_i][demand_k][sample_n]
+                    else:
+                        if dist_type_dv[dv_i] == 'Uniform':
+                            temp_sample = temp_sample + self._DV_dict[dv_i][demand_k][sample_n]
+                        elif dist_type_dv[dv_i] == 'Lognormal':
+                            temp_sample = temp_sample.multiply(self._DV_dict[dv_i][demand_k][sample_n])
+                if dist_type_dv[dv_i] == 'Uniform':
+                    temp_sample = temp_sample.multiply(1/n_sample)
+                elif dist_type_dv[dv_i] == 'Lognormal':
+                    temp_sample = temp_sample.power(1/n_sample)
+                if 'RepairRate' in dv_i:
+                    if 'PGV' in dv_i:
+                        self._DV_dict[dv_i][demand_k] = {
+                            'NumberOfBreaks': temp_sample.multiply(0.2),
+                            'NumberOfLeaks': temp_sample.multiply(0.8)
+                        }
+                    elif 'PGD' in dv_i:
+                        self._DV_dict[dv_i][demand_k] = {
+                            'NumberOfBreaks': temp_sample.multiply(0.8),
+                            'NumberOfLeaks': temp_sample.multiply(0.2)
+                        }
+                else:
+                    self._DV_dict[dv_i][demand_k] = temp_sample
+                
         #
         if len(method_assess_param['DV']) == 0:
-            logging.info(f'No DV requested for this analysis"\n')
+            logging.info(f'No DV requested for this analysis\n')
         else:
-            logging.info(f'Added DV results to "model._DV_dict"\n')
+            logging.info(f'Added DV results to "model._DV_dict\n')
 
     
     # -----------------------------------------------------------
@@ -1366,35 +1480,68 @@ class assessment(object):
             else:
                 sep = ','
             
+            # set up export file headers
+            cols = []
+            for i in range(len(other_config_param['ColumnsToKeepInFront'])):
+                if not other_config_param['ColumnsToKeepInFront'][i] == 'SHAPE_LENGTH':
+                    cols.append(other_config_param['ColumnsToKeepInFront'][i])
+            
+            # create a file with all of the results
+            # make path
+            save_path_all = os.path.join(other_config_param['Dir_DV'], 'AllResults.'+setup_config['General']['OutputFileType'])
+            logging.info(f"\t{os.path.basename(save_path_all)}")
+            # get data for initial column headers from site_data
+            df_all_export = site_data[cols].copy()
+            
+            # track sum of dvs
+            if 'RepairRatePGV' in self._DV_dict or 'RepairRatePGD' in self._DV_dict:
+                total_repair_rate = np.zeros(site_data.shape[0])
+            
             # loop through all DVs
             for dv_i in self._DV_dict:
             
                 # make path
                 save_path = os.path.join(other_config_param['Dir_DV'], dv_i+'.'+setup_config['General']['OutputFileType'])
                 logging.info(f"\t{os.path.basename(save_path)}")
-                
-                # set up export file headers
-                cols = []
-                for i in range(len(other_config_param['ColumnsToKeepInFront'])):
-                    if not other_config_param['ColumnsToKeepInFront'][i] == 'SHAPE_LENGTH':
-                        cols.append(other_config_param['ColumnsToKeepInFront'][i])
-                        
                 # get data for initial column headers from site_data
                 df_export = site_data[cols].copy()
             
                 # loop through demands and epistemic branches to make more column headers and get data from _DV_dict
                 for demand_j in self._DV_dict[dv_i]:
+                    # print(f'4, {self._DV_dict[dv_i][demand_j].keys()}')
                     # -----------------------------------------------------------
                     # for without combining epistemic uncertainty
                     # for epi_i in self._DV_dict[dv_i][demand_j]:
                         # cols.append(demand_j+'_'+epi_i)
                         # df_export[demand_j+'_'+epi_i] = self._DV_dict[dv_i][demand_j][epi_i].toarray()[0]
                     # -----------------------------------------------------------
-                    for sample_n in range(len(self._DV_dict[dv_i][demand_j])):
-                        df_export[demand_j+'_IMsample'+str(sample_n+1)] = self._DV_dict[dv_i][demand_j][sample_n].toarray()[0]
-                        
+                    # for sample_n in range(len(self._DV_dict[dv_i][demand_j])):
+                        # df_export[demand_j+'_IMsample'+str(sample_n+1)] = self._DV_dict[dv_i][demand_j][sample_n].toarray()[0]
+                    if isinstance(self._DV_dict[dv_i][demand_j],dict):
+                        for key in self._DV_dict[dv_i][demand_j].keys():
+                            df_export[demand_j+'_'+key] = self._DV_dict[dv_i][demand_j][key].toarray()[0]
+                            # file with all the results
+                            df_all_export[dv_i+'_'+demand_j+'_'+key] = self._DV_dict[dv_i][demand_j][key].toarray()[0]
+                            # track sum of dvs
+                            if 'RepairRatePGV' in self._DV_dict or 'RepairRatePGD' in self._DV_dict:
+                                total_repair_rate = total_repair_rate + self._DV_dict[dv_i][demand_j][key].toarray()[0]
+                    else:
+                        df_export[demand_j] = self._DV_dict[dv_i][demand_j].toarray()[0]
+                        # file with all the results
+                        df_all_export[dv_i+'_'+demand_j] = self._DV_dict[dv_i][demand_j].toarray()[0]
+                        # track sum of dvs
+                        if 'RepairRatePGV' in self._DV_dict or 'RepairRatePGD' in self._DV_dict:
+                            total_repair_rate = total_repair_rate + self._DV_dict[dv_i][demand_j].toarray()[0]
+
                 # export to file
                 df_export.to_csv(save_path, index=False, sep=sep)
+            
+            # add column for total repair rate
+            if 'RepairRatePGV' in self._DV_dict or 'RepairRatePGD' in self._DV_dict:
+                df_all_export['TotalRepairRateForAllDemands'] = total_repair_rate
+            
+            # export to file
+            df_all_export.to_csv(save_path_all, index=False, sep=sep)
             
             #
             logging.info(f'\n')

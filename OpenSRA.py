@@ -30,8 +30,22 @@ import logging
 import sys
 import argparse
 import json
+import zipfile
 import numpy as np
 import pandas as pd
+
+# Prior to importing OpenSRA backend, see if lib/OpenSHA folder exists
+# and contains files, if not, unzip from lib/OpenSHA.zip
+opensra_dir = os.path.dirname(os.path.realpath(__file__))
+flag_to_unzip_opensha_zip = False
+if os.path.isdir(os.path.join(opensra_dir,'lib','OpenSHA')):
+    if len(os.listdir(os.path.join(opensra_dir,'lib','OpenSHA'))) == 0:
+        flag_to_unzip_opensha_zip = True
+else:
+    flag_to_unzip_opensha_zip = True
+if flag_to_unzip_opensha_zip:
+    with zipfile.ZipFile(os.path.join(opensra_dir,'lib','OpenSHA.zip'), 'r') as zip_ref:
+        zip_ref.extractall(os.path.join(opensra_dir,'lib'))
 
 # OpenSRA modules and functions
 from src import Model, PreProcess, Fcn_Common
@@ -335,7 +349,7 @@ def main(input_dir, clean_prev_run, logging_level):
     
     # -----------------------------------------------------------
     # Exit Program
-    logging.info("\t------------- OpenSRA Analysis -------------')")
+    logging.info("\t------------- OpenSRA Analysis -------------")
     logging.info('---------------')
     
 

@@ -153,94 +153,142 @@ def Jibson2007(**kwargs):
 
     # Get inputs
     pga = kwargs.get('pga',None) # g, peak ground acceleration = amax in paper
-    ky = kwargs.get('ky',None) # g, yield acceleration = ac in paper, either provided or computed below
+    ky = kwargs.get('ky',None) # g, yield acceleration = ac in paper
     M = kwargs.get('M',None) # moment magnitude
     Ia = kwargs.get('Ia',None) # m/s, arias intensity
-    slope_type = kwargs.get('slope_type',None)
-
-    # Check if ky is provided, if not then compute it
-    if ky is None:
-        try:
-            # determine yield acceleration based on input params and mode of failure
-            ky = fcn_liq_land.get_ky(slope_type,method='grant',kwargs=kwargs) # g
-
-        except:
-            logging.info('Not enough inputs to calculate ky - need factor of safety and slope angle')
-            ky = None
+    # slope_type = kwargs.get('slope_type',None)
+    n_sample = kwargs.get('n_sample',1) # number of samples, default to 1
+    n_site = kwargs.get('n_site',pga[0].shape[1]) # number of sites
+    n_event = kwargs.get('n_event',pga[0].shape[0]) # number of ruptures
+    return_param = kwargs.get('return_param',['pgd_land']) # default to liq susc
 
     # initialize diciontary for displacement
-    d_dict = {}
+    d = {}
 
-    if ky is None and (pga is None or Ia is None):
-        logging.info('Requires at the minimum ky and either pga or Ia; cannot proceed with procedure')
-        d = np.nan
-        sigma = np.nan
+    # if ky is None and (pga is None or Ia is None):
+    if pga is None and Ia is None:
+        # logging.info('Requires at the minimum ky and either pga or Ia; cannot proceed with procedure')
+        logging.info('Requires either pga or Ia; cannot proceed with procedure')
+        return None
 
     else:
-
-        # Model as a function of ky and pga
         if pga is not None:
-            # displacement, cm
-            if pga > ky:
-                d = 10**(0.215 + np.log10((1 - ky/pga)**2.341 * (ky/pga)**-1.438)) # eq. 6 in Jibson (2007)
-            else:
-                d = 0
-
-            # sigma for ln(D)
-            sigma = 0.510*np.log(10) # eq. 6 in Jibson (2007)
-
-            d_dict.update({'ky_pga': [d,sigma]})
-
+            # Model as a function of ky and pga
+            if M is None:
+                case = 1
+                case_var = 'ky_pga'
+                sigma_total = 0.510*np.log(10) # eq. 6 in Jibson (2007)
+                
             # Model as a function of ky, pga, and M
-            if M is not None:               # displacement, cm
-                if pga > ky:
-                    d = 10**(-2.710 + np.log10((1 - ky/pga)**2.335 * (ky/pga)**-1.478) + 0.424*M) # eq. 7 in Jibson (2007)
-                else:
-                    d = 0
+            else:
+                case = 2
+                case_var = 'ky_pga_M'
+                sigma_total = 0.454*np.log(10) # eq. 7 in Jibson (2007)
 
-                # sigma for ln(D)
-                sigma = 0.454*np.log(10) # eq. 7 in Jibson (2007)
-
-                d_dict.update({'ky_pga_M': [d,sigma]})
-
-        #
         if Ia is not None:
             # Model as a function of ky and Ia
-            # displacement, cm
-            d = 10**(2.401*np.log10(Ia) - 3.481*np.log10(ky) - 3.230) # eq. 9 in Jibson (2007)
+            if pga is None:
+                case = 3
+                case_var = 'ky_Ia'
+                sigma_total = 0.656*np.log(10) # eq. 9 in Jibson (2007)
 
-            # sigma for ln(D)
-            sigma = 0.656*np.log(10) # eq. 9 in Jibson (2007)
+            # Model as a function of ky, Ia, and pga
+            else:
+                case = 4
+                case_var = 'ky_pga_Ia'
+                sigma_total = 0.616*np.log(10) # eq. 10 in Jibson (2007)
+        
+        
+        # -----------------------------------------------------------
+        # -----------------------------------------------------------
+        # distribution
+        # borrewed from BrayMacedo2017 for now
+        prob_dist_type = 'Lognormal'
+        sigma_aleatory = 0.4 # for ln(D)
+        sigma_epistemic = (sigma_total**2-sigma_aleatory**2)**0.5 # for ln(D)
+        # -----------------------------------------------------------
+        # -----------------------------------------------------------
+        
 
-            d_dict.update({'ky_Ia': [d,sigma]})
-
-            if pga is not None:
-                # Model as a function of ky, Ia, and pga
+        # loop through samples
+        for k in range(n_sample):
+        
+            # Model as a function of ky and pga
+            if case == 1:
+                # get current sampled inputs
+                pga_k = pga[k].data
+                row_k = pga[k].row
+                col_k = pga[k].col
+                # get other params for current sample
+                ky_k = ky[col_k]
+                # initialize zero array
+                d_k = np.zeros(len(pga_k))
                 # displacement, cm
-                if pga > ky:
-                    d = 10**(0.561*np.log10(Ia) - 3.833*np.log10(ky/pga) - 1.474) # eq. 10 in Jibson (2007)
-                else:
-                    d = 0
+                cond = np.where(pga_k>ky_k)[0] # indices where condition is true
+                d_k[cond] = 10**(0.215 + np.log10((1 - ky_k[cond]/pga_k[cond])**2.341 * \
+                    (ky_k[cond]/pga_k[cond])**-1.438)) # eq. 6 in Jibson (2007)
+                
+            # Model as a function of ky, pga, and M
+            elif case == 2:
+                # get current sampled inputs
+                pga_k = pga[k].data
+                row_k = pga[k].row
+                col_k = pga[k].col
+                # get other params for current sample
+                ky_k = ky[col_k]
+                M_k = M[row_k]
+                M_k = np.maximum(np.minimum(M_k,7.6),5.3) # limit assessment to 5.3 <= Mw <= 7.6
+                # initialize zero array
+                d_k = np.zeros(len(pga_k))
+                # displacement, cm
+                cond = np.where(pga_k>ky_k)[0] # indices where condition is true
+                d_k[cond] = 10**(-2.710 + np.log10((1 - ky_k[cond]/pga_k[cond])**2.335 * \
+                    (ky_k[cond]/pga_k[cond])**-1.478) + 0.424*M_k[cond]) # eq. 7 in Jibson (2007)
+            
+            # Model as a function of ky and Ia
+            elif case == 3:
+                # get current sampled inputs
+                Ia_k = Ia[k].data
+                row_k = Ia[k].row
+                col_k = Ia[k].col
+                # get other params for current sample
+                ky_k = ky[col_k]
+                # displacement, cm
+                d_k = 10**(2.401*np.log10(Ia_k) - 3.481*np.log10(ky_k) - 3.230) # eq. 9 in Jibson (2007)
+                
+            # Model as a function of ky, Ia, and pga
+            elif case == 4:
+                # get current sampled inputs
+                pga_k = pga[k].data
+                row_k = pga[k].row
+                col_k = pga[k].col
+                Ia_k = Ia[k].data
+                # get other params for current sample
+                ky_k = ky[col_k]
+                # initialize zero array
+                d_k = np.zeros(len(pga_k))
+                # displacement, cm
+                cond = np.where(pga_k>ky_k)[0] # indices where condition is true
+                d_k[cond] = 10**(0.561*np.log10(Ia[cond]) - \
+                    3.833*np.log10(ky[cond]/pga[cond]) - 1.474) # eq. 10 in Jibson (2007)
 
-                # sigma for ln(D)
-                sigma = 0.616*np.log(10) # eq. 10 in Jibson (2007)
+            # update dictionary
+            d.update({k:sparse.coo_matrix((d_k,(row_k,col_k)),shape=(n_event,n_site))})
 
-                d_dict.update({'ky_pga,Ia': [d,sigma]})
+        # store outputs
+        output = {}
+        #
+        if 'pgd_land' in return_param:
+            output.update({'pgd_land': d.copy()})
+        # store probability distribution parameters
+        output.update({'prob_dist': {
+            'type': prob_dist_type,
+            'sigma_total': sigma_total,
+            'sigma_aleatory': sigma_aleatory,
+            'sigma_epistemic': sigma_epistemic}})
 
-    # loop to find the model with the lowest sigma
-
-    # print(d_dict)
-
-    sigma = 999 # set initial check to very high number
-    keys = d_dict.keys() # get all the keys in dictionary
-    if len(d_dict.keys()) > 0 and d is not np.nan: # see if there are any entries in d_dict and if d is NaN
-        for i in keys:
-            if d_dict[i][1] < sigma:
-                d = d_dict[i][0]
-                sigma = d_dict[i][1]
-
-    #
-    return d
+        #
+        return output
 
 
 # -----------------------------------------------------------
@@ -315,7 +363,6 @@ def Saygili2008(pga, **kwargs):
         try:
             # determine yield acceleration based on input params and mode of failure
             ky = fcn_liq_land.get_ky(slope_type='infinite slope',method='rathje',kwargs=kwargs) # g
-
         except:
             logging.info('Not enough inputs to calculate ky - see Rathje & Saygili (2011) for all required inputs')
             ky = None
@@ -569,22 +616,17 @@ def RathjeAntonakos2011(pga, **kwargs):
     Tm = kwargs.get('Tm',None) # sec, mean period
     Ts = kwargs.get('Tm',None) # sec, site period
     ky = kwargs.get('ky',None) # g, yield acceleration, either provided or computed below
-
-    # Check if ky is provided, if not then compute it
-    if ky is None:
-        try:
-            # determine yield acceleration based on input params and mode of failure
-            ky = fcn_liq_land.get_ky(slope_type='infinite slope',method='rathje',kwargs=kwargs) # g
-
-        except:
-            logging.info('Not enough inputs to calculate ky - see Rathje & Saygili (2011) for all required inputs')
-            ky = None
+    n_sample = kwargs.get('n_sample',1) # number of samples, default to 1
+    n_site = kwargs.get('n_site',pga[0].shape[1]) # number of sites
+    n_event = kwargs.get('n_event',pga[0].shape[0]) # number of ruptures
+    return_param = kwargs.get('return_param','pgd_land') # default to liq susc
 
     # initialize diciontary for displacement
-    d_dict = {}
+    d = {}
 
     if pga is None or ky is None:
         logging.info('Not enough inputs: cannot proceed with evaluation')
+        return None
 
     else:
         # compute Kmax to be used in place of pga
@@ -594,7 +636,6 @@ def RathjeAntonakos2011(pga, **kwargs):
                                     (-0.228 + 0.076*pga) * np.log((Ts/Tm)/0.1)**2)
             else:
                 Kmax = pga * np.exp(0)
-
         except:
             logging.info('Not enough inputs for Kmax; setting Kmax = pga')
             Kmax = pga
@@ -673,17 +714,20 @@ def RathjeAntonakos2011(pga, **kwargs):
 
             d_dict.update({'ky_pga_pgv': [d,sigma]})
 
-    # loop to find the model with the lowest sigma
-    sigma = 999 # set initial check to very high number
-    keys = d_dict.keys() # get all the keys in dictionary
-    if len(d_dict.keys()) > 0 and d is not np.nan: # see if there are any entries in d_dict and if d is NaN
-        for i in keys:
-            if d_dict[i][1] < sigma:
-                d = d_dict[i][0]
-                sigma = d_dict[i][1]
+        # store outputs
+        output = {}
+        #
+        if 'pgd_land' in return_param:
+            output.update({'pgd_land': d.copy()})
+        # store probability distribution parameters
+        output.update({'prob_dist': {
+            'type': prob_dist_type,
+            'sigma_total': sigma_total,
+            'sigma_aleatory': sigma_aleatory,
+            'sigma_epistemic': sigma_epistemic}})
 
-    #
-    return d
+        #
+        return output
 
 
 # -----------------------------------------------------------
@@ -923,10 +967,10 @@ def BrayMacedo2019(**kwargs):
         Ts = 0.01
         Sa_Ts_deg = pga
 
-    # get pgv- and period-dependent coefficients
+    # get pgv- and period-dependent coefficients and sigmas
     if 'ord' in gm_type.lower():
-        # standard deviation
-        sigma = 0.72
+        # total sigma
+        sigma_total = 0.72 # for ln(D)
 
         # initialize matrix for coeffcients
         a1 = np.zeros([n_event,n_site])
@@ -946,12 +990,29 @@ def BrayMacedo2019(**kwargs):
         a3[Ts>=0.1] = -0.945
 
     elif 'nf' in gm_type.lower() or 'near' in gm_type.lower() or 'fault' in gm_type.lower():
-        pass
+        # check if slope is oriented within 45 degree of fault-normal direction
+        # if slope_loc <= 45:
+            # total sigma
+            # sigma_total = 0.56 # for ln(D)
+        # elif slope_loc > 45:
+            # total sigma
+            # sigma_total = 0.54 # for ln(D)
+            
+        # use site-independent sigma of 0.55 for now
+            sigma_total = 0.55
 
     elif 'full' in gm_type.lower() or 'gen' in gm_type.lower():
-        pass
+        # total sigma
+        sigma_total = 0.74 # for ln(D)
 
-    # initialize dictionaries
+    # distribution based on case:
+    prob_dist_type = 'Lognormal'
+    # aleatory
+    sigma_aleatory = 0.4 # for ln(D)
+    # estimate epistemic from total and aleatory
+    sigma_epistemic = (sigma_total**2-sigma_aleatory**2)**0.5 # for ln(D)
+
+    # initialize dictionaries for outputs
     d = {}
     p_land = {}
 
@@ -964,7 +1025,7 @@ def BrayMacedo2019(**kwargs):
         row_k = pgv[k].row
         col_k = pgv[k].col
 
-        # generate array for current sample
+        # get other params for current sample
         ky_k = ky[col_k]
         M_k = M[row_k]
         Ts_k = np.ones(pgv_k.shape)*Ts
@@ -973,31 +1034,32 @@ def BrayMacedo2019(**kwargs):
         if 'ord' in gm_type.lower():
 
             # seismic displacement, cm (eq. 3)
-            ln_d_k = a1 - 2.482*np.log(ky) - 0.244*np.multiply(np.log(ky),np.log(ky)) +\
-                        0.344*np.multiply(np.log(ky),np.log(Sa_Ts_deg_k)) + 2.649*np.log(Sa_Ts_deg_k) -\
-                        0.090*np.multiply(np.log(Sa_Ts_deg_k),np.log(Sa_Ts_deg_k)) + a2*Ts +\
-                        a3*np.multiply(Ts,Ts) + 0.603*M
+            ln_d_k = a1 - 2.482*np.log(ky_k) - 0.244*np.multiply(np.log(ky_k),np.log(ky_k)) +\
+                        0.344*np.multiply(np.log(ky_k),np.log(Sa_Ts_deg_k)) + 2.649*np.log(Sa_Ts_deg_k) -\
+                        0.090*np.multiply(np.log(Sa_Ts_deg_k),np.log(Sa_Ts_deg_k)) + a2*Ts_k +\
+                        a3*np.multiply(Ts_k,Ts_k) + 0.603*M_k
 
             # probably of displacement = 0 (threshold = 0.5 cm)
             if 'p_land' in return_param:
-                p_D_eq_0_k = np.zeros([n_event,n_site])
-                p_D_eq_0_k[Ts<=0.7] = 1-norm.cdf(-2.48 - 2.97*np.log(ky[Ts<=0.7]) -\
-                                        0.12*np.multiply(np.log(ky[Ts<=0.7]),np.log(ky[Ts<=0.7])) -\
-                                        0.72*np.multiply(Ts[Ts<=0.7],np.log(ky[Ts<=0.7])) +\
-                                        1.70*Ts[Ts<=0.7] + 2.78*np.log(Sa[Ts<=0.7]))# eq. 2(a)
-                p_D_eq_0_k[Ts>0.7] = 1-norm.cdf(-3.42 - 4.93*np.log(ky[Ts>0.7]) -\
-                                        0.30*np.multiply(np.log(ky[Ts>0.7]),np.log(ky[Ts>0.7])) -\
-                                        0.35*np.multiply(Ts[Ts>0.7],np.log(ky[Ts>0.7])) -\
-                                        0.62*Ts[Ts>0.7] + 2.86*np.log(Sa[Ts>0.7])) # eq. 2(b)
-                p_land.update({k:sparse.coo_matrix(1-p_D_eq_0_k)})
+                p_land_k = np.zeros(pgv_k.shape)
+                p_land_k[Ts_k<=0.7] = norm.cdf(-2.48 - 2.97*np.log(ky_k[Ts_k<=0.7]) -\
+                                        0.12*np.multiply(np.log(ky_k[Ts_k<=0.7]),np.log(ky_k[Ts_k<=0.7])) -\
+                                        0.72*np.multiply(Ts_k[Ts_k<=0.7],np.log(ky_k[Ts_k<=0.7])) +\
+                                        1.70*Ts_k[Ts_k<=0.7] + 2.78*np.log(Sa_Ts_deg_k[Ts_k<=0.7]))# eq. 2(a)
+                p_land_k[Ts_k>0.7] = norm.cdf(-3.42 - 4.93*np.log(ky_k[Ts_k>0.7]) -\
+                                        0.30*np.multiply(np.log(ky_k[Ts_k>0.7]),np.log(ky_k[Ts_k>0.7])) -\
+                                        0.35*np.multiply(Ts_k[Ts_k>0.7],np.log(ky_k[Ts_k>0.7])) -\
+                                        0.62*Ts_k[Ts_k>0.7] + 2.86*np.log(Sa_Ts_deg_k[Ts_k>0.7])) # eq. 2(b)
+                # p_land.update({k:sparse.coo_matrix(1-p_D_eq_0_k)})
 
+
+        # -----------------------------------------------------------
+        # -----------------------------------------------------------
+        # need to update definition of coefficients for near-fault case
         elif 'nf' in gm_type.lower() or 'near' in gm_type.lower() or 'fault' in gm_type.lower():
 
             # check if slope is oriented within 45 degree of fault-normal direction
             if slope_loc <= 45:
-
-                # standard deviation
-                sigma = 0.56
 
                 # pgv- and period-dependent coefficients and parameters for D100
                 if pgv <= 150:
@@ -1040,9 +1102,6 @@ def BrayMacedo2019(**kwargs):
 
             elif slope_loc > 45:
 
-                # standard deviation
-                sigma = 0.54
-
                 # pgv- and period-dependent coefficients and parameters for D50
                 if pgv <= 150:
                     if Ts < 0.1:
@@ -1081,14 +1140,11 @@ def BrayMacedo2019(**kwargs):
                     # eq. 6(b)
                     p_D_eq_0 = 1/(1 + np.exp(-14.671 - 10.489*np.log(ky) + 2.222*np.log(pgv) - 4.759*Ts +
                                             5.549*np.log(Sa)))
+        # -----------------------------------------------------------
+        # -----------------------------------------------------------
+
 
         elif 'full' in gm_type.lower() or 'gen' in gm_type.lower():
-
-            # distribution
-            prob_dist_type = 'Lognormal'
-            sigma_aleatory = 0.4 # for ln(D)
-            sigma_total = 0.74 # for ln(D)
-            sigma_epistemic = (sigma_total**2-sigma_aleatory**2)**0.5 # for ln(D)
 
             # initialize matrix for coefficients
             a1 = np.zeros(pgv_k.shape)
@@ -1151,10 +1207,11 @@ def BrayMacedo2019(**kwargs):
     if 'p_land' in return_param:
         output.update({'p_land': p_land.copy()})
     # store probability distribution parameters
-    output.update({'prob_dist': {'type': prob_dist_type,
-                                'sigma_total': sigma_total,
-                                'sigma_aleatory': sigma_aleatory,
-                                'sigma_epistemic': sigma_epistemic}})
+    output.update({'prob_dist': {
+        'type': prob_dist_type,
+        'sigma_total': sigma_total,
+        'sigma_aleatory': sigma_aleatory,
+        'sigma_epistemic': sigma_epistemic}})
 
     #
     return output

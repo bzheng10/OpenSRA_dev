@@ -151,42 +151,56 @@ def ALA2001(**kwargs):
                 rr_break.update({k:rr_pgv_k*0.2 + rr_pgd_k*0.8})
            
     # demands that have prob = 1 (PGV) or with no pre-computed probability (SurfaceFaultRupture)
-    else:        
-        # Repair rates by PGV
-        rr_pgv_k = sparse.coo_matrix(np.zeros([n_event,n_site]))
+    else:
+        # loop through all realizations
+        for k in range(n_sample):
+            # Repair rates by PGV
+            rr_pgv_k = sparse.coo_matrix(np.zeros([n_event,n_site]))
             
-        # Repair rates by PGD for surface fault rupture
-        shape = pgd.shape
-        rows = pgd.row
-        cols = pgd.col
-        pgd_k = pgd
-        
-        # simplified fault crossing damage
-        p_no_fail = np.ones(pgd_k.data.shape)
-        p_no_fail[np.logical_and(pgd_k.data>0,pgd_k.data<=12)] = 0.50
-        p_no_fail[np.logical_and(pgd_k.data>12,pgd_k.data<=24)] = 0.25
-        p_no_fail[pgd_k.data>24] = 0.05
-        
-        # 
-        rr_pgd_k = -np.log(p_no_fail)/l_seg[cols] # number of breaks per km, with l_seg in km
-        
-        #
-        ind_red = np.where(rr_pgd_k>0)[0]
-        rows_red = rows[ind_red]
-        cols_red = cols[ind_red]
-        rr_pgd_k = sparse.coo_matrix((rr_pgd_k[ind_red],(rows_red,cols_red)),shape=(n_event,n_site))
-        
-        # store rr
-        if 'rr_pgv' in return_param:
-            rr_pgv.update({'all':rr_pgv_k})
-        if 'rr_pgd' in return_param:
-            rr_pgd.update({'all':rr_pgd_k})
-        
-        # break rr_pgv and rr_pgd into rr_leak and rr_break and combine
-        if 'rr_leak' in return_param: 
-            rr_leak.update({'all':rr_pgv_k*0.8 + rr_pgd_k*0.2})
-        if 'rr_break' in return_param:
-            rr_break.update({'all':rr_pgv_k*0.2 + rr_pgd_k*0.8})
+            # see if pgd contains multiple samples (dictionary of matrices versus matrix)
+            if type(pgd) is dict:
+                pgd_k = pgd[k]
+                # logging.debug(f"\t\tFor {pgd_label}: pgd is dictionary.")
+            else:
+                pgd_k = pgd
+                # logging.debug(f"\t\tFor {pgd_label}: pgd is matrix.")
+            
+            # Repair rates by PGD for surface fault rupture
+            shape = pgd_k.shape
+            rows = pgd_k.row
+            cols = pgd_k.col
+            # pgd_k = pgd
+            
+            # simplified fault crossing damage
+            p_no_fail = np.ones(pgd_k.data.shape)
+            p_no_fail[np.logical_and(pgd_k.data>0,pgd_k.data<=12)] = 0.50
+            p_no_fail[np.logical_and(pgd_k.data>12,pgd_k.data<=24)] = 0.25
+            p_no_fail[pgd_k.data>24] = 0.05
+            
+            # 
+            rr_pgd_k = -np.log(p_no_fail)/l_seg[cols] # number of breaks per km, with l_seg in km
+            
+            #
+            ind_red = np.where(rr_pgd_k>0)[0]
+            rows_red = rows[ind_red]
+            cols_red = cols[ind_red]
+            rr_pgd_k = sparse.coo_matrix((rr_pgd_k[ind_red],(rows_red,cols_red)),shape=(n_event,n_site))
+            
+            # store rr
+            if 'rr_pgv' in return_param:
+                # rr_pgv.update({'all':rr_pgv_k})
+                rr_pgv.update({k:rr_pgv_k})
+            if 'rr_pgd' in return_param:
+                # rr_pgd.update({'all':rr_pgd_k})
+                rr_pgd.update({k:rr_pgd_k})
+            
+            # break rr_pgv and rr_pgd into rr_leak and rr_break and combine
+            if 'rr_leak' in return_param: 
+                # rr_leak.update({'all':rr_pgv_k*0.8 + rr_pgd_k*0.2})
+                rr_leak.update({k:rr_pgv_k*0.8 + rr_pgd_k*0.2})
+            if 'rr_break' in return_param:
+                # rr_break.update({'all':rr_pgv_k*0.2 + rr_pgd_k*0.8})
+                rr_break.update({k:rr_pgv_k*0.2 + rr_pgd_k*0.8})
     
     # store outputs
     output = {}
@@ -331,71 +345,72 @@ def Hazus2014(**kwargs):
         rr_break = {}
 
     #
-    if pgd_label is None or not 'surf' in pgd_label:
-        # loop through all realizations
-        for k in range(n_sample):
-        
-            # Repair rates by PGV
-            if pgv is None:
-                rr_pgv_k = sparse.coo_matrix(np.zeros([n_event,n_site]))
-                # logging.debug(f"\t\tPGV is None.")
-            else:
-                rr_pgv_k = pgv[k].power(2.25)*0.0001 # PGV in cm/sec, repair rate in repairs/km
-                # logging.debug(f"\t\tCalculated rr_pgv.")
-                
-            # Repair rates by PGD
-            if pgd is None:
-                rr_pgd_k = sparse.coo_matrix(np.zeros([n_event,n_site]))
-            else:
-                if type(pgd) is dict:
-                    rr_pgd_k = (pgd[k]/2.54).power(0.56) # convert PGD to inches, repair rate in repairs/km
-                    # logging.debug(f"\t\tCalculated rr_pgd with pgd[k].")
-                else:
-                    rr_pgd_k = (pgd/2.54).power(0.56) # convert PGD to inches, repair rate in repairs/km
-                    # logging.debug(f"\t\tCalculated rr_pgd with pgd.")
-                rr_pgd_k = rr_pgd_k.multiply(prob[k]/100) # multiply by probability of triggering
-                # logging.debug(f"\t\tMultiplied by probability.")
-                
-            # correct for pipe_stiff
-            if 'rr_pgv' in return_param:
-                rr_pgv.update({k:rr_pgv_k.multiply(rr_multi)})
-            else:
-                rr_pgv_k = rr_pgv_k.multiply(rr_multi)
-                
-            if 'rr_pgd' in return_param:
-                rr_pgd.update({k:rr_pgd_k.multiply(rr_multi)})
-            else:
-                rr_pgd_k = rr_pgd_k.multiply(rr_multi)
-            
-            # break rr_pgv and rr_pgd into rr_leak and rr_break and combine
-            if 'rr_leak' in return_param: 
-                rr_leak.update({k:rr_pgv*0.8 + rr_pgd*0.2})
-            if 'rr_break' in return_param:
-                rr_break.update({k:rr_pgv*0.2 + rr_pgd*0.8})
-                
-    else:
+    # if pgd_label is None or not 'surf' in pgd_label:
+    # if pgd_label is None:
+    # loop through all realizations
+    for k in range(n_sample):
+    
         # Repair rates by PGV
-        rr_pgv_k = sparse.coo_matrix(np.zeros([n_event,n_site]))
+        if pgv is None:
+            rr_pgv_k = sparse.coo_matrix(np.zeros([n_event,n_site]))
+            # logging.debug(f"\t\tPGV is None.")
+        else:
+            rr_pgv_k = pgv[k].power(2.25)*0.0001 # PGV in cm/sec, repair rate in repairs/km
+            # logging.debug(f"\t\tCalculated rr_pgv.")
             
         # Repair rates by PGD
-        rr_pgd_k = (pgd/2.54).power(0.56) # convert PGD to inches, repair rate in repairs/km
+        if pgd is None:
+            rr_pgd_k = sparse.coo_matrix(np.zeros([n_event,n_site]))
+        else:
+            if type(pgd) is dict:
+                rr_pgd_k = (pgd[k]/2.54).power(0.56) # convert PGD to inches, repair rate in repairs/km
+                # logging.debug(f"\t\tCalculated rr_pgd with pgd[k].")
+            else:
+                rr_pgd_k = (pgd/2.54).power(0.56) # convert PGD to inches, repair rate in repairs/km
+                # logging.debug(f"\t\tCalculated rr_pgd with pgd.")
+            rr_pgd_k = rr_pgd_k.multiply(prob[k]/100) # multiply by probability of triggering
+            # logging.debug(f"\t\tMultiplied by probability.")
             
         # correct for pipe_stiff
         if 'rr_pgv' in return_param:
-            rr_pgv.update({'all':rr_pgv_k.multiply(rr_multi)})
+            rr_pgv.update({k:rr_pgv_k.multiply(rr_multi)})
         else:
             rr_pgv_k = rr_pgv_k.multiply(rr_multi)
             
         if 'rr_pgd' in return_param:
-            rr_pgd.update({'all':rr_pgd_k.multiply(rr_multi)})
+            rr_pgd.update({k:rr_pgd_k.multiply(rr_multi)})
         else:
             rr_pgd_k = rr_pgd_k.multiply(rr_multi)
         
         # break rr_pgv and rr_pgd into rr_leak and rr_break and combine
         if 'rr_leak' in return_param: 
-            rr_leak.update({'all':rr_pgv*0.8 + rr_pgd*0.2})
+            rr_leak.update({k:rr_pgv*0.8 + rr_pgd*0.2})
         if 'rr_break' in return_param:
-            rr_break.update({'all':rr_pgv*0.2 + rr_pgd*0.8})
+            rr_break.update({k:rr_pgv*0.2 + rr_pgd*0.8})
+                
+    #else:
+    #    # Repair rates by PGV
+    #    rr_pgv_k = sparse.coo_matrix(np.zeros([n_event,n_site]))
+    #        
+    #    # Repair rates by PGD
+    #    rr_pgd_k = (pgd/2.54).power(0.56) # convert PGD to inches, repair rate in repairs/km
+    #        
+    #    # correct for pipe_stiff
+    #    if 'rr_pgv' in return_param:
+    #        rr_pgv.update({'all':rr_pgv_k.multiply(rr_multi)})
+    #    else:
+    #        rr_pgv_k = rr_pgv_k.multiply(rr_multi)
+    #        
+    #    if 'rr_pgd' in return_param:
+    #        rr_pgd.update({'all':rr_pgd_k.multiply(rr_multi)})
+    #    else:
+    #        rr_pgd_k = rr_pgd_k.multiply(rr_multi)
+    #    
+    #    # break rr_pgv and rr_pgd into rr_leak and rr_break and combine
+    #    if 'rr_leak' in return_param: 
+    #        rr_leak.update({'all':rr_pgv*0.8 + rr_pgd*0.2})
+    #    if 'rr_break' in return_param:
+    #        rr_break.update({'all':rr_pgv*0.2 + rr_pgd*0.8})
         
     # store outputs
     output = {}

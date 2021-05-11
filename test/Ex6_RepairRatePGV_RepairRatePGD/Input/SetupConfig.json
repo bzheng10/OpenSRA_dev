@@ -83,7 +83,7 @@
             "LateralSpread": {
                 "ToAssess": true,
                 "ListOfMethods": [
-                    "Hazus2014"
+                    "GrantEtal2016"
                 ],
                 "ListOfWeights": [
                     1
@@ -95,7 +95,7 @@
             "GroundSettlement": {
                 "ToAssess": true,
                 "ListOfMethods": [
-                    "Hazus2014"
+                    "GrantEtal2016"
                 ],
                 "ListOfWeights": [
                     1

@@ -361,8 +361,8 @@ class assessment(object):
         # Check if files with samples already exist
         for im in other_config_param['IM']:
             if len(os.listdir(os.path.join(other_config_param['Dir_IM_GroundMotion_Simulation'],im))) < n_sample:
-               exist_IMSamples = False
-               break
+                exist_IMSamples = False
+                break
         
         # if samples exist, import, if not, sample
         if exist_IMSamples:
@@ -869,7 +869,7 @@ class assessment(object):
         Returns
         -------
         output : varies
-           [varies] output depends on the target demand and methods.
+            [varies] output depends on the target demand and methods.
 
         """
         
@@ -894,9 +894,9 @@ class assessment(object):
         dv_category : str
            decision variable category to calculate; options are **rr** (more to be added, see :func:`dv` for meaning of the options)
         dv_method : str
-           method/procedure to use to calculate the damage; see :func:`dv` for available methods.
+            method/procedure to use to calculate the damage; see :func:`dv` for available methods.
         return_param : str, list
-           single of a list of parameters to return, see the return variables under each function (:func:`dv`)
+            single of a list of parameters to return, see the return variables under each function (:func:`dv`)
         store_name : str, list, optional
            names to store parameter as; default = **return_param**
         ims : str, list, optional
@@ -923,7 +923,7 @@ class assessment(object):
         Returns
         -------
         output : varies
-           [varies] output depends on the target decision variables and methods.
+            [varies] output depends on the target decision variables and methods.
 
         """
         
@@ -1327,17 +1327,17 @@ class assessment(object):
                             # for demand, loop through PGV branches and scale by demand_ale_wgt
                             for sample_n in range(n_sample):
                                 if sample_n in demand_epi:
-                                  if demand_dist_type == 'Uniform':
-                                      demand_epi[sample_n] = demand_epi[sample_n] + \
-                                          demand_epi_ale[sample_n].multiply(demand_epi_wgt[demand_epi_counter])
-                                  elif demand_dist_type == 'Lognormal':
-                                      demand_epi[sample_n] = demand_epi[sample_n].multiply(
-                                          demand_epi_ale[sample_n].power(demand_epi_wgt[demand_epi_counter]))
+                                    if demand_dist_type == 'Uniform':
+                                        demand_epi[sample_n] = demand_epi[sample_n] + \
+                                            demand_epi_ale[sample_n].multiply(demand_epi_wgt[demand_epi_counter])
+                                    elif demand_dist_type == 'Lognormal':
+                                        demand_epi[sample_n] = demand_epi[sample_n].multiply(
+                                            demand_epi_ale[sample_n].power(demand_epi_wgt[demand_epi_counter]))
                                 else:
-                                  if demand_dist_type == 'Uniform':
-                                      demand_epi[sample_n] = demand_epi_ale[sample_n].multiply(demand_epi_wgt[demand_epi_counter])
-                                  elif demand_dist_type == 'Lognormal':
-                                      demand_epi[sample_n] = demand_epi_ale[sample_n].power(demand_epi_wgt[demand_epi_counter])
+                                    if demand_dist_type == 'Uniform':
+                                        demand_epi[sample_n] = demand_epi_ale[sample_n].multiply(demand_epi_wgt[demand_epi_counter])
+                                    elif demand_dist_type == 'Lognormal':
+                                        demand_epi[sample_n] = demand_epi_ale[sample_n].power(demand_epi_wgt[demand_epi_counter])
                             # clear dictionaries
                             demand_epi_ale = None
                 

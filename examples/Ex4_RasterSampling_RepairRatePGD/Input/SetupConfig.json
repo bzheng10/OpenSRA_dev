@@ -1,7 +1,7 @@
 {
     "General": {
 		"Directory": {
-			"Working": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex2_ShakeMap_FixedResidualsForSample_noEDP_noDV"
+			"Working": ""
 		},
         "OutputFileType": "csv"
     },
@@ -20,7 +20,7 @@
 		]
 	},
     "Infrastructure": {
-        "SiteDataFile": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex2_ShakeMap_FixedResidualsForSample_noEDP_noDV/Input/SiteData.csv"
+        "SiteDataFile": "examples/Ex4_RasterSampling_RepairRatePGD/Input/SiteData.csv"
     },
     "IntensityMeasure": {
         "Type": {
@@ -31,22 +31,37 @@
                 "ToAssess": true
             }
         },
-        "SourceForIM": "ShakeMap",
+        "SourceForIM": "OpenSHA",
         "SourceParameters": {
-			"Directory": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex2_ShakeMap_FixedResidualsForSample_noEDP_noDV/Input/ShakeMap",
-			"Events": [ 
-				"1989_LomaPrieta",
-				"1994_Northridge"
-			],
+			"SeismicSourceModel": "Mean UCERF3 FM3.1",
+            "Filter": {
+                "ReturnPeriod": {
+                    "ToInclude": true,
+                    "Maximum": 1000
+                },
+                "Distance": {
+                    "ToInclude": true,
+                    "Maximum": 100
+                },
+                "Magnitude": {
+                    "ToInclude": false,
+                    "Minimum": 5,
+                    "Maximum": 8
+                },
+                "PointSource": {
+                    "ToInclude": false
+                }
+            },
+            "GroundMotionModel": "Abrahamson, Silva & Kamai (2014)",
 			"SourceForVs30": "Wills et al. (2015)"
-		},
+        },
         "Correlation": {
             "Spatial": {
-                "ToInclude": false,
+                "ToInclude": true,
                 "Method": "JayaramBaker2009"
             },
             "Spectral": {
-                "ToInclude": false,
+                "ToInclude": true,
                 "Method": "BakerJayaram2008"
             }
         }
@@ -54,7 +69,7 @@
     "EngineeringDemandParameter": {
         "Type": {
             "Liquefaction": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
                     "ZhuEtal2017"
                 ],
@@ -66,7 +81,7 @@
                 }
             },
             "LateralSpread": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
                     "Hazus2014"
                 ],
@@ -78,7 +93,7 @@
                 }
             },
             "GroundSettlement": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
                     "Hazus2014"
                 ],
@@ -88,7 +103,7 @@
                 "OtherParameters": {}
             },
             "Landslide": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
                     "BrayMacedo2019"
                 ],
@@ -161,7 +176,7 @@
                 "OtherParameters": {}
             },
             "RepairRatePGD": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
                     "ORourke2020"
                 ],

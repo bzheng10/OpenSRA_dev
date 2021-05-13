@@ -1,18 +1,26 @@
 {
     "General": {
 		"Directory": {
-			"Working": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex3_LHSwithIMCorrelation_RepairRatePGV"
+			"Working": ""
 		},
         "OutputFileType": "csv"
     },
 	"UncertaintyQuantification": {
 		"Type": "MonteCarlo",
-		"Algorithm": "Latin Hypercube Sampling",
-		"NumberOfSamples": 5,
-		"Seed": 1
+		"Algorithm": "FixedResiduals",
+		"ListOfResiduals": [
+			-1.65,
+			0,
+			1.65
+		],
+		"Weights": [
+			0.2,
+			0.6,
+			0.2
+		]
 	},
     "Infrastructure": {
-        "SiteDataFile": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex3_LHSwithIMCorrelation_RepairRatePGV/Input/SiteData.csv"
+        "SiteDataFile": "examples/Ex7_UCERF3_NGAW2Avg_SurfaceFaultRupture/Input/SiteData.csv"
     },
     "IntensityMeasure": {
         "Type": {
@@ -25,7 +33,7 @@
         },
         "SourceForIM": "OpenSHA",
         "SourceParameters": {
-			"SeismicSourceModel": "Mean UCERF3 FM3.1",
+			"SeismicSourceModel": "Mean UCERF3 FM3.2",
             "Filter": {
                 "ReturnPeriod": {
                     "ToInclude": true,
@@ -36,7 +44,7 @@
                     "Maximum": 100
                 },
                 "Magnitude": {
-                    "ToInclude": false,
+                    "ToInclude": true,
                     "Minimum": 5,
                     "Maximum": 8
                 },
@@ -44,7 +52,7 @@
                     "ToInclude": false
                 }
             },
-            "GroundMotionModel": "Abrahamson, Silva & Kamai (2014)",
+            "GroundMotionModel": "NGAWest2 2014 Averaged No Idriss",
 			"SourceForVs30": "Wills et al. (2015)"
         },
         "Correlation": {
@@ -61,7 +69,7 @@
     "EngineeringDemandParameter": {
         "Type": {
             "Liquefaction": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
                     "ZhuEtal2017"
                 ],
@@ -73,7 +81,7 @@
                 }
             },
             "LateralSpread": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
                     "Hazus2014"
                 ],
@@ -85,7 +93,7 @@
                 }
             },
             "GroundSettlement": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
                     "Hazus2014"
                 ],
@@ -95,12 +103,12 @@
                 "OtherParameters": {}
             },
             "Landslide": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
-                    "BrayMacedo2019"
+                    "BrayMacedo2019", "Jibson2007"
                 ],
                 "ListOfWeights": [
-                    1
+                    0.5, 0.5
                 ],
                 "OtherParameters": {
                     "SourceParametersForKy": "Preferred",
@@ -108,12 +116,12 @@
                 }
             },
             "SurfaceFaultRupture": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
-                    "WellsCoppersmith1994"
+                    "WellsCoppersmith1994", "Thompson2020", "Hazus2014"
                 ],
                 "ListOfWeights": [
-                    1
+                    1, 1, 1
                 ],
                 "OtherParameters": {
                 }
@@ -168,12 +176,12 @@
                 "OtherParameters": {}
             },
             "RepairRatePGD": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
-                    "ORourke2020"
+                    "ORourke2020", "ALA2001", "Hazus2014"
                 ],
                 "ListOfWeights": [
-                    1
+                    1, 1, 1
                 ],
                 "OtherParameters": {
                     "pgd_cutoff": 10.16

@@ -1,7 +1,7 @@
 {
     "General": {
 		"Directory": {
-			"Working": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex5_RepairRatePGD_MultipleMethods"
+			"Working": ""
 		},
         "OutputFileType": "csv"
     },
@@ -20,7 +20,7 @@
 		]
 	},
     "Infrastructure": {
-        "SiteDataFile": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex5_RepairRatePGD_MultipleMethods/Input/SiteData.csv"
+        "SiteDataFile": "examples/Ex6_RepairRatePGV_RepairRatePGD/Input/SiteData.csv"
     },
     "IntensityMeasure": {
         "Type": {
@@ -52,16 +52,16 @@
                     "ToInclude": false
                 }
             },
-            "GroundMotionModel": "Abrahamson, Silva & Kamai (2014)",
+            "GroundMotionModel": "Chiou & Youngs (2014)",
 			"SourceForVs30": "Wills et al. (2015)"
         },
         "Correlation": {
             "Spatial": {
-                "ToInclude": true,
+                "ToInclude": false,
                 "Method": "JayaramBaker2009"
             },
             "Spectral": {
-                "ToInclude": true,
+                "ToInclude": false,
                 "Method": "BakerJayaram2008"
             }
         }
@@ -83,7 +83,7 @@
             "LateralSpread": {
                 "ToAssess": true,
                 "ListOfMethods": [
-                    "Hazus2014"
+                    "GrantEtal2016"
                 ],
                 "ListOfWeights": [
                     1
@@ -95,7 +95,7 @@
             "GroundSettlement": {
                 "ToAssess": true,
                 "ListOfMethods": [
-                    "Hazus2014"
+                    "GrantEtal2016"
                 ],
                 "ListOfWeights": [
                     1
@@ -166,7 +166,7 @@
     "DecisionVariable": {
         "Type": {
             "RepairRatePGV": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
                     "ORourke2020", "ALA2001", "Hazus2014"
                 ],

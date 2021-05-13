@@ -1,18 +1,18 @@
 {
     "General": {
 		"Directory": {
-			"Working": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex1_OpenSHA_LHS_noEDP_noDV"
+			"Working": ""
 		},
         "OutputFileType": "csv"
     },
 	"UncertaintyQuantification": {
 		"Type": "MonteCarlo",
 		"Algorithm": "Latin Hypercube Sampling",
-		"NumberOfSamples": 3,
+		"NumberOfSamples": 5,
 		"Seed": 1
 	},
     "Infrastructure": {
-        "SiteDataFile": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex1_OpenSHA_LHS_noEDP_noDV/Input/SiteData.csv"
+        "SiteDataFile": "examples/Ex3_LHSwithIMCorrelation_RepairRatePGV/Input/SiteData.csv"
     },
     "IntensityMeasure": {
         "Type": {
@@ -49,11 +49,11 @@
         },
         "Correlation": {
             "Spatial": {
-                "ToInclude": false,
+                "ToInclude": true,
                 "Method": "JayaramBaker2009"
             },
             "Spectral": {
-                "ToInclude": false,
+                "ToInclude": true,
                 "Method": "BakerJayaram2008"
             }
         }
@@ -158,7 +158,7 @@
     "DecisionVariable": {
         "Type": {
             "RepairRatePGV": {
-                "ToAssess": false,
+                "ToAssess": true,
                 "ListOfMethods": [
                     "ORourke2020"
                 ],

@@ -1,7 +1,7 @@
 {
     "General": {
 		"Directory": {
-			"Working": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex6_RepairRatePGV_RepairRatePGD"
+			"Working": ""
 		},
         "OutputFileType": "csv"
     },
@@ -20,7 +20,7 @@
 		]
 	},
     "Infrastructure": {
-        "SiteDataFile": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex6_RepairRatePGV_RepairRatePGD/Input/SiteData.csv"
+        "SiteDataFile": "examples/Ex2_ShakeMap_FixedResidualsForSample_noEDP_noDV/Input/SiteData.csv"
     },
     "IntensityMeasure": {
         "Type": {
@@ -31,30 +31,15 @@
                 "ToAssess": true
             }
         },
-        "SourceForIM": "OpenSHA",
+        "SourceForIM": "ShakeMap",
         "SourceParameters": {
-			"SeismicSourceModel": "Mean UCERF3 FM3.1",
-            "Filter": {
-                "ReturnPeriod": {
-                    "ToInclude": true,
-                    "Maximum": 1000
-                },
-                "Distance": {
-                    "ToInclude": true,
-                    "Maximum": 100
-                },
-                "Magnitude": {
-                    "ToInclude": false,
-                    "Minimum": 5,
-                    "Maximum": 8
-                },
-                "PointSource": {
-                    "ToInclude": false
-                }
-            },
-            "GroundMotionModel": "Chiou & Youngs (2014)",
+			"Directory": "examples/Ex2_ShakeMap_FixedResidualsForSample_noEDP_noDV/Input/ShakeMap",
+			"Events": [ 
+				"1989_LomaPrieta",
+				"1994_Northridge"
+			],
 			"SourceForVs30": "Wills et al. (2015)"
-        },
+		},
         "Correlation": {
             "Spatial": {
                 "ToInclude": false,
@@ -69,7 +54,7 @@
     "EngineeringDemandParameter": {
         "Type": {
             "Liquefaction": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
                     "ZhuEtal2017"
                 ],
@@ -81,9 +66,9 @@
                 }
             },
             "LateralSpread": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
-                    "GrantEtal2016"
+                    "Hazus2014"
                 ],
                 "ListOfWeights": [
                     1
@@ -93,9 +78,9 @@
                 }
             },
             "GroundSettlement": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
-                    "GrantEtal2016"
+                    "Hazus2014"
                 ],
                 "ListOfWeights": [
                     1
@@ -103,7 +88,7 @@
                 "OtherParameters": {}
             },
             "Landslide": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
                     "BrayMacedo2019"
                 ],
@@ -166,22 +151,22 @@
     "DecisionVariable": {
         "Type": {
             "RepairRatePGV": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
-                    "ORourke2020", "ALA2001", "Hazus2014"
+                    "ORourke2020"
                 ],
                 "ListOfWeights": [
-                    1, 1, 1
+                    1
                 ],
                 "OtherParameters": {}
             },
             "RepairRatePGD": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
-                    "ORourke2020", "ALA2001", "Hazus2014"
+                    "ORourke2020"
                 ],
                 "ListOfWeights": [
-                    1, 1, 1
+                    1
                 ],
                 "OtherParameters": {
                     "pgd_cutoff": 10.16

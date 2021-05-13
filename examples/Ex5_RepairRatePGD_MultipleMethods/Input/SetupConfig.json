@@ -1,7 +1,7 @@
 {
     "General": {
 		"Directory": {
-			"Working": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex7_UCERF3_NGAW2Avg_SurfaceFaultRupture"
+			"Working": ""
 		},
         "OutputFileType": "csv"
     },
@@ -20,7 +20,7 @@
 		]
 	},
     "Infrastructure": {
-        "SiteDataFile": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex7_UCERF3_NGAW2Avg_SurfaceFaultRupture/Input/SiteData.csv"
+        "SiteDataFile": "examples/Ex5_RepairRatePGD_MultipleMethods/Input/SiteData.csv"
     },
     "IntensityMeasure": {
         "Type": {
@@ -33,7 +33,7 @@
         },
         "SourceForIM": "OpenSHA",
         "SourceParameters": {
-			"SeismicSourceModel": "Mean UCERF3 FM3.2",
+			"SeismicSourceModel": "Mean UCERF3 FM3.1",
             "Filter": {
                 "ReturnPeriod": {
                     "ToInclude": true,
@@ -44,7 +44,7 @@
                     "Maximum": 100
                 },
                 "Magnitude": {
-                    "ToInclude": true,
+                    "ToInclude": false,
                     "Minimum": 5,
                     "Maximum": 8
                 },
@@ -52,7 +52,7 @@
                     "ToInclude": false
                 }
             },
-            "GroundMotionModel": "NGAWest2 2014 Averaged No Idriss",
+            "GroundMotionModel": "Abrahamson, Silva & Kamai (2014)",
 			"SourceForVs30": "Wills et al. (2015)"
         },
         "Correlation": {
@@ -105,10 +105,10 @@
             "Landslide": {
                 "ToAssess": true,
                 "ListOfMethods": [
-                    "BrayMacedo2019", "Jibson2007"
+                    "BrayMacedo2019"
                 ],
                 "ListOfWeights": [
-                    0.5, 0.5
+                    1
                 ],
                 "OtherParameters": {
                     "SourceParametersForKy": "Preferred",
@@ -116,12 +116,12 @@
                 }
             },
             "SurfaceFaultRupture": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
-                    "WellsCoppersmith1994", "Thompson2020", "Hazus2014"
+                    "WellsCoppersmith1994"
                 ],
                 "ListOfWeights": [
-                    1, 1, 1
+                    1
                 ],
                 "OtherParameters": {
                 }
@@ -166,12 +166,12 @@
     "DecisionVariable": {
         "Type": {
             "RepairRatePGV": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
-                    "ORourke2020"
+                    "ORourke2020", "ALA2001", "Hazus2014"
                 ],
                 "ListOfWeights": [
-                    1
+                    1, 1, 1
                 ],
                 "OtherParameters": {}
             },

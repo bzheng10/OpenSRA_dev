@@ -1,26 +1,18 @@
 {
     "General": {
 		"Directory": {
-			"Working": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex4_RasterSampling_RepairRatePGD"
+			"Working": ""
 		},
         "OutputFileType": "csv"
     },
 	"UncertaintyQuantification": {
 		"Type": "MonteCarlo",
-		"Algorithm": "FixedResiduals",
-		"ListOfResiduals": [
-			-1.65,
-			0,
-			1.65
-		],
-		"Weights": [
-			0.2,
-			0.6,
-			0.2
-		]
+		"Algorithm": "Latin Hypercube Sampling",
+		"NumberOfSamples": 3,
+		"Seed": 1
 	},
     "Infrastructure": {
-        "SiteDataFile": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/test/Ex4_RasterSampling_RepairRatePGD/Input/SiteData.csv"
+        "SiteDataFile": "examples/Ex1_OpenSHA_LHS_noEDP_noDV/Input/SiteData.csv"
     },
     "IntensityMeasure": {
         "Type": {
@@ -57,11 +49,11 @@
         },
         "Correlation": {
             "Spatial": {
-                "ToInclude": true,
+                "ToInclude": false,
                 "Method": "JayaramBaker2009"
             },
             "Spectral": {
-                "ToInclude": true,
+                "ToInclude": false,
                 "Method": "BakerJayaram2008"
             }
         }
@@ -69,7 +61,7 @@
     "EngineeringDemandParameter": {
         "Type": {
             "Liquefaction": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
                     "ZhuEtal2017"
                 ],
@@ -81,7 +73,7 @@
                 }
             },
             "LateralSpread": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
                     "Hazus2014"
                 ],
@@ -93,7 +85,7 @@
                 }
             },
             "GroundSettlement": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
                     "Hazus2014"
                 ],
@@ -103,7 +95,7 @@
                 "OtherParameters": {}
             },
             "Landslide": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
                     "BrayMacedo2019"
                 ],
@@ -176,7 +168,7 @@
                 "OtherParameters": {}
             },
             "RepairRatePGD": {
-                "ToAssess": true,
+                "ToAssess": false,
                 "ListOfMethods": [
                     "ORourke2020"
                 ],

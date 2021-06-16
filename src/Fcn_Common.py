@@ -22,6 +22,51 @@ from scipy.interpolate import interp2d
 
 
 # -----------------------------------------------------------
+def get_midpoint(lon1, lat1, lon2, lat2):
+    """
+    returns midpoint given two coordinates
+    
+    """
+    
+    # the longitudes or latitutes are equal, then just return halfway point
+    # if lon1 == lon2:
+        # lon_mid = lon1
+        # lat_mid = (lat1+lat2)/2
+    # elif lat1 == lat2:
+        # lon_mid = (lon1+lon2)/2
+        # lat_mid = lat1
+    # if longitudes and latitudes are not equal, apply trig
+    # else:
+    # convert long lat from degrees to radians
+    lon1 = np.radians(lon1)
+    lat1 = np.radians(lat1)
+    lon2 = np.radians(lon2)
+    lat2 = np.radians(lat2)
+    # get delta in longitude
+    d_lon = lon2-lon1
+    # intermediate calculations
+    Bx = np.cos(lat2) * np.cos(d_lon)
+    By = np.cos(lat2) * np.sin(d_lon)
+    # lat and lon for mid points
+    lon_mid = lon1 + np.arctan2(By, np.cos(lat1) + Bx)
+    lat_mid = np.arctan2(np.sin(lat1)+np.sin(lat2), np.sqrt((np.cos(lat1)+Bx)*(np.cos(lat1)+Bx) + By*By))
+    # convert back to degrees
+    lon_mid = np.degrees(lon_mid)
+    lat_mid = np.degrees(lat_mid)
+    #
+    return lon_mid, lat_mid
+
+
+# -----------------------------------------------------------
+def get_quick_dist(lon1, lat1, lon2, lat2):
+    """
+    Get quick (crude) distance between two points
+    
+    """
+    
+    return ((lon1-lon2)**2 + (lat1-lat2)**2) ** (0.5)
+
+# -----------------------------------------------------------
 def lhs(n_var, n_samp, dist='normal', low=None, high=None, return_prob=False):
     """
     Performs Latin-Hypercube Sampling and returns both the cdfs and the residuals for the user-specified distribution.
@@ -92,7 +137,7 @@ def interp_from_raster(raster_path, x, y,
         # samples[abs(samples)>1e10] = np.nan
         samples[abs(samples)>1e10] = -9999
         # return
-        logging.info(f'\t\t{os.path.basename(raster_path)}')
+        # logging.info(f'\t\t{os.path.basename(raster_path)}')
         return samples
     else:
         logging.info(f'\t\t{os.path.basename(raster_path)} does not exist')
@@ -141,7 +186,7 @@ def check_common_member(a, b):
     
     a_set = set(a) 
     b_set = set(b) 
-  
+    
     if (a_set & b_set): 
         return True
     else: 
@@ -424,7 +469,7 @@ def convert_triu_to_sym_mat(x, n, matrix_type='sparse'):
     
     
     # -----------------------------------------------------------
-def get_prob_exceed(x, y):
+def get_rate_of_exceedance(x, y, rate=None):
 	"""
 	Count the number of instances in **y** where **y** > **i** for every **i** in **x**. Probability = count/total. 
 	
@@ -502,7 +547,7 @@ def get_weighted_average(x, weights):
 
 
 # -----------------------------------------------------------
-def get_cond_prob_exceed(xbins, x, y, ycriteria):
+def get_conditional_rate_of_exceedance(xbins, x, y, ycriteria, rate=None):
 	"""
 	Count the number of instances in **y_red** where **y** > **i** for every **i** in **x**. Take the number of instances and sort them into **xbinx**. Probability = count/total. 
 	

@@ -312,9 +312,9 @@ def GrantEtal2016(**kwargs):
     liq_susc = kwargs.get('liq_susc',None) # liquefaction susceptibility category
     M = kwargs.get('M',None) # moment magnitude
     z = kwargs.get('z',np.ones(n_site)) # m, elevation, default to 0 such that pgd_ls > 0
-    dw = kwargs.get('dw',np.ones(n_site)) # m, distance to water body, default to 0 such that pgd_ls > 0
+    dw = kwargs.get('DistanceToWaterBody',np.ones(n_site)/1000)*1000 # m, distance to water body, default to 0 such that pgd_ls > 0
     z_cutoff = kwargs.get('z_cutoff',25) # m, default to 25 m as used in Grant et al. (2016)
-    dw_cutoff = kwargs.get('dw_cutoff',25) # m, default to 25 m as used in Grant et al. (2016)
+    dw_cutoff = kwargs.get('DistanceToWaterCutoff',25) # m, default to 25 m as used in Grant et al. (2016)
     n_sample = kwargs.get('n_sample',1) # number of samples, default to 1
     flag_extrap_Epgd = kwargs.get('flag_extrap_Epgd',False) # True to extrapolate Epgd in Figure 4.9 of HAZUS
 
@@ -342,7 +342,6 @@ def GrantEtal2016(**kwargs):
         pga_k = pga[k].data
         row_k = pga[k].row
         col_k = pga[k].col
-
 
         # get threshold pga against liquefaction for current sample
         liq_susc_k = liq_susc[col_k]

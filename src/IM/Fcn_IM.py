@@ -387,7 +387,7 @@ def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, store_events_file, tr
                 coords_to_read = sm_rupture['features'][0]['geometry']['coordinates'][0][0]
                 trace_set_i = []
                 for coord_i in coords_to_read:
-                    trace_set_i.append(coord_i)
+                    trace_set_i.append(coord_i[:2])
                 trace_set.append(trace_set_i)
                 # logging.info(f'\tcode on processing of rupture.json not ready')
                 
@@ -403,7 +403,7 @@ def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, store_events_file, tr
     # -----------------------------------------------------------
     # export IMs and stdevs
     for im_i in list_im:
-        file_IM = os.path.join(IM_dir,im_i,'Mean.txt')
+        file_IM = os.path.join(IM_dir,im_i,'Median.txt')
         file_stdev = os.path.join(IM_dir,im_i,'TotalStdDev.txt')
         np.savetxt(file_IM, export_IM[im_i], fmt='%5.3f')
         np.savetxt(file_stdev, export_stdev[im_i], fmt='%5.3f')
@@ -412,7 +412,14 @@ def read_ShakeMap_data(sm_dir, event_names, sites, IM_dir, store_events_file, tr
     logging.info('\t... IMs interpolated from ShakeMap grids exported to:')
     logging.info(f"\t\t{IM_dir}")
     # export list of events
-    np.savetxt(store_events_file, export_listOfScenarios, fmt='%i %i %6.3f %6.3e')
+    df_out = pd.DataFrame.from_dict({
+        "SourceIndex": export_listOfScenarios[:,0].astype(int),
+        "RuptureIndex": export_listOfScenarios[:,1].astype(int),
+        "Magnitude": export_listOfScenarios[:,2].astype(float),
+        "MeanAnnualRate": export_listOfScenarios[:,3].astype(float),
+    })
+    df_out.to_csv(store_events_file, index=False)
+    # np.savetxt(store_events_file, export_listOfScenarios, fmt='%i %i %6.3f %6.3e')
     # export complete event metadata
     if flag_export_metadata:
         file_metadata = os.path.join(os.path.dirname(store_events_file),'ShakeMap_MetaData.json')

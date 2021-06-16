@@ -23,14 +23,16 @@ src/PreProcess_Combine_RRPGV_RRPGD.py
 **/.log
 **/.pyc
 
+# lib level
+# lib/SimCenter/opensha/erf/fault_source_connectivity.txt
+# lib/SimCenter/
+# lib/OpenSHA/ERF/**
+# ScenarioConnectivity.csv
+# lib/OpenSHA/**
+**/FiniteSourceConnectivity.csv
+
+# others
 **/superseded
 # src/.ipynb_checkpoints
 # src/__pycache__
 **/temp
-
-# lib level
-# lib/SimCenter/opensha/erf/fault_source_connectivity.txt
-lib/SimCenter/
-# lib/OpenSHA/ERF/**
-# ScenarioConnectivity.csv
-lib/OpenSHA/**

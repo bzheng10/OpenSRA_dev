@@ -5,14 +5,44 @@
 		},
         "OutputFileType": "csv"
     },
-	"UncertaintyQuantification": {
-		"Type": "MonteCarlo",
+	"SamplingMethod": {
+		"Method": "MonteCarlo",
 		"Algorithm": "Latin Hypercube Sampling",
 		"NumberOfSamples": 3,
 		"Seed": 1
 	},
     "Infrastructure": {
-        "SiteDataFile": "examples/Ex1_OpenSHA_LHS_noEDP_noDV/Input/SiteData.csv"
+        "SiteDataFile": "example/Ex1_OpenSHA_LHS_noEDP_noDV/Input/SiteData.csv",
+		"SiteLocationParams": {
+			"LatMid": {
+				"DataExists": true,
+				"ColumnIDWithData": "LAT_MIDDLE"
+			},
+			"LonMid": {
+				"DataExists": true,
+				"ColumnIDWithData": "LONG_MIDDLE"
+			},
+			"LatBegin": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"LonBegin": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"LatEnd": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"LonEnd": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"Length": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			}
+		}
     },
     "IntensityMeasure": {
         "Type": {
@@ -29,32 +59,43 @@
             "Filter": {
                 "ReturnPeriod": {
                     "ToInclude": true,
-                    "Maximum": 1000
+                    "Maximum": 100000
                 },
                 "Distance": {
                     "ToInclude": true,
                     "Maximum": 100
                 },
                 "Magnitude": {
-                    "ToInclude": false,
+                    "ToInclude": true,
                     "Minimum": 5,
-                    "Maximum": 8
+                    "Maximum": null
                 },
                 "PointSource": {
                     "ToInclude": false
                 }
             },
             "GroundMotionModel": "Abrahamson, Silva & Kamai (2014)",
-			"SourceForVs30": "Wills et al. (2015)"
+			"OtherParameters": {
+				"Vs30": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				},
+				"Z1p0": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				},
+				"Z2p5": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				}
+			}
         },
         "Correlation": {
             "Spatial": {
-                "ToInclude": false,
-                "Method": "JayaramBaker2009"
+                "ToInclude": false
             },
             "Spectral": {
-                "ToInclude": false,
-                "Method": "BakerJayaram2008"
+                "ToInclude": false
             }
         }
     },
@@ -62,79 +103,38 @@
         "Type": {
             "Liquefaction": {
                 "ToAssess": false,
-                "ListOfMethods": [
-                    "ZhuEtal2017"
-                ],
-                "ListOfWeights": [
-                    1
-                ],
-                "OtherParameters": {
-                    "dc_cutoff": 20
-                }
+                "Method": {},
+                "OtherParameters": {}
             },
             "LateralSpread": {
                 "ToAssess": false,
-                "ListOfMethods": [
-                    "Hazus2014"
-                ],
-                "ListOfWeights": [
-                    1
-                ],
-                "OtherParameters": {
-                    "dw_cutoff": 50
-                }
+                "Method": {},
+                "OtherParameters": {}
             },
             "GroundSettlement": {
                 "ToAssess": false,
-                "ListOfMethods": [
-                    "Hazus2014"
-                ],
-                "ListOfWeights": [
-                    1
-                ],
+                "Method": {},
                 "OtherParameters": {}
             },
             "Landslide": {
                 "ToAssess": false,
-                "ListOfMethods": [
-                    "BrayMacedo2019"
-                ],
-                "ListOfWeights": [
-                    1
-                ],
-                "OtherParameters": {
-                    "SourceParametersForKy": "Preferred",
-                    "gm_type": "General"
-                }
+                "Method": {},
+                "OtherParameters": {}
             },
             "SurfaceFaultRupture": {
                 "ToAssess": false,
-                "ListOfMethods": [
-                    "WellsCoppersmith1994"
-                ],
-                "ListOfWeights": [
-                    1
-                ],
-                "OtherParameters": {
-                }
+                "Method": {},
+                "OtherParameters": {}
             },
             "SubsurfaceFaultRupture": {
                 "ToAssess": false,
-                "ListOfMethods": [
-                ],
-                "ListOfWeights": [
-                ],
-                "OtherParameters": {
-                }
+                "Method": {},
+                "OtherParameters": {}
             },
             "TransientGroundStrain": {
                 "ToAssess": false,
-                "ListOfMethods": [
-                ],
-                "ListOfWeights": [
-                ],
-                "OtherParameters": {
-                }
+                "Method": {},
+                "OtherParameters": {}
             }
         },
         "EpistemicUncertainty": {},
@@ -144,12 +144,8 @@
         "Type": {
             "TransientPipeStrain": {
                 "ToAssess": false,
-                "ListOfMethods": [
-                ],
-                "ListOfWeights": [
-                ],
-                "OtherParameters": {
-                }
+                "Method": {},
+                "OtherParameters": {}
             }
         },
         "EpistemicUncertainty": {},
@@ -159,25 +155,13 @@
         "Type": {
             "RepairRatePGV": {
                 "ToAssess": false,
-                "ListOfMethods": [
-                    "ORourke2020"
-                ],
-                "ListOfWeights": [
-                    1
-                ],
+                "Method": {},
                 "OtherParameters": {}
             },
             "RepairRatePGD": {
                 "ToAssess": false,
-                "ListOfMethods": [
-                    "ORourke2020"
-                ],
-                "ListOfWeights": [
-                    1
-                ],
-                "OtherParameters": {
-                    "pgd_cutoff": 10.16
-                }
+                "Method": {},
+                "OtherParameters": {}
             }
         },
         "EpistemicUncertainty": {},

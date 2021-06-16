@@ -52,7 +52,7 @@ def Newmark1967(pgv, **kwargs):
 	"""
 	
 	# case 1: shear wave
-	vs = kwargs.get('vs',None) # shear wave velocity
+	vs = kwargs.get('Vs30',None) # shear wave velocity
 	gamma_s = kwargs.get('gamma_s',None) # deg, propagating angle relative to vertical axis
 	
 	# case 2: Rayleigh wave

@@ -1,217 +1,1389 @@
 {
 	"Infrastructure": {
-	},
-	"UncertaintyQuantification": {
-		"MonteCarlo": {
-			"AleatoryVariability": {
-				"Algorithm": {
-					"Random": {
-						"NumberOfSamples": 3,
-						"Seed": 1
-					},
-					"Latin Hypercube Sampling": {
-						"NumberOfSamples": 3,
-						"Seed": 1
-					},
-					"FixedResiduals": {
-						"ListOfResiduals": [
-							-1.65,
-							0,
-							1.65
-						],
-						"Weights": [
-							0.2,
-							0.6,
-							0.2
-						]
+		"SiteLocationParams": {
+			"NameToDisplay": "Component Locations",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"LatMid": {
+					"NameToDisplay": "Midpoint - Latitude",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"ColumnIDWithData": {
+							"NameToDisplay": "Column ID With Data",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": null,
+							"Options": "ColumnHeaders"
+						}
+					}
+				},
+				"LonMid": {
+					"NameToDisplay": "Midpoint - Longtidue",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"ColumnIDWithData": {
+							"NameToDisplay": "Column ID With Data",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": null,
+							"Options": "ColumnHeaders"
+						}
+					}
+				},
+				"LatBegin": {
+					"NameToDisplay": "Startpoint - Latitude",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"ColumnIDWithData": {
+							"NameToDisplay": "Column ID With Data",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": null,
+							"Options": "ColumnHeaders"
+						}
+					}
+				},
+				"LonBegin": {
+					"NameToDisplay": "Startpoint - Longtidue",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"ColumnIDWithData": {
+							"NameToDisplay": "Column ID With Data",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": null,
+							"Options": "ColumnHeaders"
+						}
+					}
+				},
+				"LatEnd": {
+					"NameToDisplay": "Endpoint - Latitude",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"ColumnIDWithData": {
+							"NameToDisplay": "Column ID With Data",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": null,
+							"Options": "ColumnHeaders"
+						}
+					}
+				},
+				"LonEnd": {
+					"NameToDisplay": "Endpoint - Longitude",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"ColumnIDWithData": {
+							"NameToDisplay": "Column ID With Data",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": null,
+							"Options": "ColumnHeaders"
+						}
+					}
+				},
+				"Length": {
+					"NameToDisplay": "Component Length (km)",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"ColumnIDWithData": {
+							"NameToDisplay": "Column ID With Data",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": null,
+							"Options": "ColumnHeaders"
+						}
 					}
 				}
-			},
-			"EpistemicUncertainty": {
 			}
-		"PolynomialChaosExpansion": {
+		}
+	},
+	"SamplingMethod": {
+		"Method": {
+			"NameToDisplay": "Sampling Method",
+			"WidgetType": "QComboBox",
+			"ToDisplay": true,
+			"DefaultValue": "MonteCarlo",
+			"Options": {
+				"MonteCarlo": {
+					"NameToDisplay": "Monte Carlo",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"Algorithm": {
+							"NameToDisplay": "Sampling Algorithm",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "LatinHypercube",
+							"Options": {
+								"Random": {
+									"NameToDisplay": "Random",
+									"WidgetType": null,
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"LatinHypercube": {
+									"NameToDisplay": "Latin Hypercube",
+									"WidgetType": null,
+									"ToDisplay": true,
+									"Params": {}
+								}
+							}
+						},
+						"NumberOfSamples": {
+							"NameToDisplay": "Number of Samples",
+							"WidgetType": "QLineEdit",
+							"ToDisplay": true,
+							"DefaultValue": 3
+						},
+						"Seed": {
+							"NameToDisplay": "Seed Number (for Repeatability of Sampling)",
+							"WidgetType": "QLineEdit",
+							"ToDisplay": true,
+							"DefaultValue": 1
+						}
+					}
+				},
+				"LogicTree": {
+					"NameToDisplay": "Logic Tree",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"Branch": {
+							"NameToDisplay": "Branches",
+							"WidgetType": "QLineEdit",
+							"ToDisplay": true,
+							"DefaultValue": [-1.65, 0, 1.65]
+						},
+						"Weights": {
+							"NameToDisplay": "Weights",
+							"WidgetType": "QLineEdit",
+							"ToDisplay": true,
+							"DefaultValue": [-1.65, 0, 1.65]
+						}
+					}
+				},
+				"PolynomialChaosExpansion": {
+					"NameToDisplay": "Polynomial Chaos (Under Development)",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {}
+				}
+			}
 		}
 	},
     "IntensityMeasure": {
-        "SeismicSource": {
-            "Model1": {
-                "NameToDisplay": "Mean UCERF3",
-                "NameToReturn": "Mean UCERF3"
-            },
-            "Model2": {
-                "NameToDisplay": "Mean UCERF3 FM3.1",
-                "NameToReturn": "Mean UCERF3 FM3.1"
-            },
-            "Model3": {
-                "NameToDisplay": "Mean UCERF3 FM3.2",
-                "NameToReturn": "Mean UCERF3 FM3.2"
-            }
-        },
-        "GroundMotion": {
-            "Model1": {
-                "NameToDisplay": "Abrahamson, Silva & Kamai (2014)",
-                "NameToReturn": "Abrahamson, Silva & Kamai (2014)"
-            },
-            "Model2": {
-                "NameToDisplay": "Boore, Stewart, Seyhan & Atkinson (2014)",
-                "NameToReturn": "Boore, Stewart, Seyhan & Atkinson (2014)"
-            },
-            "Model3": {
-                "NameToDisplay": "Campbell & Bozorgnia (2014)",
-                "NameToReturn": "Campbell & Bozorgnia (2014)"
-            },
-            "Model4": {
-                "NameToDisplay": "Chiou & Youngs (2014)",
-                "NameToReturn": "Chiou & Youngs (2014)"
-            },
-            "Model5": {
-                "NameToDisplay": "Idriss (2014) - PGV unavailable",
-                "NameToReturn": "Idriss (2014)"
-            },
-            "Model6": {
-                "NameToDisplay": "NGAWest2 2014 Averaged - PGV unavailable",
-                "NameToReturn": "NGAWest2 2014 Averaged Attenuation Relationship"
-            },
-            "Model7": {
-                "NameToDisplay": "NGAWest2 2014 Averaged, No Idriss",
-                "NameToReturn": "NGAWest2 2014 Averaged No Idriss"
-            }
+		"OpenSHA": {
+			"NameToDisplay": "OpenSHA",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"SeismicSource": {
+					"NameToDisplay": "Seismic Source Model",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "Mean UCERF3",
+					"Options": {
+						"Mean UCERF3": {
+							"NameToDisplay": "Mean UCERF3",
+							"ToDisplay": true,
+							"Params": {}
+						},
+						"Mean UCERF3 FM3.1": {
+							"NameToDisplay": "Mean UCERF3 FM3.1",
+							"ToDisplay": true,
+							"Params": {}
+						},
+						"Mean UCERF3 FM3.2": {
+							"NameToDisplay": "Mean UCERF3 FM3.2",
+							"ToDisplay": true,
+							"Params": {}
+						}
+					}
+				},
+				"GroundMotion": {
+					"NameToDisplay": "Ground Motion Model",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "NGAWest2 2014 Averaged No Idriss",
+					"Options": {
+						"Abrahamson, Silva & Kamai (2014)": {
+							"NameToDisplay": "Abrahamson, Silva & Kamai (2014)",
+							"ToDisplay": true,
+							"Params": {}
+						},
+						"Boore, Stewart, Seyhan & Atkinson (2014)": {
+							"NameToDisplay": "Boore, Stewart, Seyhan & Atkinson (2014)",
+							"ToDisplay": true,
+							"Params": {}
+						},
+						"Campbell & Bozorgnia (2014)": {
+							"NameToDisplay": "Campbell & Bozorgnia (2014)",
+							"ToDisplay": true,
+							"Params": {}
+						},
+						"Chiou & Youngs (2014)": {
+							"NameToDisplay": "Chiou & Youngs (2014)",
+							"ToDisplay": true,
+							"Params": {}
+						},
+						"Idriss (2014)": {
+							"NameToDisplay": "Idriss (2014)",
+							"ToDisplay": false,
+							"Params": {}
+						},
+						"NGAWest2 2014 Averaged Attenuation Relationship": {
+							"NameToDisplay": "NGAWest2 2014 Averaged Relationship",
+							"ToDisplay": false,
+							"Params": {}
+						},
+						"NGAWest2 2014 Averaged No Idriss": {
+							"NameToDisplay": "NGAWest2 2014 Averaged, No Idriss",
+							"ToDisplay": true,
+							"Params": {}
+						}
+					}
+				},
+				"Vs30": {
+					"NameToDisplay": "Vs30 (m/s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "Wills et al. (2015)",
+					"Options": {
+						"Wills et al. (2015)": {
+							"NameToDisplay": "Wills et al. (2015)",
+							"ToDisplay": true,
+							"Params": {}
+						},
+						"UserDefined": {
+							"NameToDisplay": "User Defined",
+							"ToDisplay": true,
+							"Params": {
+								"ColumnIDWithData": {
+									"NameToDisplay": "Column ID With Data",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": null,
+									"Options": "ColumnHeaders"
+								}
+							}
+						}
+					}
+				},
+				"Z1p0": {
+					"NameToDisplay": "Depth to Vs of 1.0 km/s (km)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "Preferred",
+					"Options": {
+						"Preferred": {
+							"NameToDisplay": "Preferred",
+							"ToDisplay": true,
+							"Params": {}
+						},
+						"UserDefined": {
+							"NameToDisplay": "User Defined",
+							"ToDisplay": true,
+							"Params": {
+								"ColumnIDWithData": {
+									"NameToDisplay": "Column ID With Data",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": null,
+									"Options": "ColumnHeaders"
+								}
+							}
+						}
+					}
+				},
+				"Z2p5": {
+					"NameToDisplay": "Depth to Vs of 2.5 km/s (km)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "Preferred",
+					"Options": {
+						"Preferred": {
+							"NameToDisplay": "Preferred",
+							"ToDisplay": true,
+							"Params": {}
+						},
+						"UserDefined": {
+							"NameToDisplay": "User Defined",
+							"ToDisplay": true,
+							"Params": {
+								"ColumnIDWithData": {
+									"NameToDisplay": "Column ID With Data",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": null,
+									"Options": "ColumnHeaders"
+								}
+							}
+						}
+					}
+				}
+			}
         },
         "Correlation": {
-            "Spatial": {
-                "Model1": {
-                    "NameToDisplay": "Jayaram and Baker (2009)",
-                    "NameToReturn": "JayaramBaker2009"
-                }
-            },
-            "Spectral": {
-                "Model1": {
-                    "NameToDisplay": "Baker and Jayaram (2008)",
-                    "NameToReturn": "BakerJayaram2008"
-                }
-            }
-        },
-		"OtherParameters":{
-			"SourceForVs30": [
-				"Wills et al. (2015)",
-				"User Defined"
-			]
-		}
+			"NameToDisplay": "Correlations for Intensity Measures",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Spatial": {
+					"NameToDisplay": "Spatial Correlation",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"ToInclude": {
+							"NameToDisplay": "Include",
+							"WidgetType": "QCheckBox",
+							"ToDisplay": true,
+							"DefaultValue": false
+						},
+						"Method": {
+							"NameToDisplay": "Available Method(s)",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "JayaramBaker2009",
+							"Options": {
+								"JayaramBaker2009": {
+									"NameToDisplay": "Jayaram and Baker (2009)",
+									"ToDisplay": true,
+									"Params": {}
+								}
+							}
+						}
+					}
+				},
+				"Spectral": {
+					"NameToDisplay": "Cross Correlation",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"ToInclude": {
+							"NameToDisplay": "Include",
+							"WidgetType": "QCheckBox",
+							"ToDisplay": true,
+							"DefaultValue": false
+						},
+						"Method": {
+							"NameToDisplay": "Available Method(s)",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "BakerJayaram2008",
+							"Options": {
+								"BakerJayaram2008": {
+									"NameToDisplay": "Baker and Jayaram (2008)",
+									"ToDisplay": true,
+									"Params": {}
+								}
+							}
+						}
+					}
+				}
+			}
+        }
     },
     "EngineeringDemandParameter": {
         "Liquefaction": {
-            "Model1": {
-                "NameToDisplay": "Zhu et al. (2017)",
-                "NameToReturn": "ZhuEtal2017",
-                "NotesForModel": "Values for model parameters will be extracted from available datasets",
-                "Params": {
-                    "wtd": "Depth to water table (m)",
-                    "dr": "Distance to nearest river (km)",
-                    "dc": "Distance to nearest coast (km)",
-                    "dw": "Distance to nearest water body (km)",
-                    "precip": "Mean annual precipitation (mm)"
-                }
-            }
+			"NameToDisplay": "Liquefaction",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"ToInclude": {
+					"NameToDisplay": "Include",
+					"WidgetType": "QCheckBox",
+					"ToDisplay": true,
+					"DefaultValue": false
+				},
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "ZhuEtal2017",
+					"Options" : {
+						"ZhuEtal2017": {
+							"NameToDisplay": "Zhu et al. (2017)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								},
+								"ModelTransition": {
+									"NameToDisplay": "Distance for model transition (km), default: 20 km",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 20
+								},
+								"Vs30": {
+									"NameToDisplay": "Vs30 (m/s)",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "Preferred",
+									"Options": {
+										"Preferred": {
+											"NameToDisplay": "Preferred",
+											"ToDisplay": true,
+											"Params": {}
+										},
+										"UserDefined": {
+											"NameToDisplay": "User Defined",
+											"ToDisplay": true,
+											"Params": {
+												"ColumnIDWithData": {
+													"NameToDisplay": "Column ID With Data",
+													"WidgetType": "QComboBox",
+													"ToDisplay": true,
+													"DefaultValue": null,
+													"Options": "ColumnHeaders"
+												}
+											}
+										}
+									}
+								},
+								"WaterTableDepth": {
+									"NameToDisplay": "Depth to groundwater table (m)",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "Preferred",
+									"Options": {
+										"Preferred": {
+											"NameToDisplay": "Preferred",
+											"ToDisplay": true,
+											"Params": {}
+										},
+										"UserDefined": {
+											"NameToDisplay": "User Defined",
+											"ToDisplay": true,
+											"Params": {
+												"ColumnIDWithData": {
+													"NameToDisplay": "Column ID With Data",
+													"WidgetType": "QComboBox",
+													"ToDisplay": true,
+													"DefaultValue": null,
+													"Options": "ColumnHeaders"
+												}
+											}
+										}
+									}
+								},
+								"DistanceToRiver": {
+									"NameToDisplay": "Distance to nearest river (km)",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "Preferred",
+									"Options": {
+										"Preferred": {
+											"NameToDisplay": "Preferred",
+											"ToDisplay": true,
+											"Params": {}
+										},
+										"UserDefined": {
+											"NameToDisplay": "User Defined",
+											"ToDisplay": true,
+											"Params": {
+												"ColumnIDWithData": {
+													"NameToDisplay": "Column ID With Data",
+													"WidgetType": "QComboBox",
+													"ToDisplay": true,
+													"DefaultValue": null,
+													"Options": "ColumnHeaders"
+												}
+											}
+										}
+									}
+								},
+								"DistanceToCoast": {
+									"NameToDisplay": "Distance to nearest coast (km)",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "Preferred",
+									"Options": {
+										"Preferred": {
+											"NameToDisplay": "Preferred",
+											"ToDisplay": true,
+											"Params": {}
+										},
+										"UserDefined": {
+											"NameToDisplay": "User Defined",
+											"ToDisplay": true,
+											"Params": {
+												"ColumnIDWithData": {
+													"NameToDisplay": "Column ID With Data",
+													"WidgetType": "QComboBox",
+													"ToDisplay": true,
+													"DefaultValue": null,
+													"Options": "ColumnHeaders"
+												}
+											}
+										}
+									}
+								},
+								"DistanceToWaterBody": {
+									"NameToDisplay": "Distance to nearest water body (km)",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "Preferred",
+									"Options": {
+										"Preferred": {
+											"NameToDisplay": "Preferred",
+											"ToDisplay": true,
+											"Params": {}
+										},
+										"UserDefined": {
+											"NameToDisplay": "User Defined",
+											"ToDisplay": true,
+											"Params": {
+												"ColumnIDWithData": {
+													"NameToDisplay": "Column ID With Data",
+													"WidgetType": "QComboBox",
+													"ToDisplay": true,
+													"DefaultValue": null,
+													"Options": "ColumnHeaders"
+												}
+											}
+										}
+									}
+								},
+								"Precipitation": {
+									"NameToDisplay": "Mean annual precipitation (mm)",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "Preferred",
+									"Options": {
+										"Preferred": {
+											"NameToDisplay": "Preferred",
+											"ToDisplay": true,
+											"Params": {}
+										},
+										"UserDefined": {
+											"NameToDisplay": "User Defined",
+											"ToDisplay": true,
+											"Params": {
+												"ColumnIDWithData": {
+													"NameToDisplay": "Column ID With Data",
+													"WidgetType": "QComboBox",
+													"ToDisplay": true,
+													"DefaultValue": null,
+													"Options": "ColumnHeaders"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
         },
         "LateralSpread": {
-            "Model1": {
-                "NameToDisplay": "Grant et al. (2016) - same as Hazus (FEMA, 2013)",
-                "NameToReturn": "GrantEtal2016",
-                "NotesForModel": "Values for model parameters will be extracted from available datasets",
-                "Params": {
-                    "dwWB": "Closest distance to any water body (km)"
-                }
-            }
+			"NameToDisplay": "Lateral Spread",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"ToInclude": {
+					"NameToDisplay": "Include",
+					"WidgetType": "QCheckBox",
+					"ToDisplay": true,
+					"DefaultValue": false
+				},
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "GrantEtal2016",
+					"Options" : {
+						"GrantEtal2016": {
+							"NameToDisplay": "Grant et al. (2016) - same as Hazus (FEMA, 2014)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								},
+								"DistanceToWaterCutoff": {
+									"NameToDisplay": "Distance to water cutoff, default: 20 km",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 20
+								},
+								"DistanceToWaterBody": {
+									"NameToDisplay": "Distance to nearest water body (km)",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "Preferred",
+									"Options": {
+										"Preferred": {
+											"NameToDisplay": "Preferred",
+											"ToDisplay": true,
+											"Params": {}
+										},
+										"UserDefined": {
+											"NameToDisplay": "User Defined",
+											"ToDisplay": true,
+											"Params": {
+												"ColumnIDWithData": {
+													"NameToDisplay": "Column ID With Data",
+													"WidgetType": "QComboBox",
+													"ToDisplay": true,
+													"DefaultValue": null,
+													"Options": "ColumnHeaders"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
         },
         "GroundSettlement": {
-            "Model1": {
-                "NameToDisplay": "Hazus (FEMA, 2014)",
-                "NameToReturn": "Hazus2014",
-                "NotesForModel": null,
-                "Params": {
-                }
-            }
+			"NameToDisplay": "Ground Settlement",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"ToInclude": {
+					"NameToDisplay": "Include",
+					"WidgetType": "QCheckBox",
+					"ToDisplay": true,
+					"DefaultValue": false
+				},
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "Hazus2014",
+					"Options" : {
+						"Hazus2014": {
+							"NameToDisplay": "Hazus (FEMA, 2014)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								}
+							}
+						}
+					}
+				}
+			}
         },
         "Landslide": {
-            "Model1": {
-                "NameToDisplay": "Bray and Macedo (2019)",
-                "NameToReturn": "BrayMacedo2019",
-                "NotesForModel": null,
-                "Params": {
-                }
-            },
-            "Model2": {
-                "NameToDisplay": "Jibson (2007)",
-                "NameToReturn": "Jibson2007",
-                "NotesForModel": null,
-                "Params": {
-                }
-            }
+			"NameToDisplay": "Landslide",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"ToInclude": {
+					"NameToDisplay": "Include",
+					"WidgetType": "QCheckBox",
+					"ToDisplay": true,
+					"DefaultValue": false
+				},
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "BrayMacedo2019",
+					"Options" : {
+						"BrayMacedo2019": {
+							"NameToDisplay": "Bray and Macedo (2019)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								},
+								"GroundMotionType": {
+									"NameToDisplay": "Ground motion type, default: General",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "General",
+									"Options": {
+										"General": {
+											"NameToDisplay": "General (Entire Database)",
+											"ToDisplay": true,
+											"Params": {}
+										},
+										"Ordinary": {
+											"NameToDisplay": "Ordinary",
+											"ToDisplay": false,
+											"Params": {}
+										},
+										"NearFault": {
+											"NameToDisplay": "Near-Fault Pulse",
+											"ToDisplay": false,
+											"Params": {}
+										}
+									}
+								},
+								"MethodForKy": {
+									"NameToDisplay": "Method for yield acceleration, default: Bray (2007)",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "Bray2007",
+									"Options": {
+										"GrantEtal2016": {
+											"NameToDisplay": "Grant et al. (2016)",
+											"ToDisplay": true,
+											"Params": "ReferToYieldAcceleration"
+										},
+										"Bray2007": {
+											"NameToDisplay": "Bray (2007)",
+											"ToDisplay": true,
+											"Params": "ReferToYieldAcceleration"
+										},
+										"RathjeSaygili2009": {
+											"NameToDisplay": "Rathje and Saygili (2009)",
+											"ToDisplay": true,
+											"Params": "ReferToYieldAcceleration"
+										}
+									}
+								}
+							}
+						},
+						"Jibson2007": {
+							"NameToDisplay": "Jibson (2007)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								},
+								"ModelType": {
+									"NameToDisplay": "Model to use, default: Model with ky, PGA, M",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "ky_pga_M",
+									"Options": {
+										"ky_pga": {
+											"NameToDisplay": "Model with ky, PGA",
+											"ToDisplay": true,
+											"Params": {}
+										},
+										"ky_pga_M": {
+											"NameToDisplay": "Model with ky, PGA, M",
+											"ToDisplay": true,
+											"Params": {}
+										},
+										"ky_Ia": {
+											"NameToDisplay": "Model with ky, Ia",
+											"ToDisplay": false,
+											"Params": {}
+										},
+										"ky_pga_Ia": {
+											"NameToDisplay": "Model with ky, PGA, Ia",
+											"ToDisplay": false,
+											"Params": {}
+										}
+									}
+								},
+								"MethodForKy": {
+									"NameToDisplay": "Method for yield acceleration, default: Grant et al. (2016)",
+									"WidgetType": "QComboBox",
+									"ToDisplay": true,
+									"DefaultValue": "GrantEtal2016",
+									"Options": {
+										"GrantEtal2016": {
+											"NameToDisplay": "Grant et al. (2016)",
+											"ToDisplay": true,
+											"Params": "ReferToYieldAcceleration"
+										},
+										"Bray2007": {
+											"NameToDisplay": "Bray (2007)",
+											"ToDisplay": true,
+											"Params": "ReferToYieldAcceleration"
+										},
+										"RathjeSaygili2009": {
+											"NameToDisplay": "Rathje and Saygili (2009)",
+											"ToDisplay": true,
+											"Params": "ReferToYieldAcceleration"
+										}
+									}
+								}
+							}
+						}
+					}
+                },
+				"YieldAcceleration": {
+					"NameToDisplay": "Yield Acceleration",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"FrictionAngle": {
+							"NameToDisplay": "Friction Angle (deg)",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Preferred",
+							"Options": {
+								"Preferred": {
+									"NameToDisplay": "Preferred",
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"UserDefined": {
+									"NameToDisplay": "User Defined",
+									"ToDisplay": true,
+									"Params": {
+										"ColumnIDWithData": {
+											"NameToDisplay": "Column ID With Data",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": null,
+											"Options": "ColumnHeaders"
+										}
+									}
+								}
+							}
+						},
+						"Cohesion": {
+							"NameToDisplay": "Cohesion (kPa)",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Preferred",
+							"Options": {
+								"Preferred": {
+									"NameToDisplay": "Preferred",
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"UserDefined": {
+									"NameToDisplay": "User Defined",
+									"ToDisplay": true,
+									"Params": {
+										"ColumnIDWithData": {
+											"NameToDisplay": "Column ID With Data",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": null,
+											"Options": "ColumnHeaders"
+										}
+									}
+								}
+							}
+						},
+						"SlopeAngle": {
+							"NameToDisplay": "Slope (deg)",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Preferred",
+							"Options": {
+								"Preferred": {
+									"NameToDisplay": "Preferred",
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"UserDefined": {
+									"NameToDisplay": "User Defined",
+									"ToDisplay": true,
+									"Params": {
+										"ColumnIDWithData": {
+											"NameToDisplay": "Column ID With Data",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": null,
+											"Options": "ColumnHeaders"
+										}
+									}
+								}
+							}
+						},
+						"UnitWeight": {
+							"NameToDisplay": "Unit Weight (kN/m3)",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Preferred",
+							"Options": {
+								"Preferred": {
+									"NameToDisplay": "Preferred",
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"UserDefined": {
+									"NameToDisplay": "User Defined",
+									"ToDisplay": true,
+									"Params": {
+										"ColumnIDWithData": {
+											"NameToDisplay": "Column ID With Data",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": null,
+											"Options": "ColumnHeaders"
+										}
+									}
+								}
+							}
+						},
+						"SlopeThickness": {
+							"NameToDisplay": "Sliding Mass Thickness (m)",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Preferred",
+							"Options": {
+								"Preferred": {
+									"NameToDisplay": "Preferred",
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"UserDefined": {
+									"NameToDisplay": "User Defined",
+									"ToDisplay": true,
+									"Params": {
+										"ColumnIDWithData": {
+											"NameToDisplay": "Column ID With Data",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": null,
+											"Options": "ColumnHeaders"
+										}
+									}
+								}
+							}
+						},
+						"Method": {
+							"NameToDisplay": "Available Method(s)",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Bray2007",
+							"Options" : {
+								"GrantEtal2016": {
+									"NameToDisplay": "Grant et al. (2016)",
+									"ToDisplay": true,
+									"Params": {
+										"SlopeType": {
+											"NameToDisplay": "Slope type (currently applied on all components), default: Infinite Slope",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": "InfiniteSlope",
+											"Options": {
+												"InfiniteSlope": {
+													"NameToDisplay": "Infinite Slope",
+													"ToDisplay": true,
+													"Params": {
+														"RootCohesion": {
+															"NameToDisplay": "Root Cohesion (kPa)",
+															"WidgetType": "QComboBox",
+															"ToDisplay": true,
+															"DefaultValue": "Preferred",
+															"Options": {
+																"Preferred": {
+																	"NameToDisplay": "Preferred",
+																	"ToDisplay": true,
+																	"Params": {}
+																},
+																"UserDefined": {
+																	"NameToDisplay": "User Defined",
+																	"ToDisplay": true,
+																	"Params": {
+																		"ColumnIDWithData": {
+																			"NameToDisplay": "Column ID With Data",
+																			"WidgetType": "QComboBox",
+																			"ToDisplay": true,
+																			"DefaultValue": null,
+																			"Options": "ColumnHeaders"
+																		}
+																	}
+																}
+															}
+														}
+													}
+												},
+												"RotationalSlide": {
+													"NameToDisplay": "Rotational Slide",
+													"ToDisplay": false,
+													"Params": {}
+												}
+											}
+										}
+									}
+								},
+								"Bray2007": {
+									"NameToDisplay": "Bray (2007)",
+									"ToDisplay": true,
+									"Params": {
+										"SlopeType": {
+											"NameToDisplay": "Slope type (currently applied on all components), default: Infinite Slope",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": "InfiniteSlope",
+											"Options": {
+												"InfiniteSlope": {
+													"NameToDisplay": "Infinite Slope",
+													"ToDisplay": true,
+													"Params": {}
+												},
+												"RotationalSlide": {
+													"NameToDisplay": "Rotational Slide",
+													"ToDisplay": false,
+													"Params": {}
+												}
+											}
+										}
+									}
+								},
+								"RathjeSaygili2009": {
+									"NameToDisplay": "Rathje, E.M., and Saygili (2009)",
+									"ToDisplay": true,
+									"Params": {
+										"SlopeType": {
+											"NameToDisplay": "Slope type (currently applied on all components), default: Infinite Slope",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": "InfiniteSlope",
+											"Options": {
+												"InfiniteSlope": {
+													"NameToDisplay": "Infinite Slope",
+													"ToDisplay": true,
+													"Params": {
+														"RootCohesion": {
+															"NameToDisplay": "Root Cohesion (kPa)",
+															"WidgetType": "QComboBox",
+															"ToDisplay": true,
+															"DefaultValue": "Preferred",
+															"Options": {
+																"Preferred": {
+																	"NameToDisplay": "Preferred",
+																	"ToDisplay": true,
+																	"Params": {}
+																},
+																"UserDefined": {
+																	"NameToDisplay": "User Defined",
+																	"ToDisplay": true,
+																	"Params": {
+																		"ColumnIDWithData": {
+																			"NameToDisplay": "Column ID With Data",
+																			"WidgetType": "QComboBox",
+																			"ToDisplay": true,
+																			"DefaultValue": null,
+																			"Options": "ColumnHeaders"
+																		}
+																	}
+																}
+															}
+														},
+														"SlopeSaturation": {
+															"NameToDisplay": "Thickness Saturation (%)",
+															"WidgetType": "QComboBox",
+															"ToDisplay": true,
+															"DefaultValue": "Preferred",
+															"Options": {
+																"Preferred": {
+																	"NameToDisplay": "Preferred",
+																	"ToDisplay": true,
+																	"Params": {}
+																},
+																"UserDefined": {
+																	"NameToDisplay": "User Defined",
+																	"ToDisplay": true,
+																	"Params": {
+																		"ColumnIDWithData": {
+																			"NameToDisplay": "Column ID With Data",
+																			"WidgetType": "QComboBox",
+																			"ToDisplay": true,
+																			"DefaultValue": null,
+																			"Options": "ColumnHeaders"
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
         },
         "SurfaceFaultRupture": {
-            "Model1": {
-                "NameToDisplay": "Thompson (2020)",
-                "NameToReturn": "Thompson2020",
-                "NotesForModel": null,
-                "Params": {
-                }
-            },
-            "Model2": {
-                "NameToDisplay": "Wells and Coppersmith (1994)",
-                "NameToReturn": "WellsCoppersmith1994",
-                "NotesForModel": null,
-                "Params": {
-                }
-            },
-            "Model3": {
-                "NameToDisplay": "Hazus (FEMA, 2013)",
-                "NameToReturn": "Hazus2014",
-                "NotesForModel": null,
-                "Params": {
-                }
-            }
+			"NameToDisplay": "Surface Fault Rupture",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"ToInclude": {
+					"NameToDisplay": "Include",
+					"WidgetType": "QCheckBox",
+					"ToDisplay": true,
+					"DefaultValue": false
+				},
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "Thompson2020",
+					"Options" : {
+						"Thompson2020": {
+							"NameToDisplay": "Thompson (2020)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								}
+							}
+						},
+						"WellsCoppersmith1994": {
+							"NameToDisplay": "Wells and Coppersmith (1994)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								}
+							}
+						},
+						"Hazus2014": {
+							"NameToDisplay": "Hazus (FEMA, 2014)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								}
+							}
+						}
+					}
+				}
+			}
         },
         "SubsurfaceFaultRupture": {
+			"NameToDisplay": "Subsurface Fault Rupture",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {}
         },
         "TransientGroundStrain": {
+			"NameToDisplay": "Transient Ground Strain",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {}
         }
     },
     "DamageMeasure": {
         "TransientPipeStrain": {
+			"NameToDisplay": "Transient Pipe Strain",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {}
         }
     },
     "DecisionVariable": {
         "RepairRate": {
-            "Demand": {
-                "PGV": {
-                    "NameToDisplay": "Shaking Induced",
-                    "NameToReturn": "RepairRatePGV"
-                },
-                "PGD": {
-                    "NameToDisplay": "Deformation Induced",
-                    "NameToReturn": "RepairRatePGD"
-                }
-            },
-            "Models": {
-                "Model1": {
-                    "NameToDisplay": "O'Rourke (2020)",
-                    "NameToReturn": "ORourke2020",
-                    "Params": {
-                    }
-                },
-                "Model2": {
-                    "NameToDisplay": "ALA (2001)",
-                    "NameToReturn": "ALA2001",
-                    "Params": {
-                    }
-                },
-                "Model3": {
-                    "NameToDisplay": "Hazus (FEMA, 2014)",
-                    "NameToReturn": "Hazus2014",
-                    "Params": {
-                    }
-                }
-            }
+			"NameToDisplay": "Repair Rate",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Demand": {
+					"NameToDisplay": "Demands",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"RepairRatePGV": {
+							"NameToDisplay": "Shaking Induced",
+							"WidgetType": "QCheckBox",
+							"ToDisplay": true,
+							"DefaultValue": false,
+							"Params": {}
+						},
+						"RepairRatePGD": {
+							"NameToDisplay": "Deformation Induced",
+							"WidgetType": "QCheckBox",
+							"ToDisplay": true,
+							"DefaultValue": false,
+							"Params": {}
+						}
+					}
+				},
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "ORourke2020",
+					"Options" : {
+						"ORourke2020": {
+							"NameToDisplay": "O'Rourke (2020)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								},
+								"ComponentProperties": "ReferToComponentProperties"
+							}
+						},
+						"ALA2001": {
+							"NameToDisplay": "ALA (2001)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								},
+								"ComponentProperties": "ReferToComponentProperties"
+							}
+						},
+						"Hazus2014": {
+							"NameToDisplay": "Hazus (FEMA, 2014)",
+							"ToDisplay": true,
+							"Params": {
+								"ModelWeight": {
+									"NameToDisplay": "Model weight",
+									"WidgetType": "QLineEdit",
+									"ToDisplay": true,
+									"DefaultValue": 1
+								},
+								"ComponentProperties": "ReferToComponentProperties"
+							}
+						}
+					}
+				},
+				"ComponentProperties": {
+					"NameToDisplay": "Component Properties",
+					"WidgetType": null,
+					"ToDisplay": true,
+					"Params": {
+						"ComponentMaterial": {
+							"NameToDisplay": "Component Material",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Preferred",
+							"Options": {
+								"Preferred": {
+									"NameToDisplay": "Preferred",
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"UserDefined": {
+									"NameToDisplay": "User Defined",
+									"ToDisplay": true,
+									"Params": {
+										"ColumnIDWithData": {
+											"NameToDisplay": "Column ID With Data",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": null,
+											"Options": "ColumnHeaders"
+										}
+									}
+								}
+							}
+						},
+						"ComponentJointType": {
+							"NameToDisplay": "Component Joint Type",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Preferred",
+							"Options": {
+								"Preferred": {
+									"NameToDisplay": "Preferred",
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"UserDefined": {
+									"NameToDisplay": "User Defined",
+									"ToDisplay": true,
+									"Params": {
+										"ColumnIDWithData": {
+											"NameToDisplay": "Column ID With Data",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": null,
+											"Options": "ColumnHeaders"
+										}
+									}
+								}
+							}
+						},
+						"ComponentDiameter": {
+							"NameToDisplay": "Component Diameter (in), used in O'Rourke (2020) and ALA (2001)",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Preferred",
+							"Options": {
+								"Preferred": {
+									"NameToDisplay": "Preferred",
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"UserDefined": {
+									"NameToDisplay": "User Defined",
+									"ToDisplay": true,
+									"Params": {
+										"ColumnIDWithData": {
+											"NameToDisplay": "Column ID With Data",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": null,
+											"Options": "ColumnHeaders"
+										}
+									}
+								}
+							}
+						},
+						"YearOfInstallation": {
+							"NameToDisplay": "Year of Installation, used in Hazus (FEMA, 2014)",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Preferred",
+							"Options": {
+								"Preferred": {
+									"NameToDisplay": "Preferred",
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"UserDefined": {
+									"NameToDisplay": "User Defined",
+									"ToDisplay": true,
+									"Params": {
+										"ColumnIDWithData": {
+											"NameToDisplay": "Column ID With Data",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": null,
+											"Options": "ColumnHeaders"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
         }
     }
 }

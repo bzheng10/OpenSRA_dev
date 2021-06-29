@@ -627,19 +627,19 @@ def ZhuEtal2017(**kwargs):
     # two models by Zhu et al. (2017):
     # -- Model 1: better globally
     # -- Model 2: better for noncoastal (coastal cutoff at 20 km)
-
+    
     # get inputs
-    vs30 = kwargs.get('vs30',None) # m/s, shear wave vlocity over first 30 m
-    precip = kwargs.get('precip',None) # mm, mean annual precipitation
-    dc = kwargs.get('dc',None) # km, distance to nearest coast
-    dr = kwargs.get('dr',None) # km, distance to nearest river
-    dw = kwargs.get('dw',None) # km, distance to nearest water body
-    wtd = kwargs.get('wtd',None) # m, global water table depth
+    vs30 = kwargs.get('Vs30',None) # m/s, shear wave vlocity over first 30 m
+    precip = kwargs.get('Precipitation',None) # mm, mean annual precipitation
+    dc = kwargs.get('DistanceToCoast',None) # km, distance to nearest coast
+    dr = kwargs.get('DistanceToRiver',None) # km, distance to nearest river
+    dw = kwargs.get('DistanceToWaterBody',None) # km, distance to nearest water body
+    wtd = kwargs.get('WaterTableDepth',None) # m, global water table depth
     M = kwargs.get('M',None) # moment magnitude, for liquefaction triggering
     pgv = kwargs.get('pgv',None) # cm/s, peak ground velocity, for liquefaction triggering
     n_site = kwargs.get('n_site',pgv[0].shape[1]) # number of sites
     n_event = kwargs.get('n_event',pgv[0].shape[0]) # number of events
-    dc_cutoff = kwargs.get('dc_cutoff',20) # km, transition from model 1 to model 2, default to 20 km
+    dc_cutoff = kwargs.get('ModelTransition',20) # km, transition from model 1 to model 2, default to 20 km
     return_param = kwargs.get('return_param',None) # default to liq susc
     n_sample = kwargs.get('n_sample',1) # number of samples, default to 1
     
@@ -839,11 +839,11 @@ def Hazus2014(**kwargs):
     liq_susc = kwargs.get('liq_susc',None) # liquefaction susceptibility category
     pga = kwargs.get('pga',None) # g, peak ground acceleration
     M = kwargs.get('M',None) # moment magnitude
-    wtd = kwargs.get('wtd',None) # m, depth to water table
+    wtd = kwargs.get('WaterTableDepth',None) # m, depth to water table
     n_sample = kwargs.get('n_sample',1) # number of samples, default to 1
 
     # preset list
-    p_liq = []
+    p_liq = {}
 
     # correction factors for magnitude/duration and water table
     k_m = 0.0027 * M**3 - 0.0267 * M**2 - 0.2055 * M + 2.9188 # correction factor for moment magnitudes other than M=7.5, eq. 4-21
@@ -853,7 +853,7 @@ def Hazus2014(**kwargs):
     for k in range(n_sample):
 
         # get IM of all sites for current sample
-        pga_k = pga[k]
+        pga_k = pga[k].toarray()
 
         # get uncorrected p_liq given pga
         p_liq_pga = np.zeros(pga_k.shape)
@@ -877,10 +877,10 @@ def Hazus2014(**kwargs):
         p_liq_k = p_liq_pga / k_m / k_w * p_ml * 100 # eq. 4-20
 
         # append sims
-        p_liq.append(p_liq_k)
+        p_liq.update({k:p_liq_k})
 
     # set to numpy arrays
-    p_liq = np.asarray(p_liq)
+    # p_liq = np.asarray(p_liq)
 
     # probability distribution
     prob_dist_type = 'uniform'

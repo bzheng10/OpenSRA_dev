@@ -161,6 +161,7 @@ def Jibson2007(**kwargs):
     n_site = kwargs.get('n_site',pga[0].shape[1]) # number of sites
     n_event = kwargs.get('n_event',pga[0].shape[0]) # number of ruptures
     return_param = kwargs.get('return_param',['pgd_land']) # default to liq susc
+    model_type = kwargs.get('ModelType',None) # number of ruptures
 
     # initialize diciontary for displacement
     d = {}
@@ -172,37 +173,59 @@ def Jibson2007(**kwargs):
         return None
 
     else:
-        if pga is not None:
-            # Model as a function of ky and pga
-            if M is None:
+        # see if model type is not specified
+        if model_type is None:
+            # if model is not specified, check what input parameters are available
+            if pga is not None:
+                # Model as a function of ky and pga
+                if M is None:
+                    case = 1
+                    model_type = 'ky_pga'
+                    sigma_total = 0.510*np.log(10) # eq. 6 in Jibson (2007)
+                    
+                # Model as a function of ky, pga, and M
+                else:
+                    case = 2
+                    model_type = 'ky_pga_M'
+                    sigma_total = 0.454*np.log(10) # eq. 7 in Jibson (2007)
+
+            if Ia is not None:
+                # Model as a function of ky and Ia
+                if pga is None:
+                    case = 3
+                    model_type = 'ky_Ia'
+                    sigma_total = 0.656*np.log(10) # eq. 9 in Jibson (2007)
+
+                # Model as a function of ky, Ia, and pga
+                else:
+                    case = 4
+                    model_type = 'ky_pga_Ia'
+                    sigma_total = 0.616*np.log(10) # eq. 10 in Jibson (2007)
+        # see if model type is specified
+        else:
+            if model_type == 'ky_pga':
                 case = 1
-                case_var = 'ky_pga'
                 sigma_total = 0.510*np.log(10) # eq. 6 in Jibson (2007)
-                
-            # Model as a function of ky, pga, and M
-            else:
+            elif model_type == 'ky_pga_M':
                 case = 2
-                case_var = 'ky_pga_M'
                 sigma_total = 0.454*np.log(10) # eq. 7 in Jibson (2007)
-
-        if Ia is not None:
-            # Model as a function of ky and Ia
-            if pga is None:
+            elif model_type == 'ky_Ia':
                 case = 3
-                case_var = 'ky_Ia'
                 sigma_total = 0.656*np.log(10) # eq. 9 in Jibson (2007)
-
-            # Model as a function of ky, Ia, and pga
-            else:
+            elif model_type == 'ky_pga_Ia':
                 case = 4
-                case_var = 'ky_pga_Ia'
                 sigma_total = 0.616*np.log(10) # eq. 10 in Jibson (2007)
+            else:            
+                # default case
+                case = 2
+                model_type = 'ky_pga_M'
+                sigma_total = 0.454*np.log(10) # eq. 7 in Jibson (2007)
         
         
         # -----------------------------------------------------------
         # -----------------------------------------------------------
         # distribution
-        # borrewed from BrayMacedo2017 for now
+        # borrewed from BrayMacedo2019 for now
         prob_dist_type = 'Lognormal'
         sigma_aleatory = 0.4 # for ln(D)
         sigma_epistemic = (sigma_total**2-sigma_aleatory**2)**0.5 # for ln(D)
@@ -614,7 +637,7 @@ def RathjeAntonakos2011(pga, **kwargs):
     pgv = kwargs.get('pgv',None) # cm/s, peak ground velocity
     M = kwargs.get('M',None) # moment magnitude
     Tm = kwargs.get('Tm',None) # sec, mean period
-    Ts = kwargs.get('Tm',None) # sec, site period
+    Ts = kwargs.get('Ts',None) # sec, site period
     ky = kwargs.get('ky',None) # g, yield acceleration, either provided or computed below
     n_sample = kwargs.get('n_sample',1) # number of samples, default to 1
     n_site = kwargs.get('n_site',pga[0].shape[1]) # number of sites
@@ -950,7 +973,8 @@ def BrayMacedo2019(**kwargs):
     n_site = kwargs.get('n_site',pga[0].shape[1]) # number of sites
     n_event = kwargs.get('n_event',pga[0].shape[0]) # number of ruptures
     return_param = kwargs.get('return_param',['pgd_land','p_land']) # default to liq susc
-    gm_type = kwargs.get('gm_type','gen') # takes ord = ordinary GMs, nf = near-fault GMs, gen/full = general or full (ordinary + near-fault) GMs
+    # gm_type = kwargs.get('gm_type','gen') # takes ord = ordinary GMs, nf = near-fault GMs, gen/full = general or full (ordinary + near-fault) GMs
+    gm_type = kwargs.get('GroundMotionType','gen') # takes ord = ordinary GMs, nf = near-fault GMs, gen/full = general or full (ordinary + near-fault) GMs
     ky = kwargs.get('ky',None) # yield accelerations
     # Ts = kwargs.get('Ts',0.15) # sec, site period = 4H/Vs, use 0.15 sec if site/geologic data is not available
     M = kwargs.get('M',None) # moment magnitude

@@ -1,0 +1,397 @@
+{
+    "General": {
+		"Directory": {
+			"Working": ""
+		},
+        "OutputFileType": "csv"
+    },
+	"SamplingMethod": {
+		"Method": "LogicTree",
+		"Branch": [
+			-1.65,
+			0,
+			1.65
+		],
+		"Weights": [
+			0.2,
+			0.6,
+			0.2
+		]
+	},
+    "Infrastructure": {
+        "SiteDataFile": "example/Ex6_UserInputModelParams/Input/SiteData.csv",
+		"SiteLocationParams": {
+			"LatMid": {
+				"DataExists": true,
+				"ColumnIDWithData": "LAT_MIDDLE"
+			},
+			"LonMid": {
+				"DataExists": true,
+				"ColumnIDWithData": "LONG_MIDDLE"
+			},
+			"LatBegin": {
+				"DataExists": true,
+				"ColumnIDWithData": "LAT_BEGIN"
+			},
+			"LonBegin": {
+				"DataExists": true,
+				"ColumnIDWithData": "LONG_BEGIN"
+			},
+			"LatEnd": {
+				"DataExists": true,
+				"ColumnIDWithData": "LAT_END"
+			},
+			"LonEnd": {
+				"DataExists": true,
+				"ColumnIDWithData": "LONG_END"
+			},
+			"Length": {
+				"DataExists": false,
+				"ColumnIDWithData": "SHAPE_LENGTH"
+			}
+		}
+    },
+    "IntensityMeasure": {
+        "Type": {
+            "PGA": {
+                "ToAssess": true
+            },
+            "PGV": {
+                "ToAssess": true
+            }
+        },
+        "SourceForIM": "OpenSHA",
+        "SourceParameters": {
+			"SeismicSourceModel": "Mean UCERF3 FM3.2",
+            "Filter": {
+                "ReturnPeriod": {
+                    "ToInclude": true,
+                    "Maximum": 100000
+                },
+                "Distance": {
+                    "ToInclude": true,
+                    "Maximum": 100
+                },
+                "Magnitude": {
+                    "ToInclude": true,
+                    "Minimum": 5,
+                    "Maximum": null
+                },
+                "PointSource": {
+                    "ToInclude": false
+                }
+            },
+            "GroundMotionModel": "NGAWest2 2014 Averaged No Idriss",
+			"OtherParameters": {
+				"Vs30": {
+					"Source": "UserDefined",
+					"ColumnIDWithData": "Vs30 (m/s)"
+				},
+				"Z1p0": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				},
+				"Z2p5": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				}
+			}
+        },
+        "Correlation": {
+            "Spatial": {
+                "ToInclude": true,
+                "Method": "JayaramBaker2009"
+            },
+            "Spectral": {
+                "ToInclude": true,
+                "Method": "BakerJayaram2008"
+            }
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "Liquefaction": {
+                "ToAssess": true,
+                "Method": {
+                    "ZhuEtal2017": {
+						"ModelWeight": 1, 
+						"ModelTransition": 20,
+						"Vs30": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Vs30 (m/s)"
+						},
+						"WaterTableDepth": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Water Table Depth (m)"
+						},
+						"DistanceToRiver": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Distance to River (km)"
+						},
+						"DistanceToCoast": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Distance to Coast (km)"
+						},
+						"DistanceToWaterBody": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Distance to Water Body (km)"
+						},
+						"Precipitation": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Mean Annual Precipitation (mm)"
+						}
+					}
+                },
+                "OtherParameters": {
+                }
+            },
+            "LateralSpread": {
+                "ToAssess": true,
+                "Method": {
+                    "GrantEtal2016": {
+						"ModelWeight": 1,
+						"DistanceToWaterCutoff": 50
+					}
+                },
+                "OtherParameters": {
+                }
+            },
+            "GroundSettlement": {
+                "ToAssess": true,
+                "Method": {
+                    "Hazus2014": {
+						"ModelWeight": 1
+					}
+                },
+                "OtherParameters": {}
+            },
+            "Landslide": {
+                "ToAssess": true,
+                "Method": {
+                    "BrayMacedo2019": {
+						"ModelWeight": 0.5,
+						"GroundMotionType": "General",
+						"MethodForKy": "Bray2007",
+						"SlopeType": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"RootCohesion": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Root Cohesion (kPa)"
+						},
+						"FrictionAngle": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Friction Angle (deg)"
+						},
+						"Cohesion": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Cohesion (kPa)"
+						},
+						"UnitWeight": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Unit Weight (kN/m3)"
+						},
+						"SlopeAngle": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Slope (deg)"
+						},
+						"SlopeThickness": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Slope Thickness (m)"
+						}
+					},
+					"Jibson2007": {
+						"ModelWeight": 0.5,
+						"ModelType": "ky_pga_M",
+						"MethodForKy": "GrantEtal2016",
+						"SlopeType": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"RootCohesion": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Root Cohesion (kPa)"
+						},
+						"FrictionAngle": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Friction Angle (deg)"
+						},
+						"Cohesion": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Cohesion (kPa)"
+						},
+						"UnitWeight": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Unit Weight (kN/m3)"
+						},
+						"SlopeAngle": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Slope (deg)"
+						},
+						"SlopeThickness": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Slope Thickness (m)"
+						}
+					}
+                },
+                "OtherParameters": {
+                }
+            },
+            "SurfaceFaultRupture": {
+                "ToAssess": true,
+                "Method": {
+                    "WellsCoppersmith1994": {
+						"ModelWeight": 1
+					},
+					"Thompson2020": {
+						"ModelWeight": 1
+					},
+					"Hazus2014": {
+						"ModelWeight": 1
+					}
+                },
+                "OtherParameters": {
+                }
+            },
+            "SubsurfaceFaultRupture": {
+                "ToAssess": false,
+                "Method": {
+				},
+                "OtherParameters": {
+                }
+            },
+            "TransientGroundStrain": {
+                "ToAssess": false,
+                "Method": {
+				},
+                "OtherParameters": {
+                }
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "TransientPipeStrain": {
+                "ToAssess": false,
+                "Method": {
+				},
+                "OtherParameters": {
+                }
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "RepairRatePGV": {
+                "ToAssess": true,
+                "Method": {
+                    "ORourke2020": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentJointType": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentDiameter": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Outside Diameter (in)"
+						}
+					},
+                    "ALA2001": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentJointType": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentDiameter": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Outside Diameter (in)"
+						}
+					},
+                    "Hazus2014": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentJointType": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentDiameter": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Year of Installation"
+						}
+					}
+                },
+                "OtherParameters": {}
+            },
+            "RepairRatePGD": {
+                "ToAssess": true,
+                "Method": {
+                    "ORourke2020": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentJointType": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentDiameter": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Outside Diameter (in)"
+						}
+					},
+                    "ALA2001": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentJointType": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentDiameter": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Outside Diameter (in)"
+						}
+					},
+                    "Hazus2014": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentJointType": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Material & Welds"
+						},
+						"ComponentDiameter": {
+							"Source": "UserDefined",
+							"ColumnIDWithData": "Year of Installation"
+						}
+					}
+                },
+                "OtherParameters": {
+                }
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    }
+}

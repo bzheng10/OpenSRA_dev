@@ -19,7 +19,6 @@ import os
 import logging
 import json
 # import sys
-import ast
 import numpy as np
 import pandas as pd
 from scipy import sparse
@@ -32,7 +31,6 @@ from jpype.types import *
 from src.Fcn_Common import check_common_member, get_closest_pt, get_haversine_dist
 
 # Using JPype to load OpenSHA in JVM
-# jpype.addClassPath('./opensha/OpenSHA-1.5.2.jar')
 jpype.addClassPath('../../lib/OpenSHA/OpenSHA-1.5.2.jar')
 if not jpype.isJVMStarted():
     jpype.startJVM("-Xmx8G", convertStrings=False)
@@ -65,8 +63,9 @@ from org.opensha.sha.imr.attenRelImpl.ngaw2 import *
 from org.opensha.sha.imr.attenRelImpl.ngaw2.NGAW2_Wrappers import *
 from org.opensha.sha.imr.param.IntensityMeasureParams import *
 from org.opensha.sha.imr.param.OtherParams import *
-from org.opensha.sha.imr.param.SiteParams import Vs30_Param
+from org.opensha.sha.imr.param.SiteParams import *
 from org.opensha.sha.calc import *
+from org.opensha.sha.calc.params import *
 from org.opensha.sha.util import *
 from scratch.UCERF3.erf.mean import MeanUCERF3
 
@@ -94,6 +93,7 @@ def get_fault_xing_opensha(src_list, start_loc, end_loc, trace_set, save_name,
         # loop through unique source indices and get intersections
         for i in range(len(src_list)):
             if len(trace_set[i]) == 1:
+                crossing_seg_id.append([])
                 crossing_location.append([]) # point source, no intersection
             else:
                 # create linestring shape using start and end coordinates of segments
@@ -105,7 +105,7 @@ def get_fault_xing_opensha(src_list, start_loc, end_loc, trace_set, save_name,
                     if line.intersects(rup_shape):
                         ind_with_crossing_i.append(ind)
                         try: # for single intersection
-                            # x.intersection returns Point object and cannot be lopped
+                            # x.intersection returns Point object and cannot be looped
                             crossings_i.append([
                                 round(line.intersection(rup_shape).x,5),
                                 round(line.intersection(rup_shape).y,5)])
@@ -163,69 +163,87 @@ def get_fault_xing_opensha(src_list, start_loc, end_loc, trace_set, save_name,
         df_return.drop(columns=['ListOfCrossingLocations'], inplace=True)
         # convert string literals to lists
         df_return['ListOfSegmentIDsWithCrossings'] = \
-            [ast.literal_eval(df_return['ListOfSegmentIDsWithCrossings'][i]) for i in range(len(df_return))]
+            [json.loads(df_return['ListOfSegmentIDsWithCrossings'][i]) for i in range(len(df_return))]
         #
         return df_return
     
 
 # -----------------------------------------------------------
-def get_trace_opensha(src_list, src_connect_file, rup_seg_file, pt_src_file, save_name,
-                        to_write=True):
+def get_trace_opensha(src_list, finite_src_file, pt_src_file, save_name,
+                        flag_include_pt_src=False, to_write=True):
     """
     """
     
     # to read from save_name or to write to save_name
     if to_write is True:
         # load ERF solution files
-        df_src_connect = pd.read_csv(src_connect_file)
-        df_rup_seg = pd.read_csv(rup_seg_file)
-        df_pt_src = pd.read_csv(pt_src_file)
+        # df_src_connect = pd.read_csv(src_connect_file)
+        # df_rup_seg = pd.read_csv(rup_seg_file)
+        df_finite_src = pd.read_csv(finite_src_file)
+        if flag_include_pt_src:
+            df_pt_src = pd.read_csv(pt_src_file)
+            ind_end_of_finite_src = np.argmax(src_list>=df_pt_src.iloc[0,0]) # index where point sources
+        else:
+            ind_end_of_finite_src = len(src_list)
         
         # initialize list
-        trace_set = []
+        # trace_set = []
+        
+        # get traces for finite sources
+        finite_src_to_get = src_list[:ind_end_of_finite_src]
+        trace_set_finite_src = [json.loads(df_finite_src['ListOfTraces'][ind]) for ind in finite_src_to_get]
+        trace_set = trace_set_finite_src
         
         # loop through source indices, first pull list of segment IDs, and then get list of traces for each segment
-        for src_i in src_list:
-            # see if source index is in list of finite sources, if not then it is a point source
-            if src_i in df_src_connect['ListOfSegments']:
-                # get list of segment IDs from the "scenario_connectivity" file
-                listSeg_src_i = ast.literal_eval(df_src_connect['ListOfSegments'][src_i])
-                # initialize lists and counters for looping through list of segments
-                trace_src_i = []
-                count_seg = 0
-                # loop through list of segment IDs
-                for seg_j in listSeg_src_i:
-                    # get list of traces for current segment ID
-                    trace_seg_j = ast.literal_eval(df_rup_seg['SegmentTrace'][np.where(df_rup_seg['SegmentID']==seg_j)[0][0]])
-                    # it appears that in OpenSHA the directionality of segment traces are not consistently set up
-                    # below is a scheme to rearrange the order of traces such that segment endpoints are connected correctly
-                    if count_seg == 0: # no directionality enforced for first segment
-                        trace_src_i = trace_src_i + trace_seg_j
-                    elif count_seg == 1:
-                        if trace_seg_jm1[-1] == trace_seg_j[0]: # no correction needed, directions of segments align
-                            trace_src_i = trace_seg_jm1 + trace_seg_j
-                        elif trace_seg_jm1[-1] == trace_seg_j[-1]: # current segment is flipped relative to previous segment
-                            trace_src_i = trace_seg_jm1 + trace_seg_j[::-1]
-                        elif trace_seg_jm1[0] == trace_seg_j[0]: # previous segment is flipped relative to current
-                            trace_src_i = trace_seg_jm1[::-1] + trace_seg_j
-                        elif trace_seg_jm1[0] == trace_seg_j[-1]: # both segments are oriented in opposite direction
-                            trace_src_i = trace_seg_jm1[::-1] + trace_seg_j[::-1]
-                    else:
-                        if trace_seg_jm1[-1] == trace_seg_j[0]:# no correction needed, directions of segments align
-                            trace_src_i = trace_src_i + trace_seg_j
-                        else: # only need flip current segment since directionality has been established by previous segments
-                            trace_src_i = trace_src_i + trace_seg_j[::-1]
-                    # temporarily store traces of current segment for use in next iteration
-                    trace_seg_jm1 = trace_seg_j
-                    # increment counter
-                    count_seg += 1
-            # if source index is not in the "scenario_connectivity" file, then it's a point source
-            # traces of point sources are stored in "point_sources.csv"
-            else:
-                # get trace for current source index, longitudes and latitudes are stored in column indices 1:2
-                trace_src_i = df_pt_src.iloc[np.where(df_pt_src['SourceIndex']==src_i)[0][0],1:3].values.tolist()
-            # append traces for current source index to overall list
-            trace_set.append(trace_src_i)
+        #for src_i in src_list:
+        #    # see if source index is in list of line sources, if not then it is a point source
+        #    if src_i in df_src_connect['ListOfSegments']:
+        #        # get list of segment IDs from the "scenario_connectivity" file
+        #        listSeg_src_i = json.loads(df_src_connect['ListOfSegments'][src_i])
+        #        # initialize lists and counters for looping through list of segments
+        #        trace_src_i = []
+        #        count_seg = 0
+        #        # loop through list of segment IDs
+        #        for seg_j in listSeg_src_i:
+        #            # get list of traces for current segment ID
+        #            trace_seg_j = json.loads(df_rup_seg['SegmentTrace'][np.where(df_rup_seg['SegmentID']==seg_j)[0][0]])
+        #            # it appears that in OpenSHA the directionality of segment traces are not consistently set up
+        #            # below is a scheme to rearrange the order of traces such that segment endpoints are connected correctly
+        #            if count_seg == 0: # no directionality enforced for first segment
+        #                trace_src_i = trace_src_i + trace_seg_j
+        #            elif count_seg == 1:
+        #                if trace_seg_jm1[-1] == trace_seg_j[0]: # no correction needed, directions of segments align
+        #                    trace_src_i = trace_seg_jm1 + trace_seg_j
+        #                elif trace_seg_jm1[-1] == trace_seg_j[-1]: # current segment is flipped relative to previous segment
+        #                    trace_src_i = trace_seg_jm1 + trace_seg_j[::-1]
+        #                elif trace_seg_jm1[0] == trace_seg_j[0]: # previous segment is flipped relative to current
+        #                    trace_src_i = trace_seg_jm1[::-1] + trace_seg_j
+        #                elif trace_seg_jm1[0] == trace_seg_j[-1]: # both segments are oriented in opposite direction
+        #                    trace_src_i = trace_seg_jm1[::-1] + trace_seg_j[::-1]
+        #            else:
+        #                if trace_seg_jm1[-1] == trace_seg_j[0]:# no correction needed, directions of segments align
+        #                    trace_src_i = trace_src_i + trace_seg_j
+        #                else: # only need flip current segment since directionality has been established by previous segments
+        #                    trace_src_i = trace_src_i + trace_seg_j[::-1]
+        #            # temporarily store traces of current segment for use in next iteration
+        #            trace_seg_jm1 = trace_seg_j
+        #            # increment counter
+        #            count_seg += 1
+        #    # if source index is not in the "scenario_connectivity" file, then it's a point source
+        #    # traces of point sources are stored in "point_sources.csv"
+        #    else:
+        #        # get trace for current source index, longitudes and latitudes are stored in column indices 1:2
+        #        trace_src_i = df_pt_src.iloc[np.where(df_pt_src['SourceIndex']==src_i)[0][0],1:3].values.tolist()
+        #    # append traces for current source index to overall list
+        #    trace_set.append(trace_src_i)
+        
+        # get traces for point sources
+        if flag_include_pt_src:
+            pt_src_to_get = src_list[ind_end_of_finite_src:]
+            ind_for_pt_src = [[i]*len(np.where(pt_src_to_get==df_pt_src['SourceIndex'][i])[0]) for i in range(len(df_pt_src['SourceIndex'])) if df_pt_src['SourceIndex'][i] in pt_src_to_get]
+            trace_set_pt_src = list(np.round(df_pt_src.iloc[[val for sublist in ind_for_pt_src for val in sublist],1:3].values,3))
+            trace_set_pt_src = [[trace.tolist()] for trace in trace_set_pt_src]
+            trace_set = trace_set + trace_set_pt_src
         
         # export traces
         dict_out = {
@@ -245,7 +263,7 @@ def get_trace_opensha(src_list, src_connect_file, rup_seg_file, pt_src_file, sav
         # import fault traces from "file_name"
         df = pd.read_csv(save_name)
         # remove the last column of data (unused in analysis)
-        trace_set = [ast.literal_eval(item) for item in df['ListOfTraces'].tolist()]
+        trace_set = [json.loads(item) for item in df['ListOfTraces'].tolist()]
         # trace_set = [item if len(item) > 0 else [] for item in trace_set]
         #
         return trace_set
@@ -268,6 +286,15 @@ def setup_opensha(setup_config, other_config_param, site_data):
     logging.info(f"\n\n     *****Runtime messages from OpenSHA*****\n")
     logging.info(f'\t... initialized ERF "{erf_name}"')
     
+    # Set to include background source
+    flagIncludeBackground = setup_config['IntensityMeasure']['SourceParameters']['Filter']['PointSource']['ToInclude']
+    if flagIncludeBackground:
+        erf.setParameter(IncludeBackgroundParam.NAME, IncludeBackgroundOption.INCLUDE)
+        logging.info(f"\t... point sources included in list of scenarios")
+    else:
+        erf.setParameter(IncludeBackgroundParam.NAME, IncludeBackgroundOption.EXCLUDE)
+        logging.info(f"\t... point sources excluded from list of scenarios")
+    
     # Initialize IMR
     gmpe_name = setup_config['IntensityMeasure']['SourceParameters']['GroundMotionModel']
     try:
@@ -278,34 +305,30 @@ def setup_opensha(setup_config, other_config_param, site_data):
         return 1, station_info
     
     # Set site dictionary
-    locs = site_data[['LAT_MIDDLE','LONG_MIDDLE']].values # Get Locations
-    # if other_config_param['SourceForVs30'] == 'User Defined':
-    # if 'VS30 (m/s)' in site_data:
-    vs30 = site_data['Vs30 (m/s)'].values # get vs30
-    siteSpec = [{
-        'Location': {
-            'Latitude': locs[i,0],
-            'Longitude': locs[i,1]
-        },
-        'Vs30': vs30[i]
-    } for i in range(len(locs))]
-    # else:
-        # flag_get_vs30_from_opensha = True
-    # if other_config_param['SourceForVs30'] == 'Wills et al. (2015)' or \
-        # flag_get_vs30_from_opensha:
-        # siteSpec = [{
-            # 'Location': {
-                # 'Latitude': locs[i,0],
-                # 'Longitude': locs[i,1]
-            # }} for i in range(len(locs))]
-    sites = get_site_prop(imr, siteSpec)
-    # if flag_get_vs30_from_opensha:
-        # print(sites)
-        # site_datap['Vs30 (m/s)'] = vs30
-        # np.savetxt(vs30_file,site_data['Vs30 (m/s)'].values,fmt='%6.2f') # export vs30 to file for im_tool
-        
-    # logging.info(f"\t... set Vs30 to sites")
-    
+    n_site = len(site_data)
+    siteSpec = {
+        'Latitude': site_data['Mid Latitude'].values,
+        'Longitude': site_data['Mid Longitude'].values,
+    }
+    # get other parameters
+    other_param_definition = setup_config['IntensityMeasure']['SourceParameters']['OtherParameters']
+    for param in other_param_definition:
+        if param == 'Vs30':
+            siteSpec['Vs30'] = site_data['Vs30 (m/s)'].values # get vs30
+        else:
+            if other_param_definition[param]['Source'] == 'UserDefined':
+                if param == 'Z1p0': # convert z1p0 from km to m
+                    siteSpec[param] = site_data[other_param_definition[param]['ColumnIDWithData']].values*1000
+                else:
+                    siteSpec[param] = site_data[other_param_definition[param]['ColumnIDWithData']].values
+            else:
+                siteSpec[param] = None
+                
+    # create Java objects of sites
+    sites = get_site_prop(
+        imr, siteSpec, n_site,
+        outfile=os.path.join(other_config_param['Dir_IM_SeismicSource'],'SiteDataUsed.csv')
+    )
     # Set max distance
     if setup_config['IntensityMeasure']['SourceParameters']['Filter']['Distance']['ToInclude']:
         r_max = setup_config['IntensityMeasure']['SourceParameters']['Filter']['Distance']['Maximum']
@@ -332,102 +355,75 @@ def filter_ruptures(erf, locs, filter_criteria, rupture_list, rup_save_name,
     Filter rupture scenarios; locs should be in [lon,lat] order
     
     """
-    
-    # convert to np array
-    rupture_list = np.asarray(rupture_list)
 
     # filter by rate_cutoff (or return period)
     if 'ReturnPeriod' in filter_criteria:
         rate_cutoff = 1/filter_criteria['ReturnPeriod']['Maximum']
-        # rupture_list = np.asarray([row for row in rupture_list if row[3] >= rate_cutoff])
-        rupture_list = rupture_list[rupture_list[:,3]>=rate_cutoff]
-        logging.info(f"\t\t... filtered scenarios with mean annual rates less than {rate_cutoff}")
-        logging.info(f"\t\t\t  length after filter by rate = {len(rupture_list)}")
+        logging.info(f"\t\t- filtered scenarios with mean annual rates less than {rate_cutoff}")
+        rupture_list = rupture_list[rupture_list['MeanAnnualRate']>=rate_cutoff]
+        rupture_list.reset_index(inplace=True,drop=True)
+        logging.info(f"\t\t\tnumber of scenarios after filter by rates = {len(rupture_list)}")
 
     # filter by magnitude range
     if 'Magnitude' in filter_criteria:
         mag_min = filter_criteria['Magnitude']['Minimum']
         mag_max = filter_criteria['Magnitude']['Maximum']
-        # rupture_list = np.asarray([row for row in rupture_list if row[2] >= mag_min and row[2] <= mag_max])
-        rupture_list = rupture_list[np.where(np.logical_and(rupture_list[:,2]>=mag_min,rupture_list[:,2]<=mag_max))]
-        logging.info(f"\t\t... filtered scenarios with moment magnitudes outside of {mag_min} and {mag_max}")
-        logging.info(f"\t\t\t  length after filter by mag = {len(rupture_list)}")
+        logging.info(f"\t\t- filtering scenarios with moment magnitudes outside of {mag_min} and {mag_max}")
+        if mag_min is not None:
+            rupture_list = rupture_list[rupture_list['Magnitude']>=mag_min]
+            rupture_list.reset_index(inplace=True,drop=True)
+        if mag_max is not None:
+            rupture_list = rupture_list[rupture_list['Magnitude']<mag_max]
+            rupture_list.reset_index(inplace=True,drop=True)
+        logging.info(f"\t\t\tnumber of scenarios after filter by magnitude = {len(rupture_list)}")
 
-    # filter by point source
-    # list_pt_src = np.loadtxt(pt_src_file) # read list of point sources in source model
-    df_pt_src = pd.read_csv(pt_src_file)
+    # filter out inclusion of point sources
+    df_pt_src = pd.read_csv(pt_src_file) # get list of point sources
+    starting_of_pt_src = df_pt_src['SourceIndex'][0].copy()
+    ind_end_of_finite_src = np.argmax(rupture_list['SourceIndex']>=df_pt_src.iloc[0,0]) # index where point sources start
     if not 'PointSource' in filter_criteria:
-        # rupture_list = rupture_list[np.where(np.in1d(rupture_list[:,0], list_pt_src[:,0],invert=True))[0]]
-        rupture_list = rupture_list[
-            np.where(np.in1d(rupture_list[:,0],
-            df_pt_src['SourceIndex'].values,
-            invert=True))[0]
-        ]
-        logging.info(f"\t\t... point sources removed from list of scenarios")
-        logging.info(f"\t\t\t  length after filter by pt src = {len(rupture_list)}")
+        rupture_list = rupture_list[:ind_end_of_finite_src] # get finite sources only
 
     # read list of rupture segments in source model
     if 'Distance' in filter_criteria:
         #
         r_max = filter_criteria['Distance']['Maximum']
-        # with open(rup_seg_file, 'r') as read_file:
-            # list_rup_seg = json.load(read_file)
-        # read_file.close()
-        df_rup_seg = pd.read_csv(rup_seg_file)
-        # check site locations against all rupture segments and see if shortest distance is within r_max
-        seg_pass_r_max = []
-        # for seg in list_rup_seg:
-        for i in range(len(df_rup_seg)):
-            # print(ast.literal_eval(df_rup_seg.iloc[i,2]))
-            # sys.exit()
-            # flag_rmax = check_rmax(locs,list_rup_seg[seg]['SegmentTrace'],'seg',r_max)
-            flag_rmax = check_rmax(locs,ast.literal_eval(df_rup_seg.iloc[i,2]),'seg',r_max)
-            if flag_rmax == True:
-                seg_pass_r_max.append(df_rup_seg['SegmentID'][i])
-        logging.info(f"\t\t... obtained list of {len(seg_pass_r_max)} segments that are within {r_max} km of site locations")
+        logging.info(f"\t\t- filtering scenarios that are more than {r_max} km from sites")
+        df_rup_seg = pd.read_csv(rup_seg_file) # get list of rupture segments
+        # check site locations against all rupture segments and see if shortest distance is within r_max                
+        seg_pass_r_max = [df_rup_seg['SegmentID'][i] for i in range(len(df_rup_seg)) if check_rmax(locs,json.loads(df_rup_seg.iloc[i,2]),'seg',r_max)]
+        logging.info(f"\t\t\t... obtained list of {len(seg_pass_r_max)} segments that are within {r_max} km of site locations")
     
         # check if point sources are needed
         pt_src_pass_r_max = []
         if 'PointSource' in filter_criteria:
-            # check site locations against all point sources and see if shortest distance is within r_max
-            # for pt_src in list_pt_src:
-            for i in range(len(df_pt_src)):
-                # flag_rmax = check_rmax(locs,pt_src[1:3],'pt',r_max)
-                flag_rmax = check_rmax(locs,df_pt_src.iloc[i,1:].values,'pt',r_max)
-                if flag_rmax == True:
-                    # pt_src_pass_r_max.append(int(pt_src[0]))
-                    pt_src_pass_r_max.append(int(df_pt_src.iloc[i,0]))
-            logging.info(f"\t\t... obtained list of {len(pt_src_pass_r_max)} point sources that are within {r_max} km of site locations")
+            # check site locations against all point sources and see if shortest distance is within r_max                    
+            pt_src_pass_r_max = [int(df_pt_src.iloc[i,0]) for i in range(len(df_pt_src)) if check_rmax(locs,df_pt_src.iloc[i,1:].values,'pt',r_max)]
+            logging.info(f"\t\t\t... obtained list of {len(pt_src_pass_r_max)} point sources that are within {r_max} km of site locations")
 
         # get rupture section class from OpenSHA through EQHazard
         _, rupSourceSections = get_rupture_set(erf)
         
         # compare list of rupture segments that are wihtin r_max and with the rupture segments in each source
-        rupture_list_temp = []
-        for i in range(len(rupture_list)):
-            try:
-                # get list of rupture segments for current source index
-                listSeg = list(rupSourceSections[int(rupture_list[i,0])].toArray())
-                # check for common members of rupture segments
-                if check_common_member(listSeg,seg_pass_r_max):
-                    rupture_list_temp.append(rupture_list[i])
-            except:
-                # check source index for point source with those that pass r_max
-                if rupture_list[i,0] in pt_src_pass_r_max:
-                    rupture_list_temp.append(rupture_list[i])
-        rupture_list = np.asarray(rupture_list_temp)
-        logging.info(f"\t\t... filtered scenarios that are more than {r_max} km from sites")
-        logging.info(f"\t\t\t  length after filter by rmax = {len(rupture_list)}")
+        if 'PointSource' in filter_criteria:
+            pt_src_to_check = rupture_list['SourceIndex'][ind_end_of_finite_src:].values
+        else:
+            pt_src_to_check = []
+        finite_src_to_check = rupture_list['SourceIndex'][:ind_end_of_finite_src].values
+        # get rupture segments for finite sources
+        set_seg_pass_r_max = set(seg_pass_r_max)
+        rupture_list_finite = [i for i in finite_src_to_check if set(list(rupSourceSections[i].toArray())) & set_seg_pass_r_max]
+        # rupture_list_finite = rupture_list.loc[rupture_list_finite]
+        rupture_list_finite = rupture_list[np.in1d(rupture_list['SourceIndex'],rupture_list_finite)]
+        # get locations of point sources
+        common_index = sorted(list(set(pt_src_to_check).intersection(pt_src_pass_r_max)))
+        rupture_list_pt_src = rupture_list[np.in1d(rupture_list['SourceIndex'],common_index)]
+        rupture_list = pd.concat([rupture_list_finite,rupture_list_pt_src],ignore_index=True)
+        logging.info(f"\t\t\tnumber of scenarios after filter by r_max = {len(rupture_list)}")
     
     # store filtered list of rupture metainfo
-    if '.txt' in rup_save_name:
-        if len(rupture_list) > 0:
-            np.savetxt(rup_save_name, rupture_list, fmt='%i %i %6.3f %6.3e')
-        else:
-            np.savetxt(rup_save_name, rupture_list)
-    else:
-        logging.info('\t\tlimited to ".txt" output file type only')
-    logging.info(f"\t... filtered rupture scenarios by rmax and exported to:")
+    rupture_list.to_csv(rup_save_name, index=False)
+    logging.info(f"\t... filtered rupture scenarios exported to:")
     logging.info(f"\t\t{rup_save_name}")
 
     # store trace of filtered scenarios
@@ -461,14 +457,15 @@ def filter_ruptures(erf, locs, filter_criteria, rupture_list, rup_save_name,
     #logging.info(f"\t\t{trace_save_name,}")
     
     # create return dictionary
-    output = {
-        'src':rupture_list[:,0].astype(np.int32),
-        'rup':rupture_list[:,1].astype(np.int32),
-        'mag':rupture_list[:,2],
-        'rate':rupture_list[:,3]}
+    # output = {
+        # 'SourceIndex':rupture_list[:,0].astype(int),
+        # 'RuptureIndex':rupture_list[:,1].astype(int),
+        # 'Magnitude':rupture_list[:,2],
+        # 'MeanAnnualRate':rupture_list[:,3]}
         
     #
-    return output
+    # return output
+    return rupture_list
     
 
 # -----------------------------------------------------------
@@ -514,8 +511,9 @@ def get_rupture_set(erf):
 
 
 # -----------------------------------------------------------
-def get_src_rup_M_rate(erf=None, rupture_list_file=None, ind_range=['all'], rate_cutoff=None,
-                        rup_group_file=None, rup_per_group=None, file_type='txt'):
+def get_eq_rup_meta(erf=None, rupture_list_file=None, ind_range=['all'],
+                    rate_cutoff=None, m_min=None, m_max=None, rup_group_file=None,
+                    rup_per_group=None, file_type='txt'):
     """
     Gets sources, ruptures, rates, and mags from OpenSHA and metadata exported. If metadata file already exists, use existing.
     
@@ -539,50 +537,56 @@ def get_src_rup_M_rate(erf=None, rupture_list_file=None, ind_range=['all'], rate
     if rupture_list_file is None:
         # get and store rates and Mw
         nSources = erf.getNumSources()
-        if rate_cutoff is None: # no cutoff on rate
-            src_rup = [[i, j]+get_mag_rate(erf,i,j)
-                        for i in range(nSources) for j in range(erf.getNumRuptures(i))]
-        else: # apply rate_cutoff
-            src_rup = [[i, j]+get_mag_rate(erf,i,j)
-                        for i in range(nSources) for j in range(erf.getNumRuptures(i))
-                        if get_mag_rate(erf, i,j)[1] > rate_cutoff]
+        rup_meta = [[i, j]+get_mag_rate(erf,i,j)
+                    for i in range(nSources) for j in range(erf.getNumRuptures(i))]
+        logging.info(f"\t... total number of scenarios of {len(rup_meta)}")
         #
-        return src_rup
+        return rup_meta
     else:
         # see if extension is provided, if not, add it
-        if not '.'+file_type in rupture_list_file:
-            rupture_list_file = rupture_list_file+'.'+file_type
+        # if not '.'+file_type in rupture_list_file:
+            # rupture_list_file = rupture_list_file+'.'+file_type
 
         # initialize dictionaries
-        src_rup = {'src':None,'rup':None,'mag':None,'rate':None}
+        # rup_meta = {'SourceIndex':None,'RuptureIndex':None,'Magnitude':None,'MeanAnnualRate':None}
+        rup_meta = pd.read_csv(rupture_list_file)
         # load rupture_list_file
         # txt file format
-        if 'txt' in file_type:
-            f = np.loadtxt(rupture_list_file,unpack=True)
-            if len(ind_range) == 1:
-                if ind_range[0] == 'all':
-                    src_rup['src'] = f[0].astype(np.int32)
-                    src_rup['rup'] = f[1].astype(np.int32)
-                    src_rup['mag'] = f[2]
-                    src_rup['rate'] = f[3]
-                else:
-                    src_rup['src'] = f[0,ind_range[0]].astype(np.int32)
-                    src_rup['rup'] = f[1,ind_range[0]].astype(np.int32)
-                    src_rup['mag'] = f[2,ind_range[0]]
-                    src_rup['rate'] = f[3,ind_range[0]]
-            elif len(ind_range) == 2:
-                src_rup['src'] = f[0,ind_range[0]:ind_range[1]].astype(np.int32)
-                src_rup['rup'] = f[1,ind_range[0]:ind_range[1]].astype(np.int32)
-                src_rup['mag'] = f[2,ind_range[0]:ind_range[1]]
-                src_rup['rate'] = f[3,ind_range[0]:ind_range[1]]
+        # if 'txt' in file_type:
+            # f = np.loadtxt(rupture_list_file,unpack=True)
+        if len(ind_range) == 1:
+            if ind_range[0] == 'all':
+                # rup_meta['SourceIndex'] = f[0].astype(int)
+                # rup_meta['RuptureIndex'] = f[1].astype(int)
+                # rup_meta['Magnitude'] = f[2]
+                # rup_meta['MeanAnnualRate'] = f[3]
+                pass
+            else:
+                # rup_meta['SourceIndex'] = f[0,ind_range[0]].astype(int)
+                # rup_meta['RuptureIndex'] = f[1,ind_range[0]].astype(int)
+                # rup_meta['Magnitude'] = f[2,ind_range[0]]
+                # rup_meta['MeanAnnualRate'] = f[3,ind_range[0]]
+                rup_meta = rup_meta.iloc[:,ind_range[0]]
+                rup_meta.reset_index(inplace=True)
+        elif len(ind_range) == 2:
+            # rup_meta['SourceIndex'] = f[0,ind_range[0]:ind_range[1]].astype(int)
+            # rup_meta['RuptureIndex'] = f[1,ind_range[0]:ind_range[1]].astype(int)
+            # rup_meta['Magnitude'] = f[2,ind_range[0]:ind_range[1]]
+            # rup_meta['MeanAnnualRate'] = f[3,ind_range[0]:ind_range[1]]
+            rup_meta = rup_meta.iloc[:,ind_range[0]:ind_range[1]]
+            rup_meta.reset_index(inplace=True)
+        # ----------
+        # convert from Pandas series to list
+        # rup_meta = rup_meta.to_dict()
+        # ---------- 
         #
-        return src_rup
- 
+        return rup_meta
+    
     
 # -----------------------------------------------------------
 def get_mag_rate(erf, src, rup):
     """
-    This extracts the mean annual rate and moment magnitude for target scenario (source + rupture index)
+    This extracts the mean annual rate and moment magnitude for target scenario (source + rupture index) with filters on rate and magnitude
     
     Parameters
     ----------
@@ -601,15 +605,17 @@ def get_mag_rate(erf, src, rup):
         mean annual rate for scenario
     
     """
+    
     # Set current scenario
     rup = erf.getSource(src).getRupture(rup)
     # Return mean annual rate and moment magnitude
-    return [rup.getMag(), rup.getMeanAnnualRate(1)]
+    # OpenSHA reference duration is accessed by erf.getTimeSpan().getDuration()
+    return [rup.getMag(), rup.getMeanAnnualRate(erf.getTimeSpan().getDuration())]
 
 
 # -----------------------------------------------------------
 def get_IM(erf, imr, sites, src_list, rup_list, list_im=['PGA','PGV'],
-    saveDir=None, store_file_type='txt', r_max=10000):
+    saveDir=None, store_file_type='txt', r_max=200):
     """
     Get IM from OpenSHA; developed by Kuanshi Zhong (SimCenter), modified by Barry Zheng
     
@@ -617,7 +623,7 @@ def get_IM(erf, imr, sites, src_list, rup_list, list_im=['PGA','PGV'],
     
     # IM param map to save name
     list_param = {
-        'Mean': 'mean',
+        'Median': 'median',
         'InterEvStdDev': 'stdev_inter',
         'IntraEvStdDev': 'stdev_intra',
         'TotalStdDev': 'stdev_total'}
@@ -643,7 +649,7 @@ def get_IM(erf, imr, sites, src_list, rup_list, list_im=['PGA','PGV'],
     shape = (len(src_list),len(sites))
     output = {}
     for im in list_im:
-        output[im] = {'Mean': np.zeros(shape)}
+        output[im] = {'Median': np.zeros(shape)}
         output[im].update({'TotalStdDev': np.zeros(shape)})
         if hasIEStats:
             output[im].update({'InterEvStdDev': np.zeros(shape)})
@@ -684,7 +690,7 @@ def get_IM(erf, imr, sites, src_list, rup_list, list_im=['PGA','PGV'],
                 if dist_max <= r_max:
                     try:
                         imr.setIntensityMeasure(im)
-                        output[im]['Mean'][i,j] = float(np.exp(imr.getMean()))
+                        output[im]['Median'][i,j] = float(np.exp(imr.getMean()))
                         output[im]['TotalStdDev'][i,j] = float(imr.getStdDev())
                         if hasIEStats:
                             stdDevParam.setValue(StdDevTypeParam.STD_DEV_TYPE_INTER)
@@ -699,107 +705,100 @@ def get_IM(erf, imr, sites, src_list, rup_list, list_im=['PGA','PGV'],
             output[im_i][param_j] = sparse.coo_matrix(output[im_i][param_j])
             if saveDir is not None:
                 saveName = os.path.join(saveDir,im_i,param_j+'.'+store_file_type)
-                np.savetxt(saveName,output[im_i][param_j].toarray(),fmt='%5.3e')
+                np.savetxt(saveName,output[im_i][param_j].toarray(),fmt='%6.4e')
     #
     return output
     
     
 # -----------------------------------------------------------
-def get_site_prop(imr, siteSpec):
+def get_site_prop(imr, siteSpec, n_site, outfile=None):
     """
     Get and update site properties; developed by Kuanshi Zhong (SimCenter), modified by Barry Zheng
     
     """
 
-    # Available sources for inferred Vs30 in OpenSHA, prioritized in this order:
-    #     CGS/Wills VS30 Map (2015)
-    #     Thompson VS30 Map (2018)
-    #     CGS/Wills Site Classification Map (2006)
-    #     Global Vs30 from Topographic Slope (Wald & Allen 2008)
+    # Available data sources in OpenSHA, in order of priority; index next to source is used in OpenSHA
+    # Vs30:
+    #     CGS/Wills VS30 Map (2015)                                             - 0
+    #     Thompson VS30 Map (2018)                                              - 1
+    #     CGS/Wills Site Classification Map (2006)                              - 2
+    #     Global Vs30 from Topographic Slope (Wald & Allen 2008)                - 3
+    # z2.5:
+    #     SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth    - 4
+    #     SCEC CCA, Iteration 6, Basin Depth                                    - 6
+    #     SCEC Community Velocity Model Version 4 Basin Depth                   - 8
+    #     SCEC/Harvard Community Velocity Model Version 11.9.x Basin Depth      - 10
+    #     SCEC CCA, Iteration 6, Basin Depth                                    - 12
+    #     USGS Bay Area Velocity Model Release 8.3.0                            - 14
+    # z1.0:
+    #     SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth    - 5
+    #     SCEC CCA, Iteration 6, Basin Depth                                    - 7
+    #     SCEC Community Velocity Model Version 4 Basin Depth                   - 9
+    #     SCEC/Harvard Community Velocity Model Version 11.9.x Basin Depth      - 11
+    #     SCEC CCA, Iteration 6, Basin Depth                                    - 13
+    #     USGS Bay Area Velocity Model Release 8.3.0                            - 15
 
-    # GMPE
-    # try:
-        # imr = CreateIMRInstance(gmpe_name)
-    # except:
-        # print('Please check GMPE name.')
-        # return 1
     # Site data
     sites = ArrayList()
-    for cur_site in siteSpec:
-        cur_loc = Location(cur_site['Location']['Latitude'], cur_site['Location']['Longitude'])
-        sites.add(Site(cur_loc))
+    site_params = {
+        'Vs30': {
+            'Name': 'Vs30',
+            'Index': [0,1,2,3]
+        },
+        'Z1p0': {
+            'Name': 'Depth 1.0 km/sec',
+            'Index': [5,7,9,11,13,15]
+        },
+        'Z2p5': {
+            'Name': 'Depth 2.5 km/sec',
+            'Index': [4,6,8,10,12,14]
+        }
+    }
+    col_order = ['Latitude','Longitude']
+    site_params_to_get = [key for key in siteSpec if siteSpec[key] is None]
+    # setup for storage
+    for param in site_params:
+        col_order.append(param)
+        if param in site_params_to_get:
+            siteSpec[param] = []
+        siteSpec[param+'_Source'] = []
+        col_order.append(param+'_Source')
+    # setup to get site params
+    addSite = [sites.add(Site(Location(siteSpec['Latitude'][i], siteSpec['Longitude'][i]))) for i in range(n_site)]
     siteDataProviders = OrderedSiteDataProviderList.createSiteDataProviderDefaults()
-    try:
-        availableSiteData = siteDataProviders.getAllAvailableData(sites)
-    except:
-        print('Error in getAllAvailableData')
-        return 1
+    availableSiteData = siteDataProviders.getAllAvailableData(sites)
     siteTrans = SiteTranslator()
     # Looping over all sites
-    site_prop = []
-    for i in range(len(siteSpec)):
-        site_tmp = dict()
+    for i in range(n_site):
         # Current site
         site = sites.get(i)
-        # Location
-        cur_site = siteSpec[i]
-        locResults = {'Latitude': cur_site['Location']['Latitude'],
-                      'Longitude': cur_site['Location']['Longitude']}
-        cur_loc = Location(cur_site['Location']['Latitude'], cur_site['Location']['Longitude'])
-        siteDataValues = ArrayList()
-        for j in range(len(availableSiteData)):
-            siteDataValues.add(availableSiteData.get(j).getValue(i))
-        imrSiteParams = imr.getSiteParams()
-        siteDataResults = []
-        # Setting site parameters
-        for j in range(imrSiteParams.size()):
-            siteParam = imrSiteParams.getByIndex(j)
-            newParam = Parameter.clone(siteParam)
-            siteDataFound = siteTrans.setParameterValue(newParam, siteDataValues)
-            # if siteParam.getName() == 'Depth 1.0 km/sec':
-            # print(siteParam.getName())
-                # return siteParam, newParam, siteDataFound
-            if (str(newParam.getName())=='Vs30' and bool(cur_site.get('Vs30', None))):
-                if cur_site['Vs30'] == -1:
-                    cur_site['Vs30'] = 1000
-                newParam.setValue(Double(cur_site['Vs30']))
-                siteDataResults.append({'Type': 'Vs30',
-                                        'Value': float(newParam.getValue()),
-                                        'Source': 'User Defined'})
-            elif (str(newParam.getName())=='Vs30 Type' and bool(cur_site.get('Vs30', None))):
-                newParam.setValue("Measured")
-                siteDataResults.append({'Type': 'Vs30 Type',
-                                        'Value': 'Measured',
-                                        'Source': 'User Defined'})
-            elif siteDataFound:
-                provider = "Unknown"
-                provider = get_DataSource(newParam.getName(), siteDataValues)
-                if 'String' in str(type(newParam.getValue())):
-                    tmp_value = str(newParam.getValue())
-                elif 'Double' in str(type(newParam.getValue())):
-                    tmp_value = float(newParam.getValue())
-                    if str(newParam.getName())=='Vs30':
-                            cur_site.update({'Vs30': tmp_value})
-                else:
-                    tmp_value = str(newParam.getValue())
-                siteDataResults.append({'Type': str(newParam.getName()),
-                                        'Value': tmp_value,
-                                        'Source': str(provider)})
+        # Looping over site params
+        for param in site_params:
+            newParam = Parameter.clone(imr.getSiteParams().getParameter(site_params[param]['Name']))
+            # if need to get from OpenSHA datasets
+            if param in site_params_to_get:
+                for j in site_params[param]['Index']:
+                    if not np.isnan(float(availableSiteData.get(j).getValue(i).getValue())):
+                        paramVal = availableSiteData.get(j).getValue(i).getValue()
+                        paramSource = availableSiteData.get(j).getSourceName()
+                        break
+                newParam.setValue(paramVal)
+                siteSpec[param].append(float(paramVal))
+                siteSpec[param+'_Source'].append(str(paramSource))
+            # if already in site_data
             else:
-                newParam.setValue(siteParam.getDefaultValue())
-                siteDataResults.append({'Type': str(siteParam.getName()),
-                                        'Value': float(siteParam.getDefaultValue()),
-                                        'Source': 'Default'})
+                newParam.setValue(Double(siteSpec[param][i]))
+                if param == 'Vs30':
+                    newParamType = Parameter.clone(imr.getSiteParams().getParameter('Vs30 Type'))
+                    newParamType.setValue('Measured')
+                    site.addParameter(newParamType)
+                siteSpec[param+'_Source'].append('User Defined')
             site.addParameter(newParam)
-            # End for j
-        # Updating site specifications
-        # siteSpec[i] = cur_site
-        # site_tmp.update({'Location': locResults,
-                         # 'SiteData': siteDataResults})
-        # site_prop.append(site_tmp)
-
-    # Return
-    # return siteSpec, sites, site_prop
+    # export siteSpec
+    if outfile is not None:
+        df_out = pd.DataFrame.from_dict(siteSpec)
+        df_out.to_csv(outfile,index=False)
+    #
     return sites
 
 

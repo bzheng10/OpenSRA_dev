@@ -36,16 +36,16 @@ import pandas as pd
 
 # Prior to importing OpenSRA backend, see if lib/OpenSHA folder exists
 # and contains files, if not, unzip from lib/OpenSHA.zip
-opensra_dir = os.path.dirname(os.path.realpath(__file__))
-flag_to_unzip_opensha_zip = False
-if os.path.isdir(os.path.join(opensra_dir,'lib','OpenSHA')):
-    if len(os.listdir(os.path.join(opensra_dir,'lib','OpenSHA'))) == 0:
-        flag_to_unzip_opensha_zip = True
-else:
-    flag_to_unzip_opensha_zip = True
-if flag_to_unzip_opensha_zip:
-    with zipfile.ZipFile(os.path.join(opensra_dir,'lib','OpenSHA.zip'), 'r') as zip_ref:
-        zip_ref.extractall(os.path.join(opensra_dir,'lib'))
+# opensra_dir = os.path.dirname(os.path.realpath(__file__))
+# flag_to_unzip_opensha_zip = False
+# if os.path.isdir(os.path.join(opensra_dir,'lib','OpenSHA')):
+    # if len(os.listdir(os.path.join(opensra_dir,'lib','OpenSHA'))) == 0:
+        # flag_to_unzip_opensha_zip = True
+# else:
+    # flag_to_unzip_opensha_zip = True
+# if flag_to_unzip_opensha_zip:
+    # with zipfile.ZipFile(os.path.join(opensra_dir,'lib','OpenSHA.zip'), 'r') as zip_ref:
+        # zip_ref.extractall(os.path.join(opensra_dir,'lib'))
 
 # OpenSRA modules and functions
 from src import Model, PreProcess, Fcn_Common
@@ -85,7 +85,7 @@ def main(input_dir, clean_prev_run, logging_level):
     folders_to_create = []
     
     # Initialize dictionary for storing model parameters
-    method_assess_param = {}
+    method_param_for_assess = {}
     
     # -----------------------------------------------------------
     # Pre-process
@@ -105,13 +105,13 @@ def main(input_dir, clean_prev_run, logging_level):
     other_config_param['Flag_SampleWithStdDevTotal'] = False # True to sample from total sigma; False to sample intra- and inter-event sigmas separately then add together
     other_config_param['Flag_UseUniformStdDev'] = False # set value for uniform aleatory sigma; set to None to use GM predicted total sigma
     other_config_param['Flag_CombineAleatoryAndEpistemic'] = False # instead of using aleatory and epistemic stddevs, used total stddev
-    other_config_param['Flag_UseSpecificAleatoryCases'] = True # instead of using aleatory and epistemic stddevs, used total stddev
+    other_config_param['Flag_UseSpecificAleatoryBranch'] = True # instead of using aleatory and epistemic stddevs, used total stddev
     other_config_param['UniformStdDev'] = 0.65 # set value for uniform aleatory sigma; set to None to use GM predicted total sigma
     other_config_param['Num_Decimals'] = 3 # number of decimals in log10 space for export
     other_config_param['Flag_ResampleIM'] = False # sample IM even if samples already exist
     other_config_param['RupturePerGroup'] = 100 # number of ruptures to store per group
     other_config_param['Num_Threads'] = 1 # number of threads for regional_processor
-    other_config_param['ListOfIMParams'] = ['Mean','InterEvStdDev','IntraEvStdDev','TotalStdDev']
+    other_config_param['ListOfIMParams'] = ['Median','InterEvStdDev','IntraEvStdDev','TotalStdDev']
     other_config_param['ApproxPeriod'] = {
         'PGA': 0.01,
         'PGV': 1
@@ -143,65 +143,73 @@ def main(input_dir, clean_prev_run, logging_level):
     }
     # Other site param
     other_config_param['ColumnsToKeepInFront'] = [
-        'SITE_NUM', 'LAT_BEGIN', 'LONG_BEGIN', 'LAT_END',
-        'LONG_END', 'LAT_MIDDLE', 'LONG_MIDDLE', 'SHAPE_LENGTH']
+        'Component Index', 'Start Latitude', 'Start Longitude', 
+        'End Latitude', 'End Longitude',
+        'Mid Latitude', 'Mid Longitude', 'Component Length (km)']
     other_config_param['ColumnsAppended'] = []
     other_config_param['Dir_Library'] = os.path.join(other_config_param['Dir_OpenSRA'],'lib')
-    other_config_param['Dir_GeneralSiteData'] = os.path.join(other_config_param['Dir_Library'],'OtherData')
-    other_config_param['SiteParams'] = {
-        'Vs30': {
-            'PathToRaster': os.path.join(
-                other_config_param['Dir_GeneralSiteData'], 'Vs30_Wills_et_al_2015',
-                'California_vs30_Wills15_hybrid_7p5c','California_vs30_Wills15_hybrid_7p5c.tif'),
-            'ColumnNameToStoreAs': 'Vs30 (m/s)'
-        },
-        'Slope': {
-            'PathToRaster': os.path.join(
-                other_config_param['Dir_GeneralSiteData'],
-                'Slope_Interpretted_From_CA_DEM', 'CA_Slope_Degrees_UTM_clip.tif'),
-            'ColumnNameToStoreAs': 'Slope (deg)'
-        }
-    }
+    # other_config_param['Dir_GeneralSiteData'] = os.path.join(other_config_param['Dir_Library'],'OtherData')
+    other_config_param['File_AvailableDataset'] = os.path.join(other_config_param['Dir_Library'],'AvailableDataset.json')
+    #other_config_param['SiteParams'] = {
+    #    'Vs30': {
+    #        'PathToRaster': os.path.join(
+    #            other_config_param['Dir_GeneralSiteData'], 'Vs30_Wills_et_al_2015',
+    #            'California_vs30_Wills15_hybrid_7p5c','California_vs30_Wills15_hybrid_7p5c.tif'),
+    #        'ColumnNameToStoreAs': 'Vs30 (m/s)'
+    #    },
+    #    'Slope': {
+    #        'PathToRaster': os.path.join(
+    #            other_config_param['Dir_GeneralSiteData'],
+    #            'Slope_Interpretted_From_CA_DEM', 'CA_Slope_Degrees_UTM_clip.tif'),
+    #        'ColumnNameToStoreAs': 'Slope (deg)'
+    #    }
+    #}
     # Zhu et al. (2017) model parameters
-    other_config_param['Dir_ZhuEtal2017_param'] = os.path.join(
-        other_config_param['Dir_GeneralSiteData'],'Zhu_etal_2017_Model_Inputs')
-    other_config_param['ZhuEtal2017_param'] = {
-        'dwWB': {
-            'FolderName': 'CA_DistAnyWater_NoWB_WGS84_clip_km',
-            'ColumnNameToStoreAs': 'Dist_Any Water (km)'
-        },
-        'dc': {
-            'FolderName': 'CA_DistCoast_WGS84_clip_km',
-            'ColumnNameToStoreAs': 'Dist_Coast (km)'
-        },
-        'dr': {
-            'FolderName': 'CA_DistRivers_WGS84_clip_km',
-            'ColumnNameToStoreAs': 'Dist_River (km)'
-        },
-        'wtd': {
-            'FolderName': 'CA_ModeledWTD_1km_WGS84_merge_clip_m',
-            'ColumnNameToStoreAs': 'Water Table Depth (m)'
-        },
-        'precip': {
-            'FolderName': 'CA_Precip_1981-2010_WGS84_clip_mm',
-            'ColumnNameToStoreAs': 'CA_Precip (mm)'
-        }
-    }
+    #other_config_param['Dir_ZhuEtal2017_param'] = os.path.join(
+    #    other_config_param['Dir_GeneralSiteData'],'Zhu_etal_2017_Model_Inputs')
+    #other_config_param['ZhuEtal2017_param'] = {
+    #    'DistanceToWaterBody': {
+    #        'FolderName': 'CA_DistAnyWater_NoWB_WGS84_clip_km',
+    #        'ColumnNameToStoreAs': 'Distance to Water Body (m)'
+    #    },
+    #    'DistanceToCoast': {
+    #        'FolderName': 'CA_DistCoast_WGS84_clip_km',
+    #        'ColumnNameToStoreAs': 'Distance to Coast (m)'
+    #    },
+    #    'DistanceToRiver': {
+    #        'FolderName': 'CA_DistRivers_WGS84_clip_km',
+    #        'ColumnNameToStoreAs': 'Distance to River (m)'
+    #    },
+    #    'WaterTableDepth': {
+    #        'FolderName': 'CA_ModeledWTD_1km_WGS84_merge_clip_m',
+    #        'ColumnNameToStoreAs': 'Water Table Depth (m)'
+    #    },
+    #    'Precipitation': {
+    #        'FolderName': 'CA_Precip_1981-2010_WGS84_clip_mm',
+    #        'ColumnNameToStoreAs': 'Mean Annual Precipitation (m)'
+    #    }
+    #}
     # Params for landslide
     # shapefile with geologic units
-    other_config_param['Shp_GeologicUnit'] = os.path.join(
-        other_config_param['Dir_GeneralSiteData'],
-        'CGS_CA_Geologic_Map_2010','shapefiles','GMC_geo_poly.shp')
+    #other_config_param['Shp_GeologicUnit'] = os.path.join(
+    #    other_config_param['Dir_GeneralSiteData'],
+    #    'CGS_CA_Geologic_Map_2010','shapefiles','GMC_geo_poly.shp')
     # Slate's temporary file with properties for geologic units
-    other_config_param['File_GeologicUnitParam'] = os.path.join(
-        other_config_param['Dir_Library'], 
-        'Slate', 'Seismic_Hazard_CGS_Unit Strengths.csv')
-    other_config_param['ColumnsToUseForKy'] = {
-        'friction_angle': 'Friction Angle (deg)',
-        'cohesion': 'Cohesion (kPa)',
-        'thickness': 'Thickness (m)',
-        'unit_weight': 'Unit Weight (kN/m3)',
-        }
+    #other_config_param['File_GeologicUnitParam'] = os.path.join(
+    #    other_config_param['Dir_Library'], 
+    #    'Slate', 'Seismic_Hazard_CGS_Unit Strengths.csv')
+    #other_config_param['ColumnNamesForKy'] = {
+    #    'FrictionAngle': 'Friction Angle (deg)',
+    #    'Cohesion': 'Cohesion (kPa)',
+    #    'Thickness': 'Sliding Mass Thickness (m)',
+    #    'UnitWeight': 'Unit Weight (kN/m3)',
+    #    }
+    other_config_param['ColumnsFromParamCSVForKy'] = {
+       'FrictionAngle': 'Friction Angle (degrees)',
+       'Cohesion': 'Cohesion (kPa)',
+       'SlopeThickness': 'Thickness (m, assume 6 m)',
+       'UnitWeight': 'Unit Weight (kN/m3)'
+   }
     # Probability distribution types
     other_config_param['DistributionType'] = {
         'Uniform': {
@@ -210,7 +218,7 @@ def main(input_dir, clean_prev_run, logging_level):
                 'RepairRatePGD'
             ],
             'Aleatory': {
-                'Cases': [0.125, 0.375, 0.625, 0.875],
+                'Branch': [0.125, 0.375, 0.625, 0.875],
                 'Weights': [0.25, 0.25, 0.25, 0.25]
             },
             'Epistemic': {
@@ -224,7 +232,7 @@ def main(input_dir, clean_prev_run, logging_level):
                 'TransientGroundStrain', 'TransientPipeStrain', 'RepairRatePGV'
             ],
             'Aleatory': {
-                'Cases': [-1.65, 0, 1.65],
+                'Branch': [-1.65, 0, 1.65],
                 'Weights': [0.2, 0.6, 0.2]
             },
             'Epistemic': {
@@ -256,9 +264,15 @@ def main(input_dir, clean_prev_run, logging_level):
                     os.remove(os.path.join(root,file))
         logging.info('Cleaned outputs previous run')
     
+    # Load in JSON file with available methods and parameters
+    other_config_param['Path_MethodsAndParams'] = \
+        os.path.join(other_config_param['Dir_OpenSRA'],'MethodsAndParams.json')
+    with open(other_config_param['Path_MethodsAndParams'],'r') as f:
+        method_param_dict = json.load(f)
+    
     # Create other variables from and append to setup_config
-    other_config_param, folders_to_create, method_assess_param = PreProcess.get_other_setup_config(
-        setup_config, other_config_param, folders_to_create, method_assess_param
+    other_config_param, folders_to_create, method_param_for_assess = PreProcess.get_other_setup_config(
+        setup_config, other_config_param, folders_to_create, method_param_for_assess
     )
     
     # Create additional folders in working directory
@@ -272,24 +286,30 @@ def main(input_dir, clean_prev_run, logging_level):
     # Import and update site data file
     if os.path.exists(other_config_param['Path_SiteData_Updated']):
         site_data = pd.read_csv(other_config_param['Path_SiteData_Updated']) # read site data file
+        other_config_param['Flag_LoadFromUpdatedSiteData'] = True
     else:
         site_data = pd.read_csv(other_config_param['Path_SiteData']) # read site data file
+        other_config_param['Flag_LoadFromUpdatedSiteData'] = False
     # Limit number of sites to 5000 if including spatial correlation
     if setup_config['IntensityMeasure']['Correlation']['Spatial']['ToInclude']:
         site_data = site_data.loc[:5000,:]
     other_config_param['Num_Sites'] = len(site_data)
     
     # Update site_data 
-    site_data = PreProcess.update_site_data_file(site_data, setup_config, other_config_param)
+    site_data, dataset_meta_dict = PreProcess.update_site_data_file(
+        site_data, setup_config, other_config_param
+    )
     
     # Append site_data to method parameters
-    method_assess_param = PreProcess.add_site_data_to_method_param(setup_config, site_data, other_config_param, method_assess_param)
+    method_param_for_assess = PreProcess.add_site_data_to_method_param(
+        setup_config, site_data, other_config_param, method_param_for_assess, dataset_meta_dict
+    )
     
     # Set up other parameters for method assessment
-    method_assess_param = PreProcess.setup_other_method_param(other_config_param, method_assess_param)
+    method_param_for_assess = PreProcess.setup_other_method_param(other_config_param, method_param_for_assess)
     
     # Export site locations and vs30 to text files for OpenSHA interface
-    PreProcess.export_site_loc_and_vs30(site_data, other_config_param)
+    # PreProcess.export_site_loc_and_vs30(site_data, other_config_param)
     
     logging.info('\t******** Preprocess ********')
     logging.info('---------------\n\n')
@@ -315,8 +335,8 @@ def main(input_dir, clean_prev_run, logging_level):
     logging.info('---------------')
     logging.info('\t------------- Get Means and StdDevs for Intensity Measures -------------')
     model.get_IM_means(setup_config, other_config_param, site_data)
-    other_config_param['Num_Events'] = len(model._EVENT_dict['Scenarios']['mag'])
-    
+    other_config_param['Num_Events'] = len(model._EVENT_dict['Scenarios']['Magnitude'])
+
     # -----------------------------------------------------------
     # Generate realizations of IMs (i.e., sampling)
     logging.info('---------------')
@@ -327,19 +347,19 @@ def main(input_dir, clean_prev_run, logging_level):
     # Assess EDPs
     logging.info('---------------')
     logging.info('\t------------- Assess Engineering Demand Parameters -------------')
-    model.assess_EDP(setup_config, other_config_param, site_data, method_assess_param)
+    model.assess_EDP(setup_config, other_config_param, site_data, method_param_for_assess)
     
     # -----------------------------------------------------------
     # Assess DMs
     logging.info('---------------')
     logging.info('\t------------- Assess Damage Measures -------------')
-    model.assess_DM(setup_config, other_config_param, site_data, method_assess_param)
+    model.assess_DM(setup_config, other_config_param, site_data, method_param_for_assess)
     
     # -----------------------------------------------------------
     # Assess DVs
     logging.info('---------------')
     logging.info('\t------------- Assess Decision Variables -------------')
-    model.assess_DV(setup_config, other_config_param, site_data, method_assess_param)
+    model.assess_DV(setup_config, other_config_param, site_data, method_param_for_assess)
     
     # -----------------------------------------------------------
     # Export
@@ -360,7 +380,7 @@ if __name__ == "__main__":
     # Create parser for command line arguments
     parser = argparse.ArgumentParser(
         description='Open-source Seismic Risk Analysis (OpenSRA)'
-        )
+    )
     
     # Define arguments
     # input directory

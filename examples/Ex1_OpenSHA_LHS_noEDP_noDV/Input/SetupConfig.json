@@ -1,0 +1,170 @@
+{
+    "General": {
+		"Directory": {
+			"Working": ""
+		},
+        "OutputFileType": "csv"
+    },
+	"SamplingMethod": {
+		"Method": "MonteCarlo",
+		"Algorithm": "Latin Hypercube Sampling",
+		"NumberOfSamples": 3,
+		"Seed": 1
+	},
+    "Infrastructure": {
+        "SiteDataFile": "example/Ex1_OpenSHA_LHS_noEDP_noDV/Input/SiteData.csv",
+		"SiteLocationParams": {
+			"LatMid": {
+				"DataExists": true,
+				"ColumnIDWithData": "LAT_MIDDLE"
+			},
+			"LonMid": {
+				"DataExists": true,
+				"ColumnIDWithData": "LONG_MIDDLE"
+			},
+			"LatBegin": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"LonBegin": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"LatEnd": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"LonEnd": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"Length": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			}
+		}
+    },
+    "IntensityMeasure": {
+        "Type": {
+            "PGA": {
+                "ToAssess": true
+            },
+            "PGV": {
+                "ToAssess": true
+            }
+        },
+        "SourceForIM": "OpenSHA",
+        "SourceParameters": {
+			"SeismicSourceModel": "Mean UCERF3 FM3.1",
+            "Filter": {
+                "ReturnPeriod": {
+                    "ToInclude": true,
+                    "Maximum": 100000
+                },
+                "Distance": {
+                    "ToInclude": true,
+                    "Maximum": 100
+                },
+                "Magnitude": {
+                    "ToInclude": true,
+                    "Minimum": 5,
+                    "Maximum": null
+                },
+                "PointSource": {
+                    "ToInclude": false
+                }
+            },
+            "GroundMotionModel": "Abrahamson, Silva & Kamai (2014)",
+			"OtherParameters": {
+				"Vs30": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				},
+				"Z1p0": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				},
+				"Z2p5": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				}
+			}
+        },
+        "Correlation": {
+            "Spatial": {
+                "ToInclude": false
+            },
+            "Spectral": {
+                "ToInclude": false
+            }
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "Liquefaction": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "LateralSpread": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "GroundSettlement": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "Landslide": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "SurfaceFaultRupture": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "SubsurfaceFaultRupture": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "TransientGroundStrain": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "TransientPipeStrain": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "RepairRatePGV": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "RepairRatePGD": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    }
+}

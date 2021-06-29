@@ -1,0 +1,155 @@
+{
+    "General": {
+		"Directory": {
+			"Working": ""
+		},
+        "OutputFileType": "csv"
+    },
+	"SamplingMethod": {
+		"Method": "MonteCarlo",
+		"Algorithm": "Latin Hypercube Sampling",
+		"NumberOfSamples": 3,
+		"Seed": 1
+	},
+    "Infrastructure": {
+        "SiteDataFile": "example/Ex2_ShakeMap_noEDP_noDV/Input/SiteData.csv",
+		"SiteLocationParams": {
+			"LatMid": {
+				"DataExists": true,
+				"ColumnIDWithData": "LAT_MIDDLE"
+			},
+			"LonMid": {
+				"DataExists": true,
+				"ColumnIDWithData": "LONG_MIDDLE"
+			},
+			"LatBegin": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"LonBegin": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"LatEnd": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"LonEnd": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			},
+			"Length": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			}
+		}
+    },
+    "IntensityMeasure": {
+        "Type": {
+            "PGA": {
+                "ToAssess": true
+            },
+            "PGV": {
+                "ToAssess": true
+            }
+        },
+        "SourceForIM": "ShakeMap",
+        "SourceParameters": {
+			"Directory": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/Ex2_ShakeMap_LogicTree_noEDP_noDV/Input/ShakeMap",
+			"Events": [ 
+				"1989_LomaPrieta",
+				"1994_Northridge"
+			],
+			"OtherParameters": {
+				"Vs30": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				},
+				"Z1p0": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				},
+				"Z2p5": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				}
+			}
+        },
+        "Correlation": {
+            "Spatial": {
+                "ToInclude": false
+            },
+            "Spectral": {
+                "ToInclude": false
+            }
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "Liquefaction": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "LateralSpread": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "GroundSettlement": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "Landslide": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "SurfaceFaultRupture": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "SubsurfaceFaultRupture": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "TransientGroundStrain": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "TransientPipeStrain": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "RepairRatePGV": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "RepairRatePGD": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    }
+}

@@ -1,0 +1,182 @@
+{
+	"SupportedFileTypes": {
+		"Raster": {
+			"Description": "Information stored by locations, where X and Y and LAT and LONG, and Z is the value",
+			"Extensions": [
+				".tif",
+				".tiff"
+			]
+		},
+		"Shapefile": {
+			"Description": "Information stored in shapes (e.g., points, lines, polygons)",
+			"Extensions": [
+				".shp"
+			]
+		},
+		"CSV": {
+			"Description": "Table with comma-separated values",
+			"Extensions": [
+				".csv",
+				".txt"
+			]
+		}
+	},
+	"Parameters": {
+		"SlopeAngle": {
+			"ColumnNameToStoreAs": "Slope (deg)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "Raster",
+					"Source": "Source to be entered",
+					"Path": "OtherData/Slope_Interpretted_From_CA_DEM/CA_Slope_Degrees_UTM_clip.tif",
+					"UnitForData": "deg",
+					"TargetUnit": "deg",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		},
+		"Vs30": {
+			"ColumnNameToStoreAs": "Vs30 (m/s)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "Raster",
+					"Source": "Wills et al. (2015)",
+					"Path": "OtherData/Vs30_Wills_et_al_2015/California_vs30_Wills15_hybrid_7p5c/California_vs30_Wills15_hybrid_7p5c.tif",
+					"UnitForData": "m/s",
+					"TargetUnit": "m/s",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		},
+		"WaterTableDepth": {
+			"ColumnNameToStoreAs": "Water Table Depth (m)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "Raster",
+					"Source": "Source to be entered",
+					"Path": "OtherData/Zhu_etal_2017_Model_Inputs/CA_ModeledWTD_1km_WGS84_merge_clip_m/CA_ModeledWTD_1km_WGS84_merge_clip_m.tif",
+					"UnitForData": "m",
+					"TargetUnit": "m",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		},
+		"DistanceToRiver": {
+			"ColumnNameToStoreAs": "Distance to River (km)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "Raster",
+					"Source": "Source to be entered",
+					"Path": "OtherData/Zhu_etal_2017_Model_Inputs/CA_DistRivers_WGS84_clip_km/CA_DistRivers_WGS84_clip_km.tif",
+					"UnitForData": "km",
+					"TargetUnit": "km",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		},
+		"DistanceToCoast": {
+			"ColumnNameToStoreAs": "Distance to Coast (km)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "Raster",
+					"Source": "Source to be entered",
+					"Path": "OtherData/Zhu_etal_2017_Model_Inputs/CA_DistCoast_WGS84_clip_km/CA_DistCoast_WGS84_clip_km.tif",
+					"UnitForData": "km",
+					"TargetUnit": "km",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		},
+		"DistanceToWaterBody": {
+			"ColumnNameToStoreAs": "Distance to Water Body (km)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "Raster",
+					"Source": "Source to be entered",
+					"Path": "OtherData/Zhu_etal_2017_Model_Inputs/CA_DistAnyWater_NoWB_WGS84_clip_km/CA_DistAnyWater_NoWB_WGS84_clip_km.tif",
+					"UnitForData": "km",
+					"TargetUnit": "km",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		},
+		"Precipitation": {
+			"ColumnNameToStoreAs": "Mean Annual Precipitation (mm)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "Raster",
+					"Source": "Source to be entered",
+					"Path": "OtherData/Zhu_etal_2017_Model_Inputs/CA_Precip_1981-2010_WGS84_clip_mm/CA_Precip_1981-2010_WGS84_clip_mm.tif",
+					"UnitForData": "mm",
+					"TargetUnit": "mm",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		},
+		"GeologicUnit": {
+			"ColumnNameToStoreAs": "Geologic Unit",
+			"Datasets": {
+				"Set1": {
+					"FileType": "Shapefile",
+					"Source": "CGS (2010)",
+					"Path": "OtherData/CGS_CA_Geologic_Map_2010/shapefiles/GMC_geo_poly.shp",
+					"UnitForData": null,
+					"TargetUnit": null,
+					"ConversionToOutputUnit": null
+				}
+			}
+		},
+		"FrictionAngle": {
+			"ColumnNameToStoreAs": "Friction Angle (deg)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "CSV",
+					"Source": "Source to be entered",
+					"Path": "Slate/Seismic_Hazard_CGS_Unit Strengths.csv",
+					"UnitForData": "deg",
+					"TargetUnit": "deg",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		},
+		"Cohesion": {
+			"ColumnNameToStoreAs": "Cohesion (kPa)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "CSV",
+					"Source": "Source to be entered",
+					"Path": "Slate/Seismic_Hazard_CGS_Unit Strengths.csv",
+					"UnitForData": "kPa",
+					"TargetUnit": "kPa",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		},
+		"SlopeThickness": {
+			"ColumnNameToStoreAs": "Slope Thickness (m)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "CSV",
+					"Source": "Source to be entered",
+					"Path": "Slate/Seismic_Hazard_CGS_Unit Strengths.csv",
+					"UnitForData": "m",
+					"TargetUnit": "m",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		},
+		"UnitWeight": {
+			"ColumnNameToStoreAs": "Unit Weight (kN/m3)",
+			"Datasets": {
+				"Set1": {
+					"FileType": "CSV",
+					"Source": "Source to be entered",
+					"Path": "Slate/Seismic_Hazard_CGS_Unit Strengths.csv",
+					"UnitForData": "kN/m3",
+					"TargetUnit": "kN/m3",
+					"ConversionToOutputUnit": 1
+				}
+			}
+		}
+	}
+}

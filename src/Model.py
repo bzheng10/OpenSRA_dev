@@ -19,9 +19,9 @@ import importlib
 import os
 import logging
 import numpy as np
-# import pandas as pd
+import pandas as pd
 from scipy import sparse
-import json
+# import json
 
 # OpenSRA modules and functions
 from src import Fcn_Common
@@ -104,7 +104,7 @@ class assessment(object):
 
         # Setup for _EVENT_dict
         self._EVENT_dict['Scenarios'] = {}
-        event_keys = ['src','rup','mag','rate']
+        event_keys = ['SourceIndex','RuptureIndex','Magnitude','MeanAnnualRate']
 
         # Initialize variables to be used
         trace_set = None
@@ -118,16 +118,16 @@ class assessment(object):
             logging.info(f"File with list of rupture scenarios exist in:")
             logging.info(f"\t{other_config_param['Dir_IM']}")
             exist_ListOfScenarios = True
-            rupture_list = OpenSHAInterface.get_src_rup_M_rate(
+            rupture_list = OpenSHAInterface.get_eq_rup_meta(
                 erf=None, rupture_list_file=other_config_param['File_ListOfScenarios'], ind_range=['all'])
             for key in event_keys:
-                self._EVENT_dict['Scenarios'][key] = rupture_list[key]
-            self._EVENT_dict['Scenarios']['Num_Events'] = len(self._EVENT_dict['Scenarios']['src'])
+                self._EVENT_dict['Scenarios'][key] = rupture_list[key].values
+            self._EVENT_dict['Scenarios']['Num_Events'] = len(self._EVENT_dict['Scenarios']['SourceIndex'])
 
         # Check if files with predictions already exist
         for im in other_config_param['IM']:
             list_of_files = os.listdir(os.path.join(other_config_param['Dir_IM_GroundMotion_Prediction'],im))
-            if 'Mean.txt' in list_of_files:
+            if 'Median.txt' in list_of_files:
                 if 'TotalStdDev.txt' in list_of_files or \
                     ('InterEvStdDev.txt' in list_of_files and 'IntraEvStdDev.txt' in list_of_files):
                     exist_Predictions = True
@@ -154,6 +154,7 @@ class assessment(object):
             if setup_config['IntensityMeasure']['SourceForIM'] == 'OpenSHA':
                 logging.info(f"\n------------------------------------------------------\n-----Interfacing with OpenSHA for GMs\n")
                 # Setup up OpenSHA
+                # erf, imr, sites = OpenSHAInterface.setup_opensha(setup_config, other_config_param, site_data)
                 erf, imr, sites = OpenSHAInterface.setup_opensha(setup_config, other_config_param, site_data)
                 self._EVENT_dict['RuptureForecast'] = {
                     'ModelName': setup_config['IntensityMeasure']['SourceParameters']['SeismicSourceModel'],
@@ -167,20 +168,19 @@ class assessment(object):
                 
                 # Get list of ruptures
                 if exist_ListOfScenarios is False:
-                    # Get full list
-                    logging.info(f"Generating full list of rupture scenarios")
-                    rupture_list = OpenSHAInterface.get_src_rup_M_rate(
-                        erf=erf, rupture_list_file=None, ind_range=['all'], rate_cutoff=None)
+                    # Get list with rate cutoff and distance filters
+                    logging.info(f"Getting full list of rupture scenarios")
+                    rupture_list = pd.read_csv(other_config_param['Path_RuptureMetadata'])
                     # Filter list of ruptures
                     filters = setup_config['IntensityMeasure']['SourceParameters']['Filter']
                     filters_to_perform = {}
                     for item in filters.keys():
                         if filters[item]['ToInclude']:
                             filters_to_perform[item] = filters[item]
-                    logging.info(f"... list of filters to perform: {filters_to_perform.keys()}")
+                    logging.info(f"\t... list of filters to perform: {list(filters_to_perform)}")
                     rupture_list = OpenSHAInterface.filter_ruptures(
                         erf = erf,
-                        locs = site_data[['LONG_MIDDLE','LAT_MIDDLE']].values,
+                        locs = site_data[['Mid Longitude','Mid Latitude']].values,
                         filter_criteria = filters_to_perform,
                         rupture_list = rupture_list,
                         rup_save_name = other_config_param['File_ListOfScenarios'],
@@ -192,14 +192,14 @@ class assessment(object):
                         if np.ndim(rupture_list[key]) < 1:
                             self._EVENT_dict['Scenarios'][key] = np.expand_dims(rupture_list[key],axis=0)
                         else:
-                            self._EVENT_dict['Scenarios'][key] = rupture_list[key]
+                            self._EVENT_dict['Scenarios'][key] = rupture_list[key].values
                     # Get list of traces for each source scenario
                     trace_set = OpenSHAInterface.get_trace_opensha(
-                        src_list = np.unique(rupture_list['src']),
-                        src_connect_file = other_config_param['Path_FaultConnectivity'],
-                        rup_seg_file = other_config_param['Path_RuptureSegment'],
+                        src_list = np.unique(rupture_list['SourceIndex']),
+                        finite_src_file = other_config_param['Path_FiniteSource'],
                         pt_src_file = other_config_param['Path_PointSource'],
-                        save_name = other_config_param['File_ScenarioTraces']
+                        save_name = other_config_param['File_ScenarioTraces'],
+                        flag_include_pt_src = other_config_param['Flag_IncludeFilter_PtSrc']
                     )
                 
                 # Get IM predictions
@@ -209,8 +209,8 @@ class assessment(object):
                         erf = erf,
                         imr = imr,
                         sites = sites,
-                        src_list = rupture_list['src'],
-                        rup_list = rupture_list['rup'],
+                        src_list = rupture_list['SourceIndex'],
+                        rup_list = rupture_list['RuptureIndex'],
                         list_im = other_config_param['IM'],
                         saveDir = other_config_param['Dir_IM_GroundMotion_Prediction'],
                         # store_file_type = setup_config['General']['OutputFileType']
@@ -227,7 +227,7 @@ class assessment(object):
                 Fcn_IM.read_ShakeMap_data(
                     sm_dir = other_config_param['Dir_ShakeMap'],
                     event_names = other_config_param['ShakeMapEvents'],
-                    sites = site_data[['LONG_MIDDLE','LAT_MIDDLE']].values,
+                    sites = site_data[['Mid Longitude','Mid Latitude']].values,
                     IM_dir = other_config_param['Dir_IM_GroundMotion_Prediction'],
                     store_events_file = other_config_param['File_ListOfScenarios'],
                     trace_save_name = other_config_param.get('File_ScenarioTraces',None)
@@ -243,14 +243,14 @@ class assessment(object):
                     )
                 })
                 #
-                rupture_list = OpenSHAInterface.get_src_rup_M_rate(
+                rupture_list = OpenSHAInterface.get_eq_rup_meta(
                     erf=None, rupture_list_file=other_config_param['File_ListOfScenarios'])
                 for key in event_keys:
                     if np.ndim(rupture_list[key]) < 1:
                         self._EVENT_dict['Scenarios'][key] = np.expand_dims(rupture_list[key],axis=0)
                     else:
                         self._EVENT_dict['Scenarios'][key] = rupture_list[key]
-                self._EVENT_dict['Scenarios']['Num_Events'] = len(self._EVENT_dict['Scenarios']['src'])
+                self._EVENT_dict['Scenarios']['Num_Events'] = len(self._EVENT_dict['Scenarios']['SourceIndex'])
                 logging.info(f"\n\n-----Getting GMs from ShakeMap\n------------------------------------------------------")
         
         #
@@ -278,16 +278,16 @@ class assessment(object):
                     # Get list of traces for each source scenario
                     trace_set = OpenSHAInterface.get_trace_opensha(
                         src_list = None,
-                        src_connect_file = None,
-                        rup_seg_file = None,
+                        finite_src_file = None,
                         pt_src_file = None,
                         save_name = other_config_param['File_ScenarioTraces'],
-                        to_write = False
+                        to_write = False,
+                        flag_include_pt_src = False
                     )
                 self._EVENT_dict['FaultCrossings'] = OpenSHAInterface.get_fault_xing_opensha(
-                    src_list = np.unique(rupture_list['src']),
-                    start_loc = site_data[['LONG_BEGIN','LAT_BEGIN']].values,
-                    end_loc = site_data.loc[:,['LONG_END','LAT_END']].values,
+                    src_list = np.unique(rupture_list['SourceIndex']),
+                    start_loc = site_data[['Start Longitude','Start Latitude']].values,
+                    end_loc = site_data[['End Longitude','End Latitude']].values,
                     trace_set = trace_set,
                     save_name = other_config_param['File_FaultCrossing']
                 )
@@ -340,15 +340,18 @@ class assessment(object):
         n_site = other_config_param['Num_Sites']
         n_event = other_config_param['Num_Events']
         n_IM = other_config_param['Num_IM']
-        sample_nethod = setup_config['UncertaintyQuantification']['Type']
-        algorithm = setup_config['UncertaintyQuantification']['Algorithm']
-        if 'fixed' in algorithm.lower():
-            input_residuals = setup_config['UncertaintyQuantification']['ListOfResiduals']
-            input_residual_weights = setup_config['UncertaintyQuantification']['Weights']
-            n_sample = len(input_residuals)
-        elif 'random' in algorithm.lower() or 'latin' in algorithm.lower():
-            n_sample = setup_config['UncertaintyQuantification']['NumberOfSamples']
-            seed_num = setup_config['UncertaintyQuantification']['Seed']
+        sampling_method = setup_config['SamplingMethod']['Method']
+        if 'monte' in sampling_method.lower():
+            algorithm = setup_config['SamplingMethod']['Algorithm']
+            n_sample = setup_config['SamplingMethod']['NumberOfSamples']
+            seed_num = setup_config['SamplingMethod']['Seed']
+        elif 'logic' in sampling_method.lower():
+            algorithm = None
+            logic_branch = setup_config['SamplingMethod']['Branch']
+            logic_branch_weights = setup_config['SamplingMethod']['Weights']
+            n_sample = len(logic_branch)
+        elif 'polynomial' in sampling_method.lower():
+            logging.info("Polynomial chaos under development: restart analysis with another method")
         # store_file_type = setup_config['General']['OutputFileType']
         store_file_type = 'txt'
         n_decimals = other_config_param['Num_Decimals']
@@ -361,8 +364,8 @@ class assessment(object):
         # Check if files with samples already exist
         for im in other_config_param['IM']:
             if len(os.listdir(os.path.join(other_config_param['Dir_IM_GroundMotion_Simulation'],im))) < n_sample:
-               exist_IMSamples = False
-               break
+                exist_IMSamples = False
+                break
         
         # if samples exist, import, if not, sample
         if exist_IMSamples:
@@ -437,37 +440,64 @@ class assessment(object):
             # compute inter-event spatial correlations between sites
             self._IM_dict['Simulation']['Correlation']['Spatial']['Matrix'] = {}
             self._IM_dict['Simulation']['Correlation']['Spatial']['Cholesky'] = {}
+            self._IM_dict['Simulation']['Correlation']['Spatial']['CheckForUniqueSites'] = {'FlagRepeatingSites': False}
+            n_site_spatial = n_site
+            site_lon_spatial = site_data['Mid Longitude'].values
+            site_lat_spatial = site_data['Mid Latitude'].values
             if proc_for_corr['Spatial'] is None:
                 logging.info(f"\tSpatial correlation not requested; correlation between sites set to 0")
                 for im_i in other_config_param['IM']:
-                    self._IM_dict['Simulation']['Correlation']['Spatial']['Matrix'].update({im_i: np.eye(n_site)})
-                    self._IM_dict['Simulation']['Correlation']['Spatial']['Cholesky'].update({im_i: sparse.eye(n_site)})
+                    self._IM_dict['Simulation']['Correlation']['Spatial']['Matrix'].update({im_i: np.eye(n_site_spatial)})
+                    self._IM_dict['Simulation']['Correlation']['Spatial']['Cholesky'].update({im_i: sparse.eye(n_site_spatial)})
             else:
                 logging.info(f"\tSpatial correlation:")
                 if self._IM_dict['Simulation']['Correlation']['Spatial']['Method'] == 'JayaramBaker2009':
                     logging.info(f"\t\tmethod = {self._IM_dict['Simulation']['Correlation']['Spatial']['Method']}")
                     # -----------------------------------------------------------
                     # working procedure to calculate spatial correlation matrix
-                    site_lon = site_data['LONG_MIDDLE'].values
-                    site_lat = site_data['LAT_MIDDLE'].values
+                    # site_lon = site_data['LONG_MIDDLE'].values
+                    # site_lat = site_data['LAT_MIDDLE'].values
+                    
+                    # # -----------------------------------------------------------
+                    # working section to get spatial correlations for unique sites only
+                    #   keep matrix positive definite for Choleksy decomposition
+                    site_mat = np.vstack([site_lon_spatial,site_lat_spatial]).T
+                    site_mat_unique, ind_rev = np.unique(site_mat, axis=0, return_inverse=True)
+                    n_site_unique = site_mat_unique.shape[0]
+                    
+                    # store check for repeating sites
+                    if n_site_unique < n_site:
+                        self._IM_dict['Simulation']['Correlation']['Spatial']['CheckForUniqueSites'].update({
+                            'FlagRepeatingSites': True,
+                            'UniqueSites': site_mat_unique,
+                            'IndicesForReconstruction': ind_rev
+                        })
+                        n_site_spatial = n_site_unique
+                        site_lon_spatial = site_mat_unique[:,0]
+                        site_lat_spatial = site_mat_unique[:,1]
+                    
                     # get distances between sites for upper triangle
-                    ind1,ind2 = Fcn_Common.fast_triu_indices(n_site)
-                    d = Fcn_Common.get_haversine_dist(site_lon[ind1],site_lat[ind1],site_lon[ind2],site_lat[ind2])
+                    ind1,ind2 = Fcn_Common.fast_triu_indices(n_site_spatial)
+                    d = Fcn_Common.get_haversine_dist(
+                        site_lon_spatial[ind1], site_lat_spatial[ind1], 
+                        site_lon_spatial[ind2], site_lat_spatial[ind2])
                     # compute intra-event correlations between sites for IMs
                     self._IM_dict['Simulation']['Correlation']['Spatial']['Value'] = {}
                     for i in range(other_config_param['Num_IM']):
                         corr_val = proc_for_corr['Spatial'](d=d, T=other_config_param['ApproxPeriod'][other_config_param['IM'][i]])
-                        corr_mat = Fcn_Common.convert_triu_to_sym_mat(corr_val,n_site)
+                        corr_mat = Fcn_Common.convert_triu_to_sym_mat(corr_val,n_site_spatial)
                         self._IM_dict['Simulation']['Correlation']['Spatial']['Matrix'].update({
                             other_config_param['IM'][i]: corr_mat})
                         self._IM_dict['Simulation']['Correlation']['Spatial']['Cholesky'].update({
                             other_config_param['IM'][i]: sparse.coo_matrix(np.linalg.cholesky(corr_mat.toarray()))})
+                    # # -----------------------------------------------------------
+                        
                     # -----------------------------------------------------------
                 else:
                     logging.info(f"\t\tinvalid method requested; correlation between sites set to 0")
                     for im_i in other_config_param['IM']:
-                        self._IM_dict['Simulation']['Correlation']['Spatial']['Matrix'].update({im_i: np.eye(n_site)})
-                        self._IM_dict['Simulation']['Correlation']['Spatial']['Cholesky'].update({im_i: sparse.eye(n_site)})
+                        self._IM_dict['Simulation']['Correlation']['Spatial']['Matrix'].update({im_i: np.eye(n_site_spatial)})
+                        self._IM_dict['Simulation']['Correlation']['Spatial']['Cholesky'].update({im_i: sparse.eye(n_site_spatial)})
             
             # get flag for sampling with total stdevs
             Flag_SampleWithStdDevTotal = other_config_param['Flag_SampleWithStdDevTotal']
@@ -491,21 +521,20 @@ class assessment(object):
                 #
                 residuals = {}
                 spectral_corr = self._IM_dict['Simulation']['Correlation']['Spectral']['Matrix']
-                im_counter = 0
-                for im_i in other_config_param['IM']:
-                    # ret residuals and then sample
-                    if 'fixed' in algorithm.lower():
+                for im_counter, im_i in enumerate(other_config_param['IM']):
+                    # get residuals and then sample
+                    if 'logic' in sampling_method.lower():
                         residuals[im_i] = np.ones((n_sample,n_event,n_site))
                         for j in range(n_sample):
-                            residuals[im_i][j,:,:] = input_residuals[j]
-                    elif 'random' in algorithm.lower() or 'latin' in algorithm.lower():
+                            residuals[im_i][j,:,:] = logic_branch[j]
+                    elif 'monte' in sampling_method.lower():
                         # get spatially-correlated residuals for first IM
                         if im_counter == 0:
                             residuals[im_i] = Fcn_IM.get_correlated_residuals(
                                 chol_mat = self._IM_dict['Simulation']['Correlation']['Spatial']['Cholesky'][im_i],
                                 n_sample = n_sample,
                                 n_event = n_event,
-                                dim3 = n_site,
+                                dim3 = n_site_spatial,
                                 algorithm = algorithm
                             )
                             prev_im = im_i
@@ -515,15 +544,25 @@ class assessment(object):
                                 chol_mat = self._IM_dict['Simulation']['Correlation']['Spatial']['Cholesky'][im_i],
                                 n_sample = n_sample,
                                 n_event = n_event,
-                                dim3 = n_site,
+                                dim3 = n_site_spatial,
                                 algorithm = algorithm,
                                 cross_corr = spectral_corr[im_counter-1,im_counter],
                                 prev_residuals = residuals[prev_im]
                             )
-                    im_counter += 1
+                            
+                            # # -----------------------------------------------------------
+                            # reconstruct full matrix given repeating sites
+                            if self._IM_dict['Simulation']['Correlation']['Spatial']['CheckForUniqueSites']['FlagRepeatingSites']:
+                                ind_rev = self._IM_dict['Simulation']['Correlation']['Spatial']['CheckForUniqueSites']['IndicesForReconstruction']
+                                residuals_full = np.zeros((residuals[im_i].shape[0],residuals[im_i].shape[1],len(ind_rev)))
+                                for i in range(len(ind_rev)):
+                                    residuals_full[:,:,i] = residuals[im_i][:,:,ind_rev[i]]
+                                residuals[im_i] = residuals_full
+                            # # -----------------------------------------------------------
+                            
                     # set up and get distributions
                     self._IM_dict['Simulation']['Sample'][im_i] = {}
-                    mean = self._IM_dict['Prediction'][im_i]['Mean']
+                    median = self._IM_dict['Prediction'][im_i]['Median']
                     if Flag_UseUniformStdDev:
                         stdev_total = sparse.coo_matrix(np.ones((n_event,n_site))*other_config_param['UniformStdDev'])
                     else:
@@ -531,32 +570,43 @@ class assessment(object):
                     # loop through each sample
                     for j in range(n_sample):
                         sample_j = stdev_total.multiply(residuals[im_i][j])
-                        sample_j = mean.multiply(sample_j.expm1() + np.ones((n_event,n_site)))
+                        sample_j = median.multiply(sample_j.expm1() + np.ones((n_event,n_site)))
                         self._IM_dict['Simulation']['Sample'][im_i][j] = sample_j
                 logging.info(f"\tPerformed sampling using total StdDev")
             else: # for inter and intra stdevs
                 # get spatially-correlated residuals for each IM
                 eps_intra = {}
                 for im_i in other_config_param['IM']:
-                    if 'fixed' in algorithm.lower():
+                    if 'logic' in sampling_method.lower():
                         eps_intra[im_i] = np.ones((n_sample,n_event,n_site))
                         for j in range(n_sample):
-                            eps_intra[im_i][j,:,:] = input_residuals[j]
-                    elif 'random' in algorithm.lower() or 'latin' in algorithm.lower():
+                            eps_intra[im_i][j,:,:] = logic_branch[j]
+                    elif 'monte' in sampling_method.lower():
                         # get spatially-correlated residuals for each IM, cross-correlation is considered in eta
                         eps_intra[im_i] = Fcn_IM.get_correlated_residuals(
                             chol_mat = self._IM_dict['Simulation']['Correlation']['Spatial']['Cholesky'][im_i],
                             n_sample = n_sample,
                             n_event = n_event,
-                            dim3 = n_site,
+                            dim3 = n_site_spatial,
                             algorithm = algorithm
                         )
+                        
+                        # # -----------------------------------------------------------
+                        # reconstruct full matrix given repeating sites
+                        if self._IM_dict['Simulation']['Correlation']['Spatial']['CheckForUniqueSites']['FlagRepeatingSites']:
+                            ind_rev = self._IM_dict['Simulation']['Correlation']['Spatial']['CheckForUniqueSites']['IndicesForReconstruction']
+                            residuals_full = np.zeros((eps_intra[im_i].shape[0],eps_intra[im_i].shape[1],len(ind_rev)))
+                            for i in range(len(ind_rev)):
+                                residuals_full[:,:,i] = eps_intra[im_i][:,:,ind_rev[i]]
+                            eps_intra[im_i] = residuals_full
+                        # # -----------------------------------------------------------
+                        
                 # get spectrally-correlated residuals for each event
-                if 'fixed' in algorithm.lower():
+                if 'logic' in sampling_method.lower():
                     eta_inter = np.ones((n_sample,n_event,n_IM))
                     for j in range(n_sample):
-                        eta_inter[j,:,:] = input_residuals[j]
-                elif 'random' in algorithm.lower() or 'latin' in algorithm.lower():
+                        eta_inter[j,:,:] = logic_branch[j]
+                elif 'monte' in sampling_method.lower():
                     # get spatially-correlated residuals for each IM, cross-correlation is considered in eta
                     eta_inter = Fcn_IM.get_correlated_residuals(
                         chol_mat = self._IM_dict['Simulation']['Correlation']['Spectral']['Cholesky'],
@@ -566,20 +616,18 @@ class assessment(object):
                         algorithm = algorithm
                     )
                 # get samples
-                im_counter = 0
-                for im_i in other_config_param['IM']:
+                for im_counter, im_i in enumerate(other_config_param['IM']):
                     # set up and get distributions
                     self._IM_dict['Simulation']['Sample'][im_i] = {}
-                    mean = self._IM_dict['Prediction'][im_i]['Mean']
+                    median = self._IM_dict['Prediction'][im_i]['Median']
                     stdev_intra = self._IM_dict['Prediction'][im_i]['IntraEvStdDev']
                     stdev_inter = self._IM_dict['Prediction'][im_i]['InterEvStdDev']
                     # loop through each sample
                     for j in range(n_sample):
                         sample_j = stdev_intra.multiply(eps_intra[im_i][j]) + \
                             stdev_inter.multiply(np.tile(eta_inter[j,:,im_counter],[n_site,1]).T)
-                        sample_j = mean.multiply(sample_j.expm1() + np.ones((n_event,n_site)))
+                        sample_j = median.multiply(sample_j.expm1() + np.ones((n_event,n_site)))
                         self._IM_dict['Simulation']['Sample'][im_i][j] = sample_j
-                    im_counter += 1
                 logging.info(f"\tPerformed sampling using Inter- and IntraStdDevs")
 
             # export to files
@@ -601,7 +649,7 @@ class assessment(object):
         logging.info(f'Added IM simulations to "model._IM_dict\n')
     
     # -----------------------------------------------------------
-    def assess_EDP(self, setup_config, other_config_param, site_data, method_assess_param):
+    def assess_EDP(self, setup_config, other_config_param, site_data, method_param_for_assess):
         """
         Using the simulated intensity measures to calculate engineering demand parameters.
 
@@ -649,15 +697,18 @@ class assessment(object):
         n_site = other_config_param['Num_Sites']
         n_event = other_config_param['Num_Events']
         n_EDP = other_config_param['Num_EDP']
-        sample_nethod = setup_config['UncertaintyQuantification']['Type']
-        algorithm = setup_config['UncertaintyQuantification']['Algorithm']
-        if 'fixed' in algorithm.lower():
-            input_residuals = setup_config['UncertaintyQuantification']['ListOfResiduals']
-            input_residual_weights = setup_config['UncertaintyQuantification']['Weights']
-            n_sample = len(input_residuals)
-        elif 'random' in algorithm.lower() or 'latin' in algorithm.lower():
-            n_sample = setup_config['UncertaintyQuantification']['NumberOfSamples']
-            seed_num = setup_config['UncertaintyQuantification']['Seed']
+        sampling_method = setup_config['SamplingMethod']['Method']
+        if 'monte' in sampling_method.lower():
+            algorithm = setup_config['SamplingMethod']['Algorithm']
+            n_sample = setup_config['SamplingMethod']['NumberOfSamples']
+            seed_num = setup_config['SamplingMethod']['Seed']
+        elif 'logic' in sampling_method.lower():
+            algorithm = None
+            logic_branch = setup_config['SamplingMethod']['Branch']
+            logic_branch_weights = setup_config['SamplingMethod']['Weights']
+            n_sample = len(logic_branch)
+        elif 'polynomial' in sampling_method.lower():
+            logging.info("Polynomial chaos under development: restart analysis with another method")
         # store_file_type = setup_config['General']['OutputFileType']
         store_file_type = 'txt'
         n_decimals = other_config_param['Num_Decimals']
@@ -669,25 +720,25 @@ class assessment(object):
         kwargs['n_sample'] = n_sample
         
         # get current PEER category info from model_assess_param
-        curr_peer_category = method_assess_param['EDP']
+        curr_peer_category = method_param_for_assess['EDP']
         
         # dictionary for parameters computed in run
         param_computed_in_run_to_add = {}
         
-        # loop through list of EDPs
-        edp_counter = 0
+        # loop through list of EDPs=
         temp_out = {}
-        for edp_i in curr_peer_category:
+        for edp_counter, edp_i in enumerate(curr_peer_category):
             logging.info(f"Current EDP: {edp_i}")
+            edp_info = curr_peer_category[edp_i]
             # initialize storage for hazard
             self._EDP_dict[edp_i] = {}
             
-            # pull method params from model_
-            method = list(curr_peer_category[edp_i]['Method'].keys())
-            return_param = curr_peer_category[edp_i]['ReturnParameter']
-            dist_type = curr_peer_category[edp_i]['Uncertainty']['DistributionType']
-            epistemic_branch = curr_peer_category[edp_i]['Uncertainty']['Epistemic']['Branch']
-            epistemic_weight = curr_peer_category[edp_i]['Uncertainty']['Epistemic']['Weight']
+            # pull method params from model
+            method = list(edp_info['Method'].keys())
+            return_param = edp_info['ReturnParameter']
+            dist_type = edp_info['Uncertainty']['DistributionType']
+            epistemic_branch = edp_info['Uncertainty']['Epistemic']['Branch']
+            epistemic_weight = edp_info['Uncertainty']['Epistemic']['Weight']
             
             # use return params as keys for output dictionary
             for param_j in return_param:
@@ -738,23 +789,31 @@ class assessment(object):
                 }
             
             # loop through list of methods for hazard
-            method_counter = 0
-            for method_j in method:
+            for method_counter, method_j in enumerate(method):
                 logging.info(f"\tCurrent method: {method_j}")
+                method_info = edp_info['Method'][method_j]
                 # add mag to kwargs
-                if curr_peer_category[edp_i]['Method'][method_j]['Flags']['mag'] is True:
-                    kwargs['M'] = self._EVENT_dict['Scenarios']['mag']
+                if method_info['Flags']['mag'] is True:
+                    kwargs['M'] = self._EVENT_dict['Scenarios']['Magnitude']
                 # add IM simulations to kwargs
-                if curr_peer_category[edp_i]['Method'][method_j]['Flags']['PGA'] is True:
+                if method_info['Flags']['PGA'] is True:
                     kwargs['pga'] = self._IM_dict['Simulation']['Sample']['PGA']
-                if curr_peer_category[edp_i]['Method'][method_j]['Flags']['PGV'] is True:
+                if method_info['Flags']['PGV'] is True:
                     kwargs['pgv'] = self._IM_dict['Simulation']['Sample']['PGV']
                 # add additional parameters computed in this run into kwargs
                 for key in param_computed_in_run_to_add[edp_i]:
                     kwargs[key] = param_computed_in_run_to_add[edp_i][key]
                 # add method specific input parameters to kwargs
-                for param_k in curr_peer_category[edp_i]['Method'][method_j]['InputParameters']:
-                    kwargs[param_k] = curr_peer_category[edp_i]['Method'][method_j]['InputParameters'][param_k]
+                for param_k in method_info['InputParameters']:
+                    param_info = method_info['InputParameters'][param_k]
+                    if isinstance(param_info, dict):
+                        # specifically for Vs30         
+                        if param_k == 'Vs30' and param_info['Source'] == 'SameAsIntensityMeasure':
+                            kwargs[param_k] = site_data['Vs30 (m/s)'].values
+                        else:
+                            kwargs[param_k] = site_data[param_info['ColumnIDWithData']].values
+                    else:
+                        kwargs[param_k] = param_info
                 
                 # if edp_i == 'SurfaceFaultRupture':
                     # temp_file = os.path.join(r'C:\Users\barry\Desktop\New folder\test2','input_param.json')
@@ -772,12 +831,11 @@ class assessment(object):
                     # warnings.simplefilter("ignore")
                 output = proc_for_method(**kwargs)
 
-                
-                # if edp_i == 'Landslide':
-                    # temp_out[method_j] = output
+                # if edp_i == 'LateralSpread':
+                    # return output
                 
                 # store outputs
-                weight = curr_peer_category[edp_i]['Method'][method_j]['Weight']
+                weight = method_info['Weight']
                 # loop through return parameters
                 for param_k in return_param:
                     if param_k in output.keys():
@@ -837,19 +895,14 @@ class assessment(object):
                 kwargs.pop('pgv',None)
                 for key in param_computed_in_run_to_add[edp_i]:
                     kwargs.pop(key,None)
-                for param_k in curr_peer_category[edp_i]['Method'][method_j]['InputParameters']:
+                for param_k in method_info['InputParameters']:
                     kwargs.pop(param_k,None)
-            
-                #
-                method_counter += 1
             
             # remove hazard specific input parameters from kwargs for next iteration
             kwargs.pop('return_param',None)
-            #
-            edp_counter += 1
             
         #
-        if len(method_assess_param['EDP']) == 0:
+        if len(method_param_for_assess['EDP']) == 0:
             logging.info(f'No EDP requested for this analysis\n')
         else:
             logging.info(f'Added EDP results to "model._EDP_dict\n')
@@ -857,7 +910,7 @@ class assessment(object):
         # return temp_out
 
     # -----------------------------------------------------------
-    def assess_DM(self, setup_config, other_config_param, site_data, method_assess_param):
+    def assess_DM(self, setup_config, other_config_param, site_data, method_param_for_assess):
         """
         Using the simulated intensity measures and engineering demand parameters to calculate damage measures.
 
@@ -869,7 +922,7 @@ class assessment(object):
         Returns
         -------
         output : varies
-           [varies] output depends on the target demand and methods.
+            [varies] output depends on the target demand and methods.
 
         """
         
@@ -878,14 +931,14 @@ class assessment(object):
             self._DM_dict = {}
     
         #
-        if len(method_assess_param['DM']) == 0:
+        if len(method_param_for_assess['DM']) == 0:
             logging.info(f'No DM requested for this analysis\n')
         else:
             logging.info(f'Added DM results to "model._DM_dict\n')
     
     
     # -----------------------------------------------------------
-    def assess_DV(self, setup_config, other_config_param, site_data, method_assess_param):
+    def assess_DV(self, setup_config, other_config_param, site_data, method_param_for_assess):
         """
         Using the simulated intensity measures, engineering demand parameters, and damage measures to calculate decision variables/values.
 
@@ -894,9 +947,9 @@ class assessment(object):
         dv_category : str
            decision variable category to calculate; options are **rr** (more to be added, see :func:`dv` for meaning of the options)
         dv_method : str
-           method/procedure to use to calculate the damage; see :func:`dv` for available methods.
+            method/procedure to use to calculate the damage; see :func:`dv` for available methods.
         return_param : str, list
-           single of a list of parameters to return, see the return variables under each function (:func:`dv`)
+            single of a list of parameters to return, see the return variables under each function (:func:`dv`)
         store_name : str, list, optional
            names to store parameter as; default = **return_param**
         ims : str, list, optional
@@ -923,7 +976,7 @@ class assessment(object):
         Returns
         -------
         output : varies
-           [varies] output depends on the target decision variables and methods.
+            [varies] output depends on the target decision variables and methods.
 
         """
         
@@ -935,21 +988,24 @@ class assessment(object):
         n_site = other_config_param['Num_Sites']
         n_event = other_config_param['Num_Events']
         n_EDP = other_config_param['Num_EDP']
-        sample_nethod = setup_config['UncertaintyQuantification']['Type']
-        algorithm = setup_config['UncertaintyQuantification']['Algorithm']
-        if 'fixed' in algorithm.lower():
-            input_residuals = setup_config['UncertaintyQuantification']['ListOfResiduals']
-            input_residual_weights = setup_config['UncertaintyQuantification']['Weights']
-            n_sample = len(input_residuals)
-        elif 'random' in algorithm.lower() or 'latin' in algorithm.lower():
-            n_sample = setup_config['UncertaintyQuantification']['NumberOfSamples']
-            seed_num = setup_config['UncertaintyQuantification']['Seed']
+        sampling_method = setup_config['SamplingMethod']['Method']
+        if 'monte' in sampling_method.lower():
+            algorithm = setup_config['SamplingMethod']['Algorithm']
+            n_sample = setup_config['SamplingMethod']['NumberOfSamples']
+            seed_num = setup_config['SamplingMethod']['Seed']
+        elif 'logic' in sampling_method.lower():
+            algorithm = None
+            logic_branch = setup_config['SamplingMethod']['Branch']
+            logic_branch_weights = setup_config['SamplingMethod']['Weights']
+            n_sample = len(logic_branch)
+        elif 'polynomial' in sampling_method.lower():
+            logging.info("Polynomial chaos under development: restart analysis with another method")
         # store_file_type = setup_config['General']['OutputFileType']
         store_file_type = 'txt'
         n_decimals = other_config_param['Num_Decimals']
         
         # get rates and reformat to shape = n_event x n_site
-        rate = self._EVENT_dict['Scenarios']['rate']
+        rate = self._EVENT_dict['Scenarios']['MeanAnnualRate']
         rate = np.tile(rate,[n_site, 1]).T
         
         # set up kwargs to pass inputs into method function
@@ -965,7 +1021,7 @@ class assessment(object):
         # setup additional information for DV
         demand_dict = {}
         dist_type_dv = {}
-        for dv_i in method_assess_param['DV']:
+        for dv_i in method_param_for_assess['DV']:
             demand_dict[dv_i] = {}
             # get DV distribution type
             if dv_i in other_config_param['DistributionType']['Uniform']['ListOfHazard']:
@@ -1063,19 +1119,20 @@ class assessment(object):
         # -----------------------------------------------------------
         
         # get current PEER category info from model_assess_param
-        curr_peer_category = method_assess_param['DV']
+        curr_peer_category = method_param_for_assess['DV']
         # Loop through DVs
         dv_counter = 0
         for dv_i in curr_peer_category:
             logging.info(f"Current DV: {dv_i}")
+            dv_info = curr_peer_category[dv_i]
             self._DV_dict[dv_i] = {}
 
             # get DV ID
             dv_id = other_config_param['ID_DV'][dv_i]
             
-            # pull method params from method_assess_param
-            method = list(curr_peer_category[dv_i]['Method'].keys())
-            return_param = curr_peer_category[dv_i]['ReturnParameter']
+            # pull method params from method_param_for_assess
+            method = list(dv_info['Method'].keys())
+            return_param = dv_info['ReturnParameter']
             
             # get demand_dict for current dv
             curr_demand_dict = demand_dict[dv_i]
@@ -1093,11 +1150,20 @@ class assessment(object):
             method_counter = 0
             for method_j in method:
                 logging.info(f"\tCurrent method: {method_j}")
-                method_weight = curr_peer_category[dv_i]['Method'][method_j]['Weight']
-            
+                method_info = dv_info['Method'][method_j]
+                method_weight = method_info['Weight']
+                
                 # add method specific input parameters to kwargs
-                for param_k in curr_peer_category[dv_i]['Method'][method_j]['InputParameters']:
-                    kwargs[param_k] = curr_peer_category[dv_i]['Method'][method_j]['InputParameters'][param_k]
+                for param_k in method_info['InputParameters']:
+                    param_info = method_info['InputParameters'][param_k]
+                    if isinstance(param_info, dict):
+                        # specifically for Vs30         
+                        if param_k == 'Vs30' and param_info['Source'] == 'SameAsIntensityMeasure':
+                            kwargs[param_k] = site_data['Vs30 (m/s)'].values
+                        else:
+                            kwargs[param_k] = site_data[param_info['ColumnIDWithData']].values
+                    else:
+                        kwargs[param_k] = param_info
             
                 # import procedure for current method
                 proc_for_method = getattr(
@@ -1110,33 +1176,33 @@ class assessment(object):
                 # loop through demands for current DV
                 for demand_k in curr_demand_dict:
                     logging.info(f"\t\tCurrent demand for DV: {demand_k}")
+                    demand_info = curr_demand_dict[demand_k]
                     self._DV_dict[dv_i][demand_k] = {}
                     # self._DV_dict[dv_i][demand_k] = None
                 
                     # get info for current demand
-                    demand_dist_type = curr_demand_dict[demand_k]['Demand']['DistType']
-                    demand_epi_branch = curr_demand_dict[demand_k]['Demand']['EpiBranch']
-                    demand_epi_wgt = curr_demand_dict[demand_k]['Demand']['EpiWgt']
+                    demand_dist_type = demand_info['Demand']['DistType']
+                    demand_epi_branch = demand_info['Demand']['EpiBranch']
+                    demand_epi_wgt = demand_info['Demand']['EpiWgt']
                     if demand_dist_type == 'Uniform':
-                        demand_ale_sf = curr_demand_dict[demand_k]['Demand']['ScaleFactorAle']
-                        demand_epi_sf = curr_demand_dict[demand_k]['Demand']['ScaleFactorEpi']
+                        demand_ale_sf = demand_info['Demand']['ScaleFactorAle']
+                        demand_epi_sf = demand_info['Demand']['ScaleFactorEpi']
                         demand_epi_str = []
                         for demand_epi_l in demand_epi_branch:
                             demand_epi_str.append(f'SF^{demand_epi_l}')
                     elif demand_dist_type == 'Lognormal':
-                        demand_ale_stddev = curr_demand_dict[demand_k]['Demand']['StdDevAle']
-                        demand_epi_stddev = curr_demand_dict[demand_k]['Demand']['StdDevEpi']
-                        demand_total_stddev = curr_demand_dict[demand_k]['Demand']['StdDevTotal']
+                        demand_ale_stddev = demand_info['Demand']['StdDevAle']
+                        demand_epi_stddev = demand_info['Demand']['StdDevEpi']
+                        demand_total_stddev = demand_info['Demand']['StdDevTotal']
                         demand_epi_str = []
                         for demand_epi_l in demand_epi_branch:
                             demand_epi_str.append(f'{demand_epi_l}Sigma')
                     
                     # add to kwargs
-                    kwargs['pgd_label'] = curr_demand_dict[demand_k]['Demand']['Label']
+                    kwargs['pgd_label'] = demand_info['Demand']['Label']
                     # loop through epistemic branches for demand
                     demand_epi = {}
-                    demand_epi_counter = 0
-                    for demand_epi_l in demand_epi_branch:
+                    for demand_epi_counter, demand_epi_l in enumerate(demand_epi_branch):
                         # logging.info(f"\t\t\tCurrent epistemic branch for demand: {demand_epi_str[demand_epi_counter]}")
                         # setup
                         # epi_name = 'epi_'+str(demand_epi_l)
@@ -1148,11 +1214,11 @@ class assessment(object):
                             for sample_n in range(n_sample):
                                 # default = lognormal
                                 # get demand for current sample
-                                demand_epi[sample_n] = curr_demand_dict[demand_k]['Demand']['Value'][sample_n]
+                                demand_epi[sample_n] = demand_info['Demand']['Value'][sample_n]
                                 # apply scale_factor to mean demand and covert back to coo_matrix
                                 demand_epi[sample_n] = demand_epi[sample_n].multiply(scale_factor).tocoo()
                             # add adjusted demand to kwargs
-                            kwargs[curr_demand_dict[demand_k]['Demand']['Type']] = demand_epi
+                            kwargs[demand_info['Demand']['Type']] = demand_epi
                             # -----------------------------------------------------------
                             # run method
                             output = proc_for_method(**kwargs)
@@ -1160,31 +1226,30 @@ class assessment(object):
                             # store into temporary dict
                             demand_epi = output[dv_id]
                             # remove adjusted demand kwargs for next iteration
-                            kwargs.pop(curr_demand_dict[demand_k]['Demand']['Type'],None)
+                            kwargs.pop(demand_info['Demand']['Type'],None)
                             # clear dictionaries
                             output = None
                         
                         # specific for RepairRatePGD
                         else:
                             # see if using specific aleatory cases for demand
-                            if other_config_param['Flag_UseSpecificAleatoryCases']:
+                            if other_config_param['Flag_UseSpecificAleatoryBranch']:
                                 # get fixed aleatory cases 
-                                demand_ale_case = other_config_param['DistributionType'][demand_dist_type]['Aleatory']['Cases']
+                                demand_ale_case = other_config_param['DistributionType'][demand_dist_type]['Aleatory']['Branch']
                                 demand_ale_wgt = other_config_param['DistributionType'][demand_dist_type]['Aleatory']['Weights']
                             else:
                                 demand_ale_case = np.transpose(Fcn_Common.lhs(n_var=1, n_samp=min(5,n_sample), dist=demand_dist_type))[0]
                                 demand_ale_wgt = np.ones(min(5,n_sample))/min(5,n_sample)
                             
                             # loop through aleatory cases for demand
-                            demand_ale_counter = 0
                             demand_epi_ale = {}
-                            for demand_ale_m in demand_ale_case:
+                            for demand_ale_counter, demand_ale_m in enumerate(demand_ale_case):
                                 # for each PGV branch in the demand; sample the demand on aleatory variability
                                 demand_epi_ale_val = {}
                                 for sample_n in range(n_sample):
                                     # logging.info(f"\t\t\t\t\tSample {sample_n} of demand")
                                     # get demand for current sample
-                                    demand_epi_ale_val[sample_n] = curr_demand_dict[demand_k]['Demand']['Value'][sample_n]
+                                    demand_epi_ale_val[sample_n] = demand_info['Demand']['Value'][sample_n]
                                     if demand_dist_type == 'Uniform':
                                         # adjust for epistemic
                                         scale_factor = demand_epi_sf**demand_epi_l
@@ -1202,14 +1267,14 @@ class assessment(object):
                                     # apply scale_factor to mean demand and covert back to coo_matrix
                                     demand_epi_ale_val[sample_n] = demand_epi_ale_val[sample_n].multiply(scale_factor).tocoo()
                                 # add adjusted demand to kwargs
-                                kwargs[curr_demand_dict[demand_k]['Demand']['Label']] = demand_epi_ale_val
+                                kwargs[demand_info['Demand']['Label']] = demand_epi_ale_val
                                 
                                 
                                 # -----------------------------------------------------------
                                 # for probability
                                 # -----------------------------------------------------------
                                 # see if using specific aleatory cases for probability
-                                if curr_demand_dict[demand_k]['Prob'] is None:
+                                if demand_info['Prob'] is None:
                                     prob_dist_type = 'Uniform'
                                     #
                                     prob_epi_sf = 1
@@ -1221,42 +1286,40 @@ class assessment(object):
                                     prob_ale_wgt = [1]
                                 else:                                        
                                     # get info for current demand probability
-                                    prob_dist_type = curr_demand_dict[demand_k]['Prob']['DistType']
-                                    prob_epi_sf = curr_demand_dict[demand_k]['Prob']['ScaleFactorEpi']
-                                    prob_epi_branch = curr_demand_dict[demand_k]['Prob']['EpiBranch']
-                                    prob_epi_wgt = curr_demand_dict[demand_k]['Prob']['EpiWgt']
+                                    prob_dist_type = demand_info['Prob']['DistType']
+                                    prob_epi_sf = demand_info['Prob']['ScaleFactorEpi']
+                                    prob_epi_branch = demand_info['Prob']['EpiBranch']
+                                    prob_epi_wgt = demand_info['Prob']['EpiWgt']
                                     #
-                                    prob_ale_sf = curr_demand_dict[demand_k]['Prob']['ScaleFactorAle']
-                                    if other_config_param['Flag_UseSpecificAleatoryCases']:
+                                    prob_ale_sf = demand_info['Prob']['ScaleFactorAle']
+                                    if other_config_param['Flag_UseSpecificAleatoryBranch']:
                                         # get fixed aleatory cases 
-                                        prob_ale_case = other_config_param['DistributionType']['Uniform']['Aleatory']['Cases']
+                                        prob_ale_case = other_config_param['DistributionType']['Uniform']['Aleatory']['Branch']
                                         prob_ale_wgt = other_config_param['DistributionType']['Uniform']['Aleatory']['Weights']
                                     else:
                                         prob_ale_case = np.transpose(Fcn_Common.lhs(n_var=1, n_samp=min(5,n_sample), dist='Uniform'))[0]
                                         prob_ale_wgt = np.ones(min(5,n_sample))/min(5,n_sample)
                                 
                                 # loop through epistemic branches for probability
-                                prob_epi_counter = 0
                                 prob_epi = {}
-                                for prob_epi_l in prob_epi_branch:
+                                for prob_epi_counter, prob_epi_l in enumerate(prob_epi_branch):
                                     # logging.info(f"\t\t\t\tCurrent epistemic branch for prob: {prob_epi_branch[prob_epi_counter]}")
                                     # loop through aleatory cases for demand
-                                    prob_ale_counter = 0
                                     prob_epi_ale = {}
-                                    for prob_ale_m in prob_ale_case:
+                                    for prob_ale_counter, prob_ale_m in enumerate(prob_ale_case):
                                         # for each PGV branch in the demand; sample the demand on aleatory variability
                                         prob_epi_ale_val = {}
                                         for sample_n in range(n_sample):
                                             # logging.info(f"\t\t\t\t\tSample {sample_n} of demand")
                                             # get demand for current sample
-                                            if curr_demand_dict[demand_k]['Prob']['Value'] is None:
+                                            if demand_info['Prob']['Value'] is None:
                                                 ref_sparse_mat = demand_epi_ale_val[sample_n].tocoo()
                                                 prob_epi_ale_val[sample_n] = sparse.coo_matrix(
                                                     (np.ones(len(ref_sparse_mat.data)),(ref_sparse_mat.row,ref_sparse_mat.col)),
                                                     shape=ref_sparse_mat.shape
                                                 )
                                             else:
-                                                prob_epi_ale_val[sample_n] = curr_demand_dict[demand_k]['Prob']['Value'][sample_n]
+                                                prob_epi_ale_val[sample_n] = demand_info['Prob']['Value'][sample_n]
                                             # adjust for epistemic
                                             scale_factor = prob_epi_sf**prob_epi_l
                                             # adjust for aleatory
@@ -1266,7 +1329,7 @@ class assessment(object):
                                             # limit maximum probability to 100%
                                             prob_epi_ale_val[sample_n].data = np.minimum(prob_epi_ale_val[sample_n].data,100)
                                         # add adjusted demand to kwargs
-                                        kwargs[curr_demand_dict[demand_k]['Prob']['Label']] = prob_epi_ale_val
+                                        kwargs[demand_info['Prob']['Label']] = prob_epi_ale_val
                                     
                                         # -----------------------------------------------------------
                                         # run method
@@ -1281,9 +1344,7 @@ class assessment(object):
                                             else:
                                                 prob_epi_ale[sample_n] = output[dv_id][sample_n].multiply(prob_ale_wgt[prob_ale_counter])
                                         # remove adjusted prob kwargs for next iteration
-                                        kwargs.pop(curr_demand_dict[demand_k]['Prob']['Label'],None)
-                                        # increment counter
-                                        prob_ale_counter += 1
+                                        kwargs.pop(demand_info['Prob']['Label'],None)
                                         # clear dictionaries
                                         output = None
 
@@ -1294,8 +1355,6 @@ class assessment(object):
                                                 prob_epi_ale[sample_n].multiply(prob_epi_wgt[prob_epi_counter])
                                         else:
                                             prob_epi[sample_n] = prob_epi_ale[sample_n].multiply(prob_epi_wgt[prob_epi_counter])
-                                    # increment counter
-                                    prob_epi_counter += 1
                                     # clear dictionaries
                                     prob_epi_ale = None
                                 # -----------------------------------------------------------
@@ -1318,26 +1377,24 @@ class assessment(object):
                                         elif demand_dist_type == 'Lognormal':
                                             demand_epi_ale[sample_n] = prob_epi[sample_n].power(demand_ale_wgt[demand_ale_counter])
                                 # remove adjusted demand kwargs for next iteration
-                                kwargs.pop(curr_demand_dict[demand_k]['Demand']['Label'],None)
-                                # increment counter
-                                demand_ale_counter += 1
+                                kwargs.pop(demand_info['Demand']['Label'],None)
                                 # clear dictionaries
                                 prob_epi = None
 
                             # for demand, loop through PGV branches and scale by demand_ale_wgt
                             for sample_n in range(n_sample):
                                 if sample_n in demand_epi:
-                                  if demand_dist_type == 'Uniform':
-                                      demand_epi[sample_n] = demand_epi[sample_n] + \
-                                          demand_epi_ale[sample_n].multiply(demand_epi_wgt[demand_epi_counter])
-                                  elif demand_dist_type == 'Lognormal':
-                                      demand_epi[sample_n] = demand_epi[sample_n].multiply(
-                                          demand_epi_ale[sample_n].power(demand_epi_wgt[demand_epi_counter]))
+                                    if demand_dist_type == 'Uniform':
+                                        demand_epi[sample_n] = demand_epi[sample_n] + \
+                                            demand_epi_ale[sample_n].multiply(demand_epi_wgt[demand_epi_counter])
+                                    elif demand_dist_type == 'Lognormal':
+                                        demand_epi[sample_n] = demand_epi[sample_n].multiply(
+                                            demand_epi_ale[sample_n].power(demand_epi_wgt[demand_epi_counter]))
                                 else:
-                                  if demand_dist_type == 'Uniform':
-                                      demand_epi[sample_n] = demand_epi_ale[sample_n].multiply(demand_epi_wgt[demand_epi_counter])
-                                  elif demand_dist_type == 'Lognormal':
-                                      demand_epi[sample_n] = demand_epi_ale[sample_n].power(demand_epi_wgt[demand_epi_counter])
+                                    if demand_dist_type == 'Uniform':
+                                        demand_epi[sample_n] = demand_epi_ale[sample_n].multiply(demand_epi_wgt[demand_epi_counter])
+                                    elif demand_dist_type == 'Lognormal':
+                                        demand_epi[sample_n] = demand_epi_ale[sample_n].power(demand_epi_wgt[demand_epi_counter])
                             # clear dictionaries
                             demand_epi_ale = None
                 
@@ -1375,9 +1432,7 @@ class assessment(object):
                                     self._DV_dict[dv_i][demand_k][sample_n] = demand_epi[sample_n].multiply(method_weight)
                                 elif dist_type_dv[dv_i] == 'Lognormal':
                                     self._DV_dict[dv_i][demand_k][sample_n] = demand_epi[sample_n].power(method_weight)
-                                        
-                        # increment counter
-                        demand_epi_counter += 1                        
+                                               
                     # clear dictionaries
                     demand_epi = None
                     # -----------------------------------------------------------
@@ -1386,7 +1441,7 @@ class assessment(object):
                                     
                     # remove demand specific input parameters from kwargs for next iteration
                     kwargs.pop('pgd_label',None)
-            
+                    
             # combine events and update _DV_dict
             for demand_k in self._DV_dict[dv_i]:
                 # -----------------------------------------------------------
@@ -1453,7 +1508,7 @@ class assessment(object):
                     self._DV_dict[dv_i][demand_k] = temp_sample
                 
         #
-        if len(method_assess_param['DV']) == 0:
+        if len(method_param_for_assess['DV']) == 0:
             logging.info(f'No DV requested for this analysis\n')
         else:
             logging.info(f'Added DV results to "model._DV_dict\n')
@@ -1467,7 +1522,7 @@ class assessment(object):
         """
         
         if len(self._DV_dict) == 0:
-            logging.info(f"No DV requested for this analysis - Nothing to export\n")
+            logging.info(f"No DV requested for this analysis - No results to export\n")
             
         else:
             logging.info(f"Export directory for DV:")

@@ -1,0 +1,370 @@
+{
+    "General": {
+		"Directory": {
+			"Working": ""
+		},
+        "OutputFileType": "csv"
+    },
+	"SamplingMethod": {
+		"Method": "MonteCarlo",
+		"Algorithm": "Latin Hypercube Sampling",
+		"NumberOfSamples": 3,
+		"Seed": 1
+	},
+    "Infrastructure": {
+        "SiteDataFile": "example/Ex5_MultipleMethods/Input/SiteData.csv",
+		"SiteLocationParams": {
+			"LatMid": {
+				"DataExists": true,
+				"ColumnIDWithData": "LAT_MIDDLE"
+			},
+			"LonMid": {
+				"DataExists": true,
+				"ColumnIDWithData": "LONG_MIDDLE"
+			},
+			"LatBegin": {
+				"DataExists": true,
+				"ColumnIDWithData": "LAT_BEGIN"
+			},
+			"LonBegin": {
+				"DataExists": true,
+				"ColumnIDWithData": "LONG_BEGIN"
+			},
+			"LatEnd": {
+				"DataExists": true,
+				"ColumnIDWithData": "LAT_END"
+			},
+			"LonEnd": {
+				"DataExists": true,
+				"ColumnIDWithData": "LONG_END"
+			},
+			"Length": {
+				"DataExists": false,
+				"ColumnIDWithData": null
+			}
+		}
+    },
+    "IntensityMeasure": {
+        "Type": {
+            "PGA": {
+                "ToAssess": true
+            },
+            "PGV": {
+                "ToAssess": true
+            }
+        },
+        "SourceForIM": "OpenSHA",
+        "SourceParameters": {
+			"SeismicSourceModel": "Mean UCERF3 FM3.2",
+            "Filter": {
+                "ReturnPeriod": {
+                    "ToInclude": true,
+                    "Maximum": 100000
+                },
+                "Distance": {
+                    "ToInclude": true,
+                    "Maximum": 100
+                },
+                "Magnitude": {
+                    "ToInclude": true,
+                    "Minimum": 5,
+                    "Maximum": null
+                },
+                "PointSource": {
+                    "ToInclude": false
+                }
+            },
+            "GroundMotionModel": "NGAWest2 2014 Averaged No Idriss",
+			"OtherParameters": {
+				"Vs30": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				},
+				"Z1p0": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				},
+				"Z2p5": {
+					"Source": "Preferred",
+					"ColumnIDWithData": null
+				}
+			}
+        },
+        "Correlation": {
+            "Spatial": {
+                "ToInclude": true,
+                "Method": "JayaramBaker2009"
+            },
+            "Spectral": {
+                "ToInclude": true,
+                "Method": "BakerJayaram2008"
+            }
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "Liquefaction": {
+                "ToAssess": true,
+                "Method": {
+                    "ZhuEtal2017": {
+						"ModelWeight": 1, 
+						"ModelTransition": 20,
+						"Vs30": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"WaterTableDepth": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"DistanceToRiver": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"DistanceToCoast": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"DistanceToWaterBody": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"Precipitation": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						}
+					}
+				},
+                "OtherParameters": {}
+            },
+            "LateralSpread": {
+                "ToAssess": true,
+                "Method": {
+                    "GrantEtal2016": {
+						"ModelWeight": 1,
+						"DistanceToWaterCutoff": 50
+					}
+				},
+                "OtherParameters": {}
+            },
+            "GroundSettlement": {
+                "ToAssess": true,
+                "Method": {
+                    "Hazus2014": {
+						"ModelWeight": 1
+					}
+                },
+                "OtherParameters": {}
+            },
+            "Landslide": {
+                "ToAssess": true,
+                "Method": {
+                    "BrayMacedo2019": {
+						"ModelWeight": 0.5,
+						"GroundMotionType": "General",
+						"MethodForKy": "Bray2007",
+						"SlopeType": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"RootCohesion": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"FrictionAngle": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"Cohesion": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"UnitWeight": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"SlopeAngle": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"SlopeThickness": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						}
+					},
+					"Jibson2007": {
+						"ModelWeight": 0.5,
+						"ModelType": "ky_pga_M",
+						"MethodForKy": "GrantEtal2016",
+						"SlopeType": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"RootCohesion": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"FrictionAngle": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"Cohesion": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"UnitWeight": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"SlopeAngle": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"SlopeThickness": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						}
+					}
+				},
+                "OtherParameters": {}
+            },
+            "SurfaceFaultRupture": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "SubsurfaceFaultRupture": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "TransientGroundStrain": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "TransientPipeStrain": {
+                "ToAssess": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "RepairRatePGV": {
+                "ToAssess": true,
+                "Method": {
+                    "ORourke2020": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"ComponentJointType": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"ComponentDiameter": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						}
+					},
+                    "ALA2001": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"ComponentJointType": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"ComponentDiameter": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						}
+					},
+                    "Hazus2014": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"ComponentJointType": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"YearOfInstallation": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						}
+					}
+				},
+                "OtherParameters": {}
+            },
+            "RepairRatePGD": {
+                "ToAssess": true,
+                "Method": {
+                    "ORourke2020": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"ComponentJointType": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"ComponentDiameter": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						}
+					},
+                    "ALA2001": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"ComponentJointType": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"ComponentDiameter": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						}
+					},
+                    "Hazus2014": {
+						"ModelWeight": 1,
+						"ComponentMaterial": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"ComponentJointType": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						},
+						"YearOfInstallation": {
+							"Source": "Preferred",
+							"ColumnIDWithData": null
+						}
+					}
+                },
+                "OtherParameters": {
+                }
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    }
+}

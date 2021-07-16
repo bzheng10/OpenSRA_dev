@@ -12,7 +12,7 @@
 		"Seed": 1
 	},
     "Infrastructure": {
-        "SiteDataFile": "example/Ex1_OpenSHA_LHS_noEDP_noDV/Input/SiteData.csv",
+        "SiteDataFile": "examples/Ex1_OpenSHA_LHS_noEDP_noDV/Input/SiteData.csv",
 		"SiteLocationParams": {
 			"LatMid": {
 				"DataExists": true,

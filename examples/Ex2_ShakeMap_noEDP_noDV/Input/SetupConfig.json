@@ -12,7 +12,7 @@
 		"Seed": 1
 	},
     "Infrastructure": {
-        "SiteDataFile": "example/Ex2_ShakeMap_noEDP_noDV/Input/SiteData.csv",
+        "SiteDataFile": "examples/Ex2_ShakeMap_noEDP_noDV/Input/SiteData.csv",
 		"SiteLocationParams": {
 			"LatMid": {
 				"DataExists": true,

@@ -15,6 +15,7 @@
 # Python modules
 import logging
 import os
+import sys
 import numpy as np
 import rasterio as rio
 from scipy import sparse, stats
@@ -165,7 +166,7 @@ def set_logging(level, file=None):
     logger.setLevel(logging.DEBUG if level.lower() == 'debug' else logging.INFO)
 
     # setting log format for print
-    handlerStream = logging.StreamHandler()
+    handlerStream = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handlerStream.setFormatter(formatter)
     logger.addHandler(handlerStream)
@@ -621,4 +622,4 @@ def fast_triu_indices(dim, k=0):
 	cols[0] = k
 	np.cumsum(cols,out=cols)
 	#
-	return rows, cols
+	return rows, cols

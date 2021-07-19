@@ -15,7 +15,13 @@
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": null,
-							"Options": "ColumnHeaders"
+                            "Options": {
+                                "ColumnHeaders": {
+                                    "NameToDisplay": "Column Headers",
+                                    "ToDisplay": true,
+                                    "Params": {}
+                                }
+                            }
 						}
 					}
 				},
@@ -29,7 +35,13 @@
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": null,
-							"Options": "ColumnHeaders"
+                            "Options": {
+                                "ColumnHeaders": {
+                                    "NameToDisplay": "Column Headers",
+                                    "ToDisplay": true,
+                                    "Params": {}
+                                }
+                            }
 						}
 					}
 				},
@@ -43,7 +55,13 @@
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": null,
-							"Options": "ColumnHeaders"
+                            "Options": {
+                                "ColumnHeaders": {
+                                    "NameToDisplay": "Column Headers",
+                                    "ToDisplay": true,
+                                    "Params": {}
+                                }
+                            }
 						}
 					}
 				},
@@ -57,7 +75,13 @@
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": null,
-							"Options": "ColumnHeaders"
+                            "Options": {
+                                "ColumnHeaders": {
+                                    "NameToDisplay": "Column Headers",
+                                    "ToDisplay": true,
+                                    "Params": {}
+                                }
+                            }
 						}
 					}
 				},
@@ -71,7 +95,13 @@
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": null,
-							"Options": "ColumnHeaders"
+                            "Options": {
+                                "ColumnHeaders": {
+                                    "NameToDisplay": "Column Headers",
+                                    "ToDisplay": true,
+                                    "Params": {}
+                                }
+                            }
 						}
 					}
 				},
@@ -85,7 +115,13 @@
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": null,
-							"Options": "ColumnHeaders"
+                            "Options": {
+                                "ColumnHeaders": {
+                                    "NameToDisplay": "Column Headers",
+                                    "ToDisplay": true,
+                                    "Params": {}
+                                }
+                            }
 						}
 					}
 				},
@@ -99,7 +135,13 @@
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": null,
-							"Options": "ColumnHeaders"
+                            "Options": {
+                                "ColumnHeaders": {
+                                    "NameToDisplay": "Column Headers",
+                                    "ToDisplay": true,
+                                    "Params": {}
+                                }
+                            }
 						}
 					}
 				}
@@ -167,7 +209,7 @@
 							"NameToDisplay": "Weights",
 							"WidgetType": "QLineEdit",
 							"ToDisplay": true,
-							"DefaultValue": [-1.65, 0, 1.65]
+							"DefaultValue": [0.2, 0.6, 0.2]
 						}
 					}
 				},
@@ -186,7 +228,7 @@
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
-				"SeismicSource": {
+				"SeismicSourceModel": {
 					"NameToDisplay": "Seismic Source Model",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
@@ -209,7 +251,69 @@
 						}
 					}
 				},
-				"GroundMotion": {
+                "Filter": {
+                    "NameToDisplay": "Filters",
+                    "WidgetType": "QWidget",
+                    "ToDisplay": true,
+                    "Params": {
+                        "ReturnPeriod": {
+                            "NameToDisplay": "Return Period [years]",
+                            "WidgetType": "QCheckBox",
+                            "ToDisplay": true,
+                            "DefaultValue": false,
+                            "Params": {
+                                "Maximum" : {
+                                    "NameToDisplay": "Maximum",
+                                    "WidgetType": "QLineEdit",
+                                    "ToDisplay": true,
+                                    "DefaultValue": 100000
+                                }
+                            }
+                        },
+                        "Distance": {
+                            "NameToDisplay": "Distance [km]",
+                            "WidgetType": "QCheckBox",
+                            "ToDisplay": true,
+                            "DefaultValue": false,
+                            "Params": {
+                                "Maximum" : {
+                                    "NameToDisplay": "Maximum",
+                                    "WidgetType": "QLineEdit",
+                                    "ToDisplay": true,
+                                    "DefaultValue": 100
+                                }
+                            }
+                        },
+                        "Magnitude": {
+                            "NameToDisplay": "Magnitude",
+                            "WidgetType": "QCheckBox",
+                            "ToDisplay": true,
+                            "DefaultValue": false,
+                            "Params": {
+                                "Minimum" : {
+                                    "NameToDisplay": "Minimum",
+                                    "WidgetType": "QLineEdit",
+                                    "ToDisplay": true,
+                                    "DefaultValue": 2
+                                },
+                                "Maximum" : {
+                                    "NameToDisplay": "Maximum",
+                                    "WidgetType": "QLineEdit",
+                                    "ToDisplay": true,
+                                    "DefaultValue": 8
+                                }
+                            }
+                        },
+                        "PointSource": {
+                            "NameToDisplay": "Exclude Point Source?",
+                            "WidgetType": "QCheckBox",
+                            "ToDisplay": true,
+                            "DefaultValue": false,
+                            "Params": {}
+                        }
+                    }
+                },
+				"GroundMotionModel": {
 					"NameToDisplay": "Ground Motion Model",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
@@ -272,7 +376,13 @@
 									"WidgetType": "QComboBox",
 									"ToDisplay": true,
 									"DefaultValue": null,
-									"Options": "ColumnHeaders"
+                                    "Options": {
+                                        "ColumnHeaders": {
+                                            "NameToDisplay": "Column Headers",
+                                            "ToDisplay": true,
+                                            "Params": {}
+                                        }
+                                    }
 								}
 							}
 						}
@@ -298,7 +408,13 @@
 									"WidgetType": "QComboBox",
 									"ToDisplay": true,
 									"DefaultValue": null,
-									"Options": "ColumnHeaders"
+                                    "Options": {
+                                        "ColumnHeaders": {
+                                            "NameToDisplay": "Column Headers",
+                                            "ToDisplay": true,
+                                            "Params": {}
+                                        }
+                                    }
 								}
 							}
 						}
@@ -324,7 +440,13 @@
 									"WidgetType": "QComboBox",
 									"ToDisplay": true,
 									"DefaultValue": null,
-									"Options": "ColumnHeaders"
+                                    "Options": {
+                                        "ColumnHeaders": {
+                                            "NameToDisplay": "Column Headers",
+                                            "ToDisplay": true,
+                                            "Params": {}
+                                        }
+                                    }
 								}
 							}
 						}
@@ -334,20 +456,15 @@
         },
         "Correlation": {
 			"NameToDisplay": "Correlations for Intensity Measures",
-			"WidgetType": null,
+			"WidgetType": "QWidget",
 			"ToDisplay": true,
 			"Params": {
 				"Spatial": {
 					"NameToDisplay": "Spatial Correlation",
-					"WidgetType": null,
-					"ToDisplay": true,
+                    "WidgetType": "QCheckBox",
+                    "ToDisplay": true,
+                    "DefaultValue": false,
 					"Params": {
-						"ToInclude": {
-							"NameToDisplay": "Include",
-							"WidgetType": "QCheckBox",
-							"ToDisplay": true,
-							"DefaultValue": false
-						},
 						"Method": {
 							"NameToDisplay": "Available Method(s)",
 							"WidgetType": "QComboBox",
@@ -365,15 +482,10 @@
 				},
 				"Spectral": {
 					"NameToDisplay": "Cross Correlation",
-					"WidgetType": null,
-					"ToDisplay": true,
+                    "WidgetType": "QCheckBox",
+                    "ToDisplay": true,
+                    "DefaultValue": false,
 					"Params": {
-						"ToInclude": {
-							"NameToDisplay": "Include",
-							"WidgetType": "QCheckBox",
-							"ToDisplay": true,
-							"DefaultValue": false
-						},
 						"Method": {
 							"NameToDisplay": "Available Method(s)",
 							"WidgetType": "QComboBox",
@@ -390,6 +502,27 @@
 					}
 				}
 			}
+        },
+        "Type": {
+            "NameToDisplay": "Intensity Measures",
+            "WidgetType": "QWidget",
+            "ToDisplay": true,
+            "Params": {
+                "PGA": {
+                    "NameToDisplay": "Peak Ground Acceleration (PGA)",
+                    "WidgetType": "QCheckBox",
+                    "ToDisplay": true,
+                    "DefaultValue": false,
+                    "Params": {}
+                },
+                "PGV": {
+                    "NameToDisplay": "Peak Ground Velocity (PGV)",
+                    "WidgetType": "QCheckBox",
+                    "ToDisplay": true,
+                    "DefaultValue": false,
+                    "Params": {}
+                }
+            }
         }
     },
     "EngineeringDemandParameter": {
@@ -398,12 +531,6 @@
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
-				"ToInclude": {
-					"NameToDisplay": "Include",
-					"WidgetType": "QCheckBox",
-					"ToDisplay": true,
-					"DefaultValue": false
-				},
 				"Method": {
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
@@ -414,12 +541,6 @@
 							"NameToDisplay": "Zhu et al. (2017)",
 							"ToDisplay": true,
 							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								},
 								"ModelTransition": {
 									"NameToDisplay": "Distance for model transition (km), default: 20 km",
 									"WidgetType": "QLineEdit",
@@ -446,7 +567,13 @@
 													"WidgetType": "QComboBox",
 													"ToDisplay": true,
 													"DefaultValue": null,
-													"Options": "ColumnHeaders"
+                                                    "Options": {
+                                                        "ColumnHeaders": {
+                                                            "NameToDisplay": "Column Headers",
+                                                            "ToDisplay": true,
+                                                            "Params": {}
+                                                        }
+                                                    }
 												}
 											}
 										}
@@ -472,7 +599,13 @@
 													"WidgetType": "QComboBox",
 													"ToDisplay": true,
 													"DefaultValue": null,
-													"Options": "ColumnHeaders"
+                                                    "Options": {
+                                                        "ColumnHeaders": {
+                                                            "NameToDisplay": "Column Headers",
+                                                            "ToDisplay": true,
+                                                            "Params": {}
+                                                        }
+                                                    }
 												}
 											}
 										}
@@ -498,7 +631,13 @@
 													"WidgetType": "QComboBox",
 													"ToDisplay": true,
 													"DefaultValue": null,
-													"Options": "ColumnHeaders"
+                                                    "Options": {
+                                                        "ColumnHeaders": {
+                                                            "NameToDisplay": "Column Headers",
+                                                            "ToDisplay": true,
+                                                            "Params": {}
+                                                        }
+                                                    }
 												}
 											}
 										}
@@ -524,7 +663,13 @@
 													"WidgetType": "QComboBox",
 													"ToDisplay": true,
 													"DefaultValue": null,
-													"Options": "ColumnHeaders"
+                                                    "Options": {
+                                                        "ColumnHeaders": {
+                                                            "NameToDisplay": "Column Headers",
+                                                            "ToDisplay": true,
+                                                            "Params": {}
+                                                        }
+                                                    }
 												}
 											}
 										}
@@ -550,7 +695,13 @@
 													"WidgetType": "QComboBox",
 													"ToDisplay": true,
 													"DefaultValue": null,
-													"Options": "ColumnHeaders"
+                                                    "Options": {
+                                                        "ColumnHeaders": {
+                                                            "NameToDisplay": "Column Headers",
+                                                            "ToDisplay": true,
+                                                            "Params": {}
+                                                        }
+                                                    }
 												}
 											}
 										}
@@ -576,7 +727,13 @@
 													"WidgetType": "QComboBox",
 													"ToDisplay": true,
 													"DefaultValue": null,
-													"Options": "ColumnHeaders"
+                                                    "Options": {
+                                                        "ColumnHeaders": {
+                                                            "NameToDisplay": "Column Headers",
+                                                            "ToDisplay": true,
+                                                            "Params": {}
+                                                        }
+                                                    }
 												}
 											}
 										}
@@ -593,12 +750,6 @@
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
-				"ToInclude": {
-					"NameToDisplay": "Include",
-					"WidgetType": "QCheckBox",
-					"ToDisplay": true,
-					"DefaultValue": false
-				},
 				"Method": {
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
@@ -609,12 +760,6 @@
 							"NameToDisplay": "Grant et al. (2016) - same as Hazus (FEMA, 2014)",
 							"ToDisplay": true,
 							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								},
 								"DistanceToWaterCutoff": {
 									"NameToDisplay": "Distance to water cutoff, default: 20 km",
 									"WidgetType": "QLineEdit",
@@ -641,7 +786,13 @@
 													"WidgetType": "QComboBox",
 													"ToDisplay": true,
 													"DefaultValue": null,
-													"Options": "ColumnHeaders"
+                                                    "Options": {
+                                                        "ColumnHeaders": {
+                                                            "NameToDisplay": "Column Headers",
+                                                            "ToDisplay": true,
+                                                            "Params": {}
+                                                            }
+                                                        }
 												}
 											}
 										}
@@ -658,12 +809,6 @@
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
-				"ToInclude": {
-					"NameToDisplay": "Include",
-					"WidgetType": "QCheckBox",
-					"ToDisplay": true,
-					"DefaultValue": false
-				},
 				"Method": {
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
@@ -673,14 +818,7 @@
 						"Hazus2014": {
 							"NameToDisplay": "Hazus (FEMA, 2014)",
 							"ToDisplay": true,
-							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								}
-							}
+							"Params": {}
 						}
 					}
 				}
@@ -691,12 +829,6 @@
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
-				"ToInclude": {
-					"NameToDisplay": "Include",
-					"WidgetType": "QCheckBox",
-					"ToDisplay": true,
-					"DefaultValue": false
-				},
 				"Method": {
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
@@ -707,12 +839,6 @@
 							"NameToDisplay": "Bray and Macedo (2019)",
 							"ToDisplay": true,
 							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								},
 								"GroundMotionType": {
 									"NameToDisplay": "Ground motion type, default: General",
 									"WidgetType": "QComboBox",
@@ -735,29 +861,6 @@
 											"Params": {}
 										}
 									}
-								},
-								"MethodForKy": {
-									"NameToDisplay": "Method for yield acceleration, default: Bray (2007)",
-									"WidgetType": "QComboBox",
-									"ToDisplay": true,
-									"DefaultValue": "Bray2007",
-									"Options": {
-										"GrantEtal2016": {
-											"NameToDisplay": "Grant et al. (2016)",
-											"ToDisplay": true,
-											"Params": "ReferToYieldAcceleration"
-										},
-										"Bray2007": {
-											"NameToDisplay": "Bray (2007)",
-											"ToDisplay": true,
-											"Params": "ReferToYieldAcceleration"
-										},
-										"RathjeSaygili2009": {
-											"NameToDisplay": "Rathje and Saygili (2009)",
-											"ToDisplay": true,
-											"Params": "ReferToYieldAcceleration"
-										}
-									}
 								}
 							}
 						},
@@ -765,12 +868,6 @@
 							"NameToDisplay": "Jibson (2007)",
 							"ToDisplay": true,
 							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								},
 								"ModelType": {
 									"NameToDisplay": "Model to use, default: Model with ky, PGA, M",
 									"WidgetType": "QComboBox",
@@ -798,29 +895,6 @@
 											"Params": {}
 										}
 									}
-								},
-								"MethodForKy": {
-									"NameToDisplay": "Method for yield acceleration, default: Grant et al. (2016)",
-									"WidgetType": "QComboBox",
-									"ToDisplay": true,
-									"DefaultValue": "GrantEtal2016",
-									"Options": {
-										"GrantEtal2016": {
-											"NameToDisplay": "Grant et al. (2016)",
-											"ToDisplay": true,
-											"Params": "ReferToYieldAcceleration"
-										},
-										"Bray2007": {
-											"NameToDisplay": "Bray (2007)",
-											"ToDisplay": true,
-											"Params": "ReferToYieldAcceleration"
-										},
-										"RathjeSaygili2009": {
-											"NameToDisplay": "Rathje and Saygili (2009)",
-											"ToDisplay": true,
-											"Params": "ReferToYieldAcceleration"
-										}
-									}
 								}
 							}
 						}
@@ -828,7 +902,7 @@
                 },
 				"YieldAcceleration": {
 					"NameToDisplay": "Yield Acceleration",
-					"WidgetType": null,
+					"WidgetType": "QWidget",
 					"ToDisplay": true,
 					"Params": {
 						"FrictionAngle": {
@@ -851,7 +925,13 @@
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
 											"DefaultValue": null,
-											"Options": "ColumnHeaders"
+                                            "Options": {
+                                                "ColumnHeaders": {
+                                                    "NameToDisplay": "Column Headers",
+                                                    "ToDisplay": true,
+                                                    "Params": {}
+                                                }
+                                            }
 										}
 									}
 								}
@@ -877,7 +957,13 @@
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
 											"DefaultValue": null,
-											"Options": "ColumnHeaders"
+                                            "Options": {
+                                                "ColumnHeaders": {
+                                                    "NameToDisplay": "Column Headers",
+                                                    "ToDisplay": true,
+                                                    "Params": {}
+                                                }
+                                            }
 										}
 									}
 								}
@@ -903,7 +989,13 @@
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
 											"DefaultValue": null,
-											"Options": "ColumnHeaders"
+                                            "Options": {
+                                                "ColumnHeaders": {
+                                                    "NameToDisplay": "Column Headers",
+                                                    "ToDisplay": true,
+                                                    "Params": {}
+                                                }
+                                            }
 										}
 									}
 								}
@@ -929,7 +1021,13 @@
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
 											"DefaultValue": null,
-											"Options": "ColumnHeaders"
+                                            "Options": {
+                                                "ColumnHeaders": {
+                                                    "NameToDisplay": "Column Headers",
+                                                    "ToDisplay": true,
+                                                    "Params": {}
+                                                }
+                                            }
 										}
 									}
 								}
@@ -955,14 +1053,20 @@
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
 											"DefaultValue": null,
-											"Options": "ColumnHeaders"
+                                            "Options": {
+                                                "ColumnHeaders": {
+                                                    "NameToDisplay": "Column Headers",
+                                                    "ToDisplay": true,
+                                                    "Params": {}
+                                                }
+                                            }
 										}
 									}
 								}
 							}
 						},
-						"Method": {
-							"NameToDisplay": "Available Method(s)",
+						"MethodForKy": {
+							"NameToDisplay": "Method for yield acceleration",
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": "Bray2007",
@@ -1001,7 +1105,13 @@
 																			"WidgetType": "QComboBox",
 																			"ToDisplay": true,
 																			"DefaultValue": null,
-																			"Options": "ColumnHeaders"
+                                                                            "Options": {
+                                                                                "ColumnHeaders": {
+                                                                                    "NameToDisplay": "Column Headers",
+                                                                                    "ToDisplay": true,
+                                                                                    "Params": {}
+                                                                                }
+                                                                            }
 																		}
 																	}
 																}
@@ -1076,7 +1186,13 @@
 																			"WidgetType": "QComboBox",
 																			"ToDisplay": true,
 																			"DefaultValue": null,
-																			"Options": "ColumnHeaders"
+                                                                            "Options": {
+                                                                                "ColumnHeaders": {
+                                                                                    "NameToDisplay": "Column Headers",
+                                                                                    "ToDisplay": true,
+                                                                                    "Params": {}
+                                                                                }
+                                                                            }
 																		}
 																	}
 																}
@@ -1102,7 +1218,13 @@
 																			"WidgetType": "QComboBox",
 																			"ToDisplay": true,
 																			"DefaultValue": null,
-																			"Options": "ColumnHeaders"
+                                                                            "Options": {
+                                                                                "ColumnHeaders": {
+                                                                                    "NameToDisplay": "Column Headers",
+                                                                                    "ToDisplay": true,
+                                                                                    "Params": {}
+                                                                                }
+                                                                            }
 																		}
 																	}
 																}
@@ -1125,12 +1247,6 @@
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
-				"ToInclude": {
-					"NameToDisplay": "Include",
-					"WidgetType": "QCheckBox",
-					"ToDisplay": true,
-					"DefaultValue": false
-				},
 				"Method": {
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
@@ -1140,38 +1256,17 @@
 						"Thompson2020": {
 							"NameToDisplay": "Thompson (2020)",
 							"ToDisplay": true,
-							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								}
-							}
+							"Params": {}
 						},
 						"WellsCoppersmith1994": {
 							"NameToDisplay": "Wells and Coppersmith (1994)",
 							"ToDisplay": true,
-							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								}
-							}
+							"Params": {}
 						},
 						"Hazus2014": {
 							"NameToDisplay": "Hazus (FEMA, 2014)",
 							"ToDisplay": true,
-							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								}
-							}
+							"Params": {}
 						}
 					}
 				}
@@ -1206,7 +1301,7 @@
 			"Params": {
 				"Demand": {
 					"NameToDisplay": "Demands",
-					"WidgetType": null,
+					"WidgetType": "QWidget",
 					"ToDisplay": true,
 					"Params": {
 						"RepairRatePGV": {
@@ -1234,47 +1329,23 @@
 						"ORourke2020": {
 							"NameToDisplay": "O'Rourke (2020)",
 							"ToDisplay": true,
-							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								},
-								"ComponentProperties": "ReferToComponentProperties"
-							}
+							"Params": {}
 						},
 						"ALA2001": {
 							"NameToDisplay": "ALA (2001)",
 							"ToDisplay": true,
-							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								},
-								"ComponentProperties": "ReferToComponentProperties"
-							}
+							"Params": {}
 						},
 						"Hazus2014": {
 							"NameToDisplay": "Hazus (FEMA, 2014)",
 							"ToDisplay": true,
-							"Params": {
-								"ModelWeight": {
-									"NameToDisplay": "Model weight",
-									"WidgetType": "QLineEdit",
-									"ToDisplay": true,
-									"DefaultValue": 1
-								},
-								"ComponentProperties": "ReferToComponentProperties"
-							}
+							"Params": {}
 						}
 					}
 				},
 				"ComponentProperties": {
 					"NameToDisplay": "Component Properties",
-					"WidgetType": null,
+					"WidgetType": "QWidget",
 					"ToDisplay": true,
 					"Params": {
 						"ComponentMaterial": {
@@ -1297,7 +1368,13 @@
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
 											"DefaultValue": null,
-											"Options": "ColumnHeaders"
+                                            "Options": {
+                                                "ColumnHeaders": {
+                                                    "NameToDisplay": "Column Headers",
+                                                    "ToDisplay": true,
+                                                    "Params": {}
+                                                }
+                                            }
 										}
 									}
 								}
@@ -1323,7 +1400,13 @@
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
 											"DefaultValue": null,
-											"Options": "ColumnHeaders"
+                                            "Options": {
+                                                "ColumnHeaders": {
+                                                    "NameToDisplay": "Column Headers",
+                                                    "ToDisplay": true,
+                                                    "Params": {}
+                                                }
+                                            }
 										}
 									}
 								}
@@ -1349,7 +1432,13 @@
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
 											"DefaultValue": null,
-											"Options": "ColumnHeaders"
+                                            "Options": {
+                                                "ColumnHeaders": {
+                                                    "NameToDisplay": "Column Headers",
+                                                    "ToDisplay": true,
+                                                    "Params": {}
+                                                }
+                                            }
 										}
 									}
 								}
@@ -1375,7 +1464,13 @@
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
 											"DefaultValue": null,
-											"Options": "ColumnHeaders"
+                                            "Options": {
+                                                "ColumnHeaders": {
+                                                    "NameToDisplay": "Column Headers",
+                                                    "ToDisplay": true,
+                                                    "Params": {}
+                                                }
+                                            }
 										}
 									}
 								}

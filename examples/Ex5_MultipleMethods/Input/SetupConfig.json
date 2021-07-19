@@ -12,7 +12,7 @@
 		"Seed": 1
 	},
     "Infrastructure": {
-        "SiteDataFile": "example/Ex5_MultipleMethods/Input/SiteData.csv",
+        "SiteDataFile": "examples/Ex5_MultipleMethods/Input/SiteData.csv",
 		"SiteLocationParams": {
 			"LatMid": {
 				"DataExists": true,

@@ -36,11 +36,12 @@ class assessment(object):
     
     .. autosummary::
     
-        get_src_GM_site
+        get_IM_means
         sim_IM
         assess_EDP
         assess_DM
         assess_DV
+        export_DV
     
     """
     

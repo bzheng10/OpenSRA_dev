@@ -10,45 +10,97 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os, sys
+import os, sys, json
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.dirname(os.path.abspath('.'))+r'/src/')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath('.')), 'src'))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+# sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'src'))
+
+# -- Preprocess/setup ---------------------------------------------------
+# setup
+cwd = os.getcwd()
+opensra_dir = os.path.dirname(cwd)
+# get list of devs from devs.json
+with open(os.path.join(opensra_dir,'readme_src','ReadmeResource.json'),'r') as f:
+    readme_resource = json.load(f)
+devs = readme_resource['Developers'] # developers
+depends = readme_resource['PythonModules'] # dependencies
+ackns = readme_resource['Acknowledgements'] # acknowledgements
+contacts = readme_resource['Contacts'] # contacts
+py_ver = readme_resource['Python']['Version'] # Python version
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'OpenSRA'
-copyright = '2020, Slate Geotechnical Consultants and The Regents of the University of California'
+copyright = '2021, Slate Geotechnical Consultants and The Regents of the University of California'
 author = 'Barry Zheng'
 
 # The full version, including alpha/beta/rc tags
-release = '(20XX)'
+release = '(2022)'
 
 
 # -- Keywords -----------------------------------------------------
 
-rst_prolog = """\
+rst_prolog = f"""\
 .. |full name| replace:: Open Seismic Risk Assessment Tool
 .. |short name| replace:: OpenSRA
 .. |github link| replace:: `OpenSRA Github page`_
 .. _OpenSRA Github page: https://github.com/OpenSRA/OpenSRA
-.. |messageBoard| replace:: `Message Board`_
 .. |downloadLink| replace:: `OpenSRA download link`_
 .. _OpenSRA download link: https://peer.berkeley.edu/opensra
-.. |version| replace:: 0.1
+.. |version| replace:: 0.4
 .. |peer link| replace:: `PEER`_
 .. _PEER: https://peer.berkeley.edu/
-.. |slate link| replace:: `Slate Geotechnical Consultants`_
-.. _Slate Geotechnical Consultants: http://slategeotech.com/
+.. |slate link| replace:: `Slate Geotechnical Consultants (Slate)`_
+.. _Slate Geotechnical Consultants (Slate): http://slategeotech.com/
 .. |ngawest2 link| replace:: `NGA West 2`_
 .. _NGA West 2: https://peer.berkeley.edu/research/nga-west-2
-.. |contact person| replace:: Barry Zheng, Slate Geotechnical Consultants, bzheng@slategeotech.com
-.. |developers| replace:: Barry Zheng (Slate), 
-                          Jennie Watson-Lamprey (Slate), 
-                          Wael Elhaddad (SimCenter, NHERI), 
-                          Frank McKenna (SimCenter, NHERI), 
 """
 
+# List of contacts
+for count,item in enumerate(contacts):
+    info = contacts[item]
+    rst_prolog = rst_prolog + \
+f"""\
+.. |contact{count+1}| replace:: {item}, {info['Title']} ({info['Affiliation']}): {info['Profile']}
+"""
+
+# List of developers
+for count,item in enumerate(devs):
+    info = devs[item]
+    rst_prolog = rst_prolog + \
+f"""\
+.. |dev{count+1}| replace:: {item}, {info['Title']} ({info['Affiliation']})
+"""
+
+# List of project managers
+for count,item in enumerate(pms):
+    info = pms[item]
+    rst_prolog = rst_prolog + \
+f"""\
+.. |pm{count+1}| replace:: {item}, {info['Title']} ({info['Affiliation']})
+"""
+
+# List of acknowledgements
+for count,item in enumerate(ackns):
+    info = ackns[item]
+    rst_prolog = rst_prolog + \
+f"""\
+.. |ackn{count+1}| replace:: {item}, {info['Title']} ({info['Affiliation']})
+"""
+
+# .. |messageBoard| replace:: `Message Board`_
+# .. |contact1| replace:: Barry Zheng (Slate): bzheng@slategeotech.com
+# .. |contact2| replace:: Jennie Watson-Lamprey (Slate): jwatsonlamprey@slategeotech.com
+# .. |dev1| replace:: Barry Zheng (Slate)
+# .. |dev2| replace:: Steve Gavrilovic (SimCenter, NHERI)
+# .. |dev3| replace:: Frank McKenna (SimCenter, NHERI)
+# .. |dev4| replace:: Maxime Lacour (UC Berkeley)
+# .. |ackn1| replace:: Wael Elhaddad (SimCenter, NHERI)
+# .. |ackn2| replace:: Kuanshi Zhong (SimCenter, NHERI)
+# .. |ackn3| replace:: Simon Kwong (USGS)
+# """
 
 # -- General configuration ---------------------------------------------------
 
@@ -108,4 +160,10 @@ html_static_path = ['_static']
 # 'searchbox.html']``.
 #
 # html_sidebars = {}
-html_theme = 'nature'
+# html_theme = 'nature'
+# html_theme = 'alabaster'
+html_theme = 'classic'
+# html_theme = 'furo'
+# html_theme = 'press' # not working, compatibility with logo
+# html_theme = 'insegel'
+# html_theme = 'sphinx_material'

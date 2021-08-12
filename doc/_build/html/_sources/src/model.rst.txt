@@ -1,7 +1,7 @@
 Assessment Class Object
-=========================
+=======================
 
-.. automodule:: model.assessment
-	:members: create_RV, generate_IM, generate_EDP, generate_DM, generate_DV
+.. automodule:: Model.assessment
+	:members: get_IM_means, sim_IM, assess_EDP, assess_DM, assess_DV, export_DV
 	:no-undoc-members:
 	

@@ -4,272 +4,41 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>General Functions &#8212; OpenSRA (20XX) documentation</title>
-    <link rel="stylesheet" href="../_static/nature.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>General Functions &#8212; OpenSRA (2022) documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="Decision Variables" href="dv.html" /> 
+    <link rel="prev" title="Decision Variables" href="dv.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
   </head><body>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="dv.html" title="Decision Variables"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
-      </ul>
-    </div>  
+  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
-  <div class="section" id="module-fcn_gen">
-<span id="general-functions"></span><h1>General Functions<a class="headerlink" href="#module-fcn_gen" title="Permalink to this headline">¶</a></h1>
-<dl class="py function">
-<dt id="fcn_gen.convert_array_to_sym_mat">
-<code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">convert_array_to_sym_mat</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">n</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.convert_array_to_sym_mat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a 1D array to a symmetric matric, e.g., 3 elements -&gt; 2x2 matrix, 6 elements -&gt; 3x3 matrix</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>x</strong><span class="classifier">float, array</span></dt><dd><p>1D array of n! elements, where elements should be ordered left-right, top-down, e.g., for a 3x3 matrix, 1D array consists of components (1,1), (1,2), (1,3), (2,2), (2,3), (3,3)</p>
-</dd>
-<dt><strong>n</strong><span class="classifier">int</span></dt><dd><p>dimension of the symmetric matrix</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>mat</strong><span class="classifier">float, matrix</span></dt><dd><p>symmetric matrix</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="fcn_gen.count_in_range">
-<code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">count_in_range</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">list</span></em>, <em class="sig-param"><span class="n">a</span><span class="o">=</span><span class="default_value">- inf</span></em>, <em class="sig-param"><span class="n">b</span><span class="o">=</span><span class="default_value">inf</span></em>, <em class="sig-param"><span class="n">flag_include_a</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">flag_include_b</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.count_in_range" title="Permalink to this definition">¶</a></dt>
-<dd><p>counts the number of instances in a list between lower and upper limits, inclusive or exclusive</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>list</strong><span class="classifier">float, array</span></dt><dd><p>list of values</p>
-</dd>
-<dt><strong>a</strong><span class="classifier">float, optional</span></dt><dd><p>lower limit; default to <strong>-inf</strong></p>
-</dd>
-<dt><strong>b</strong><span class="classifier">float, optional</span></dt><dd><p>upper limit; default to <strong>inf</strong></p>
-</dd>
-<dt><strong>flag_include_a</strong><span class="classifier">boolean, optional</span></dt><dd><p>include <strong>a</strong> in count; default = True</p>
-</dd>
-<dt><strong>flag_include_b</strong><span class="classifier">boolean, optional</span></dt><dd><p>include <strong>b</strong> in count; default = True</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>count</strong><span class="classifier">float</span></dt><dd><p>number of instances</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="fcn_gen.find_set_nan">
-<code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">find_set_nan</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arr</span></em>, <em class="sig-param"><span class="n">find_val</span></em>, <em class="sig-param"><span class="n">set_val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.find_set_nan" title="Permalink to this definition">¶</a></dt>
-<dd><p>Finds all the elements in an array <strong>arr</strong> that equals the value <strong>find_val</strong> and sets these elements to the value <strong>set_val</strong>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>arr: float, array</strong></dt><dd><p>an array of values</p>
-</dd>
-<dt><strong>find_val: float</strong></dt><dd><p>value to search for</p>
-</dd>
-<dt><strong>set_val: float</strong></dt><dd><p>value to set to</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>arr: float, array</dt><dd><p>modified array</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="fcn_gen.gen_rand_com">
-<code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">gen_rand_com</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nBin</span></em>, <em class="sig-param"><span class="n">nVar</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.gen_rand_com" title="Permalink to this definition">¶</a></dt>
-<dd><p>text</p>
-</dd></dl>
-
-<dl class="py function">
-<dt id="fcn_gen.get_cond_prob_exceed_by_count">
-<code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">get_cond_prob_exceed_by_count</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">xbins</span></em>, <em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="n">ycriteria</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.get_cond_prob_exceed_by_count" title="Permalink to this definition">¶</a></dt>
-<dd><p>Count the number of instances in <strong>y_red</strong> where <strong>y</strong> &gt; <strong>i</strong> for every <strong>i</strong> in <strong>x</strong>. Take the number of instances and sort them into <strong>xbinx</strong>. Probability = count/total.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>xbins</strong><span class="classifier">float, array</span></dt><dd><p>an array of bins to group x values (e.g., M = 5, 6, 6.5 for bins 5-6 and 6-6.5)</p>
-</dd>
-<dt><strong>x</strong><span class="classifier">float, array</span></dt><dd><p>an array of values to get probability of exceendance for</p>
-</dd>
-<dt><strong>y</strong><span class="classifier">float, array</span></dt><dd><p>sample or population as a function of <strong>x</strong></p>
-</dd>
-<dt><strong>ycriteria</strong><span class="classifier">float</span></dt><dd><p>the criteria in prob(y &gt; ycriteria)</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>prob</strong><span class="classifier">float</span></dt><dd><p>[%] conditional probability of exceedance</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="fcn_gen.get_haversine_dist">
-<code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">get_haversine_dist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lon1</span></em>, <em class="sig-param"><span class="n">lat1</span></em>, <em class="sig-param"><span class="n">lon2</span></em>, <em class="sig-param"><span class="n">lat2</span></em>, <em class="sig-param"><span class="n">unit</span><span class="o">=</span><span class="default_value">'km'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.get_haversine_dist" title="Permalink to this definition">¶</a></dt>
-<dd><p>calculates the Haversine distance between two sets of coordinates</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>lon1</strong><span class="classifier">float, array</span></dt><dd><p>[degree] longitude of site 1</p>
-</dd>
-<dt><strong>lat1</strong><span class="classifier">float, array</span></dt><dd><p>[degree] latitude of site 1</p>
-</dd>
-<dt><strong>lon2</strong><span class="classifier">float, array</span></dt><dd><p>[degree] longitude of site 2</p>
-</dd>
-<dt><strong>lat2</strong><span class="classifier">float, array</span></dt><dd><p>[degree] latitude of site 2</p>
-</dd>
-<dt><strong>unit</strong><span class="classifier">str</span></dt><dd><p>unit for output: ‘<strong>km</strong>’ or ‘<strong>miles</strong>’</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>d</strong><span class="classifier">float, array</span></dt><dd><p>distance</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="fcn_gen.get_prob_exceed_by_count">
-<code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">get_prob_exceed_by_count</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.get_prob_exceed_by_count" title="Permalink to this definition">¶</a></dt>
-<dd><p>Count the number of instances in <strong>y_red</strong> where <strong>y</strong> &gt; <strong>i</strong> for every <strong>i</strong> in <strong>x</strong>. Probability = count/total.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>x</strong><span class="classifier">float, array</span></dt><dd><p>an array of values to get probability of exceendance for</p>
-</dd>
-<dt><strong>y</strong><span class="classifier">float, array</span></dt><dd><p>sample or population as a function of <strong>x</strong></p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>prob</strong><span class="classifier">float</span></dt><dd><p>[%] probability of exceedance</p>
-</dd>
-<dt><strong>count</strong><span class="classifier">int</span></dt><dd><p>number of instances of exceedance</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="fcn_gen.get_weighted_average">
-<code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">get_weighted_average</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">weights</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.get_weighted_average" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the weighted average for <strong>x</strong> values and their corresponding <strong>weights</strong></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>x</strong><span class="classifier">float, array</span></dt><dd><p>array of unweighted values</p>
-</dd>
-<dt><strong>weights</strong><span class="classifier">float, array</span></dt><dd><p>list of weights corresponding to x</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>sum_weighted</strong><span class="classifier">float</span></dt><dd><p>sum of weighted x-values</p>
-</dd>
-<dt><strong>avg_weighted</strong><span class="classifier">float</span></dt><dd><p>weighted average of x-values</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="fcn_gen.inte_trap">
-<code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">inte_trap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="n">x</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.inte_trap" title="Permalink to this definition">¶</a></dt>
-<dd><p>computes the trapezoidal integration of a vector</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>y</strong><span class="classifier">float, array</span></dt><dd><p>values to perform integration on</p>
-</dd>
-<dt><strong>x</strong><span class="classifier">float, array</span></dt><dd><p>time array to compute time step from</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>inte_y</strong><span class="classifier">float, array</span></dt><dd><p>integration of y</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="fcn_gen.sort">
-<code class="sig-prename descclassname">fcn_gen.</code><code class="sig-name descname">sort</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">list</span></em>, <em class="sig-param"><span class="n">col</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fcn_gen.sort" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sorts a list of <strong>m</strong> entries and each entry with <strong>n</strong> values and sort by the column <strong>col</strong> relative to <strong>m</strong></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>list</strong><span class="classifier">float, array</span></dt><dd><p>list of values</p>
-</dd>
-<dt><strong>col</strong><span class="classifier">int</span></dt><dd><p>column to sort</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>list_sort</strong><span class="classifier">float, array</span></dt><dd><p>sorted list</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-</div>
+  <section id="general-functions">
+<h1>General Functions<a class="headerlink" href="#general-functions" title="Permalink to this headline">¶</a></h1>
+</section>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -277,16 +46,34 @@
             <p class="logo"><a href="../index.html">
               <img class="logo" src="../_static/OpenSRA_logo_1600ppi.png" alt="Logo"/>
             </a></p>
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="dv.html"
-                        title="previous chapter">Decision Variables</a></p>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="../_sources/src/fcn_gen.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
+<h1 class="logo"><a href="../index.html">OpenSRA</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="framework.html">OpenSRA Framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Assessment Class Object</a></li>
+<li class="toctree-l1"><a class="reference internal" href="im.html">Intensity Measures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="edp.html">Engineering Demand Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dm.html">Damage Measures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dv.html">Decision Variables</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">General Functions</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="dv.html" title="previous chapter">Decision Variables</a></li>
+  </ul></li>
+</ul>
+</div>
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
@@ -297,28 +84,32 @@
     </div>
 </div>
 <script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="dv.html" title="Decision Variables"
-             >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (20XX) documentation</a> &#187;</li> 
-      </ul>
+    <div class="footer">
+      &copy;2021, Slate Geotechnical Consultants and The Regents of the University of California.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/src/fcn_gen.rst.txt"
+          rel="nofollow">Page source</a>
     </div>
-    <div class="footer" role="contentinfo">
-        &#169; Copyright 2020, Slate Geotechnical Consultants and The Regents of the University of California.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.
-    </div>
+
+    
+
+    
   </body>
 </html>

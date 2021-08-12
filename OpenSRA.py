@@ -30,7 +30,7 @@ import logging
 import sys
 import argparse
 import json
-import zipfile
+# import zipfile
 import numpy as np
 import pandas as pd
 

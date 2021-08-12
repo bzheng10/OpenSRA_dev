@@ -16,22 +16,24 @@ Maxime Lacour, PhD, @ UC Berkeley: [LinkedIn](https://www.linkedin.com/in/maxime
 
 ## Dependencies
 
-### Python Packages
-The Python packages required for the current version of OpenSRA are listed below, along with the versions used in development. Packages from the "conda-forge" channel were used. If experiencing difficulty with package installation, consider working in a clean environment.
+### Python
+OpenSRA has been tested on **Python version 3.8.10**
 
-[jpype1 (1.2.1)](https://jpype.readthedocs.io/en/latest/index.html) - please first install this package; incompatibility was observed when trying to install this package after the rest
+The Python modules required for the current version of OpenSRA are listed below, along with the versions used for testing. Modules were installed via the "conda-forge" channel. If you are experiencing difficulty installing the modules, consider working in a clean environment.
 
-[NumPy (1.19.5)](https://numpy.org/doc/stable/)
+[jpype1 (1.3.0)](https://jpype.readthedocs.io/en/latest/index.html) - consider installing this package first; issues with incompatibility were observed when this package was installed after the others
 
-[pandas (1.2.1)](https://pandas.pydata.org/docs/)
+[numpy (1.21.0)](https://numpy.org/doc/stable/)
 
-[SciPy (1.6.0)](https://docs.scipy.org/doc/scipy/reference/)
+[pandas (1.2.5)](https://pandas.pydata.org/docs/)
 
-[GeoPandas (0.8.1)](https://geopandas.org/) - dependency will be removed in the future
+[scipy (1.7.0)](https://docs.scipy.org/doc/scipy/reference/)
 
-[rasterio (1.1.8)](https://rasterio.readthedocs.io/en/latest/) - dependency will be removed in the future
+[geopandas (0.9.0)](https://geopandas.org/) - dependency will likely be removed in the future
 
-[shapely (1.7.1)](https://shapely.readthedocs.io/en/stable/manual.html) - dependency will be removed in the future
+[rasterio (1.2.6)](https://rasterio.readthedocs.io/en/latest/) - dependency will likely be removed in the future
+
+[shapely (1.7.1)](https://shapely.readthedocs.io/en/stable/manual.html) - dependency will likely be removed in the future
 
 ### Java
 Currently, OpenSRA uses [OpenSHA](https://opensha.org/) for seismic source and ground motion characterizations. OpenSHA is developed in Java, and as such Java must be installed in order for OpenSRA to interface with OpenSHA. A procedure to install Java is provided below.
@@ -75,7 +77,7 @@ To run OpenSRA in the command prompt, nagivate to the root folder of OpenSRA and
 python OpenSRA.py -i PATH_TO_INPUT_FOLDER
 ```
 
-To also clean outputs from the previous run, run the command:
+To clean results from the previous run, run the command:
 ```
 python OpenSRA.py -i PATH_TO_INPUT_FOLDER -c yes
 ```
@@ -83,8 +85,9 @@ python OpenSRA.py -i PATH_TO_INPUT_FOLDER -c yes
 ## Developer's Guide
 Under development
 
-## Acknowledgments
+## Acknowledgements
 The OpenSRA development team would like to acknowledge [Dr. Wael Elhaddad and Dr. Kuanshi Zhong @ NHERI SimCenter](https://simcenter.designsafe-ci.org/about/people/) for providing developmental support on the OpenSHA interface, and [Dr. Simon Kwong @ USGS](https://www.usgs.gov/staff-profiles/neal-simon-kwong) for providing technical feedback on seismic and performance-based hazard analysis.
 
 ## License
 Please check the license file in the root folder.
+

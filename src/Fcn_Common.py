@@ -286,10 +286,8 @@ def get_haversine_dist(lon1, lat1, lon2, lat2, unit='km'):
 		r = 3958.8 # miles
 	
 	# convert long lat from degrees to radians
-	lon1 = np.radians(lon1)
-	lat1 = np.radians(lat1)
-	lon2 = np.radians(lon2)
-	lat2 = np.radians(lat2)
+	lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+	# lon1 = np.radians(lon1) 
 	
 	# Haversine function for epicentral distance
 	d = 2*r*np.arcsin(np.sqrt(np.sin((lat2-lat1)/2)**2 + np.cos(lat1)*np.cos(lat2)*np.sin((lon2-lon1)/2)**2))

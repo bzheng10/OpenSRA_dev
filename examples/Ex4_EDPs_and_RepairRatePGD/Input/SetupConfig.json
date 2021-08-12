@@ -12,7 +12,7 @@
 		"Seed": 1
 	},
     "Infrastructure": {
-        "SiteDataFile": "example/Ex4_EDPs_and_RepairRatePGD/Input/SiteData.csv",
+        "SiteDataFile": "examples/Ex4_EDPs_and_RepairRatePGD/Input/SiteData.csv",
 		"SiteLocationParams": {
 			"LatMid": {
 				"DataExists": true,

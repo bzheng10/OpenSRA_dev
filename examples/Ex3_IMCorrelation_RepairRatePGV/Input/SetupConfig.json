@@ -12,7 +12,7 @@
 		"Seed": 1
 	},
     "Infrastructure": {
-        "SiteDataFile": "example/Ex3_IMCorrelation_RepairRatePGV/Input/SiteData.csv",
+        "SiteDataFile": "examples/Ex3_IMCorrelation_RepairRatePGV/Input/SiteData.csv",
 		"SiteLocationParams": {
 			"LatMid": {
 				"DataExists": true,

@@ -1,92 +1,71 @@
 {
     "General": {
+        "AnalysisID" : "Example 3",
 		"Directory": {
 			"Working": ""
 		},
         "OutputFileType": "csv"
     },
-	"SamplingMethod": {
-		"Method": "MonteCarlo",
-		"Algorithm": "Latin Hypercube Sampling",
-		"NumberOfSamples": 3,
-		"Seed": 1
-	},
+    "SamplingMethod": {
+        "Method": {
+            "MonteCarlo" : {
+                "Algorithm": "LatinHypercube",
+                "NumberOfSamples": 3,
+                "Seed": 1
+            }
+        }
+    },
     "Infrastructure": {
         "SiteDataFile": "examples/Ex3_IMCorrelation_RepairRatePGV/Input/SiteData.csv",
 		"SiteLocationParams": {
-			"LatMid": {
-				"DataExists": true,
-				"ColumnIDWithData": "LAT_MIDDLE"
-			},
-			"LonMid": {
-				"DataExists": true,
-				"ColumnIDWithData": "LONG_MIDDLE"
-			},
-			"LatBegin": {
-				"DataExists": true,
-				"ColumnIDWithData": "LAT_BEGIN"
-			},
-			"LonBegin": {
-				"DataExists": true,
-				"ColumnIDWithData": "LONG_BEGIN"
-			},
-			"LatEnd": {
-				"DataExists": true,
-				"ColumnIDWithData": "LAT_END"
-			},
-			"LonEnd": {
-				"DataExists": true,
-				"ColumnIDWithData": "LONG_END"
-			},
-			"Length": {
-				"DataExists": false,
-				"ColumnIDWithData": null
-			}
+            "LatMid": "LAT_MIDDLE",
+            "LonMid": "LONG_MIDDLE",
+            "LatBegin": "LAT_BEGIN",
+            "LonBegin": "LONG_BEGIN",
+            "LatEnd": "LAT_END",
+            "LonEnd": "LONG_END",
+            "Length": null
 		}
     },
     "IntensityMeasure": {
         "Type": {
             "PGA": {
-                "ToAssess": true
+                "ToInclude": true
             },
             "PGV": {
-                "ToAssess": true
+                "ToInclude": true
             }
         },
-        "SourceForIM": "OpenSHA",
-        "SourceParameters": {
-			"SeismicSourceModel": "Mean UCERF3 FM3.1",
-            "Filter": {
-                "ReturnPeriod": {
-                    "ToInclude": true,
-                    "Maximum": 100000
+        "SourceForIM": {
+            "OpenSHA": {
+                "SeismicSourceModel": "Mean UCERF3 FM3.1",
+                "Filter": {
+                    "ReturnPeriod": {
+                        "ToInclude": true,
+                        "Maximum": 100000
+                    },
+                    "Distance": {
+                        "ToInclude": true,
+                        "Maximum": 100
+                    },
+                    "Magnitude": {
+                        "ToInclude": true,
+                        "Minimum": 5,
+                        "Maximum": null
+                    },
+                    "PointSource": {
+                        "ToInclude": false
+                    }
                 },
-                "Distance": {
-                    "ToInclude": true,
-                    "Maximum": 100
-                },
-                "Magnitude": {
-                    "ToInclude": true,
-                    "Minimum": 5,
-                    "Maximum": null
-                },
-                "PointSource": {
-                    "ToInclude": false
-                }
-            },
-            "GroundMotionModel": "Abrahamson, Silva & Kamai (2014)",
-			"OtherParameters": {
+                "GroundMotionModel": "Abrahamson, Silva & Kamai (2014)",
 				"Vs30": {
-					"Source": "Preferred",
-					"ColumnIDWithData": null
+                    "Wills et al. (2015)" : {}
 				},
 				"Z1p0": {
-					"Source": "Preferred",
-					"ColumnIDWithData": null
+                    "Preferred" : {}
 				},
 				"Z2p5": {
-					"Source": "Preferred",
-					"ColumnIDWithData": null
+                    "Preferred" : {}
 				}
 			}
         },
@@ -104,37 +83,37 @@
     "EngineeringDemandParameter": {
         "Type": {
             "Liquefaction": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "LateralSpread": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "GroundSettlement": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "Landslide": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "SurfaceFaultRupture": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "SubsurfaceFaultRupture": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "TransientGroundStrain": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             }
@@ -145,7 +124,7 @@
     "DamageMeasure": {
         "Type": {
             "TransientPipeStrain": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             }
@@ -156,7 +135,7 @@
     "DecisionVariable": {
         "Type": {
             "RepairRatePGV": {
-                "ToAssess": true,
+                "ToInclude": true,
                 "Method": {
                     "ORourke2020": {
 						"ModelWeight": 1,
@@ -177,7 +156,7 @@
                 "OtherParameters": {}
             },
             "RepairRatePGD": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             }

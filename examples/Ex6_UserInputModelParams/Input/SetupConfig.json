@@ -1,5 +1,6 @@
 {
     "General": {
+        "AnalysisID" : "Example 6",
 		"Directory": {
 			"Working": ""
 		},
@@ -24,43 +25,22 @@
     "Infrastructure": {
         "SiteDataFile": "examples/Ex6_UserInputModelParams/Input/SiteData.csv",
 		"SiteLocationParams": {
-			"LatMid": {
-				"DataExists": true,
-				"ColumnIDWithData": "LAT_MIDDLE"
-			},
-			"LonMid": {
-				"DataExists": true,
-				"ColumnIDWithData": "LONG_MIDDLE"
-			},
-			"LatBegin": {
-				"DataExists": true,
-				"ColumnIDWithData": "LAT_BEGIN"
-			},
-			"LonBegin": {
-				"DataExists": true,
-				"ColumnIDWithData": "LONG_BEGIN"
-			},
-			"LatEnd": {
-				"DataExists": true,
-				"ColumnIDWithData": "LAT_END"
-			},
-			"LonEnd": {
-				"DataExists": true,
-				"ColumnIDWithData": "LONG_END"
-			},
-			"Length": {
-				"DataExists": false,
-				"ColumnIDWithData": "SHAPE_LENGTH"
-			}
+            "LatMid": "LAT_MIDDLE",
+            "LonMid": "LONG_MIDDLE",
+            "LatBegin": "LAT_BEGIN",
+            "LonBegin": "LONG_BEGIN",
+            "LatEnd": "LAT_END",
+            "LonEnd": "LONG_END",
+			"Length": null
 		}
     },
     "IntensityMeasure": {
         "Type": {
             "PGA": {
-                "ToAssess": true
+                "ToInclude": true
             },
             "PGV": {
-                "ToAssess": true
+                "ToInclude": true
             }
         },
         "SourceForIM": {
@@ -86,16 +66,15 @@
                 },
                 "GroundMotionModel": "NGAWest2 2014 Averaged No Idriss",
                 "Vs30": {
-                    "Source": "UserDefined",
-                    "ColumnIDWithData": "Vs30 (m/s)"
+                    "UserDefined" : {
+                        "ColumnIDWithData": "Vs30 (m/s)"
+                    }
                 },
                 "Z1p0": {
-                    "Source": "Preferred",
-                    "ColumnIDWithData": null
+                    "Preferred" : {}
                 },
                 "Z2p5": {
-                    "Source": "Preferred",
-                    "ColumnIDWithData": null
+                    "Preferred" : {}
                 }
             }
         },
@@ -113,7 +92,7 @@
     "EngineeringDemandParameter": {
         "Type": {
             "Liquefaction": {
-                "ToAssess": true,
+                "ToInclude": true,
                 "Method": {
                     "ZhuEtal2017": {
 						"ModelWeight": 1, 
@@ -154,7 +133,7 @@
                 }
             },
             "LateralSpread": {
-                "ToAssess": true,
+                "ToInclude": true,
                 "Method": {
                     "GrantEtal2016": {
 						"ModelWeight": 1,
@@ -165,7 +144,7 @@
                 }
             },
             "GroundSettlement": {
-                "ToAssess": true,
+                "ToInclude": true,
                 "Method": {
                     "Hazus2014": {
 						"ModelWeight": 1
@@ -174,7 +153,7 @@
                 "OtherParameters": {}
             },
             "Landslide": {
-                "ToAssess": true,
+                "ToInclude": true,
                 "Method": {
                     "BrayMacedo2019": {
 						"ModelWeight": 0.5,
@@ -259,7 +238,7 @@
                 }
             },
             "SurfaceFaultRupture": {
-                "ToAssess": true,
+                "ToInclude": true,
                 "Method": {
                     "WellsCoppersmith1994": {
 						"ModelWeight": 1
@@ -275,14 +254,14 @@
                 }
             },
             "SubsurfaceFaultRupture": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {
 				},
                 "OtherParameters": {
                 }
             },
             "TransientGroundStrain": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {
 				},
                 "OtherParameters": {
@@ -295,7 +274,7 @@
     "DamageMeasure": {
         "Type": {
             "TransientPipeStrain": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {
 				},
                 "OtherParameters": {
@@ -308,7 +287,7 @@
     "DecisionVariable": {
         "Type": {
             "RepairRatePGV": {
-                "ToAssess": true,
+                "ToInclude": true,
                 "Method": {
                     "ORourke2020": {
 						"ModelWeight": 1,
@@ -368,7 +347,7 @@
                 "OtherParameters": {}
             },
             "RepairRatePGD": {
-                "ToAssess": true,
+                "ToInclude": true,
                 "Method": {
                     "ORourke2020": {
 						"ModelWeight": 1,

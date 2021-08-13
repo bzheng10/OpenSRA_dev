@@ -1,77 +1,56 @@
 {
     "General": {
+        "AnalysisID" : "Example 2",
 		"Directory": {
 			"Working": ""
 		},
         "OutputFileType": "csv"
     },
-	"SamplingMethod": {
-		"Method": "MonteCarlo",
-		"Algorithm": "Latin Hypercube Sampling",
-		"NumberOfSamples": 3,
-		"Seed": 1
-	},
+    "SamplingMethod": {
+        "Method": {
+            "MonteCarlo" : {
+                "Algorithm": "LatinHypercube",
+                "NumberOfSamples": 3,
+                "Seed": 1
+            }
+        }
+    },
     "Infrastructure": {
         "SiteDataFile": "examples/Ex2_ShakeMap_noEDP_noDV/Input/SiteData.csv",
 		"SiteLocationParams": {
-			"LatMid": {
-				"DataExists": true,
-				"ColumnIDWithData": "LAT_MIDDLE"
-			},
-			"LonMid": {
-				"DataExists": true,
-				"ColumnIDWithData": "LONG_MIDDLE"
-			},
-			"LatBegin": {
-				"DataExists": false,
-				"ColumnIDWithData": null
-			},
-			"LonBegin": {
-				"DataExists": false,
-				"ColumnIDWithData": null
-			},
-			"LatEnd": {
-				"DataExists": false,
-				"ColumnIDWithData": null
-			},
-			"LonEnd": {
-				"DataExists": false,
-				"ColumnIDWithData": null
-			},
-			"Length": {
-				"DataExists": false,
-				"ColumnIDWithData": null
-			}
+            "LatMid": "LAT_MIDDLE",
+            "LonMid": "LONG_MIDDLE",
+            "LatBegin": "LAT_BEGIN",
+            "LonBegin": "LONG_BEGIN",
+            "LatEnd": "LAT_END",
+            "LonEnd": "LONG_END",
+            "Length": null
 		}
     },
     "IntensityMeasure": {
         "Type": {
             "PGA": {
-                "ToAssess": true
+                "ToInclude": true
             },
             "PGV": {
-                "ToAssess": true
+                "ToInclude": true
             }
         },
-        "SourceForIM": "ShakeMap",
-        "SourceParameters": {
-			"Directory": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/Ex2_ShakeMap_LogicTree_noEDP_noDV/Input/ShakeMap",
-			"Events": [ 
-				"1989_LomaPrieta",
-				"1994_Northridge"
-			],
-			"OtherParameters": {
+        "SourceForIM": {
+            "ShakeMap": {
+                "Directory": "examples/Ex2_ShakeMap_noEDP_noDV/Input/ShakeMap",
+                "Events": [
+                    "1989_LomaPrieta",
+                    "1994_Northridge"
+                ],
 				"Vs30": {
-					"Source": "Preferred",
-					"ColumnIDWithData": null
+                    "Wills et al. (2015)" : {}
 				},
 				"Z1p0": {
-					"Source": "Preferred",
-					"ColumnIDWithData": null
+                    "Preferred" : {}
 				},
 				"Z2p5": {
-					"Source": "Preferred",
-					"ColumnIDWithData": null
+                    "Preferred" : {}
 				}
 			}
         },
@@ -87,37 +66,37 @@
     "EngineeringDemandParameter": {
         "Type": {
             "Liquefaction": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "LateralSpread": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "GroundSettlement": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "Landslide": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "SurfaceFaultRupture": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "SubsurfaceFaultRupture": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "TransientGroundStrain": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             }
@@ -128,7 +107,7 @@
     "DamageMeasure": {
         "Type": {
             "TransientPipeStrain": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             }
@@ -139,12 +118,12 @@
     "DecisionVariable": {
         "Type": {
             "RepairRatePGV": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
             "RepairRatePGD": {
-                "ToAssess": false,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             }

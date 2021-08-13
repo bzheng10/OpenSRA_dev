@@ -5,146 +5,97 @@
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
-				"LatMid": {
-					"NameToDisplay": "Midpoint - Latitude",
-					"WidgetType": null,
-					"ToDisplay": true,
-					"Params": {
-						"ColumnIDWithData": {
-							"NameToDisplay": "Column ID With Data",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": null,
-                            "Options": {
-                                "ColumnHeaders": {
-                                    "NameToDisplay": "Column Headers",
-                                    "ToDisplay": true,
-                                    "Params": {}
-                                }
-                            }
-						}
-					}
-				},
-				"LonMid": {
-					"NameToDisplay": "Midpoint - Longtidue",
-					"WidgetType": null,
-					"ToDisplay": true,
-					"Params": {
-						"ColumnIDWithData": {
-							"NameToDisplay": "Column ID With Data",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": null,
-                            "Options": {
-                                "ColumnHeaders": {
-                                    "NameToDisplay": "Column Headers",
-                                    "ToDisplay": true,
-                                    "Params": {}
-                                }
-                            }
-						}
-					}
-				},
-				"LatBegin": {
-					"NameToDisplay": "Startpoint - Latitude",
-					"WidgetType": null,
-					"ToDisplay": true,
-					"Params": {
-						"ColumnIDWithData": {
-							"NameToDisplay": "Column ID With Data",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": null,
-                            "Options": {
-                                "ColumnHeaders": {
-                                    "NameToDisplay": "Column Headers",
-                                    "ToDisplay": true,
-                                    "Params": {}
-                                }
-                            }
-						}
-					}
-				},
-				"LonBegin": {
-					"NameToDisplay": "Startpoint - Longtidue",
-					"WidgetType": null,
-					"ToDisplay": true,
-					"Params": {
-						"ColumnIDWithData": {
-							"NameToDisplay": "Column ID With Data",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": null,
-                            "Options": {
-                                "ColumnHeaders": {
-                                    "NameToDisplay": "Column Headers",
-                                    "ToDisplay": true,
-                                    "Params": {}
-                                }
-                            }
-						}
-					}
-				},
-				"LatEnd": {
-					"NameToDisplay": "Endpoint - Latitude",
-					"WidgetType": null,
-					"ToDisplay": true,
-					"Params": {
-						"ColumnIDWithData": {
-							"NameToDisplay": "Column ID With Data",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": null,
-                            "Options": {
-                                "ColumnHeaders": {
-                                    "NameToDisplay": "Column Headers",
-                                    "ToDisplay": true,
-                                    "Params": {}
-                                }
-                            }
-						}
-					}
-				},
-				"LonEnd": {
-					"NameToDisplay": "Endpoint - Longitude",
-					"WidgetType": null,
-					"ToDisplay": true,
-					"Params": {
-						"ColumnIDWithData": {
-							"NameToDisplay": "Column ID With Data",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": null,
-                            "Options": {
-                                "ColumnHeaders": {
-                                    "NameToDisplay": "Column Headers",
-                                    "ToDisplay": true,
-                                    "Params": {}
-                                }
-                            }
-						}
-					}
-				},
-				"Length": {
-					"NameToDisplay": "Component Length (km)",
-					"WidgetType": null,
-					"ToDisplay": true,
-					"Params": {
-						"ColumnIDWithData": {
-							"NameToDisplay": "Column ID With Data",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": null,
-                            "Options": {
-                                "ColumnHeaders": {
-                                    "NameToDisplay": "Column Headers",
-                                    "ToDisplay": true,
-                                    "Params": {}
-                                }
-                            }
-						}
-					}
-				}
+                "LatBegin": {
+                    "NameToDisplay": "Startpoint - Latitude",
+                    "WidgetType": "QComboBox",
+                    "ToDisplay": true,
+                    "DefaultValue": null,
+                    "Options": {
+                        "ColumnHeaders": {
+                            "NameToDisplay": "Column Headers",
+                            "ToDisplay": true,
+                            "Params": {}
+                        }
+                    }
+                },
+                "LatMid": {
+                    "NameToDisplay": "Midpoint - Latitude",
+                    "WidgetType": "QComboBox",
+                    "ToDisplay": true,
+                    "DefaultValue": null,
+                    "Options": {
+                        "ColumnHeaders": {
+                            "NameToDisplay": "Column Headers",
+                            "ToDisplay": true,
+                            "Params": {}
+                        }
+                    }
+                },
+                "LatEnd": {
+                    "NameToDisplay": "Endpoint - Latitude",
+                    "WidgetType": "QComboBox",
+                    "ToDisplay": true,
+                    "DefaultValue": null,
+                    "Options": {
+                        "ColumnHeaders": {
+                            "NameToDisplay": "Column Headers",
+                            "ToDisplay": true,
+                            "Params": {}
+                        }
+                    }
+                },
+                "LonBegin": {
+                    "NameToDisplay": "Startpoint - Longitude",
+                    "WidgetType": "QComboBox",
+                    "ToDisplay": true,
+                    "DefaultValue": null,
+                    "Options": {
+                        "ColumnHeaders": {
+                            "NameToDisplay": "Column Headers",
+                            "ToDisplay": true,
+                            "Params": {}
+                        }
+                    }
+                },
+                "LonMid": {
+                    "NameToDisplay": "Midpoint - Longitude",
+                    "WidgetType": "QComboBox",
+                    "ToDisplay": true,
+                    "DefaultValue": null,
+                    "Options": {
+                        "ColumnHeaders": {
+                            "NameToDisplay": "Column Headers",
+                            "ToDisplay": true,
+                            "Params": {}
+                        }
+                    }
+                },
+                "LonEnd": {
+                    "NameToDisplay": "Endpoint - Longitude",
+                    "WidgetType": "QComboBox",
+                    "ToDisplay": true,
+                    "DefaultValue": null,
+                    "Options": {
+                        "ColumnHeaders": {
+                            "NameToDisplay": "Column Headers",
+                            "ToDisplay": true,
+                            "Params": {}
+                        }
+                    }
+                },
+                "Length": {
+                    "NameToDisplay": "Component Length (km)",
+                    "WidgetType": "QComboBox",
+                    "ToDisplay": true,
+                    "DefaultValue": null,
+                    "Options": {
+                        "ColumnHeaders": {
+                            "NameToDisplay": "Column Headers",
+                            "ToDisplay": true,
+                            "Params": {}
+                        }
+                    }
+                }
 			}
 		}
 	},

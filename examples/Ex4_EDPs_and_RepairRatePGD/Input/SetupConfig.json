@@ -59,7 +59,7 @@
                 },
                 "GroundMotionModel": "NGAWest2 2014 Averaged No Idriss",
                 "Vs30": {
-                    "Wills et al. (2015)" : {}
+                    "Preferred" : {}
                 },
                 "Z1p0": {
                     "Preferred" : {}

@@ -16,7 +16,7 @@
         }
     },
     "Infrastructure": {
-        "SiteDataFile": "examples/Ex1_OpenSHA_LHS_noEDP_noDV/Input/SiteData.csv",
+        "SiteDataFile": "examples/Ex1_OpenSHA_noEDP_noDV/Input/SiteData.csv",
 		"SiteLocationParams": {
             "LatMid": "LAT_MIDDLE",
             "LonMid": "LONG_MIDDLE",
@@ -59,7 +59,7 @@
                 },
                 "GroundMotionModel": "Abrahamson, Silva & Kamai (2014)",
 				"Vs30": {
-                    "Wills et al. (2015)" : {}
+                    "Preferred" : {}
 				},
 				"Z1p0": {
                     "Preferred" : {}

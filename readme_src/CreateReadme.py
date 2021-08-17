@@ -14,9 +14,10 @@ def main():
     flag_includeJava = True
 
     # setup
-    cwd = os.getcwd()
+    readme_dir = os.getcwd()
+    opensra_dir = os.path.dirname(readme_dir)
     # get list of devs from devs.json
-    with open(os.path.join(cwd,'readme_src','ReadmeResource.json'),'r') as f:
+    with open(os.path.join(readme_dir,'readme_src','ReadmeResource.json'),'r') as f:
         readme_resource = json.load(f)
     print(readme_resource.keys())
     devs = readme_resource['Developers'] # developers
@@ -83,7 +84,7 @@ def main():
     # 1-2-2: Java
     if flag_includeJava:
         # get list of devs from devs.json
-        with open(os.path.join(cwd,'readme_src','JavaText.txt'),'r') as f:
+        with open(os.path.join(readme_dir,'readme_src','JavaText.txt'),'r') as f:
             for line in f:
                 text = add_string(text, line.rstrip())
         text = add_string(text, '')
@@ -135,17 +136,15 @@ def main():
 
     # generate requirements.txt file
     reqs = [module+'=='+depends[module]['Version']+'\n' for module in depends]
-    print(f"\n - Saving requirement file to: {os.path.join(cwd,'requirements.txt')}")
-    with open(os.path.join(cwd,'requirements.txt'),'w') as f:
+    print(f"\n - Saving requirement file to: {os.path.join(opensra_dir,'requirements.txt')}")
+    with open(os.path.join(opensra_dir,'requirements.txt'),'w') as f:
         for line in reqs:
             f.write(line)
             
-
 # add string
 def add_string(text, string):
     text.append(string+'\n')
     return text
-    
     
 # init
 if __name__ == '__main__':

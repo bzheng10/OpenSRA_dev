@@ -158,13 +158,10 @@
                     "BrayMacedo2019": {
 						"ModelWeight": 0.5,
 						"GroundMotionType": "General",
-                        "MethodForKy": {
-                            "Bray2007" : {
-                                "SlopeType": {
-                                    "InfiniteSlope" : {}
-                                }
-                            }
-                        },
+                        "MethodForKy": "Bray2007",
+						"SlopeType": {
+                            "Preferred" : {}
+						},
 						"FrictionAngle": {
                             "UserDefined" : {
                                 "ColumnIDWithData": "Friction Angle (deg)"
@@ -194,19 +191,15 @@
 					"Jibson2007": {
 						"ModelWeight": 0.5,
 						"ModelType": "ky_pga_M",
-                        "MethodForKy": {
-                            "GrantEtal2016" : {
-                                "SlopeType": {
-                                    "InfiniteSlope" : {
-                                        "RootCohesion": {
-                                            "UserDefined" : {
-                                                "ColumnIDWithData": "Root Cohesion (kPa)"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
+                        "MethodForKy": "GrantEtal2016",
+						"SlopeType": {
+                            "Preferred" : {}
+						},
+						"RootCohesion": {
+							"UserDefined" : {
+								"ColumnIDWithData": "Root Cohesion (kPa)"
+							}
+						},
 						"FrictionAngle": {
                             "UserDefined" : {
                                 "ColumnIDWithData": "Friction Angle (deg)"

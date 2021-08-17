@@ -145,24 +145,24 @@ class assessment(object):
                     store_file_type = 'txt'
                 )
             })
-
+        
         # Get predictions and rupture lists from OpenSHA
         if exist_ListOfScenarios is False or exist_Predictions is False:
             # Setup - general
             self._EVENT_dict['Platform'] = setup_config['IntensityMeasure']['SourceForIM']
             
             # Interface with OpenSHA
-            if setup_config['IntensityMeasure']['SourceForIM'] == 'OpenSHA':
+            if 'OpenSHA' in setup_config['IntensityMeasure']['SourceForIM']:
                 logging.info(f"\n------------------------------------------------------\n-----Interfacing with OpenSHA for GMs\n")
                 # Setup up OpenSHA
                 # erf, imr, sites = OpenSHAInterface.setup_opensha(setup_config, other_config_param, site_data)
                 erf, imr, sites = OpenSHAInterface.setup_opensha(setup_config, other_config_param, site_data)
                 self._EVENT_dict['RuptureForecast'] = {
-                    'ModelName': setup_config['IntensityMeasure']['SourceParameters']['SeismicSourceModel'],
+                    'ModelName': setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['SeismicSourceModel'],
                     'JavaInstance': erf
                 }
                 self._EVENT_dict['GroundMotion'] = {
-                    'ModelName': setup_config['IntensityMeasure']['SourceParameters']['GroundMotionModel'],
+                    'ModelName': setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['GroundMotionModel'],
                     'JavaInstance': imr
                 }
                 self._EVENT_dict['SiteParamForModel'] = sites
@@ -173,7 +173,7 @@ class assessment(object):
                     logging.info(f"Getting full list of rupture scenarios")
                     rupture_list = pd.read_csv(other_config_param['Path_RuptureMetadata'])
                     # Filter list of ruptures
-                    filters = setup_config['IntensityMeasure']['SourceParameters']['Filter']
+                    filters = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['Filter']
                     filters_to_perform = {}
                     for item in filters.keys():
                         if filters[item]['ToInclude']:
@@ -222,7 +222,7 @@ class assessment(object):
         
                 logging.info(f"\n\n-----Interfacing with OpenSHA for GMs\n------------------------------------------------------")
                 
-            elif setup_config['IntensityMeasure']['SourceForIM'] == 'ShakeMap':
+            elif 'ShakeMap' in setup_config['IntensityMeasure']['SourceForIM']:
                 logging.info(f"\n------------------------------------------------------\n-----Getting GMs from ShakeMap\n")
                 #
                 Fcn_IM.read_ShakeMap_data(
@@ -258,7 +258,7 @@ class assessment(object):
         logging.info(f'Added listOfRuptures to "model._EVENT_dict" and IM Means and StdDevs to "model._IM_dict"\n')
         
         # Get Fault Crossings
-        if setup_config['EngineeringDemandParameter']['Type']['SurfaceFaultRupture']['ToAssess']:
+        if setup_config['EngineeringDemandParameter']['Type']['SurfaceFaultRupture']['ToInclude']:
             logging.info(f"SurfaceFaultRupture is requested; getting fault crossings...")
             if os.path.exists(other_config_param['File_FaultCrossing']):
                 logging.info(f"\tFile with fault crossings exists:")
@@ -342,16 +342,17 @@ class assessment(object):
         n_event = other_config_param['Num_Events']
         n_IM = other_config_param['Num_IM']
         sampling_method = setup_config['SamplingMethod']['Method']
-        if 'monte' in sampling_method.lower():
-            algorithm = setup_config['SamplingMethod']['Algorithm']
-            n_sample = setup_config['SamplingMethod']['NumberOfSamples']
-            seed_num = setup_config['SamplingMethod']['Seed']
-        elif 'logic' in sampling_method.lower():
+        if 'MonteCarlo' in sampling_method:
+            sampling_method_info = setup_config['SamplingMethod']['Method']
+            algorithm = setup_config['SamplingMethod']['Method']['MonteCarlo']['Algorithm']
+            n_sample = setup_config['SamplingMethod']['Method']['MonteCarlo']['NumberOfSamples']
+            seed_num = setup_config['SamplingMethod']['Method']['MonteCarlo']['Seed']
+        elif 'LogicTree' in sampling_method:
             algorithm = None
-            logic_branch = setup_config['SamplingMethod']['Branch']
-            logic_branch_weights = setup_config['SamplingMethod']['Weights']
+            logic_branch = setup_config['SamplingMethod']['Method']['LogicTree']['Branch']
+            logic_branch_weights = setup_config['SamplingMethod']['Method']['LogicTree']['Weights']
             n_sample = len(logic_branch)
-        elif 'polynomial' in sampling_method.lower():
+        elif 'PolynomialChaosExpansion' in sampling_method:
             logging.info("Polynomial chaos under development: restart analysis with another method")
         # store_file_type = setup_config['General']['OutputFileType']
         store_file_type = 'txt'
@@ -524,11 +525,11 @@ class assessment(object):
                 spectral_corr = self._IM_dict['Simulation']['Correlation']['Spectral']['Matrix']
                 for im_counter, im_i in enumerate(other_config_param['IM']):
                     # get residuals and then sample
-                    if 'logic' in sampling_method.lower():
+                    if 'LogicTree' in sampling_method:
                         residuals[im_i] = np.ones((n_sample,n_event,n_site))
                         for j in range(n_sample):
                             residuals[im_i][j,:,:] = logic_branch[j]
-                    elif 'monte' in sampling_method.lower():
+                    elif 'MonteCarlo' in sampling_method:
                         # get spatially-correlated residuals for first IM
                         if im_counter == 0:
                             residuals[im_i] = Fcn_IM.get_correlated_residuals(
@@ -578,11 +579,11 @@ class assessment(object):
                 # get spatially-correlated residuals for each IM
                 eps_intra = {}
                 for im_i in other_config_param['IM']:
-                    if 'logic' in sampling_method.lower():
+                    if 'LogicTree' in sampling_method:
                         eps_intra[im_i] = np.ones((n_sample,n_event,n_site))
                         for j in range(n_sample):
                             eps_intra[im_i][j,:,:] = logic_branch[j]
-                    elif 'monte' in sampling_method.lower():
+                    elif 'MonteCarlo' in sampling_method:
                         # get spatially-correlated residuals for each IM, cross-correlation is considered in eta
                         eps_intra[im_i] = Fcn_IM.get_correlated_residuals(
                             chol_mat = self._IM_dict['Simulation']['Correlation']['Spatial']['Cholesky'][im_i],
@@ -603,11 +604,11 @@ class assessment(object):
                         # # -----------------------------------------------------------
                         
                 # get spectrally-correlated residuals for each event
-                if 'logic' in sampling_method.lower():
+                if 'LogicTree' in sampling_method:
                     eta_inter = np.ones((n_sample,n_event,n_IM))
                     for j in range(n_sample):
                         eta_inter[j,:,:] = logic_branch[j]
-                elif 'monte' in sampling_method.lower():
+                elif 'MonteCarlo' in sampling_method:
                     # get spatially-correlated residuals for each IM, cross-correlation is considered in eta
                     eta_inter = Fcn_IM.get_correlated_residuals(
                         chol_mat = self._IM_dict['Simulation']['Correlation']['Spectral']['Cholesky'],
@@ -699,16 +700,17 @@ class assessment(object):
         n_event = other_config_param['Num_Events']
         n_EDP = other_config_param['Num_EDP']
         sampling_method = setup_config['SamplingMethod']['Method']
-        if 'monte' in sampling_method.lower():
-            algorithm = setup_config['SamplingMethod']['Algorithm']
-            n_sample = setup_config['SamplingMethod']['NumberOfSamples']
-            seed_num = setup_config['SamplingMethod']['Seed']
-        elif 'logic' in sampling_method.lower():
+        if 'MonteCarlo' in sampling_method:
+            sampling_method_info = setup_config['SamplingMethod']['Method']
+            algorithm = setup_config['SamplingMethod']['Method']['MonteCarlo']['Algorithm']
+            n_sample = setup_config['SamplingMethod']['Method']['MonteCarlo']['NumberOfSamples']
+            seed_num = setup_config['SamplingMethod']['Method']['MonteCarlo']['Seed']
+        elif 'LogicTree' in sampling_method:
             algorithm = None
-            logic_branch = setup_config['SamplingMethod']['Branch']
-            logic_branch_weights = setup_config['SamplingMethod']['Weights']
+            logic_branch = setup_config['SamplingMethod']['Method']['LogicTree']['Branch']
+            logic_branch_weights = setup_config['SamplingMethod']['Method']['LogicTree']['Weights']
             n_sample = len(logic_branch)
-        elif 'polynomial' in sampling_method.lower():
+        elif 'PolynomialChaosExpansion' in sampling_method:
             logging.info("Polynomial chaos under development: restart analysis with another method")
         # store_file_type = setup_config['General']['OutputFileType']
         store_file_type = 'txt'
@@ -809,10 +811,13 @@ class assessment(object):
                     param_info = method_info['InputParameters'][param_k]
                     if isinstance(param_info, dict):
                         # specifically for Vs30         
-                        if param_k == 'Vs30' and param_info['Source'] == 'SameAsIntensityMeasure':
+                        if param_k == 'Vs30' and 'Preferred' in param_info:
                             kwargs[param_k] = site_data['Vs30 (m/s)'].values
                         else:
-                            kwargs[param_k] = site_data[param_info['ColumnIDWithData']].values
+                            if 'Preferred' in param_info:
+                                kwargs[param_k] = site_data[param_info['ColumnIDWithData']].values
+                            else:
+                                kwargs[param_k] = site_data[param_info['UserDefined']['ColumnIDWithData']].values
                     else:
                         kwargs[param_k] = param_info
                 
@@ -990,16 +995,17 @@ class assessment(object):
         n_event = other_config_param['Num_Events']
         n_EDP = other_config_param['Num_EDP']
         sampling_method = setup_config['SamplingMethod']['Method']
-        if 'monte' in sampling_method.lower():
-            algorithm = setup_config['SamplingMethod']['Algorithm']
-            n_sample = setup_config['SamplingMethod']['NumberOfSamples']
-            seed_num = setup_config['SamplingMethod']['Seed']
-        elif 'logic' in sampling_method.lower():
+        if 'MonteCarlo' in sampling_method:
+            sampling_method_info = setup_config['SamplingMethod']['Method']
+            algorithm = setup_config['SamplingMethod']['Method']['MonteCarlo']['Algorithm']
+            n_sample = setup_config['SamplingMethod']['Method']['MonteCarlo']['NumberOfSamples']
+            seed_num = setup_config['SamplingMethod']['Method']['MonteCarlo']['Seed']
+        elif 'LogicTree' in sampling_method:
             algorithm = None
-            logic_branch = setup_config['SamplingMethod']['Branch']
-            logic_branch_weights = setup_config['SamplingMethod']['Weights']
+            logic_branch = setup_config['SamplingMethod']['Method']['LogicTree']['Branch']
+            logic_branch_weights = setup_config['SamplingMethod']['Method']['LogicTree']['Weights']
             n_sample = len(logic_branch)
-        elif 'polynomial' in sampling_method.lower():
+        elif 'PolynomialChaosExpansion' in sampling_method:
             logging.info("Polynomial chaos under development: restart analysis with another method")
         # store_file_type = setup_config['General']['OutputFileType']
         store_file_type = 'txt'
@@ -1159,10 +1165,13 @@ class assessment(object):
                     param_info = method_info['InputParameters'][param_k]
                     if isinstance(param_info, dict):
                         # specifically for Vs30         
-                        if param_k == 'Vs30' and param_info['Source'] == 'SameAsIntensityMeasure':
+                        if param_k == 'Vs30' and 'Preferred' in param_info:
                             kwargs[param_k] = site_data['Vs30 (m/s)'].values
                         else:
-                            kwargs[param_k] = site_data[param_info['ColumnIDWithData']].values
+                            if 'Preferred' in param_info:
+                                kwargs[param_k] = site_data[param_info['ColumnIDWithData']].values
+                            else:
+                                kwargs[param_k] = site_data[param_info['UserDefined']['ColumnIDWithData']].values
                     else:
                         kwargs[param_k] = param_info
             

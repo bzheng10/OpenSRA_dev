@@ -308,13 +308,13 @@
 					}
 				},
 				"Vs30": {
-					"NameToDisplay": "Vs30 (m/s)",
+					"NameToDisplay": "Vs30 (m/s), Preferred: Wills et al. (2015)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "Wills et al. (2015)",
+					"DefaultValue": "Preferred",
 					"Options": {
 						"Wills et al. (2015)": {
-							"NameToDisplay": "Wills et al. (2015)",
+							"NameToDisplay": "Preferred",
 							"ToDisplay": true,
 							"Params": {}
 						},
@@ -499,7 +499,7 @@
 									"DefaultValue": 20
 								},
 								"Vs30": {
-									"NameToDisplay": "Vs30 (m/s)",
+									"NameToDisplay": "Vs30 (m/s), Preferred: Wills et al. (2015)",
 									"WidgetType": "QComboBox",
 									"ToDisplay": true,
 									"DefaultValue": "Preferred",
@@ -1016,8 +1016,40 @@
 								}
 							}
 						},
+						"SlopeType": {
+							"NameToDisplay": "Slope Type",
+							"WidgetType": "QComboBox",
+							"ToDisplay": true,
+							"DefaultValue": "Preferred",
+							"Options": {
+								"Preferred": {
+									"NameToDisplay": "Preferred",
+									"ToDisplay": true,
+									"Params": {}
+								},
+								"UserDefined": {
+									"NameToDisplay": "User Defined",
+									"ToDisplay": true,
+									"Params": {
+										"ColumnIDWithData": {
+											"NameToDisplay": "Column ID With Data",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": null,
+											"Options": {
+												"ColumnHeaders": {
+													"NameToDisplay": "Column Headers",
+													"ToDisplay": true,
+													"Params": {}
+												}
+											}
+										}
+									}
+								}
+							}
+						},
 						"MethodForKy": {
-							"NameToDisplay": "Method for yield acceleration",
+							"NameToDisplay": "Method",
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": "Bray2007",
@@ -1026,54 +1058,35 @@
 									"NameToDisplay": "Grant et al. (2016)",
 									"ToDisplay": true,
 									"Params": {
-										"SlopeType": {
-											"NameToDisplay": "Slope type (currently applied on all components), default: Infinite Slope",
+										"RootCohesion": {
+											"NameToDisplay": "Root Cohesion (kPa)",
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
-											"DefaultValue": "InfiniteSlope",
+											"DefaultValue": "Preferred",
 											"Options": {
-												"InfiniteSlope": {
-													"NameToDisplay": "Infinite Slope",
+												"Preferred": {
+													"NameToDisplay": "Preferred",
+													"ToDisplay": true,
+													"Params": {}
+												},
+												"UserDefined": {
+													"NameToDisplay": "User Defined",
 													"ToDisplay": true,
 													"Params": {
-														"RootCohesion": {
-															"NameToDisplay": "Root Cohesion (kPa)",
+														"ColumnIDWithData": {
+															"NameToDisplay": "Column ID With Data",
 															"WidgetType": "QComboBox",
 															"ToDisplay": true,
-															"DefaultValue": "Preferred",
+															"DefaultValue": null,
 															"Options": {
-																"Preferred": {
-																	"NameToDisplay": "Preferred",
+																"ColumnHeaders": {
+																	"NameToDisplay": "Column Headers",
 																	"ToDisplay": true,
 																	"Params": {}
-																},
-																"UserDefined": {
-																	"NameToDisplay": "User Defined",
-																	"ToDisplay": true,
-																	"Params": {
-																		"ColumnIDWithData": {
-																			"NameToDisplay": "Column ID With Data",
-																			"WidgetType": "QComboBox",
-																			"ToDisplay": true,
-																			"DefaultValue": null,
-                                                                            "Options": {
-                                                                                "ColumnHeaders": {
-                                                                                    "NameToDisplay": "Column Headers",
-                                                                                    "ToDisplay": true,
-                                                                                    "Params": {}
-                                                                                }
-                                                                            }
-																		}
-																	}
 																}
 															}
 														}
 													}
-												},
-												"RotationalSlide": {
-													"NameToDisplay": "Rotational Slide",
-													"ToDisplay": false,
-													"Params": {}
 												}
 											}
 										}
@@ -1083,101 +1096,69 @@
 									"NameToDisplay": "Bray (2007)",
 									"ToDisplay": true,
 									"Params": {
-										"SlopeType": {
-											"NameToDisplay": "Slope type (currently applied on all components), default: Infinite Slope",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": "InfiniteSlope",
-											"Options": {
-												"InfiniteSlope": {
-													"NameToDisplay": "Infinite Slope",
-													"ToDisplay": true,
-													"Params": {}
-												},
-												"RotationalSlide": {
-													"NameToDisplay": "Rotational Slide",
-													"ToDisplay": false,
-													"Params": {}
-												}
-											}
-										}
 									}
 								},
 								"RathjeSaygili2009": {
-									"NameToDisplay": "Rathje, E.M., and Saygili (2009)",
+									"NameToDisplay": "Rathje and Saygili (2009)",
 									"ToDisplay": true,
 									"Params": {
-										"SlopeType": {
-											"NameToDisplay": "Slope type (currently applied on all components), default: Infinite Slope",
+										"RootCohesion": {
+											"NameToDisplay": "Root Cohesion (kPa)",
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
-											"DefaultValue": "InfiniteSlope",
+											"DefaultValue": "Preferred",
 											"Options": {
-												"InfiniteSlope": {
-													"NameToDisplay": "Infinite Slope",
+												"Preferred": {
+													"NameToDisplay": "Preferred",
+													"ToDisplay": true,
+													"Params": {}
+												},
+												"UserDefined": {
+													"NameToDisplay": "User Defined",
 													"ToDisplay": true,
 													"Params": {
-														"RootCohesion": {
-															"NameToDisplay": "Root Cohesion (kPa)",
+														"ColumnIDWithData": {
+															"NameToDisplay": "Column ID With Data",
 															"WidgetType": "QComboBox",
 															"ToDisplay": true,
-															"DefaultValue": "Preferred",
+															"DefaultValue": null,
 															"Options": {
-																"Preferred": {
-																	"NameToDisplay": "Preferred",
+																"ColumnHeaders": {
+																	"NameToDisplay": "Column Headers",
 																	"ToDisplay": true,
 																	"Params": {}
-																},
-																"UserDefined": {
-																	"NameToDisplay": "User Defined",
-																	"ToDisplay": true,
-																	"Params": {
-																		"ColumnIDWithData": {
-																			"NameToDisplay": "Column ID With Data",
-																			"WidgetType": "QComboBox",
-																			"ToDisplay": true,
-																			"DefaultValue": null,
-                                                                            "Options": {
-                                                                                "ColumnHeaders": {
-                                                                                    "NameToDisplay": "Column Headers",
-                                                                                    "ToDisplay": true,
-                                                                                    "Params": {}
-                                                                                }
-                                                                            }
-																		}
-																	}
 																}
 															}
-														},
-														"SlopeSaturation": {
-															"NameToDisplay": "Thickness Saturation (%)",
+														}
+													}
+												}
+											}
+										},
+										"SlopeSaturation": {
+											"NameToDisplay": "Thickness Saturation (%)",
+											"WidgetType": "QComboBox",
+											"ToDisplay": true,
+											"DefaultValue": "Preferred",
+											"Options": {
+												"Preferred": {
+													"NameToDisplay": "Preferred",
+													"ToDisplay": true,
+													"Params": {}
+												},
+												"UserDefined": {
+													"NameToDisplay": "User Defined",
+													"ToDisplay": true,
+													"Params": {
+														"ColumnIDWithData": {
+															"NameToDisplay": "Column ID With Data",
 															"WidgetType": "QComboBox",
 															"ToDisplay": true,
-															"DefaultValue": "Preferred",
+															"DefaultValue": null,
 															"Options": {
-																"Preferred": {
-																	"NameToDisplay": "Preferred",
+																"ColumnHeaders": {
+																	"NameToDisplay": "Column Headers",
 																	"ToDisplay": true,
 																	"Params": {}
-																},
-																"UserDefined": {
-																	"NameToDisplay": "User Defined",
-																	"ToDisplay": true,
-																	"Params": {
-																		"ColumnIDWithData": {
-																			"NameToDisplay": "Column ID With Data",
-																			"WidgetType": "QComboBox",
-																			"ToDisplay": true,
-																			"DefaultValue": null,
-                                                                            "Options": {
-                                                                                "ColumnHeaders": {
-                                                                                    "NameToDisplay": "Column Headers",
-                                                                                    "ToDisplay": true,
-                                                                                    "Params": {}
-                                                                                }
-                                                                            }
-																		}
-																	}
 																}
 															}
 														}

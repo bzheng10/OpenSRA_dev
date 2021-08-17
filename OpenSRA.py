@@ -254,7 +254,11 @@ def main(input_dir, clean_prev_run, logging_level):
     
     # -----------------------------------------------------------
     # Get working directory and see if user wants previous run cleaned
-    other_config_param['Dir_Working'] = setup_config['General']['Directory']['Working']
+    if len(setup_config['General']['Directory']['Working']) == 0:
+        # if no working directory is given, use directory that the "Input" folder is in
+        other_config_param['Dir_Working'] = os.path.dirname(input_dir)
+    else:
+        other_config_param['Dir_Working'] = setup_config['General']['Directory']['Working']
     if clean_prev_run.lower() in 'yes':
         for root, dirs, files in os.walk(other_config_param['Dir_Working']):
             if 'Input' in root:

@@ -59,7 +59,7 @@
                 },
                 "GroundMotionModel": "NGAWest2 2014 Averaged No Idriss",
                 "Vs30": {
-                    "Wills et al. (2015)" : {}
+                    "Preferred" : {}
                 },
                 "Z1p0": {
                     "Preferred" : {}
@@ -188,8 +188,18 @@
                 "OtherParameters": {}
             },
             "SurfaceFaultRupture": {
-                "ToInclude": false,
-                "Method": {},
+                "ToInclude": true,
+                "Method": {
+                    "WellsCoppersmith1994": {
+						"ModelWeight": 1
+					},
+					"Thompson2020": {
+						"ModelWeight": 1
+					},
+					"Hazus2014": {
+						"ModelWeight": 1
+					}
+				},
                 "OtherParameters": {}
             },
             "SubsurfaceFaultRupture": {

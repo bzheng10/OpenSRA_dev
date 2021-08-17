@@ -1,21 +1,21 @@
 {
     "Examples": {
-        "1. OpenSHA LHS - No EDP & No DV": {
-            "InputFile": "Ex1_OpenSHA_LHS_noEDP_noDV/Input/SetupConfig.json"
+        "1. OpenSHA for IM with No EDP & No DV": {
+            "InputFile": "Ex1_OpenSHA_noEDP_noDV/Input/SetupConfig.json"
         },
-        "2. ShakeMap Fixed Residuals - No EDP & No DV": {
+        "2. ShakeMap for IM with No EDP & No DV": {
             "InputFile": "Ex2_ShakeMap_noEDP_noDV/Input/SetupConfig.json"
         },
-        "3. LHS with IM Correlation - Repair-rate PGV": {
-            "InputFile": "Ex3_IMCorrelation_RepairRatePGV/Input/SetupConfig.json"
+        "3. Correlated IMs and PGV-Induced Repair Rates": {
+            "InputFile": "Ex3_IMCorr_RepairRatePGV/Input/SetupConfig.json"
         },
-        "4. Raster Sampling - Repair-rate PGD": {
+        "4. EDP-Induced Repair Rates": {
             "InputFile": "Ex4_EDPs_and_RepairRatePGD/Input/SetupConfig.json"
         },
-        "5. Repair-rate PGD with Multiple Methods": {
+        "5. Multiple Methods for EDPs and DVs": {
             "InputFile": "Ex5_MultipleMethods/Input/SetupConfig.json"
         },
-        "6. Repair-rate PGV and Repair-rate PGD": {
+        "6. Analysis with User Defined Input Parameters": {
             "InputFile": "Ex6_UserInputModelParams/Input/SetupConfig.json"
         }
     }

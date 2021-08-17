@@ -16,7 +16,7 @@
         }
     },
     "Infrastructure": {
-        "SiteDataFile": "examples/Ex3_IMCorrelation_RepairRatePGV/Input/SiteData.csv",
+        "SiteDataFile": "examples/Ex3_IMCorr_RepairRatePGV/Input/SiteData.csv",
 		"SiteLocationParams": {
             "LatMid": "LAT_MIDDLE",
             "LonMid": "LONG_MIDDLE",
@@ -59,7 +59,7 @@
                 },
                 "GroundMotionModel": "Abrahamson, Silva & Kamai (2014)",
 				"Vs30": {
-                    "Wills et al. (2015)" : {}
+                    "Preferred" : {}
 				},
 				"Z1p0": {
                     "Preferred" : {}
@@ -140,16 +140,13 @@
                     "ORourke2020": {
 						"ModelWeight": 1,
 						"ComponentMaterial": {
-							"Source": "UserDefined",
-							"ColumnIDWithData": "Material & Welds"
+                            "Preferred" : {}
 						},
 						"ComponentJointType": {
-							"Source": "UserDefined",
-							"ColumnIDWithData": "Material & Welds"
+                            "Preferred" : {}
 						},
 						"ComponentDiameter": {
-							"Source": "UserDefined",
-							"ColumnIDWithData": "Outside Diameter (in)"
+                            "Preferred" : {}
 						}
 					}
                 },

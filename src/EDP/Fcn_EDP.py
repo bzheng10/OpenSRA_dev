@@ -539,9 +539,11 @@ def get_ky(**kwargs):
     
     # extract input params
     slope_type = kwargs.get('SlopeType','infinite')
-    if isinstance(slope_type,str) and slope_type == 'Preferred':
+    # if isinstance(slope_type,str) and 'Preferred' in slope_type:
+    if 'Preferred' in slope_type:
         slope_type = np.array(['infinite']*n_site) # preferred slope type
-    elif isinstance(slope_type,np.ndarray):
+    # elif isinstance(slope_type,np.ndarray):
+    else:
         slope_type = np.array([item.lower() for item in slope_type])
 
     # initialize ky

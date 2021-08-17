@@ -112,7 +112,7 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
     dir_input = other_config_param['Dir_Input']
 
     # Set full path for site output folder
-    other_config_param['Dir_Site'] = os.path.join(setup_config['General']['Directory']['Working'], 'Site') 
+    other_config_param['Dir_Site'] = os.path.join(other_config_param['Dir_Working'], 'Site') 
     folders_to_create.append(other_config_param['Dir_Site'])
     
     # Create full file paths for vairous files by appending the appropriate directory to the file name
@@ -143,32 +143,34 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
         
         # Check if Vs30,z1p0,z2p5 needs to be obtained from pre-packaged dataset
         if category == 'IntensityMeasure':
-            if setup_config[category]['SourceForIM'] == 'OpenSHA':
-                for param in setup_config[category]['SourceParameters']['OtherParameters']:
-                    if 'z1p0' in param or 'z2p5' in param:
-                        pass # to get with OpenSHAInterface
-                    else:
-                        if setup_config[category]['SourceParameters']['OtherParameters'][param]['Source'] != 'UserDefined':
-                            other_config_param['ParamsToGetFromDatasets'].append(param)
-                # -----------------------------------------------------------
-                # to add z1p0
-                # to add z2p5
-                # -----------------------------------------------------------
+            if 'OpenSHA' in setup_config[category]['SourceForIM']:
+                for param in setup_config[category]['SourceForIM']['OpenSHA']:
+                    # limit to Vs30,z1p0,z2p5 for now:
+                    if 'Vs30' in param or 'Z1p0' in param or 'Z2p5' in param:
+                        if 'Z1p0' in param or 'Z2p5' in param:
+                            pass # to get with OpenSHAInterface
+                        else:
+                            if setup_config[category]['SourceForIM']['OpenSHA'][param] != 'UserDefined':
+                                other_config_param['ParamsToGetFromDatasets'].append(param)
+                        # -----------------------------------------------------------
+                        # to add z1p0
+                        # to add z2p5
+                        # -----------------------------------------------------------
         # Get the types of hazard to assess:
         if category == 'EngineeringDemandParameter':
             hazard_list = list(other_config_param['ID_EDP'])
         else:
             hazard_list = list(setup_config[category]['Type'])
         for hazard in hazard_list:
-            # Get flag for 'ToAssess'
-            Flag_ToAssess = setup_config[category]['Type'][hazard]['ToAssess']
+            # Get flag for 'ToInclude'
+            Flag_ToInclude = setup_config[category]['Type'][hazard]['ToInclude']
             # For Liquefaction force True if either LateralSpread or GroundSettlement is requested
             if hazard == 'Liquefaction':
-                if setup_config[category]['Type']['LateralSpread']['ToAssess'] \
-                    or setup_config[category]['Type']['GroundSettlement']['ToAssess']:
-                    Flag_ToAssess = True
-            # If 'Flag_ToAssess' is True, update dictionaries
-            if Flag_ToAssess:
+                if setup_config[category]['Type']['LateralSpread']['ToInclude'] \
+                    or setup_config[category]['Type']['GroundSettlement']['ToInclude']:
+                    Flag_ToInclude = True
+            # If 'Flag_ToInclude' is True, update dictionaries
+            if Flag_ToInclude:
                 # For other_config_param
                 other_config_param[peer_categories[category]].append(hazard)
                 # For method_param_for_assess
@@ -196,10 +198,10 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
                         for param in method_info:
                             param_info = method_info[param]
                             if isinstance(param_info,dict):
-                                if 'Source' in param_info:
-                                    if param_info['Source'] == 'Preferred' and \
-                                        not param in other_config_param['ParamsToGetFromDatasets']:
-                                        other_config_param['ParamsToGetFromDatasets'].append(param)
+                                # if 'Source' in param_info:
+                                if 'Preferred' in param_info and \
+                                    not param in other_config_param['ParamsToGetFromDatasets']:
+                                    other_config_param['ParamsToGetFromDatasets'].append(param)
                         # Pull 'OtherParameters' into method_param_for_assess
                         for param in setup_config[category]['Type'][hazard]['OtherParameters']:
                             method_param_for_assess[peer_categories[category]][hazard]['Method'][method]['InputParameters'].update({
@@ -227,9 +229,9 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
     other_config_param['File_ScenarioTraces'] = os.path.join(other_config_param['Dir_IM_SeismicSource'],'ScenarioTraces.csv')
     
     # Check the source for intensity measures
-    if setup_config['IntensityMeasure']['SourceForIM'] == 'OpenSHA':
+    if 'OpenSHA' in setup_config['IntensityMeasure']['SourceForIM']:
         # Create additional parameters for use of source model
-        src_model = setup_config['IntensityMeasure']['SourceParameters']['SeismicSourceModel']
+        src_model = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['SeismicSourceModel']
         other_config_param['Path_FiniteSourceConnectivity'] = os.path.join(dir_opensra,'lib','OpenSHA','ERF',src_model,'FiniteSourceConnectivity.csv')
         other_config_param['Path_RuptureSegment'] = os.path.join(dir_opensra,'lib','OpenSHA','ERF',src_model,'RuptureSegments.csv')
         other_config_param['Path_PointSource'] = os.path.join(dir_opensra,'lib','OpenSHA','ERF',src_model,'PointSourceTraces.csv')
@@ -237,9 +239,9 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
         other_config_param['Path_FiniteSource'] = os.path.join(dir_opensra,'lib','OpenSHA','ERF',src_model,'FiniteSourceTraces.zip')
         
         # Check for filters to use
-        other_config_param['Flag_IncludeFilter_TrMax'] = setup_config['IntensityMeasure']['SourceParameters']['Filter']['ReturnPeriod']['ToInclude']
-        other_config_param['Flag_IncludeFilter_RMax'] = setup_config['IntensityMeasure']['SourceParameters']['Filter']['Distance']['ToInclude']
-        other_config_param['Flag_IncludeFilter_PtSrc'] = setup_config['IntensityMeasure']['SourceParameters']['Filter']['PointSource']['ToInclude']
+        other_config_param['Flag_IncludeFilter_TrMax'] = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['Filter']['ReturnPeriod']['ToInclude']
+        other_config_param['Flag_IncludeFilter_RMax'] = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['Filter']['Distance']['ToInclude']
+        other_config_param['Flag_IncludeFilter_PtSrc'] = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['Filter']['PointSource']['ToInclude']
         
         # Base name for file with rupture metadata
         other_config_param['File_ListOfScenarios_Full'] = os.path.join(other_config_param['Dir_IM_SeismicSource'],'ListOfScenarios_Full')
@@ -268,10 +270,10 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Section reserved for ShakeMap
-    elif setup_config['IntensityMeasure']['SourceForIM'] == 'ShakeMap':
-        other_config_param['Dir_ShakeMap'] = setup_config['IntensityMeasure']['SourceParameters']['Directory']
+    elif 'ShakeMap' in setup_config['IntensityMeasure']['SourceForIM']:
+        other_config_param['Dir_ShakeMap'] = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Directory']
         try:
-            list_events = setup_config['IntensityMeasure']['SourceParameters']['Events']
+            list_events = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['Events']
             other_config_param['ShakeMapEvents'] = []
             for event_i in list_events:
                 if event_i in os.listdir(other_config_param['Dir_ShakeMap']):
@@ -400,6 +402,10 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
     with open(os.path.join(dir_working,'CreatedConfigParams.json'), 'w') as outfile:
         json.dump(other_config_param, outfile, indent=4, separators=(',', ': '))
     
+    # append working_directory to folders to create
+    # folders_to_create = [os.path.join(dir_working, item) for item in folders_to_create]
+    # print(folders_to_create)
+    
     # Eeturn updated dictionary of other_config_param
     return other_config_param, folders_to_create, method_param_for_assess
     
@@ -449,60 +455,98 @@ def update_site_data_file(site_data, setup_config, other_config_param):
     #     been performed; do not perform again
     if other_config_param['Flag_LoadFromUpdatedSiteData']:
         pass
-    else:
+    else: 
         for param in site_loc_params:
-            if site_loc_params[param]['DataExists'] and \
-                site_loc_params[param]['ColumnIDWithData'] in site_data:
-                pass
-            else:
+            if site_loc_params[param] is None:
                 site_loc_params_to_get.append(param)
-        if 'LatMid' in site_loc_params_to_get or 'LonMid' in site_loc_params_to_get:
-            flag_midpoint_exists = False
-        if 'LatBegin' in site_loc_params_to_get or 'LonBegin' in site_loc_params_to_get or \
-            'LatEnd' in site_loc_params_to_get or 'LonEnd' in site_loc_params_to_get:
-            flag_endpoints_exist = False
-        logging.info("Site Location parameters to be set:")
+        logging.info("Additional site Location parameters to get:")
         logging.info(f"\t{(', '.join(map(str,site_loc_params_to_get)))}")
+
+        # update column names to standardized names
+        site_data.rename({
+            site_loc_params['LonMid']: 'Mid Longitude',
+            site_loc_params['LatMid']: 'Mid Latitude',
+            site_loc_params['LonBegin']: 'Start Longitude',
+            site_loc_params['LatBegin']: 'Start Latitude',
+            site_loc_params['LonEnd']: 'End Longitude',
+            site_loc_params['LatEnd']: 'End Latitude'
+        }, axis='columns', inplace=True)
+        flag_update_site_data_file = True # updated site data
         
-        # check if either midpoints or endpoints are provided
-        if flag_midpoint_exists is False and flag_endpoints_exist is False:
-            logging.info(f"Not enough inputs for site locations")
-            logging.info(f"At least one of the following conditions is required:")
-            logging.info(f"\t (1) Specify midpoint coordinates")
-            logging.info(f"\t (2) Specify endpoint (start AND end) coordinates")
-        else:
-            # update column names to standardized names
-            if flag_midpoint_exists:
-                site_data.rename({
-                    site_loc_params['LonMid']['ColumnIDWithData']: 'Mid Longitude',
-                    site_loc_params['LatMid']['ColumnIDWithData']: 'Mid Latitude'
-                }, axis='columns',inplace=True)
-                flag_update_site_data_file = True # updated site data
-            if flag_endpoints_exist:
-                site_data.rename({
-                    site_loc_params['LonBegin']['ColumnIDWithData']: 'Start Longitude',
-                    site_loc_params['LatBegin']['ColumnIDWithData']: 'Start Latitude',
-                    site_loc_params['LonEnd']['ColumnIDWithData']: 'End Longitude',
-                    site_loc_params['LatEnd']['ColumnIDWithData']: 'End Latitude'
-                }, axis='columns',inplace=True)
-                flag_update_site_data_file = True # updated site data
-                # logging.info("Endpoints of components are set to equal the given midpoints")
-            # set endpoints to equal midpoint
-            if flag_endpoints_exist is False:
-                site_data['Start Longitude'] = site_data['Mid Longitude'].values
-                site_data['Start Latitude'] = site_data['Mid Latitude'].values
-                site_data['End Longitude'] = site_data['Mid Longitude'].values
-                site_data['End Latitude'] = site_data['Mid Latitude'].values
-                flag_update_site_data_file = True # updated site data
-            # compute midpoint based on endpoints
-            if flag_midpoint_exists is False:
-                site_data['Mid Longitude'], site_data['Mid Latitude'] = Fcn_Common.get_midpoint(
-                    lon1 = site_data['Start Longitude'].values,
-                    lat1 = site_data['Start Latitude'].values,
-                    lon2 = site_data['End Longitude'].values,
-                    lat2 = site_data['End Latitude'].values
-                )
-                flag_update_site_data_file = True # updated site data
+        ## ---------------------
+        ## ---------------------
+        ## GUI currently requires BEGIN, END, and MID columns as inputs
+        ## keep the following code to allow flexibility in site location inputs
+        
+        #for param in site_loc_params:
+        #    if site_loc_params[param]['DataExists'] and \
+        #        site_loc_params[param]['ColumnIDWithData'] in site_data:
+        #        pass
+        #    else:
+        #        site_loc_params_to_get.append(param)
+        #if 'LatMid' in site_loc_params_to_get or 'LonMid' in site_loc_params_to_get:
+        #    flag_midpoint_exists = False
+        #if 'LatBegin' in site_loc_params_to_get or 'LonBegin' in site_loc_params_to_get or \
+        #    'LatEnd' in site_loc_params_to_get or 'LonEnd' in site_loc_params_to_get:
+        #    flag_endpoints_exist = False
+        #logging.info("Site Location parameters to be set:")
+        #logging.info(f"\t{(', '.join(map(str,site_loc_params_to_get)))}")
+        #
+        ## check if either midpoints or endpoints are provided
+        #if flag_midpoint_exists is False and flag_endpoints_exist is False:
+        #    logging.info(f"Not enough inputs for site locations")
+        #    logging.info(f"At least one of the following conditions is required:")
+        #    logging.info(f"\t (1) Specify midpoint coordinates")
+        #    logging.info(f"\t (2) Specify endpoint (start AND end) coordinates")
+        #else:
+        #    # update column names to standardized names
+        #    if flag_midpoint_exists:
+        #        site_data.rename({
+        #            site_loc_params['LonMid']['ColumnIDWithData']: 'Mid Longitude',
+        #            site_loc_params['LatMid']['ColumnIDWithData']: 'Mid Latitude'
+        #        }, axis='columns',inplace=True)
+        #        flag_update_site_data_file = True # updated site data
+        #    if flag_endpoints_exist:
+        #        site_data.rename({
+        #            site_loc_params['LonBegin']['ColumnIDWithData']: 'Start Longitude',
+        #            site_loc_params['LatBegin']['ColumnIDWithData']: 'Start Latitude',
+        #            site_loc_params['LonEnd']['ColumnIDWithData']: 'End Longitude',
+        #            site_loc_params['LatEnd']['ColumnIDWithData']: 'End Latitude'
+        #        }, axis='columns',inplace=True)
+        #        flag_update_site_data_file = True # updated site data
+        #        # logging.info("Endpoints of components are set to equal the given midpoints")
+        #    # set endpoints to equal midpoint
+        #    if flag_endpoints_exist is False:
+        #        site_data['Start Longitude'] = site_data['Mid Longitude'].values
+        #        site_data['Start Latitude'] = site_data['Mid Latitude'].values
+        #        site_data['End Longitude'] = site_data['Mid Longitude'].values
+        #        site_data['End Latitude'] = site_data['Mid Latitude'].values
+        #        flag_update_site_data_file = True # updated site data
+        #    # compute midpoint based on endpoints
+        #    if flag_midpoint_exists is False:
+        #        site_data['Mid Longitude'], site_data['Mid Latitude'] = Fcn_Common.get_midpoint(
+        #            lon1 = site_data['Start Longitude'].values,
+        #            lat1 = site_data['Start Latitude'].values,
+        #            lon2 = site_data['End Longitude'].values,
+        #            lat2 = site_data['End Latitude'].values
+        #        )
+        #        flag_update_site_data_file = True # updated site data
+        
+        # Check if start and end locations are given in the file; if not set equal to site locations (i.e., points)
+        # if not 'LONG_BEGIN' in site_data.columns:
+            # site_data['LONG_BEGIN'] = site_data['LONG_MIDDLE'].values
+            # site_data['LAT_BEGIN'] = site_data['LAT_MIDDLE'].values
+            # site_data['LONG_END'] = site_data['LONG_MIDDLE'].values
+            # site_data['LAT_END'] = site_data['LAT_MIDDLE'].values
+            # flag_update_site_data_file = True # updated site data   
+            
+        # Check if segment lengths are given in the file; if not then assume lengths of 1 km and add to "site_data"
+        # if not 'SHAPE_LENGTH' in site_data.columns:
+            # site_data['SHAPE_LENGTH'] = [1]*len(site_data)
+            # flag_update_site_data_file = True # updated site data
+        
+        ## ---------------------
+        ## ---------------------
             
         # calculate length of component if not given
         if 'Length' in site_loc_params_to_get:
@@ -517,22 +561,9 @@ def update_site_data_file(site_data, setup_config, other_config_param):
                 site_data['Component Length (km)'] = [1]*len(site_data)
         else:
             site_data.rename({
-                    site_loc_params['Length']['ColumnIDWithData']: 'Component Length (km)'
+                    site_loc_params['Length']: 'Component Length (km)'
                 }, axis='columns',inplace=True)
             flag_update_site_data_file = True # updated site data
-    
-    # Check if start and end locations are given in the file; if not set equal to site locations (i.e., points)
-    # if not 'LONG_BEGIN' in site_data.columns:
-        # site_data['LONG_BEGIN'] = site_data['LONG_MIDDLE'].values
-        # site_data['LAT_BEGIN'] = site_data['LAT_MIDDLE'].values
-        # site_data['LONG_END'] = site_data['LONG_MIDDLE'].values
-        # site_data['LAT_END'] = site_data['LAT_MIDDLE'].values
-        # flag_update_site_data_file = True # updated site data   
-        
-    # Check if segment lengths are given in the file; if not then assume lengths of 1 km and add to "site_data"
-    # if not 'SHAPE_LENGTH' in site_data.columns:
-        # site_data['SHAPE_LENGTH'] = [1]*len(site_data)
-        # flag_update_site_data_file = True # updated site data
     
     # Loop through ParamsToGetFromDatasets and obtain data
     params_to_get = other_config_param['ParamsToGetFromDatasets']
@@ -776,13 +807,13 @@ def add_site_data_to_method_param(setup_config, site_data, other_config_param, m
                 method_info = hazard_info['Method'][method]
                 for param in method_info['InputParameters']:
                     if isinstance(method_info['InputParameters'][param],dict):
-                        if method_info['InputParameters'][param]['Source'] == 'Preferred':
+                        if 'Preferred' in method_info['InputParameters'][param]:
                             if param in dataset_meta_dict:
                                 method_param_for_assess[category][hazard]['Method'][method]['InputParameters'][param]['ColumnIDWithData'] = \
                                     dataset_meta_dict[param]['ColumnNameStoredAs']
                             else:
                                 method_param_for_assess[category][hazard]['Method'][method]['InputParameters'][param] = 'Preferred'
-                        elif method_info['InputParameters'][param]['Source'] == 'UserDefined':
+                        elif 'UserDefined' in method_info['InputParameters'][param]:
                             if param in dataset_meta_dict:
                                 method_param_for_assess[category][hazard]['Method'][method]['InputParameters'][param]['ColumnIDWithData'] = \
                                     dataset_meta_dict[param]['ColumnNameStoredAs'] + '_Existing'
@@ -876,10 +907,13 @@ def add_site_data_to_method_param(setup_config, site_data, other_config_param, m
                 # check if item is dictionary
                 if isinstance(method_info['InputParameters'][param], dict):
                     # specifically for Vs30
-                    if param == 'Vs30' and param_info['Source'] == 'Preferred':
+                    if param == 'Vs30' and 'Preferred' in param_info:
                         kwargs[param] = site_data['Vs30 (m/s)'].values
                     else:
-                        kwargs[param] = site_data[param_info['ColumnIDWithData']].values
+                        if 'Preferred' in param_info:
+                            kwargs[param] = site_data[param_info['ColumnIDWithData']].values
+                        else:
+                            kwargs[param] = site_data[param_info['UserDefined']['ColumnIDWithData']].values
                         ## See if param is one of the parameters with pre-packaged data
                         #if param in other_config_param['ColumnNamesForKy']:
                         #    if method_info[param]['Source'] == 'Preferred': # if preferred data (obtained in OpenSRA)

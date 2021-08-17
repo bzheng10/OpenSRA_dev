@@ -281,13 +281,13 @@ def setup_opensha(setup_config, other_config_param, site_data):
     
     # Initialize ERF
     logging.info(f"\n\n     *****Runtime messages from OpenSHA*****\n")
-    erf_name = setup_config['IntensityMeasure']['SourceParameters']['SeismicSourceModel']
+    erf_name = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['SeismicSourceModel']
     erf = getERF(erf_name)
     logging.info(f"\n\n     *****Runtime messages from OpenSHA*****\n")
     logging.info(f'\t... initialized ERF "{erf_name}"')
     
     # Set to include background source
-    flagIncludeBackground = setup_config['IntensityMeasure']['SourceParameters']['Filter']['PointSource']['ToInclude']
+    flagIncludeBackground = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['Filter']['PointSource']['ToInclude']
     if flagIncludeBackground:
         erf.setParameter(IncludeBackgroundParam.NAME, IncludeBackgroundOption.INCLUDE)
         logging.info(f"\t... point sources included in list of scenarios")
@@ -296,7 +296,7 @@ def setup_opensha(setup_config, other_config_param, site_data):
         logging.info(f"\t... point sources excluded from list of scenarios")
     
     # Initialize IMR
-    gmpe_name = setup_config['IntensityMeasure']['SourceParameters']['GroundMotionModel']
+    gmpe_name = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['GroundMotionModel']
     try:
         imr = CreateIMRInstance(gmpe_name)
         logging.info(f'\t... created instance of IMR "{gmpe_name}"')
@@ -311,18 +311,20 @@ def setup_opensha(setup_config, other_config_param, site_data):
         'Longitude': site_data['Mid Longitude'].values,
     }
     # get other parameters
-    other_param_definition = setup_config['IntensityMeasure']['SourceParameters']['OtherParameters']
+    other_param_definition = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']
     for param in other_param_definition:
-        if param == 'Vs30':
-            siteSpec['Vs30'] = site_data['Vs30 (m/s)'].values # get vs30
-        else:
-            if other_param_definition[param]['Source'] == 'UserDefined':
-                if param == 'Z1p0': # convert z1p0 from km to m
-                    siteSpec[param] = site_data[other_param_definition[param]['ColumnIDWithData']].values*1000
-                else:
-                    siteSpec[param] = site_data[other_param_definition[param]['ColumnIDWithData']].values
+        # limit to Vs30,z1p0,z2p5 for now:
+        if 'Vs30' in param or 'Z1p0' in param or 'Z2p5' in param:
+            if param == 'Vs30':
+                siteSpec['Vs30'] = site_data['Vs30 (m/s)'].values # get vs30
             else:
-                siteSpec[param] = None
+                if 'UserDefined' in other_param_definition[param]:
+                    siteSpec[param] = site_data[other_param_definition[param]['UserDefined']['ColumnIDWithData']].values
+                    # convert z1p0 from km to m
+                    if param == 'Z1p0':
+                        siteSpec[param] = siteSpec[param]*1000
+                else:
+                    siteSpec[param] = None
                 
     # create Java objects of sites
     sites = get_site_prop(
@@ -330,8 +332,8 @@ def setup_opensha(setup_config, other_config_param, site_data):
         outfile=os.path.join(other_config_param['Dir_IM_SeismicSource'],'SiteDataUsed.csv')
     )
     # Set max distance
-    if setup_config['IntensityMeasure']['SourceParameters']['Filter']['Distance']['ToInclude']:
-        r_max = setup_config['IntensityMeasure']['SourceParameters']['Filter']['Distance']['Maximum']
+    if setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['Filter']['Distance']['ToInclude']:
+        r_max = setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['Filter']['Distance']['Maximum']
         imr.setUserMaxDistance(r_max)
         logging.info(f"\t... set max distance to {r_max} km")
     
@@ -368,7 +370,7 @@ def filter_ruptures(erf, locs, filter_criteria, rupture_list, rup_save_name,
     if 'Magnitude' in filter_criteria:
         mag_min = filter_criteria['Magnitude']['Minimum']
         mag_max = filter_criteria['Magnitude']['Maximum']
-        logging.info(f"\t\t- filtering scenarios with moment magnitudes outside of {mag_min} and {mag_max}")
+        logging.info(f"\t\t- filtering scenarios by magnitude range: min = {mag_min}, max = {mag_max}")
         if mag_min is not None:
             rupture_list = rupture_list[rupture_list['Magnitude']>=mag_min]
             rupture_list.reset_index(inplace=True,drop=True)

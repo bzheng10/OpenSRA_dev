@@ -178,6 +178,14 @@
 			"NameToDisplay": "OpenSHA",
 			"WidgetType": null,
 			"ToDisplay": true,
+            "DisplayOrder": [
+                "SeismicSourceModel",
+                "Filter",
+                "GroundMotionModel",
+                "Vs30",
+                "Z1p0",
+                "Z2p5"
+            ],
 			"Params": {
 				"SeismicSourceModel": {
 					"NameToDisplay": "Seismic Source Model",
@@ -313,7 +321,7 @@
 					"ToDisplay": true,
 					"DefaultValue": "Preferred",
 					"Options": {
-						"Wills et al. (2015)": {
+						"Preferred": {
 							"NameToDisplay": "Preferred",
 							"ToDisplay": true,
 							"Params": {}
@@ -852,7 +860,7 @@
 					}
                 },
 				"YieldAcceleration": {
-					"NameToDisplay": "Yield Acceleration",
+					"NameToDisplay": "Yield Acceleration Parameters",
 					"WidgetType": "QWidget",
 					"ToDisplay": true,
 					"Params": {
@@ -1049,7 +1057,7 @@
 							}
 						},
 						"MethodForKy": {
-							"NameToDisplay": "Method",
+							"NameToDisplay": "Method for Yield Acceleration",
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": "Bray2007",

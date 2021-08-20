@@ -499,6 +499,15 @@
 						"ZhuEtal2017": {
 							"NameToDisplay": "Zhu et al. (2017)",
 							"ToDisplay": true,
+                            "DisplayOrder": [
+                                "ModelTransition",
+                                "Vs30",
+                                "WaterTableDepth",
+                                "DistanceToRiver",
+                                "DistanceToCoast",
+                                "DistanceToWaterBody",
+                                "Precipitation"
+                            ],
 							"Params": {
 								"ModelTransition": {
 									"NameToDisplay": "Distance for model transition (km), default: 20 km",
@@ -863,6 +872,14 @@
 					"NameToDisplay": "Yield Acceleration Parameters",
 					"WidgetType": "QWidget",
 					"ToDisplay": true,
+                    "DisplayOrder": [
+                        "UnitWeight",
+                        "FrictionAngle",
+                        "Cohesion",
+                        "SlopeType",
+                        "SlopeAngle",
+                        "SlopeThickness"
+                    ],
 					"Params": {
 						"FrictionAngle": {
 							"NameToDisplay": "Friction Angle (deg)",
@@ -929,7 +946,7 @@
 							}
 						},
 						"SlopeAngle": {
-							"NameToDisplay": "Slope (deg)",
+							"NameToDisplay": "Slope Angle (deg)",
 							"WidgetType": "QComboBox",
 							"ToDisplay": true,
 							"DefaultValue": "Preferred",
@@ -1143,7 +1160,7 @@
 											}
 										},
 										"SlopeSaturation": {
-											"NameToDisplay": "Thickness Saturation (%)",
+											"NameToDisplay": "Slope Saturation (%)",
 											"WidgetType": "QComboBox",
 											"ToDisplay": true,
 											"DefaultValue": "Preferred",

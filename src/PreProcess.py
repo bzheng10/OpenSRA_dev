@@ -203,9 +203,10 @@ def get_other_setup_config(setup_config, other_config_param, folders_to_create, 
                                     not param in other_config_param['ParamsToGetFromDatasets']:
                                     other_config_param['ParamsToGetFromDatasets'].append(param)
                         # Pull 'OtherParameters' into method_param_for_assess
-                        for param in setup_config[category]['Type'][hazard]['OtherParameters']:
-                            method_param_for_assess[peer_categories[category]][hazard]['Method'][method]['InputParameters'].update({
-                                param: setup_config[category]['Type'][hazard]['OtherParameters'][param]})
+                        if 'OtherParameters' in setup_config[category]['Type'][hazard]:
+                            for param in setup_config[category]['Type'][hazard]['OtherParameters']:
+                                method_param_for_assess[peer_categories[category]][hazard]['Method'][method]['InputParameters'].update({
+                                    param: setup_config[category]['Type'][hazard]['OtherParameters'][param]})
                         count+=1
         other_config_param['Num_'+peer_categories[category]] = len(other_config_param[peer_categories[category]])
 

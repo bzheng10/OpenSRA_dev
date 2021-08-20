@@ -1,22 +1,19 @@
 backend structure & efficiency
 
-- multiprocessing.pool on haversine function
+- incorporate multiprocessing/numba
 
 - remove for loops for logic tree by adding 3rd degree for samples
 
-- find way to multi process IM from OpenSHA
+- improve speed on getting IM predictions from OpenSHA
 
 - instead of making cov for all sites and sample all at once, perform in loop and use filtered number of sites with large number of events
 	- works better for large number of sites, but may sacrifice run time for low number of sites but high number of events
 	
 - convert current functions to base and derived classes (see https://github.com/arkottke/pyrvt/blob/master/pyrvt/peak_calculators.py)
 
-- use numba to improve speed by precompiling certain functions
-
-
-
 
 backednd features
 
 - polynomial chaos
 
+- fault rupture for shake map (area, union)

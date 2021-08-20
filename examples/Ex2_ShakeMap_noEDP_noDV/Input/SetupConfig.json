@@ -42,7 +42,10 @@
                 "Events": [
                     "1989_LomaPrieta",
                     "1994_Northridge"
-                ]
+                ],
+                "Vs30": {
+                    "Preferred" : {}
+                },
 			}
         },
         "Correlation": {

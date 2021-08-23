@@ -216,7 +216,7 @@
                     "ToDisplay": true,
                     "Params": {
                         "ReturnPeriod": {
-                            "NameToDisplay": "Return Period [years]",
+                            "NameToDisplay": "Return Period (years)",
                             "WidgetType": "QCheckBox",
                             "ToDisplay": true,
                             "DefaultValue": false,
@@ -230,7 +230,7 @@
                             }
                         },
                         "Distance": {
-                            "NameToDisplay": "Distance [km]",
+                            "NameToDisplay": "Distance (km)",
                             "WidgetType": "QCheckBox",
                             "ToDisplay": true,
                             "DefaultValue": false,
@@ -264,7 +264,7 @@
                             }
                         },
                         "PointSource": {
-                            "NameToDisplay": "Exclude Point Source?",
+                            "NameToDisplay": "Include background seismicity?",
                             "WidgetType": "QCheckBox",
                             "ToDisplay": true,
                             "DefaultValue": false,

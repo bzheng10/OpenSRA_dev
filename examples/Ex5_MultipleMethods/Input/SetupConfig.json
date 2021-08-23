@@ -8,10 +8,17 @@
     },
 	"SamplingMethod": {
 		"Method": {
-            "MonteCarlo" : {
-                "Algorithm": "LatinHypercube",
-                "NumberOfSamples": 3,
-                "Seed": 1
+            "LogicTree": {
+                "Branch": [
+                    -1.65,
+                    0,
+                    1.65
+                ],
+                "Weights": [
+                    0.2,
+                    0.6,
+                    0.2
+                ]
             }
         }
 	},

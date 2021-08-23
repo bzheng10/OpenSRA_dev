@@ -10,7 +10,7 @@
         "Method": {
             "MonteCarlo" : {
                 "Algorithm": "LatinHypercube",
-                "NumberOfSamples": 3,
+                "NumberOfSamples": 100,
                 "Seed": 1
             }
         }

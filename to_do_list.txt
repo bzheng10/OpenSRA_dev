@@ -11,6 +11,24 @@ backend structure & efficiency
 	
 - convert current functions to base and derived classes (see https://github.com/arkottke/pyrvt/blob/master/pyrvt/peak_calculators.py)
 
+- run subset of components from front end
+
+- under sampling method, add button to clean previous samples
+
+- add PGV contours
+
+- bug "ex 3": repair rate for shaking induced not preselected
+---- in output setup config file, don't see "RepairRatePGD"
+
+- under list of cases to run:
+	- show list of parameters that uses user-defined values.
+
+- embed layers interface under results
+
+- "results" list under results tab should start with DV (repair rate), then shaking induced or deformation induced
+----- subcategories (lateral spread, then ground settlement)
+
+- fontsize for program output menu
 
 backednd features
 

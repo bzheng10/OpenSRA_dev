@@ -331,7 +331,7 @@ def setup_opensha(setup_config, other_config_param, site_data):
     # create Java objects of sites
     sites = get_site_prop(
         imr, siteSpec, n_site,
-        outfile=os.path.join(other_config_param['Dir_IM_SeismicSource'],'SiteDataUsed.csv')
+        outfile=os.path.join(other_config_param['Dir_IM_GroundMotion_Prediction'],'SiteDataUsedInGMM.csv')
     )
     # Set max distance
     if setup_config['IntensityMeasure']['SourceForIM']['OpenSHA']['Filter']['Distance']['ToInclude']:

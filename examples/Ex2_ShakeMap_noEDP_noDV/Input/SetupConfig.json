@@ -45,7 +45,7 @@
                 ],
                 "Vs30": {
                     "Preferred" : {}
-                },
+                }
 			}
         },
         "Correlation": {

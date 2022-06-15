@@ -1,7 +1,5 @@
 backend structure & efficiency
 
-- incorporate multiprocessing/numba
-
 - remove for loops for logic tree by adding 3rd degree for samples
 
 - improve speed on getting IM predictions from OpenSHA
@@ -11,14 +9,31 @@ backend structure & efficiency
 	
 - convert current functions to base and derived classes (see https://github.com/arkottke/pyrvt/blob/master/pyrvt/peak_calculators.py)
 
+- polynomial chaos
+
+- fault rupture for shake map (area, union)
+
+- thread and numba opensha functions
+
+- less sig figs on outputs
+
 - run subset of components from front end
+
+- write program to test each function with updates (unit tests) - Albert Kottke
+ 
+- system wide check against SERA (PG&E)
+
+- fragilities coming in soon
+
+- pivot table for results
+
+
+
+front end
 
 - under sampling method, add button to clean previous samples
 
 - add PGV contours
-
-- bug "ex 3": repair rate for shaking induced not preselected
----- in output setup config file, don't see "RepairRatePGD"
 
 - under list of cases to run:
 	- show list of parameters that uses user-defined values.
@@ -28,10 +43,43 @@ backend structure & efficiency
 - "results" list under results tab should start with DV (repair rate), then shaking induced or deformation induced
 ----- subcategories (lateral spread, then ground settlement)
 
-- fontsize for program output menu
+- weird large fontsizes when I open the program on 4k screen (or when switching between screens of different resolution)
 
-backednd features
+- From Micaela: when she picked example 6, GUI resized automatically, then she tried to re-maximized the screen, but the widgets not resize properly 
 
-- polynomial chaos
+- opensra.exe getting flagged a threat/trojan and removed by windows defender
 
-- fault rupture for shake map (area, union)
+- widget screen popups
+
+- horizontal scrolling bar on input table not showing up when table extends beyong width
+
+- gray out preferred variables drop down menus when "preferred configuration" is selected under "general"
+
+- bullets for model parameters
+
+- help widget (more thoughts needed)
+
+- results tab: add button to open up working directory
+
+- progress bar (more thoughts needed and need to interface with backend somehow)
+
+- how to test program & experience
+
+- how to update program
+
+- polygon function for areas sounds interesting! helps crop out data to make analysis of results easier. i like! (Brian Low)
+
+- glitchy after prolonged use (from Micaela), potentially memory leak?
+
+- tie help menu to documentation (to do later)
+
+
+
+user documentation
+
+- remind users to clear output
+
+- 
+
+
+- breakout meetings with individual TACs

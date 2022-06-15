@@ -13,14 +13,132 @@
 
 # -----------------------------------------------------------
 # Python modules
-import logging
-# import ast
 import numpy as np
 from scipy import sparse
 
+# OpenSRA modules and classes
+from src.base_class import BaseClass
+
 
 # -----------------------------------------------------------
-def Hazus2014(**kwargs):
+class SurfaceFaultRupture(BaseClass):
+    "Inherited class specfic to surface fault rupture"
+
+    TYPE = 'EDP'
+
+    def __init__(self):
+        super().__init__()
+
+
+# -----------------------------------------------------------
+class WellsCopppersmith1994(SurfaceFaultRupture):
+    """
+    Compute surface fault rupture displacement using Wells & Coppersmith (1994).
+    
+    Parameters
+    ----------
+    M : float
+        moment magnitude
+    mat_seg2calc : matrix
+        matrix (n_event by n_site) with sites to calculate flagged as 1, else 0
+    d_type : str
+        displacement type: either **maximum** or **average**
+    fault_type : str
+        type of fault, enter bolded keywords: **ss** (strike-slip), **r** (reverse), **n** (normal), or **all**
+    
+    Returns
+    -------
+    d : float
+        [cm] surface fault rupture displacement
+        
+    References
+    ----------
+    .. [1] Wells, D.L., and Coppersmith, K.J., 1994, New Empirical Relationships Among Magnitude, Rupture Length, Rupture width, Rupture Area, and Surface Displacement, Bulletin of the Seismological Society of America, vol. 84, no. 4, pp. 974-1002.
+    
+    """
+
+    NAME = 'Wells and Coppersmith (1994)'
+    ABBREV = 'WC94'
+    REF = "".join([
+        'Wells, D.L., and Coppersmith, K.J., 1994, ',
+        'New Empirical Relationships Among Magnitude, Rupture Length, Rupture width, Rupture Area, and Surface Displacement, ',
+        'Bulletin of the Seismological Society of America, ',
+        'vol. 84, no. 4, pp. 974-1002.'
+    ])
+    LEVEL = 1
+    INPUT = {
+        'REQUIRED': {
+            'd': {
+                'DESC': 'distance [km]'
+            },
+            'T': {
+                'DESC': 'period [sec]'
+            }
+        },
+        'OPTIONAL': {
+            'geo_cond': {
+                'DESC': 'geologic condition: 1 for variability within soil; 2 for homogenous conditions',
+                'DEFAULT': 2
+            }
+        }
+    }
+    OUTPUT = {
+        'corr': {
+            'DESC': 'Correlation values'
+        }
+    }
+
+
+    # instantiation
+    def __init__(self):
+        super().__init__()
+
+
+    # update calculation method
+    def _perform_calc(self):
+        """Performs calculations"""
+        # pull inputs locally
+        d = self._inputs['d']
+        T = self._inputs['T']
+        geo_cond = self._inputs['geo_cond']
+
+        M = kwargs.get('M',None) # moment magnitude
+        n_site = kwargs.get('n_site',None) # number of sites
+        n_event = kwargs.get('n_event',len(M)) # number of ruptures
+        d_type = kwargs.get('d_type','max') # displacement type
+        fault_type = kwargs.get('fault_type','all') # fault type
+        return_param = kwargs.get('return_param',None) #
+        n_sample = kwargs.get('n_sample',1) # number of samples, default to 1
+
+        # calculations
+        corr = self._model(d, T, geo_cond)
+        
+        # store intermediate params
+        self._inters.update({
+            'corr': corr
+        })
+
+
+    @staticmethod
+    @jit(nopython=True)
+    def _model(d, T, geo_cond):
+        """Model to calculate correlation"""
+        #
+        if T < 1:
+            if geo_cond == 1:
+                b = 8.5 + 17.2*T
+            elif geo_cond == 2:
+                b = 40.7 - 15.0*T
+            else:
+                raise ValueError(f"geo_cond must be equal 1 or 2 (see documentation).")
+        elif T >= 1:
+            b = 22.0 + 3.7*T
+        #
+        return np.exp(-3*d/b)
+
+
+# -----------------------------------------------------------
+def h14(**kwargs):
     """
     Compute surface fault rupture displacement using Wells & Coppersmith (1994) with modified parameters
     
@@ -43,13 +161,13 @@ def Hazus2014(**kwargs):
     
     # return 10**(-5.26 + 0.79*M) * 100
     kwargs['flag_hazus'] = True
-    output = WellsCoppersmith1994(**kwargs)
+    output = wc94(**kwargs)
     #
     return output
     
     
 # -----------------------------------------------------------
-def WellsCoppersmith1994(**kwargs):
+def wc94(**kwargs):
     """
     Compute surface fault rupture displacement using Wells & Coppersmith (1994).
     
@@ -101,7 +219,6 @@ def WellsCoppersmith1994(**kwargs):
         row = []
         col = []
         for i in range(len(fault_crossings)):
-            # crossings_i = ast.literal_eval(fault_crossings['ListOfSegmentIDsWithCrossings'][i])
             crossings_i = fault_crossings['ListOfSegmentIDsWithCrossings'][i]
             if len(crossings_i) > 0:
                 for j in crossings_i:
@@ -226,7 +343,7 @@ def WellsCoppersmith1994(**kwargs):
     return output
     
 # -----------------------------------------------------------
-def Thompson2020(**kwargs):
+def t20(**kwargs):
     """
     Compute surface fault rupture displacement using Wells & Coppersmith (1994).
     
@@ -254,6 +371,6 @@ def Thompson2020(**kwargs):
     
     #
     kwargs['flag_thompson'] = True
-    output = WellsCoppersmith1994(**kwargs)
+    output = wc94(**kwargs)
     #
     return output

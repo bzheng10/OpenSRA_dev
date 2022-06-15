@@ -19,6 +19,382 @@ import logging
 import numpy as np
 from scipy import sparse
 
+# OpenSRA modules and classes
+from src.base_class import BaseModel
+
+
+# -----------------------------------------------------------
+class LateralSpread(BaseModel):
+    "Inherited class specfic to liquefaction-induced lateral spread deformation"
+    
+    _RETURN_PBEE_META = {
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
+        'type': 'lateral spread',       # Type of model (e.g., liquefaction, landslide, pipe strain)
+        'variable': [
+            'pgdef',
+        ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
+    }
+
+    def __init__(self):
+        super().__init__()
+
+
+# -----------------------------------------------------------
+class YoudEtal2002(LateralSpread):
+    """
+    Revised multilinear regression equations for prediction of lateral spread displacement (Youd et al., 2002). Two models are available:
+    
+    1. **Ordinary**: **d** = f(ky, Sa(T), Ts, M)
+    2. **Near-fault**: **d** = f(ky, Sa(T), Ts, M, pgv) - unavailable for this version of OpenSRA
+    3. **General** (default): **d** = f(ky, Sa(T), Ts, M, pgv) - unavailable for this version of OpenSRA
+    
+    Parameters
+    ----------
+    From upstream PBEE:
+        
+    Geotechnical/geologic:
+    t_15: float, np.ndarray or list
+        [m] cumulative thickness (in upper 20 m) of all saturated soil layers susceptible to liquefaction (initiation with N1_60<15)
+    f_15: float, np.ndarray or list
+        [%] average fines content of the soil within t_15
+    d50_15: float, np.ndarray or list
+        [mm] average mean grain size of the soil within t_15
+    w_ff: float, np.ndarray or list
+        [%] free face ratio (height of free face/distance from base of free face to site); for free-face model
+    slope: float, np.ndarray or list
+        [deg] ground slope; for ground (infinite) slope model
+    prob_liq: float, np.ndarray or list
+        [%] probability of liquefaction
+    min_dist: float, np.ndarray or list
+        [km] closest horizontal distance from site to source
+    
+    Fixed:
+    slope_type: float, np.ndarray or list
+        slope_type: **ground** (infinite) slope or **freeface**; default: ground
+    mag: float, np.ndarray or list
+        moment magnitude
+
+    Returns
+    -------
+    pgdef : float, np.ndarray or list
+        [cm] permanent ground deformation
+    
+    References
+    ----------
+    .. [1] Youd. T.L., Hansen, C.M., and Bartlett, S.F., 2002, Revised Multilinear Regression Equations for Prediction of Lateral Spread Displacement, Journal of Geotechnical and Geoenvironmental Engineering, vol. 128, no. 12, pp. 1007-1017.
+    
+    """
+
+    _NAME = 'Youd et al. (2002)'       # Name of the model
+    _ABBREV = None                     # Abbreviated name of the model
+    _REF = "".join([                     # Reference for the model
+        'Youd. T.L., Hansen, C.M., and Bartlett, S.F., 2002, ',
+        'Revised Multilinear Regression Equations for Prediction of Lateral Spread Displacement, ',
+        'Journal of Geotechnical and Geoenvironmental Engineering, ',
+        'vol. 128, no. 12, pp. 1007-1017.'
+    ])
+    _RETURN_PBEE_DIST = {                            # Distribution information
+        "desc": 'returned PBEE upstream random variables:',
+        'params': {
+            'pgdef': {
+                'desc': 'permanent ground deformation (cm)',
+                'unit': 'cm',
+                'mean': None,
+                'aleatory': 0.7,
+                'epistemic': {
+                    'coeff': 0.4, # base uncertainty, based on coeffcients
+                    'input': None, # sigma_mu uncertainty from input parameters
+                    'total': None # SRSS of coeff and input sigma_mu uncertainty
+                },
+                'dist_type': 'lognormal',
+            },
+        }
+    }
+    _INPUT_PBEE_META = {
+        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+        'variable': [
+        ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    }
+    _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        "desc": 'PBEE upstream random variables:',
+        'params': {
+        }
+    }
+    _INPUT_DIST_VARY_WITH_LEVEL = True
+    _N_LEVEL = 3
+    _MODEL_INPUT_INFRA = {
+        "desc": 'Infrastructure random variables:',
+        "params": {
+        }
+    }
+    _MODEL_INPUT_GEO = {
+        "desc": 'Geotechnical/geologic random variables:',
+        'params': {
+            't_15': 'cumulative thickness (in upper 20 m) of all saturated soil layers susceptible to liquefaction initiation with N1_60',
+            'f_15': 'average fines content of the soil comprising T_15 (%)',
+            'd50_15': 'average mean grain size of the soil comprising T_15 (mm)',
+            'w_ff': 'free-face ratio (height and/or horizontal distance from site to toe) (%); for free-face model',
+            'slope': 'ground slope; for ground (infinite) (m) slope model)',
+            'prob_liq': 'probability of liquefaction (%)',
+            'min_dist': 'closest horizontal distance from site to source (km)',
+        }
+    }
+    _MODEL_INPUT_FIXED = {
+        'desc': 'Fixed input variables:',
+        'params': {
+            'slope_model': '"ground" slope or "freeface" slope; default=ground',
+            'mag': 'moment magnitude',
+        }
+    }
+    _REQ_MODEL_RV_FOR_LEVEL = {
+        'level1': ['min_dist', 'w_ff', 't_15', 'f_15', 'd50_15'],
+        'level2': ['min_dist', 'w_ff', 't_15', 'f_15', 'd50_15'],
+        'level3': ['min_dist', 'w_ff', 't_15', 'f_15', 'd50_15', 'slope'],
+    }
+    _REQ_MODEL_FIXED_FOR_LEVEL = {
+        'level1': ['mag', 'slope_model'],
+        'level2': ['mag', 'slope_model'],
+        'level3': ['mag', 'slope_model'],
+    }
+    _MODEL_INTERNAL = {
+        'n_sample': 1,
+        'n_site': 1,
+    }
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
+    _MODEL_FORM_DETAIL = {}
+    _MODEL_INPUT_RV = {}
+    
+    
+    @staticmethod
+    # @njit
+    def _model(
+        t_15, f_15, d50_15, w_ff, slope, min_dist, prob_liq, # geotechnical/geologic
+        slope_model, mag, # fixed/toggles
+        return_inter_params=False # to get intermediate params
+    ):
+        """Model"""
+        
+        # initialize arrays
+        pgdef = np.empty(slope.shape)
+        
+        # adjusted distance
+        min_dist_star = min_dist + 10**(0.89*mag-5.64)
+        
+        # convert slope from degrees to percent
+        slope_percent = np.arctan(slope*np.pi/180)*100
+        
+        # evaluate common terms
+        log10_pgdef = \
+            1.532*mag + \
+            -1.406*np.log10(min_dist_star) + \
+            -0.012*min_dist + \
+            0.540*np.log10(t_15) + \
+            3.413*np.log10(100-f_15) + \
+            -0.795*np.log10(d50_15+0.1)
+        
+        # model 1: ground slope
+        ind_ground = np.where(slope_model=='ground')[0]
+        # find cases using ground slope model
+        if len(ind_ground) > 0:
+            log10_pgdef[ind_ground] += \
+                -16.213 + \
+                0.338*np.log10(slope_percent[ind_ground])
+            
+        # model 1: ground slope
+        ind_ff = np.where(slope_model=='freeface')[0]
+        if len(ind_ff) > 0:
+            log10_pgdef[ind_ff] += \
+                -16.713 + \
+                0.592*np.log10(w_ff[ind_ff])
+
+        # expected deformation given probability of liquefaction
+        pgdef = 10**(log10_pgdef) * prob_liq/100
+        
+        # prepare outputs
+        output = {
+            'pgdef': pgdef,
+        }
+        # get intermediate values if requested
+        if return_inter_params:
+            output['slope_percent'] = slope_percent
+            output['min_dist_star'] = min_dist_star
+        
+        # return
+        return output
+
+
+# -----------------------------------------------------------
+class Hazus2014(LateralSpread):
+    """
+    Compute lateral spreading, same methodology as Grant et al. (2016).
+    
+    Parameters
+    ----------
+    From upstream PBEE:
+    pga: float, np.ndarray or list
+        [g] peak ground acceleration
+        
+    Geotechnical/geologic:
+    prob_liq: float, np.ndarray or list
+        [%] probability of liquefaction
+    dist_water: float, np.ndarray or list, optional
+        [km] distance to nearest river, lake, or coast; site is only susceptible to lateral spread if distance is less than 25 meters
+    
+    Fixed:
+    mag: float, np.ndarray or list
+        moment magnitude
+    liq_susc: str, np.ndarray or list
+        susceptibility category to liquefaction (none, very low, low, moderate, high, very high)
+
+    Returns
+    -------
+    pgdef : float, np.ndarray or list
+        [cm] permanent ground deformation
+    
+    References
+    ----------
+    .. [1] Federal Emergency Management Agency (FEMA), 2014, Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, National Institute of Building Sciences and Federal Emergency Management Agency, Washington, DC, 690 p.
+    
+    """
+
+    _NAME = 'Hazus (FEMA, 2014)'       # Name of the model
+    _ABBREV = None                     # Abbreviated name of the model
+    _REF = "".join([                     # Reference for the model
+        'Federal Emergency Management Agency (FEMA), 2014, ',
+        'Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, ',
+        'National Institute of Building Sciences and Federal Emergency Management Agency, ',
+        'Washington, DC, 690 p.'
+    ])
+    _RETURN_PBEE_DIST = {                            # Distribution information
+        "desc": 'returned PBEE upstream random variables:',
+        'params': {
+            'pgdef': {
+                'desc': 'permanent ground deformation (cm)',
+                'unit': 'cm',
+                'mean': None,
+                'aleatory': 0.8,
+                'epistemic': {
+                    'coeff': 0.25, # base uncertainty, based on coeffcients
+                    'input': None, # sigma_mu uncertainty from input parameters
+                    'total': None # SRSS of coeff and input sigma_mu uncertainty
+                },
+                'dist_type': 'lognormal',
+            },
+        }
+    }
+    _INPUT_PBEE_META = {
+        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+        'variable': [
+            'pga'
+        ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    }
+    _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        "desc": 'PBEE upstream random variables:',
+        'params': {
+            'pga': {
+                'desc': 'peak ground acceleration (g)',
+                'unit': 'g',
+                'mean': None,
+                'aleatory': None,
+                'epistemic': None,
+                'dist_type': 'lognormal'
+            }
+        }
+    }
+    _INPUT_DIST_VARY_WITH_LEVEL = False
+    _N_LEVEL = 3
+    _MODEL_INPUT_INFRA = {
+        "desc": 'Infrastructure random variables:',
+        "params": {}
+    }
+    _MODEL_INPUT_GEO = {
+        "desc": 'Geotechnical/geologic random variables:',
+        'params': {
+            'prob_liq': 'probability of liquefaction (%)',
+            'dist_water': 'distance to nearest river, lake, or coast'
+        }
+    }
+    _MODEL_INPUT_FIXED = {
+        'desc': 'Fixed input variables:',
+        'params': {
+            'mag': 'moment magnitude',
+            'liq_susc': 'liquefaction susceptibility category',
+        }
+    }
+    _REQ_MODEL_RV_FOR_LEVEL = {
+        'prob_liq',
+    }
+    _REQ_MODEL_FIXED_FOR_LEVEL = {
+        'mag',
+        'liq_susc'
+    }
+    _MODEL_INTERNAL = {
+        'n_sample': 1,
+        'n_site': 1,
+    }
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
+    _MODEL_FORM_DETAIL = {}
+    _MODEL_INPUT_RV = {}
+    
+    
+    @staticmethod
+    # @njit
+    def _model(
+        pga, # upstream PBEE RV
+        prob_liq, dist_water, # geotechnical/geologic
+        mag, liq_susc, # fixed/toggles
+        extrapolat_expected_pgdef=False, 
+        return_inter_params=False # to get intermediate params
+    ):
+        """Model"""
+        
+        # initialize arrays
+        
+        # get threshold pga against liquefaction
+        pga_t = np.ones(pga.shape)*np.nan
+        pga_t[liq_susc=='very high'] = 0.09 # g
+        pga_t[liq_susc=='high'] = 0.12 # g
+        pga_t[liq_susc=='moderate'] = 0.15 # g
+        pga_t[liq_susc=='low'] = 0.21 # g
+        pga_t[liq_susc=='very low'] = 0.26 # g
+        pga_t[liq_susc=='none'] = 1. # g
+        
+        # pga factor of safety
+        ratio = pga/pga_t
+        
+        # get normalized displacement in inches, a, for M=7
+        expected_pgdef = np.ones(pga.shape)*np.nan
+        expected_pgdef[ratio<=1] = 0
+        expected_pgdef[np.logical_and(ratio>1,ratio<=2)] = 12*ratio[np.logical_and(ratio>1,ratio<=2)] - 12
+        expected_pgdef[np.logical_and(ratio>2,ratio<=3)] = 18*ratio[np.logical_and(ratio>2,ratio<=3)] - 24
+        if extrapolat_expected_pgdef is True:
+            expected_pgdef[ratio>3] = 70*ratio[ratio>3] - 180
+        else:
+            expected_pgdef[np.logical_and(ratio>3,ratio<=4)] = 70*ratio[np.logical_and(ratio>3,ratio<=4)] - 180
+            expected_pgdef[ratio>4] = 100
+        expected_pgdef *= 2.54 # convert from inches to cm
+        
+        # magnitude correction
+        k_delta = 0.0086*mag**3 - 0.0914*mag**2 + 0.4698*mag - 0.9835
+        
+        # susceptibility to lateral spreading only for deposits found near water body (dw < dw_cutoff)
+        pgdef = k_delta * expected_pgdef * prob_liq/100
+        pgdef[dist_water>25] = 0
+        
+        # prepare outputs
+        output = {
+            'pgdef': pgdef,
+        }
+        # get intermediate values if requested
+        if return_inter_params:
+            output['k_delta'] = k_delta
+            output['expected_pgdef'] = expected_pgdef
+            output['pga_t'] = pga_t
+            output['ratio'] = ratio
+        
+        # return
+        return output
+
 
 # -----------------------------------------------------------
 def IdrissBoulanger2008(FS_liq, N1_60_cs=None, qc_1N_cs=None):
@@ -259,7 +635,7 @@ def ZhangEtal2004(FS_liq, N1_60_cs=None, qc_1N_cs=None):
 
 
 # -----------------------------------------------------------
-def GrantEtal2016(**kwargs):
+def GrantEtal2016_superseded(**kwargs):
     """
     Compute rock and soil landslide displacement using following the Grant et al. (2016) deterministic procedure. Of the 40 coseismic landslide datasets described in Keefer (1984), Grant et al. (2016) selected the four most fundamental modes of failures (see Table 1 in Grant et al., 2016, for detailed descriptions):
 
@@ -422,7 +798,7 @@ def GrantEtal2016(**kwargs):
 
 
 # -----------------------------------------------------------
-def YoudEtal2002(M, R, W, S, T_15, F_15, D50_15, flag_model=1):
+def YoudEtal2002_superseded(M, R, W, S, T_15, F_15, D50_15, flag_model=1):
     """
     Revised multilinear regression equations for prediction of lateral spread displacement (Youd et al., 2002)
 
@@ -470,7 +846,7 @@ def YoudEtal2002(M, R, W, S, T_15, F_15, D50_15, flag_model=1):
 
     # calcualte ln(D)
     log_Dh = b0 + b1*M + b2*np.log10(R_star) + b3*R + b4*np.log10(W) + \
-            b4*np.log10(S) + b6*np.log(T_15) + b7*np.log10(100-F_15) + b8*np.log10(D50_15+0.1)
+            b5*np.log10(S) + b6*np.log(T_15) + b7*np.log10(100-F_15) + b8*np.log10(D50_15+0.1)
 
     # calculate D
     Dh = 10**log_Dh
@@ -482,7 +858,7 @@ def YoudEtal2002(M, R, W, S, T_15, F_15, D50_15, flag_model=1):
 # -----------------------------------------------------------
 # FEMA (2014) HAZUS
 # -----------------------------------------------------------
-def Hazus2014(**kwargs):
+def Hazus2014_superseded(**kwargs):
     """
     Compute lateral spreading, which is the the same procedure used by Grant et al. (2016). See and use the function :func:`edp.ls.grant_etal_2016_ls`.
 

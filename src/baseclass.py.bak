@@ -1,0 +1,293 @@
+# -----------------------------------------------------------
+# Open-Source Seismic Risk Assessment, OpenSRA(TM)
+#
+# Copyright(c) 2020-2022 The Regents of the University of California and
+# Slate Geotechnical Consultants. All Rights Reserved.
+#
+# Methods for buckling
+#
+# Created: April 13, 2020
+# @author: Barry Zheng (Slate Geotechnical Consultants)
+# -----------------------------------------------------------
+
+
+# -----------------------------------------------------------
+# Python modules
+import numpy as np
+
+
+# -----------------------------------------------------------
+class BaseClass(object):
+    """Base class for models"""
+
+
+    # class definitions
+    NAME = ''               # Name of the model
+    ABBREV = ''             # Abbreviated name of the model
+    REF = ''                # Reference for the model
+    TYPE = ''               # Type of model (e.g., liquefaction, landslide)
+    LEVEL = []              # Level of analysis: 1 = statewide, 2 = regional, 3 = site-specific
+    DIST = {                # Distribution information for output
+        'TYPE': 'lognormal',
+        'ALEATORY': 1,
+        'EPISTEMIC': 1,
+        'TOTAL': 1
+    }
+    INPUT = {               # Model inputs (random and fixed variables)
+        'RANDOM': {         # List of random inputs with means, sigmas, and distributions (normal or lognormal)
+            'RV1': {'MEAN': 0, 'SIGMA': 1, 'MIN': -1, 'MAX': 1, 'DIST': 'lognormal'},
+            'RV2': {'MEAN': 0, 'SIGMA': 1, 'MIN': -1, 'MAX': 1, 'DIST': 'lognormal'},
+            'RV3': {'MEAN': 0, 'SIGMA': 1, 'MIN': -1, 'MAX': 1, 'DIST': 'normal'},
+            'RV4': {'MEAN': 0, 'SIGMA': 1, 'MIN': -1, 'MAX': 1, 'DIST': 'normal'}
+        },
+        'FIXED': {          # List of fixed variables
+            'return_param': ['all'], # "List of output parameters to return; default = ['all']"
+            'OPT1': 0,
+            'OPT2': False,
+            'OPT3': 'string'
+        }
+    }
+    OUTPUT = [              # List of available outputs (see 'return_param' under INPUT.OPTIONAL)
+        'OUT1',
+        'OUT2'
+    ]
+
+
+    # instantiation
+    def __init__(self):
+        """Create an instance of the class"""
+        # setup
+        super().__init__()
+        # clear instance dictionaries
+        self._inputs = {}
+        self._inters = {}
+        self._outputs = {}
+
+
+    # properties
+    @property
+    def name(self):
+        """Name of the model"""
+        return self.NAME
+
+    @property
+    def abbrev(self):
+        """Abbreviated name of the model"""
+        return self.ABBREV
+
+    @property
+    def ref(self):
+        """Reference for the model"""
+        return self.REF
+
+    @property
+    def type(self):
+        """Type of model (e.g., liquefaction, landslide)"""
+        return self.TYPE
+
+    @property
+    def dist(self):
+        """Distribution information"""
+        return self.DIST
+
+    @property
+    def level(self):
+        """Level of analysis: 1 = statewide, 2 = regional, 3 = site-specific"""
+        return self.LEVEL
+
+    @property
+    def input(self):
+        """Model inputs (random and fixed variables)"""
+        return self.INPUT
+
+
+    # call function
+    def __call__(self, kwargs):
+        """Actions to perform when called after instantiation"""
+        self._get_inputs(**kwargs)
+        self._perform_calc()
+        self._get_results()
+        return self._get_results()
+
+    # get inputs
+    def _get_inputs(self, **kwargs):
+        """Checks kwargs for input parameters and stores in class"""
+        # get general params
+        self._inputs['n_site'] = kwargs.get('n_site')
+        self._inputs['n_sample'] = kwargs.get('n_sample')
+        self._inputs['n_event'] = kwargs.get('n_event')
+        # get required inputs
+        for param in self.INPUT['REQUIRED']:
+            # if param in kwargs:
+            try:
+                self._inputs[param] = kwargs.get(param)
+            # else:
+            except ValueError
+                print(f'Missing "{param}" in inputs; will sample from distribution')
+
+                # raise ValueError(f"Missing model input: {param}; cannot proceed with method.")
+        # get optional inputs
+        for param in self.INPUT['OPTIONAL']:
+            self._inputs[param] = kwargs.get(param, self.INPUT['OPTIONAL'][param])
+
+    # calculates
+    def _perform_calc(self):
+        """Performs calculations"""
+        # Actions to be coded under individual models
+        pass
+
+    # get results
+    def _get_results(self):
+        """Return outputs based on self.OUTPUT definition"""
+        if 'return_param' in self._inputs:
+            if 'all' in self._inputs['return_param']:
+                for param in self.OUTPUT:
+                    self._outputs[param] = self._inters[param]
+            else:
+                for param in self._inputs.get('return_param'):
+                    if param in self._inters:
+                        self._outputs[param] = self._inters[param]
+                    else:
+                        raise ValueError(f"Requested return parameter {param} is not a valid output.")
+        else:
+            for param in self.OUTPUT:
+                self._outputs[param] = self._inters[param]
+        return self._outputs
+
+    # get model distribution
+    def get_dist(self):
+        """Return model distribution"""
+        # self._outputs['prob_dist'] = {
+        #     'type': self.DIST['TYPE'],
+        #     'sigma_total': self.DIST['TOTAL'],
+        #     'sigma_aleatory': self.DIST['ALEATORY'],
+        #     'sigma_epistemic': self.DIST['EPISTEMIC']
+        # }
+        return self.DIST
+
+
+    @classmethod
+    def sample_rv(cls, mean, sigma, dist, low=None, high=None, n_sample=1):
+        samples = None
+        return samples
+
+
+
+    @classmethod
+    def _update_param(cls):
+        return NotImplementedError("To be added")
+
+
+    @staticmethod
+    def _convert_to_ndarray(arr, length=1):
+        return arr if isinstance(arr, np.ndarray) else np.asarray([arr]*length)
+
+
+    # addtional templates
+    def instance_method_placeholder_1(self):
+        pass
+
+    @classmethod
+    def class_method_placeholder_1(cls):
+        pass
+
+    @staticmethod
+    def static_method_placeholder_1():
+        pass
+
+
+# -----------------------------------------------------------
+class GenericModel(BaseClass):
+    """
+    Compute output using generic model = c0 + c1*PARAM1 + c2*PARAM2) + ...
+
+    Parameters
+    ----------
+    coeffs: float, np.ndarray or list
+       coefficients starting with constant
+    params: float, np.ndarray or list
+       [mm] pipe outside diameter
+    t: float, np.ndarray or list
+       [mm] ]pipe wall thickness
+    sigma_y: float, np.ndarray or list
+       [kPa] pipe yield stress
+    pressure_op: float, np.ndarray or list
+       [kPa] pipe internal operating pressure
+
+    Returns
+    -------
+    prob : float
+        [%] probability of compressive buckling
+
+    References
+    ----------
+    .. [1] Bray, J.D., and Bain, C., 2022, Title, Publication, vol. xx, no. yy, pp. zz-zz.
+
+    """
+
+    NAME = 'Bray and Bain (2022)'   # Name of the model
+    ABBREV = 'BB22'                 # Abbreviated name of the model
+    REF = "".join([                 # Reference for the model
+        'Bray, J.D., and Bain, C., 2022, ',
+        'Title, ',
+        'Publication, ',
+        'vol. xx, no. yy, pp. zz-zz.'
+    ])
+    LEVEL = 3                       # Level of analysis: 1 = statewide, 2 = regional, 3 = site-specific
+    DIST = {                        # Distribution information
+        'TYPE': 'lognormal',
+        'ALEATORY': 0.407,
+        'EPISTEMIC': 0,
+        'TOTAL': 0.407
+    }
+    INPUT = {                       # Model inputs (required and optional)
+        'REQUIRED': [               # List of required inputs
+            'eps_p',
+            'd',
+            't',
+            'sigma_y',
+            'pressure_op'
+        ],
+        'OPTIONAL': {               # Optional inputs with default values
+        }
+    }
+    OUTPUT = [                      # List of available outputs
+        'prob'
+    ]
+
+
+    # instantiation
+    def __init__(self):
+        super().__init__()
+
+
+    # update calculation method
+    def _perform_calc(self):
+        """Performs calculations"""
+        # pull inputs locally
+        n_sample = self._inputs['n_sample']
+        n_site = self._inputs['n_site']
+
+        eps_p = self._convert_to_ndarray(self._inputs['eps_p'], n_sample)
+        d = self._convert_to_ndarray(self._inputs['d'], n_sample)
+        t = self._convert_to_ndarray(self._inputs['t'], n_sample)
+        sigma_y = self._convert_to_ndarray(self._inputs['sigma_y'], n_sample)
+        pressure_op = self._convert_to_ndarray(self._inputs['pressure_op'], n_sample)
+
+        # calculations
+        prob = self._model(eps_p, d, t, sigma_y, pressure_op)
+
+        # store intermediate params
+        self._inters.update({
+            'prob': prob
+        })
+
+
+    # generic model
+    @staticmethod
+    # @jit
+    # @jit(nopython=True)
+    def _model(coeffs, params, sigma, tau):
+        coeffs = coeffs[:,np.newaxis] # expand coeffs to with new axis
+        means = np.sum(coeffs*params,axis=0) # sum of coeffs*params
+        medians = np.exp(means) # to linear scale

@@ -31,8 +31,8 @@ src/PreProcess_Combine_RRPGV_RRPGD.py
 # ScenarioConnectivity.csv
 # lib/OpenSHA/**
 **/FiniteSourceConnectivity.csv
-lib/OpenSHA/ERF/Mean UCERF3
-lib/OpenSHA/ERF/Mean UCERF3.2
+lib/OpenSHA/ERF/Mean\ UCERF3
+lib/OpenSHA/ERF/Mean\ UCERF3.2
 
 # others
 **/superseded

@@ -568,7 +568,7 @@
 									"NameToDisplay": "gw_depth",
 									"VarType": "random",
 									"DescToDisplay": "[m] depth to groundwater table",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -576,7 +576,7 @@
 									"NameToDisplay": "dist_river",
 									"VarType": "random",
 									"DescToDisplay": "[km] distance to nearest river",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -584,7 +584,7 @@
 									"NameToDisplay": "dist_coast",
 									"VarType": "random",
 									"DescToDisplay": "[km] distance to nearest coast",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -592,7 +592,7 @@
 									"NameToDisplay": "dist_water",
 									"VarType": "random",
 									"DescToDisplay": "[km] distance to nearest water body",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -600,7 +600,7 @@
 									"NameToDisplay": "precip",
 									"VarType": "random",
 									"DescToDisplay": "[mm] mean annual precipitation",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
@@ -626,7 +626,7 @@
 									"NameToDisplay": "vs30",
 									"VarType": "random",
 									"DescToDisplay": "[m/s] time-averaged shear wave velocity in the upper 30-meters",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -634,7 +634,7 @@
 									"NameToDisplay": "cti",
 									"VarType": "random",
 									"DescToDisplay": "compound topographic index",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
@@ -660,7 +660,7 @@
 									"NameToDisplay": "gw_depth",
 									"VarType": "random",
 									"DescToDisplay": "[m] depth to groundwater table",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -668,7 +668,7 @@
 									"NameToDisplay": "liq_susc",
 									"VarType": "fixed",
 									"DescToDisplay": "liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
@@ -705,7 +705,7 @@
 									"NameToDisplay": "vs30",
 									"VarType": "random",
 									"DescToDisplay": "[m/s] time-averaged shear wave velocity in the upper 30-meters",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -713,7 +713,7 @@
 									"NameToDisplay": "gw_depth",
 									"VarType": "random",
 									"DescToDisplay": "[m] depth to groundwater table",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -721,7 +721,7 @@
 									"NameToDisplay": "dist_river",
 									"VarType": "random",
 									"DescToDisplay": "[km] distance to nearest river",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -729,7 +729,7 @@
 									"NameToDisplay": "dist_coast",
 									"VarType": "random",
 									"DescToDisplay": "[km] distance to nearest coast",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -737,7 +737,7 @@
 									"NameToDisplay": "dist_water",
 									"VarType": "random",
 									"DescToDisplay": "[km] distance to nearest water body",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -745,7 +745,7 @@
 									"NameToDisplay": "precip",
 									"VarType": "random",
 									"DescToDisplay": "[mm] mean annual precipitation",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
@@ -785,13 +785,13 @@
 								"dist_water": {
 									"NameToDisplay": "dist_water [km]: distance to nearest water body",
 									"VarType": "random",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true
 								},
 								"liq_susc": {
 									"NameToDisplay": "liq_susc: liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
 									"VarType": "fixed",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true
 								}
 							}
@@ -820,7 +820,7 @@
 									"NameToDisplay": "t_15",
 									"VarType": "random",
 									"DescToDisplay": "[m] cumulative thickness (in upper 20 m) of all saturated soil layers susceptible to liquefaction (initiation with N1_60<15)",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -828,7 +828,7 @@
 									"NameToDisplay": "f_15",
 									"VarType": "random",
 									"DescToDisplay": "[%] average fines content of the soil within \"t_15\" above",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -836,7 +836,7 @@
 									"NameToDisplay": "d50_15",
 									"VarType": "random",
 									"DescToDisplay": "[mm] average mean grain size of the soil within \"t_15\" above",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -844,7 +844,7 @@
 									"NameToDisplay": "w_ff",
 									"VarType": "random",
 									"DescToDisplay": "[%] free face ratio (height of free face/distance from base of free face to site); for free-face model",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -852,7 +852,7 @@
 									"NameToDisplay": "slope",
 									"VarType": "random",
 									"DescToDisplay": "[deg] ground slope; for ground (infinite) slope model",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -860,7 +860,7 @@
 									"NameToDisplay": "slope_type",
 									"VarType": "fixed",
 									"DescToDisplay": "type of slope (\"free face\" or \"ground\"; default = \"ground\"",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
@@ -901,7 +901,7 @@
 									"NameToDisplay": "dist_water",
 									"VarType": "random",
 									"DescToDisplay": "[km] distance to nearest water body",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -909,7 +909,7 @@
 									"NameToDisplay": "liq_susc",
 									"VarType": "fixed",
 									"DescToDisplay": "liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
@@ -953,7 +953,7 @@
 									"NameToDisplay": "slope",
 									"VarType": "random",
 									"DescToDisplay": "[deg] slope angle",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -961,7 +961,7 @@
 									"NameToDisplay": "t_slope",
 									"VarType": "random",
 									"DescToDisplay": "[m] slope thickness",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -969,7 +969,7 @@
 									"NameToDisplay": "gamma_soil",
 									"VarType": "random",
 									"DescToDisplay": "[kN/m^3] unit weight of soil",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -977,7 +977,7 @@
 									"NameToDisplay": "phi_soil",
 									"VarType": "random",
 									"DescToDisplay": "[deg] friction angle of soil",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -985,7 +985,7 @@
 									"NameToDisplay": "coh_soil",
 									"VarType": "random",
 									"DescToDisplay": "[kPa] cohesion of soil",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
@@ -1014,7 +1014,7 @@
 									"NameToDisplay": "slope",
 									"VarType": "random",
 									"DescToDisplay": "[deg] slope angle",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1022,7 +1022,7 @@
 									"NameToDisplay": "t_slope",
 									"VarType": "random",
 									"DescToDisplay": "[m] slope thickness",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1030,7 +1030,7 @@
 									"NameToDisplay": "gamma_soil",
 									"VarType": "random",
 									"DescToDisplay": "[kN/m^3] unit weight of soil",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1038,7 +1038,7 @@
 									"NameToDisplay": "phi_soil",
 									"VarType": "random",
 									"DescToDisplay": "[deg] friction angle of soil",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1046,7 +1046,7 @@
 									"NameToDisplay": "coh_soil",
 									"VarType": "random",
 									"DescToDisplay": "[kPa] cohesion of soil",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
@@ -1482,7 +1482,7 @@
 									"NameToDisplay": "d_pipe",
 									"VarType": "random",
 									"DescToDisplay": "[mm] pipe outside diameter - required for \"level 2 and 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1490,7 +1490,7 @@
 									"NameToDisplay": "t_pipe",
 									"VarType": "random",
 									"DescToDisplay": "[mm] pipe wall thickness - required for \"level 2 and 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1498,7 +1498,7 @@
 									"NameToDisplay": "sigma_y",
 									"VarType": "random",
 									"DescToDisplay": "[kPa] pipe yield stress - required for \"level 2 and 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1506,7 +1506,7 @@
 									"NameToDisplay": "n_param",
 									"VarType": "random",
 									"DescToDisplay": "Ramberg-Osgood parameter",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1514,7 +1514,7 @@
 									"NameToDisplay": "r_param",
 									"VarType": "random",
 									"DescToDisplay": "Ramberg-Osgood parameter",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1522,7 +1522,7 @@
 									"NameToDisplay": "def_length",
 									"VarType": "random",
 									"DescToDisplay": "[m] length of ground deformation zone (both clay and sand models) - required for \"level 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1530,7 +1530,7 @@
 									"NameToDisplay": "s_u_backfill",
 									"VarType": "random",
 									"DescToDisplay": "[kPa] undrained shear strength (clay model only) - required for \"level 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1538,7 +1538,7 @@
 									"NameToDisplay": "alpha_backfill",
 									"VarType": "random",
 									"DescToDisplay": "adhesion factor (clay model only) - required for \"level 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1546,7 +1546,7 @@
 									"NameToDisplay": "gamma_backfill",
 									"VarType": "random",
 									"DescToDisplay": "[kN/m^3] total unit weight of backfill soil (sand model only) - required for \"level 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1554,7 +1554,7 @@
 									"NameToDisplay": "h_cover",
 									"VarType": "random",
 									"DescToDisplay": "[m] burial depth to pipe centerline (sand model only) - required for \"level 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1562,7 +1562,7 @@
 									"NameToDisplay": "phi_backfill",
 									"VarType": "random",
 									"DescToDisplay": "[deg] friction angle of backfill soil (sand model only) - required for \"level 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1570,7 +1570,7 @@
 									"NameToDisplay": "delta_backfill",
 									"VarType": "random",
 									"DescToDisplay": "sand-pipe interface friction angle ratio (sand model only) - required for \"level 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1578,7 +1578,7 @@
 									"NameToDisplay": "soil_type",
 									"VarType": "fixed",
 									"DescToDisplay": "soil type for backfill (\"sand\" or \"clay\" for model to use) - required for \"level 1, 2, 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1586,7 +1586,7 @@
 									"NameToDisplay": "welding",
 									"VarType": "fixed",
 									"DescToDisplay": "\"welded\" or \"seamless\" for SMLS - required for \"level 2 and 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1594,7 +1594,7 @@
 									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
 									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\" - required for \"level 2 and 3\" analysis",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
@@ -1641,7 +1641,7 @@
 									"NameToDisplay": "d_pipe",
 									"VarType": "random",
 									"DescToDisplay": "[mm] pipe outside diameter",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1649,7 +1649,7 @@
 									"NameToDisplay": "t_pipe",
 									"VarType": "random",
 									"DescToDisplay": "[mm] pipe wall thickness",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1657,7 +1657,7 @@
 									"NameToDisplay": "sigma_y",
 									"VarType": "random",
 									"DescToDisplay": " [kPa] pipe yield stress",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1665,7 +1665,7 @@
 									"NameToDisplay": "op_press",
 									"VarType": "random",
 									"DescToDisplay": "[kPa] pipe internal operating pressure",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1673,7 +1673,7 @@
 									"NameToDisplay": "welding",
 									"VarType": "fixed",
 									"DescToDisplay": "flag for welding - \"True\" for welded, \"False\" for seamless or SMLS",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
@@ -1681,7 +1681,7 @@
 									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
 									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\"",
-									"WidgetType": null,
+									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								}

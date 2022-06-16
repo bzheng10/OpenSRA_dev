@@ -20,6 +20,7 @@ import importlib
 import time
 import pathlib
 import warnings
+import copy
 from itertools import chain
 # import itertools
 
@@ -46,7 +47,7 @@ from rasterio.plot import show, adjust_band
 # from rtree import index
 
 # efficient processing modules
-from numba import jit, njit
+# from numba import jit, njit
 
 # plotting modules
 if importlib.util.find_spec('matplotlib') is not None:
@@ -309,8 +310,8 @@ class CSVData(GeoData):
             # show or not
             if show is True:
                 plt.show()
-                
-                
+
+
 # -----------------------------------------------------------
 class DataFromArgs(CSVData):
     """[summary]
@@ -319,24 +320,54 @@ class DataFromArgs(CSVData):
         object ([type]): [description]
     """
     
-
     # instantiation
-    def __init__(self, lon, lat, lon_header="LON", lat_header="LAT", crs='EPSG:4326'):
+    def __init__(self,
+                 lon, lat, lon_header="LON", lat_header="LAT",
+                 shape_type='point', crs='EPSG:4326',
+                 lon_begin=None, lat_begin=None, lon_begin_header="LON_BEGIN", lat_begin_header="LAT_BEGIN",
+                 lon_end=None, lat_end=None, lon_end_header="LON_END", lat_endheader="LAT_END"):
         # invoke parent function
         # GeoData().__init__(fpath)
         # GeoData(fpath)
         
+        # check shape type
+        if shape_type != 'point' and shape_type != 'line':
+            raise ValueError('shape_type must be either "point" or "line"')
+        
+        # get inputs
+        self._shape_type = shape_type
+        self.crs = crs
+        
         # other inputs
         # append dimensions if dim = 0
-        if np.ndim(lon) == 0:
-            lon = np.expand_dims(lon, axis=0)
-        if np.ndim(lat) == 0:
-            lat = np.expand_dims(lat, axis=0)
-        self._lon = lon
-        self._lat = lat
+        self._lon = self._check_and_expand_dim(lon)
+        self._lat = self._check_and_expand_dim(lat)
         self._lon_header = lon_header
         self._lat_header = lat_header
-        self.crs = crs
+        # if line, also get begin and end points
+        if self._shape_type == 'line':
+            # begin point
+            if lon_begin is None:
+                self._lon_begin = self._lon
+            else:
+                self._lon_begin = self._check_and_expand_dim(lon_begin)
+            if lat_begin is None:
+                self._lat_begin = self._lat
+            else:
+                self._lat_begin = self._check_and_expand_dim(lat_begin)
+            self._lon_begin_header = lon_begin_header
+            self._lat_begin_header = lat_begin_header
+            # end point
+            if lon_end is None:
+                self._lon_end = self._lon
+            else:
+                self._lon_end = self._check_and_expand_dim(lon_end)
+            if lat_end is None:
+                self._lat_end = self._lat
+            else:
+                self._lat_end = self._check_and_expand_dim(lat_end)
+            self._lon_end_header = lon_end_header
+            self._lat_end_header = lat_end_header
         
         # create data table
         self._create_data_table()
@@ -348,228 +379,64 @@ class DataFromArgs(CSVData):
         # geometry coordinates
         # for exporting
 
+    
+    def _check_and_expand_dim(x):
+        if np.ndim(x) == 0:
+            return np.expand_dims(x)
+        else:
+            return x
 
     def _create_data_table(self):
         """creates DataFrame for input data"""
-        self.data = pd.DataFrame(
-            zip(self._lon,self._lat),
-            columns=[self._lon_header,self._lat_header]
-        )
+        if self._shape_type == 'point':
+            self.data = pd.DataFrame(
+                zip(self._lon,self._lat),
+                columns=[self._lon_header,self._lat_header]
+            )
+        elif self._shape_type == 'line':
+            # calculate length
+            dist = get_haversine_dist(
+                self._lon_begin, self._lat_begin,
+                self._lon_end, self._lat_end,
+                unit='km'
+            )
+            self.data = pd.DataFrame(
+                zip(self._lon,self._lat,
+                    self._lon_begin,self._lat_begin,
+                    self._lon_end,self._lat_end,
+                    dist),
+                columns=[
+                    self._lon_header,self._lat_header,
+                    self._lon_begin_header,self._lat_begin_header,
+                    self._lon_end_header,self._lat_end_header,
+                    'LENGTH_KM'
+                    ]
+            )
+    
+
+    def _convert_to_gdf(self):
+        """converts to geopandas.GeoDataFrame"""
+        # convert to GeoDataFrame
+        if self._shape_type == 'point':
+            self.data = GeoDataFrame(
+                self.data,
+                crs=self.crs,
+                geometry=[Point(xy) for xy in zip(self.data[self._lon_header], self.data[self._lat_header])]
+            )
+        elif self._shape_type == 'line':
+            begin_pair = list(zip(self.data[self._lon_begin_header], self.data[self._lat_begin_header]))
+            end_pair = list(zip(self.data[self._lon_end_header], self.data[self._lat_end_header]))
+            n_pair = len(begin_pair)
+            self.data = GeoDataFrame(
+                self.data,
+                crs=self.crs,
+                geometry=[LineString([begin_pair[i],end_pair[i]]) for i in range(n_pair)]
+            )
     
     
     def _read_data(self):
         """unused"""
         return "Not used by this class"
-        
-        
-# -----------------------------------------------------------
-class LocationData(GeoData):
-    """[summary]
-
-    Args:
-        object ([type]): [description]
-    """
-    
-    def __init__(self, fpath=None, lon=None, lat=None, lon_header='LON', lat_header='LAT'):
-        """initialize"""
-        if fpath is None:
-            if lon is None or lat is None:
-                raise ValueError('Please specify either "fpath" or both "lon" and "lat"')
-            else:
-                fpath = "NONE.from_args"
-        # invoke parent function
-        super().__init__(fpath)
-        
-        # compile data into GeoDataFrame
-        if self.ftype == '.shp':
-            self.data = ShapefileData(fpath).data
-        elif self.ftype == '.tif':
-            self.data = RasterData(fpath).data
-        elif self.ftype == '.xml':
-            self.data = GridData(fpath).data
-        elif self.ftype == '.csv':
-            self.data = CSVData(fpath,lon_header,lat_header).data
-        elif self.ftype == '.from_args':
-            self.data = DataFromArgs(lon,lat).data
-        
-        # store other inputs
-        self._lon_header = lon_header
-        self._lat_header = lat_header
-        
-        # get x and y values for sampling
-        self._get_xy()
-        
-        # initialize other attributes
-        # geometry coordinates
-        self.bound = None
-        self._bound_coord = None
-        # for exporting
-        self._spath = None
-     
-        
-    def _get_xy(self):
-        """store values to x and y"""
-        # see if column ID for lon and lat are given
-        if self._lon_header is None or self._lat_header is None:
-            try:
-                self._x = self.data.LON_MID.to_numpy()
-                self._y = self.data.LAT_MID.to_numpy()
-            except AttributeError:
-                try:
-                    self._x = self.data.LON.to_numpy()
-                    self._y = self.data.LAT.to_numpy()
-                except AttributeError:
-                    logging.info(f'Program cannot locate the columns with "Longitude"/"Latitude" data; please reload {self.__class__.__name__} and specify column headers')
-        else:
-            self._x = self.data[self._lon_header].to_numpy()
-            self._y = self.data[self._lat_header].to_numpy()
-    
-    
-    def sample_csv(self, fpath, cols_to_get, append_header_str='_OpenSHA', interp_scheme='nearest', out_of_bound_value=np.nan):
-        """sample values from CSV files with list of locations and parameters"""        
-        # import sample set
-        sample_set = LocationData(fpath=fpath).data
-        if interp_scheme == 'nearest':
-            # first determine which locations are within and outside the convex hull of the sample set
-            sindex = self.data.sindex # spatial index for location data
-            hull = sample_set.geometry.unary_union.convex_hull
-            print(hull)
-            loc_ind_in_hull = sindex.query_bulk(hull,predicate='intersects')[1]
-            loc_ind_outside_hull = list(set(list(self.data.index)).difference(set(loc_ind_in_hull)))
-            # perform sampling for locations within convex hull
-            locs_in_convex_hull = self.data.loc[loc_ind_in_hull].copy()
-            nearest_pt_in_sample_set = sample_set.sindex.nearest(locs_in_convex_hull.geometry)[1]
-            # update data table with samples
-            for col in cols_to_get:
-                if col == 'vs30source':
-                    sampled_vals = np.empty(self.data.shape[0],dtype='<U10')
-                    sampled_vals[loc_ind_outside_hull] = 'Inferred'
-                else:
-                    sampled_vals = np.empty(self.data.shape[0])*out_of_bound_value
-                sampled_vals[loc_ind_in_hull] = sample_set[col].loc[loc_ind_in_hull].values
-                self.data[col+append_header_str] = sampled_vals
-        else:
-            raise NotImplementedError('Only "nearest" is available for interpolation scheme')
-    
-    
-    def sample_raster(self, fpath, band=1, store_name=None, interp_scheme='nearest', out_of_bound_value=np.nan, invalid_value=np.nan):
-        """sample values from raster file"""
-        # create raster object
-        raster = RasterData(fpath)
-        # perform sampling
-        raster.get_sample(
-            x=self._x, y=self._y, band=band,
-            interp_scheme=interp_scheme, out_of_bound_value=out_of_bound_value, invalid_value=invalid_value
-        )
-        # update data table with samples
-        if store_name is None:
-            store_name = get_basename_without_extension(fpath) # use raster file name, without extension
-        self.data[store_name] = raster.sample
-    
-    
-    def sample_shapefile(self, fpath, attr, store_name=None):
-        """sample values from shapefile"""
-        # create shapefile object
-        shapefile = ShapefileData(fpath)
-        # perform sampling
-        shapefile.get_sample(attr=attr, site_geometry=self.data.geometry)
-        index = shapefile.site_index_with_sample
-        sample = shapefile.sample
-        # update data table with samples
-        if store_name is None:
-            store_name = get_basename_without_extension(fpath) # use raster file name, without extension
-        self.data[store_name] = np.nan # create new column and initialize all values as nan
-        self.data.loc[index, store_name] = sample
-    
-    
-    def sample_xml(self):
-        """sample values from XML file"""
-        raise NotImplementedError("Method to be implemented")
-    
-    
-    def clip_loc_with_bound(self, bound=None, bound_fpath=None, buffer=0):
-        """remove points outside of boundary (shapely Polygon)"""
-        if bound is not None:
-            self.bound = bound # update self._bound 
-        else:
-            if bound_fpath is None:
-                return ValueError('Must provide either "bound" (GeoDataFrame) or "bound_fpath"')
-            else:
-                self.bound = ShapefileData(bound_fpath) # read using ShapefileData class
-        # get values
-        self._bound_geom_type = self.bound._geom_type
-        self.bound = self.bound.data
-        # combine boundaries into multipolygons
-        if self._bound_geom_type == 'Polygon':
-            # convert polygons into MultiPolygons
-            bound_polygon = MultiPolygon(self.bound.geometry.to_list())
-        elif self._bound_geom_type == 'LineString':
-            # polygonize LineStrings
-            bound_polygon = Polygon(self.bound.geometry.to_list())
-        # get points in boundary
-        loc_in_bound = self.clip_data_with_polygon(self.data.copy(),bound_polygon,buffer=buffer)
-        # map points to rtree and query
-        # sindex = self.data.sindex
-        # query = sindex.query_bulk(bound_polygon, predicate='intersects')
-        # update data with query results and reset index
-        self.data = self.data.loc[loc_in_bound].reset_index(drop=True)
-    
-
-    def export_data_to_shp(self, spath=None):
-        """exports geopandas.GeoDataFrame to shapefile"""
-        if spath is None:
-            if self.fpath is None:
-                logging.info('Must provide "spath" to export file')
-            else:
-                self._spath = self.fpath.replace(self.ftype,'.shp') # file path
-        else:
-            self._spath = spath
-        self.data.to_file(self._spath) # export operation
-        logging.info(f"Exported GeoDataFrame to:")
-        logging.info(f"\t{self._spath}")
-        
-        
-    def export_data_to_csv(self, spath=None):
-        """exports geopandas.GeoDataFrame to CSV file"""
-        if spath is None:
-            if self.fpath is None:
-                logging.info('Must provide "spath" to export file')
-            else:
-                self._spath = self.fpath.replace(self.ftype,'.csv') # file path
-        else:
-            self._spath = spath
-        export_data = self.data.copy()
-        export_data.drop(['geometry'], axis=1, inplace=True)
-        export_data.to_csv(self._spath, index=False) # export operation
-        logging.info(f"Exported GeoDataFrame to:")
-        logging.info(f"\t{self._spath}")
-    
-    
-    def plot(self, show=True, figsize=[16,8], plot_base=True, plot_bound=False, facecolor='none', edgecolor='g', marker='o', markersize=6, add_basemap=False, zoom='auto'):
-        """plots geodata"""
-        # if matplotlib is loaded, make plot
-        if not 'matplotlib' in sys.modules:
-            logging.info('The "matplotlib" module is not installed; cannot generate figure')
-        else:
-            # invoke parent function
-            super().plot(show=False)
-            # plot shapedata
-            if plot_base:
-                self.data.geometry.plot(ax=self._ax[0,0], facecolor=facecolor, edgecolor=edgecolor, marker=marker, markersize=markersize)
-            # plot boundary
-            if self.bound is not None:
-                self.bound.geometry.plot(ax=self._ax[0,0], facecolor='none', edgecolor='k', linewidth=3)
-            # plot approximate boundary of grid obtained via convex hull
-            if plot_bound:
-                if self._bound_coord is None:
-                    self.get_bound()
-                self._ax[0,0].plot(self._bound_coord[:,0], self._bound_coord[:,1], 'k')
-            # add basemap
-            if add_basemap:
-                self.add_basemap(zoom=zoom)
-            # show or not
-            if show is True:
-                plt.show()
 
 
 # -----------------------------------------------------------
@@ -645,7 +512,8 @@ class ShapefileData(GeoData):
         self.data.drop(np.where(self.data.geometry.isna())[0], inplace=True) # drop rows with no geometry
         # self.data = self.data.explode(ignore_index=True) # expand multi-objects
         self.data = self.data.explode(ignore_index=False, index_parts=True) # expand multi-objects
-        self.data['pipe_id'] = [pair[0]+1 for pair in self.data.index]
+        if not 'obj_id' in self.data:
+            self.data['obj_id'] = [pair[0]+1 for pair in self.data.index]
         # self.data['pipe_sub_id'] = [pair[1] for pair in self.data.index]
         self.data.reset_index(drop=True,inplace=True)
         # go through geometry, if it contains more than two points, split into additional segments
@@ -661,7 +529,8 @@ class ShapefileData(GeoData):
                     self.data.geometry[i] = geom_new
         # self.data = self.data.explode(ignore_index=True) # expand again
         self.data = self.data.explode(ignore_index=False, index_parts=True) # expand again
-        self.data['pipe_id'] = [pair[0]+1 for pair in self.data.index]
+        if not 'obj_id' in self.data:
+            self.data['obj_id'] = [pair[0]+1 for pair in self.data.index]
         # self.data['pipe_sub_id'] = [pair[1] for pair in self.data.index]
         self.data.reset_index(drop=True,inplace=True)
         # additional operations just for prepackaged CA state boundary shapefile
@@ -918,6 +787,228 @@ class ShapefileData(GeoData):
 
 
 # -----------------------------------------------------------
+class LocationData(GeoData):
+    """[summary]
+
+    Args:
+        object ([type]): [description]
+    """
+    
+    def __init__(self, fpath=None, lon=None, lat=None, lon_header='LON', lat_header='LAT',
+                 crs='EPSG:4326', rows_to_keep=None):
+        """initialize"""
+        if fpath is None:
+            if lon is None or lat is None:
+                raise ValueError('Please specify either "fpath" or both "lon" and "lat"')
+            else:
+                fpath = "NONE.from_args"
+        # invoke parent function
+        super().__init__(fpath)
+        
+        # compile data into GeoDataFrame
+        if self.ftype == '.shp':
+            self.data = ShapefileData(fpath, crs=crs, rows_to_keep=rows_to_keep).data
+        elif self.ftype == '.tif':
+            self.data = RasterData(fpath).data
+        elif self.ftype == '.xml':
+            # self.data = XMLData(fpath).data
+            raise NotImplementedError("Not implemented")
+        elif self.ftype == '.csv':
+            self.data = CSVData(fpath,lon_header,lat_header).data
+        elif self.ftype == '.from_args':
+            self.data = DataFromArgs(lon,lat).data
+        
+        # store other inputs
+        self._lon_header = lon_header
+        self._lat_header = lat_header
+        
+        # get x and y values for sampling
+        self._get_xy()
+        
+        # initialize other attributes
+        # geometry coordinates
+        self.bound = None
+        self._bound_coord = None
+        # for exporting
+        self._spath = None
+    
+    
+    def _get_xy(self):
+        """store values to x and y"""
+        # see if column ID for lon and lat are given
+        if self._lon_header is None or self._lat_header is None:
+            try:
+                self._x = self.data.LON_MID.to_numpy()
+                self._y = self.data.LAT_MID.to_numpy()
+            except AttributeError:
+                try:
+                    self._x = self.data.LON.to_numpy()
+                    self._y = self.data.LAT.to_numpy()
+                except AttributeError:
+                    logging.info(f'Program cannot locate the columns with "Longitude"/"Latitude" data; please reload {self.__class__.__name__} and specify column headers')
+        else:
+            self._x = self.data[self._lon_header].to_numpy()
+            self._y = self.data[self._lat_header].to_numpy()
+    
+    
+    def sample_csv(self, fpath, cols_to_get, append_header_str='_OpenSHA', interp_scheme='nearest', out_of_bound_value=np.nan):
+        """sample values from CSV files with list of locations and parameters"""        
+        # import sample set
+        sample_set = LocationData(fpath=fpath).data
+        if interp_scheme == 'nearest':
+            # first determine which locations are within and outside the convex hull of the sample set
+            sindex = self.data.sindex # spatial index for location data
+            hull = sample_set.geometry.unary_union.convex_hull
+            print(hull)
+            loc_ind_in_hull = sindex.query_bulk(hull,predicate='intersects')[1]
+            loc_ind_outside_hull = list(set(list(self.data.index)).difference(set(loc_ind_in_hull)))
+            # perform sampling for locations within convex hull
+            locs_in_convex_hull = self.data.loc[loc_ind_in_hull].copy()
+            nearest_pt_in_sample_set = sample_set.sindex.nearest(locs_in_convex_hull.geometry)[1]
+            # update data table with samples
+            for col in cols_to_get:
+                if col == 'vs30source':
+                    sampled_vals = np.empty(self.data.shape[0],dtype='<U10')
+                    sampled_vals[loc_ind_outside_hull] = 'Inferred'
+                else:
+                    sampled_vals = np.empty(self.data.shape[0])*out_of_bound_value
+                sampled_vals[loc_ind_in_hull] = sample_set[col].loc[loc_ind_in_hull].values
+                self.data[col+append_header_str] = sampled_vals
+        else:
+            raise NotImplementedError('Only "nearest" is available for interpolation scheme')
+    
+    
+    def sample_raster(self, fpath, band=1, store_name=None, interp_scheme='nearest', out_of_bound_value=np.nan, invalid_value=np.nan):
+        """sample values from raster file"""
+        # create raster object
+        raster = RasterData(fpath)
+        # perform sampling
+        raster.get_sample(
+            x=self._x, y=self._y, band=band,
+            interp_scheme=interp_scheme, out_of_bound_value=out_of_bound_value, invalid_value=invalid_value
+        )
+        # update data table with samples
+        if store_name is None:
+            store_name = get_basename_without_extension(fpath) # use raster file name, without extension
+        self.data[store_name] = raster.sample
+    
+    
+    def sample_shapefile(self, fpath, attr, store_name=None):
+        """sample values from shapefile"""
+        # create shapefile object
+        shapefile = ShapefileData(fpath)
+        # perform sampling
+        shapefile.get_sample(attr=attr, site_geometry=self.data.geometry)
+        index = shapefile.site_index_with_sample
+        sample = shapefile.sample
+        # update data table with samples
+        if store_name is None:
+            store_name = get_basename_without_extension(fpath) # use raster file name, without extension
+        self.data[store_name] = np.nan # create new column and initialize all values as nan
+        self.data.loc[index, store_name] = sample
+    
+    
+    def sample_xml(self):
+        """sample values from XML file"""
+        raise NotImplementedError("Method to be implemented")
+    
+    
+    def clip_loc_with_bound(self, bound=None, bound_fpath=None, buffer=0):
+        """remove points outside of boundary (shapely Polygon)"""
+        if bound is not None:
+            self.bound = bound # update self._bound 
+        else:
+            if bound_fpath is None:
+                return ValueError('Must provide either "bound" (GeoDataFrame) or "bound_fpath"')
+            else:
+                self.bound = ShapefileData(bound_fpath) # read using ShapefileData class
+        # get values
+        self._bound_geom_type = self.bound._geom_type
+        self.bound = self.bound.data
+        # combine boundaries into multipolygons
+        if self._bound_geom_type == 'Polygon':
+            # convert polygons into MultiPolygons
+            bound_polygon = MultiPolygon(self.bound.geometry.to_list())
+        elif self._bound_geom_type == 'LineString':
+            # polygonize LineStrings
+            bound_polygon = Polygon(self.bound.geometry.to_list())
+        # get points in boundary
+        loc_in_bound = self.clip_data_with_polygon(self.data.copy(),bound_polygon,buffer=buffer)
+        # map points to rtree and query
+        # sindex = self.data.sindex
+        # query = sindex.query_bulk(bound_polygon, predicate='intersects')
+        # update data with query results and reset index
+        self.data = self.data.loc[loc_in_bound].reset_index(drop=True)
+    
+
+    def export_data_to_shp(self, spath=None):
+        """exports geopandas.GeoDataFrame to shapefile"""
+        if spath is None:
+            if self.fpath is None:
+                logging.info('Must provide "spath" to export file')
+            else:
+                self._spath = self.fpath.replace(self.ftype,'.shp') # file path
+        else:
+            self._spath = spath
+        self.data.to_file(self._spath) # export operation
+        logging.info(f"Exported GeoDataFrame to:")
+        logging.info(f"\t{self._spath}")
+        
+        
+    def export_data_to_csv(self, spath=None):
+        """exports geopandas.GeoDataFrame to CSV file"""
+        if spath is None:
+            if self.fpath is None:
+                logging.info('Must provide "spath" to export file')
+            else:
+                self._spath = self.fpath.replace(self.ftype,'.csv') # file path
+        else:
+            self._spath = spath
+        export_data = self.data.copy()
+        export_data.drop(['geometry'], axis=1, inplace=True)
+        export_data.to_csv(self._spath, index=False) # export operation
+        logging.info(f"Exported GeoDataFrame to:")
+        logging.info(f"\t{self._spath}")
+    
+    
+    def plot(self, show=True, figsize=[16,8], plot_base=True, plot_bound=False, facecolor='none', edgecolor='g', marker='o', markersize=6, add_basemap=False, zoom='auto'):
+        """plots geodata"""
+        # if matplotlib is loaded, make plot
+        if not 'matplotlib' in sys.modules:
+            logging.info('The "matplotlib" module is not installed; cannot generate figure')
+        else:
+            # invoke parent function
+            super().plot(show=False)
+            # plot shapedata
+            if plot_base:
+                self.data.geometry.plot(ax=self._ax[0,0], facecolor=facecolor, edgecolor=edgecolor, marker=marker, markersize=markersize)
+            # plot boundary
+            if self.bound is not None:
+                self.bound.geometry.plot(ax=self._ax[0,0], facecolor='none', edgecolor='k', linewidth=3)
+            # plot approximate boundary of grid obtained via convex hull
+            if plot_bound:
+                if self._bound_coord is None:
+                    self.get_bound()
+                self._ax[0,0].plot(self._bound_coord[:,0], self._bound_coord[:,1], 'k')
+            # add basemap
+            if add_basemap:
+                self.add_basemap(zoom=zoom)
+            # show or not
+            if show is True:
+                plt.show()
+                
+                
+class test(GeoData):
+    def __init__(self, fpath,lon_header='LON_MID',lat_header='LON_MID'):
+        if fpath.endswith('csv'):
+            self.__class__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__class__)
+            self.__dict__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__dict__)
+        elif fpath.endswith('shp'):
+            self.__class__ = copy.deepcopy(ShapefileData(fpath).__class__)
+            self.__dict__ = copy.deepcopy(ShapefileData(fpath).__dict__)
+
+
+# -----------------------------------------------------------
 class NetworkData(ShapefileData):
     """[summary]
 
@@ -930,6 +1021,43 @@ class NetworkData(ShapefileData):
     def __init__(self, fpath, crs='EPSG:4326', rows_to_keep=None):
         # invoke parent function
         super().__init__(fpath, crs, rows_to_keep)
+    
+    def __init__(self, fpath=None, lon=None, lat=None, lon_header='LON', lat_header='LAT'):
+        """initialize"""
+        if fpath is None:
+            if lon is None or lat is None:
+                raise ValueError('Please specify either "fpath" or both "lon" and "lat"')
+            else:
+                fpath = "NONE.from_args"
+        # invoke parent function
+        super().__init__(fpath)
+        
+        # compile data into GeoDataFrame
+        if self.ftype == '.shp':
+            self.data = ShapefileData(fpath).data
+        elif self.ftype == '.tif':
+            self.data = RasterData(fpath).data
+        elif self.ftype == '.xml':
+            # self.data = XMLData(fpath).data
+            raise NotImplementedError("Not implemented")
+        elif self.ftype == '.csv':
+            self.data = CSVData(fpath,lon_header,lat_header).data
+        elif self.ftype == '.from_args':
+            self.data = DataFromArgs(lon,lat).data
+        
+        # store other inputs
+        self._lon_header = lon_header
+        self._lat_header = lat_header
+        
+        # get x and y values for sampling
+        self._get_xy()
+        
+        # initialize other attributes
+        # geometry coordinates
+        self.bound = None
+        self._bound_coord = None
+        # for exporting
+        self._spath = None
         
         # initialize other attributes        
         # for individual line segments
@@ -959,8 +1087,6 @@ class NetworkData(ShapefileData):
         self.data['NUM_SEG'] = [len(geom.coords)-1 for geom in self.data.geometry]
         # get total number of components
         self._num_seg_total = np.sum(self.data.NUM_SEG)
-        # make sub-segment ID
-        # self._sub_seg
 
 
     def clip_segment_with_bound(self, bound=None, bound_fpath=None, buffer=0):
@@ -1051,13 +1177,13 @@ class NetworkData(ShapefileData):
             # get number of segments
             num_seg = self.data.NUM_SEG[i]
             # get pipe id for tracking sub segment number
-            pipe_id = self.data.pipe_id[i]
+            obj_id = self.data.obj_id[i]
             # start sub segment id counter
             if i == 0:
-                pipe_id_prev = pipe_id # for tracking previous id
+                obj_id_prev = obj_id # for tracking previous id
                 sub_seg_id.append(np.arange(num_seg)+1)
             else:
-                if pipe_id_prev == pipe_id: # same pipe
+                if obj_id_prev == obj_id: # same pipe
                     sub_seg_id.append(np.arange(num_seg)+1 + sub_seg_id[-1][-1])
                 else:
                     sub_seg_id.append(np.arange(num_seg)+1)
@@ -1080,7 +1206,7 @@ class NetworkData(ShapefileData):
             for key in dict_meta:
                 dict_meta[key]['val'] += [self.data[dict_meta[key]['attr_id']][i]]*num_seg
             # for tracking previous id
-            pipe_id_prev = pipe_id
+            obj_id_prev = obj_id
         # form DataFrame
         self.segment_table = pd.DataFrame.from_dict(dict_loc)
         for key in dict_meta:

@@ -550,46 +550,59 @@
                             ],
 							"Params": {
 								"model_transition": {
-									"NameToDisplay": "model transition [km]: distance for transition between global and coastal model, default: 20",
+									"NameToDisplay": "model transition",
 									"WidgetType": "QLineEdit",
+									"DescToDisplay": "[km] distance for transition between global and coastal model, default: 20",
 									"ToDisplay": false,
 									"DefaultValue": 20
 								},
 								"vs30": {
-									"NameToDisplay": "vs30 [m/s]: time-averaged shear wave velocity in the upper 30-meters",
+									"NameToDisplay": "vs30",
 									"VarType": "random",
-									"WidgetType": null,
-									"ToDisplay": true
+									"WidgetType": "QLabel",
+									"DescToDisplay": "[m/s] time-averaged shear wave velocity in the upper 30-meters",
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"gw_depth": {
-									"NameToDisplay": "gw_depth [m]: depth to groundwater table",
+									"NameToDisplay": "gw_depth",
 									"VarType": "random",
+									"DescToDisplay": "[m] depth to groundwater table",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"dist_river": {
-									"NameToDisplay": "dist_river [km]: distance to nearest river",
+									"NameToDisplay": "dist_river",
 									"VarType": "random",
+									"DescToDisplay": "[km] distance to nearest river",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"dist_coast": {
-									"NameToDisplay": "dist_coast [km]: distance to nearest coast",
+									"NameToDisplay": "dist_coast",
 									"VarType": "random",
+									"DescToDisplay": "[km] distance to nearest coast",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"dist_water": {
-									"NameToDisplay": "dist_water [km]: distance to nearest water body",
+									"NameToDisplay": "dist_water",
 									"VarType": "random",
+									"DescToDisplay": "[km] distance to nearest water body",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"precip": {
-									"NameToDisplay": "precip [mm]: mean annual precipitation",
+									"NameToDisplay": "precip",
 									"VarType": "random",
+									"DescToDisplay": "[mm] mean annual precipitation",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						},
@@ -610,16 +623,20 @@
                             ],
 							"Params": {
 								"vs30": {
-									"NameToDisplay": "vs30 [m/s]: time-averaged shear wave velocity in the upper 30-meters",
+									"NameToDisplay": "vs30",
 									"VarType": "random",
+									"DescToDisplay": "[m/s] time-averaged shear wave velocity in the upper 30-meters",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"cti": {
-									"NameToDisplay": "cti: compound topographic index",
+									"NameToDisplay": "cti",
 									"VarType": "random",
+									"DescToDisplay": "compound topographic index",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						},
@@ -640,16 +657,20 @@
                             ],
 							"Params": {
 								"gw_depth": {
-									"NameToDisplay": "gw_depth [m]: depth to groundwater table",
+									"NameToDisplay": "gw_depth",
 									"VarType": "random",
+									"DescToDisplay": "[m] depth to groundwater table",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"liq_susc": {
-									"NameToDisplay": "liq_susc: liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
+									"NameToDisplay": "liq_susc",
 									"VarType": "fixed",
+									"DescToDisplay": "liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						},
@@ -674,46 +695,59 @@
                             ],
 							"Params": {
 								"model_transition": {
-									"NameToDisplay": "model transition [km]: distance for transition between global and coastal model, default: 20",
+									"NameToDisplay": "model transition",
 									"WidgetType": "QLineEdit",
+									"DescToDisplay": "[km] distance for transition between global and coastal model, default: 20",
 									"ToDisplay": false,
 									"DefaultValue": 20
 								},
 								"vs30": {
-									"NameToDisplay": "vs30 [m/s]: time-averaged shear wave velocity in the upper 30-meters",
+									"NameToDisplay": "vs30",
 									"VarType": "random",
+									"DescToDisplay": "[m/s] time-averaged shear wave velocity in the upper 30-meters",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"gw_depth": {
-									"NameToDisplay": "gw_depth [m]: depth to groundwater table",
+									"NameToDisplay": "gw_depth",
 									"VarType": "random",
+									"DescToDisplay": "[m] depth to groundwater table",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"dist_river": {
-									"NameToDisplay": "dist_river [km]: distance to nearest river",
+									"NameToDisplay": "dist_river",
 									"VarType": "random",
+									"DescToDisplay": "[km] distance to nearest river",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"dist_coast": {
-									"NameToDisplay": "dist_coast [km]: distance to nearest coast",
+									"NameToDisplay": "dist_coast",
 									"VarType": "random",
+									"DescToDisplay": "[km] distance to nearest coast",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"dist_water": {
-									"NameToDisplay": "dist_water [km]: distance to nearest water body",
+									"NameToDisplay": "dist_water",
 									"VarType": "random",
+									"DescToDisplay": "[km] distance to nearest water body",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"precip": {
-									"NameToDisplay": "precip [mm]: mean annual precipitation",
+									"NameToDisplay": "precip",
 									"VarType": "random",
+									"DescToDisplay": "[mm] mean annual precipitation",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						}
@@ -783,40 +817,52 @@
 							},
 							"Params": {
 								"t_15": {
-									"NameToDisplay": "t_15 [m]: cumulative thickness (in upper 20 m) of all saturated soil layers susceptible to liquefaction (initiation with N1_60<15)",
+									"NameToDisplay": "t_15",
 									"VarType": "random",
+									"DescToDisplay": "[m] cumulative thickness (in upper 20 m) of all saturated soil layers susceptible to liquefaction (initiation with N1_60<15)",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"f_15": {
-									"NameToDisplay": "f_15 [%]: average fines content of the soil within \"t_15\" above",
+									"NameToDisplay": "f_15",
 									"VarType": "random",
+									"DescToDisplay": "[%] average fines content of the soil within \"t_15\" above",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"d50_15": {
-									"NameToDisplay": "d50_15 [mm]: average mean grain size of the soil within \"t_15\" above",
+									"NameToDisplay": "d50_15",
 									"VarType": "random",
+									"DescToDisplay": "[mm] average mean grain size of the soil within \"t_15\" above",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"w_ff": {
-									"NameToDisplay": "w_ff [%]: free face ratio (height of free face/distance from base of free face to site); for free-face model",
+									"NameToDisplay": "w_ff",
 									"VarType": "random",
+									"DescToDisplay": "[%] free face ratio (height of free face/distance from base of free face to site); for free-face model",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"slope": {
-									"NameToDisplay": "slope [deg]: ground slope; for ground (infinite) slope model",
+									"NameToDisplay": "slope",
 									"VarType": "random",
+									"DescToDisplay": "[deg] ground slope; for ground (infinite) slope model",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"slope_type": {
-									"NameToDisplay": "slope_type: type of slope (\"free face\" or \"ground\"; default = \"ground\"",
+									"NameToDisplay": "slope_type",
 									"VarType": "fixed",
+									"DescToDisplay": "type of slope (\"free face\" or \"ground\"; default = \"ground\"",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						}
@@ -852,16 +898,20 @@
 							},
 							"Params": {
 								"dist_water": {
-									"NameToDisplay": "dist_water [km]: distance to nearest water body",
+									"NameToDisplay": "dist_water",
 									"VarType": "random",
+									"DescToDisplay": "[km] distance to nearest water body",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"liq_susc": {
-									"NameToDisplay": "liq_susc: liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
+									"NameToDisplay": "liq_susc",
 									"VarType": "fixed",
+									"DescToDisplay": "liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						}
@@ -900,34 +950,44 @@
 							},
 							"Params": {
 								"slope": {
-									"NameToDisplay": "slope [deg]: slope angle",
+									"NameToDisplay": "slope",
 									"VarType": "random",
+									"DescToDisplay": "[deg] slope angle",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"t_slope": {
-									"NameToDisplay": "t_slope [m]: slope thickness",
+									"NameToDisplay": "t_slope",
 									"VarType": "random",
+									"DescToDisplay": "[m] slope thickness",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"gamma_soil": {
-									"NameToDisplay": "gamma_soil [kN/m^3]: unit weight of soil",
+									"NameToDisplay": "gamma_soil",
 									"VarType": "random",
+									"DescToDisplay": "[kN/m^3] unit weight of soil",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"phi_soil": {
-									"NameToDisplay": "phi_soil [deg]: friction angle of soil",
+									"NameToDisplay": "phi_soil",
 									"VarType": "random",
+									"DescToDisplay": "[deg] friction angle of soil",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"coh_soil": {
-									"NameToDisplay": "coh_soil [kPa]: cohesion of soil",
+									"NameToDisplay": "coh_soil",
 									"VarType": "random",
+									"DescToDisplay": "[kPa] cohesion of soil",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						},
@@ -951,34 +1011,44 @@
 							},
 							"Params": {
 								"slope": {
-									"NameToDisplay": "slope [deg]: slope angle",
+									"NameToDisplay": "slope",
 									"VarType": "random",
+									"DescToDisplay": "[deg] slope angle",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"t_slope": {
-									"NameToDisplay": "t_slope [m]: slope thickness",
+									"NameToDisplay": "t_slope",
 									"VarType": "random",
+									"DescToDisplay": "[m] slope thickness",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"gamma_soil": {
-									"NameToDisplay": "gamma_soil [kN/m^3]: unit weight of soil",
+									"NameToDisplay": "gamma_soil",
 									"VarType": "random",
+									"DescToDisplay": "[kN/m^3] unit weight of soil",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"phi_soil": {
-									"NameToDisplay": "phi_soil [deg]: friction angle of soil",
+									"NameToDisplay": "phi_soil",
 									"VarType": "random",
+									"DescToDisplay": "[deg] friction angle of soil",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"coh_soil": {
-									"NameToDisplay": "coh_soil [kPa]: cohesion of soil",
+									"NameToDisplay": "coh_soil",
 									"VarType": "random",
+									"DescToDisplay": "[kPa] cohesion of soil",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						}
@@ -998,8 +1068,9 @@
                     ],
 					"Params": {
 						"FrictionAngle": {
-							"NameToDisplay": "Friction Angle (deg)",
+							"NameToDisplay": "phi_soil",
 							"WidgetType": "QComboBox",
+							"DescToDisplay": "[deg] friction angle of soil",
 							"ToDisplay": true,
 							"DefaultValue": "Preferred",
 							"Options": {
@@ -1030,8 +1101,9 @@
 							}
 						},
 						"Cohesion": {
-							"NameToDisplay": "Cohesion (kPa)",
+							"NameToDisplay": "coh_soil",
 							"WidgetType": "QComboBox",
+							"DescToDisplay": "[kPa] cohesion of soil",
 							"ToDisplay": true,
 							"DefaultValue": "Preferred",
 							"Options": {
@@ -1062,8 +1134,9 @@
 							}
 						},
 						"SlopeAngle": {
-							"NameToDisplay": "Slope Angle (deg)",
+							"NameToDisplay": "slope",
 							"WidgetType": "QComboBox",
+							"DescToDisplay": "[deg] slope angle",
 							"ToDisplay": true,
 							"DefaultValue": "Preferred",
 							"Options": {
@@ -1094,8 +1167,9 @@
 							}
 						},
 						"UnitWeight": {
-							"NameToDisplay": "Unit Weight (kN/m3)",
+							"NameToDisplay": "gamma_soil",
 							"WidgetType": "QComboBox",
+							"DescToDisplay": "[kN/m^3] unit weight of soil",
 							"ToDisplay": true,
 							"DefaultValue": "Preferred",
 							"Options": {
@@ -1126,8 +1200,9 @@
 							}
 						},
 						"SlopeThickness": {
-							"NameToDisplay": "Sliding Mass Thickness (m)",
+							"NameToDisplay": "t_slope",
 							"WidgetType": "QComboBox",
+							"DescToDisplay": "[m] slope thickness",
 							"ToDisplay": true,
 							"DefaultValue": "Preferred",
 							"Options": {
@@ -1158,8 +1233,9 @@
 							}
 						},
 						"SlopeType": {
-							"NameToDisplay": "Slope Type",
+							"NameToDisplay": "slope_type",
 							"WidgetType": "QComboBox",
+							"DescToDisplay": "slope type (infinite, rotational)",
 							"ToDisplay": true,
 							"DefaultValue": "Preferred",
 							"Options": {
@@ -1200,8 +1276,9 @@
 									"ToDisplay": true,
 									"Params": {
 										"RootCohesion": {
-											"NameToDisplay": "Root Cohesion (kPa)",
+											"NameToDisplay": "coh_root",
 											"WidgetType": "QComboBox",
+											"DescToDisplay": "[kPa] root cohesion",
 											"ToDisplay": true,
 											"DefaultValue": "Preferred",
 											"Options": {
@@ -1244,8 +1321,9 @@
 									"ToDisplay": true,
 									"Params": {
 										"RootCohesion": {
-											"NameToDisplay": "Root Cohesion (kPa)",
+											"NameToDisplay": "coh_root",
 											"WidgetType": "QComboBox",
+											"DescToDisplay": "[kPa] root cohesion",
 											"ToDisplay": true,
 											"DefaultValue": "Preferred",
 											"Options": {
@@ -1276,8 +1354,9 @@
 											}
 										},
 										"SlopeSaturation": {
-											"NameToDisplay": "Slope Saturation (%)",
+											"NameToDisplay": "sat_slope",
 											"WidgetType": "QComboBox",
+											"DescToDisplay": "[%] saturation of sliding mass",
 											"ToDisplay": true,
 											"DefaultValue": "Preferred",
 											"Options": {
@@ -1400,94 +1479,124 @@
 							},
 							"Params": {
 								"d_pipe": {
-									"NameToDisplay": "d_pipe [mm]: pipe outside diameter - required for \"level 2 and 3\" analysis",
+									"NameToDisplay": "d_pipe",
 									"VarType": "random",
+									"DescToDisplay": "[mm] pipe outside diameter - required for \"level 2 and 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"t_pipe": {
-									"NameToDisplay": "t_pipe [mm]: pipe wall thickness - required for \"level 2 and 3\" analysis",
+									"NameToDisplay": "t_pipe",
 									"VarType": "random",
+									"DescToDisplay": "[mm] pipe wall thickness - required for \"level 2 and 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"sigma_y": {
-									"NameToDisplay": "sigma_y [kPa]: pipe yield stress - required for \"level 2 and 3\" analysis",
+									"NameToDisplay": "sigma_y",
 									"VarType": "random",
+									"DescToDisplay": "[kPa] pipe yield stress - required for \"level 2 and 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"n_param": {
-									"NameToDisplay": "n_param: Ramberg-Osgood parameter",
+									"NameToDisplay": "n_param",
 									"VarType": "random",
+									"DescToDisplay": "Ramberg-Osgood parameter",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"r_param": {
-									"NameToDisplay": "r_param: Ramberg-Osgood parameter",
+									"NameToDisplay": "r_param",
 									"VarType": "random",
+									"DescToDisplay": "Ramberg-Osgood parameter",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"def_length": {
-									"NameToDisplay": "def_length [m]: length of ground deformation zone (both clay and sand models) - required for \"level 3\" analysis",
+									"NameToDisplay": "def_length",
 									"VarType": "random",
+									"DescToDisplay": "[m] length of ground deformation zone (both clay and sand models) - required for \"level 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"s_u_backfill": {
-									"NameToDisplay": "s_u_backfill [kPa]: undrained shear strength (clay model only) - required for \"level 3\" analysis",
+									"NameToDisplay": "s_u_backfill",
 									"VarType": "random",
+									"DescToDisplay": "[kPa] undrained shear strength (clay model only) - required for \"level 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"alpha_backfill": {
-									"NameToDisplay": "alpha_backfill: adhesion factor (clay model only) - required for \"level 3\" analysis",
+									"NameToDisplay": "alpha_backfill",
 									"VarType": "random",
+									"DescToDisplay": "adhesion factor (clay model only) - required for \"level 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"gamma_backfill": {
-									"NameToDisplay": "gamma_backfill [kN/m^3]: total unit weight of backfill soil (sand model only) - required for \"level 3\" analysis",
+									"NameToDisplay": "gamma_backfill",
 									"VarType": "random",
+									"DescToDisplay": "[kN/m^3] total unit weight of backfill soil (sand model only) - required for \"level 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"h_cover": {
-									"NameToDisplay": "h_cover [m]: burial depth to pipe centerline (sand model only) - required for \"level 3\" analysis",
+									"NameToDisplay": "h_cover",
 									"VarType": "random",
+									"DescToDisplay": "[m] burial depth to pipe centerline (sand model only) - required for \"level 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"phi_backfill": {
-									"NameToDisplay": "phi_backfill [deg]: friction angle of backfill soil (sand model only) - required for \"level 3\" analysis",
+									"NameToDisplay": "phi_backfill",
 									"VarType": "random",
+									"DescToDisplay": "[deg] friction angle of backfill soil (sand model only) - required for \"level 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"delta_backfill": {
-									"NameToDisplay": "delta_backfill: sand-pipe interface friction angle ratio (sand model only) - required for \"level 3\" analysis",
+									"NameToDisplay": "delta_backfill",
 									"VarType": "random",
+									"DescToDisplay": "sand-pipe interface friction angle ratio (sand model only) - required for \"level 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"soil_type": {
-									"NameToDisplay": "soil_type: soil type for backfill (\"sand\" or \"clay\" for model to use) - required for \"level 1, 2, 3\" analysis",
+									"NameToDisplay": "soil_type",
 									"VarType": "fixed",
+									"DescToDisplay": "soil type for backfill (\"sand\" or \"clay\" for model to use) - required for \"level 1, 2, 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"welding": {
-									"NameToDisplay": "welding: \"welded\" or \"seamless\" for SMLS - required for \"level 2 and 3\" analysis",
+									"NameToDisplay": "welding",
 									"VarType": "fixed",
+									"DescToDisplay": "\"welded\" or \"seamless\" for SMLS - required for \"level 2 and 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"steel_grade": {
-									"NameToDisplay": "steel_grade: \"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\" - required for \"level 2 and 3\" analysis",
+									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
+									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\" - required for \"level 2 and 3\" analysis",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						}
@@ -1529,40 +1638,52 @@
 							},
 							"Params": {
 								"d_pipe": {
-									"NameToDisplay": "d_pipe [mm]: pipe outside diameter",
+									"NameToDisplay": "d_pipe",
 									"VarType": "random",
+									"DescToDisplay": "[mm] pipe outside diameter",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"t_pipe": {
-									"NameToDisplay": "t_pipe [mm]: pipe wall thickness",
+									"NameToDisplay": "t_pipe",
 									"VarType": "random",
+									"DescToDisplay": "[mm] pipe wall thickness",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"sigma_y": {
-									"NameToDisplay": "sigma_y [kPa]: pipe yield stress",
+									"NameToDisplay": "sigma_y",
 									"VarType": "random",
+									"DescToDisplay": " [kPa] pipe yield stress",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"op_press": {
-									"NameToDisplay": "op_press [kPa]: pipe internal operating pressure",
+									"NameToDisplay": "op_press",
 									"VarType": "random",
+									"DescToDisplay": "[kPa] pipe internal operating pressure",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"welding": {
-									"NameToDisplay": "welding: flag for welding - \"True\" for welded, \"False\" for seamless or SMLS",
+									"NameToDisplay": "welding",
 									"VarType": "fixed",
+									"DescToDisplay": "flag for welding - \"True\" for welded, \"False\" for seamless or SMLS",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								},
 								"steel_grade": {
-									"NameToDisplay": "steel_grade: \"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\"",
+									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
+									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\"",
 									"WidgetType": null,
-									"ToDisplay": true
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						}

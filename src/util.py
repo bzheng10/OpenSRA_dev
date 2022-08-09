@@ -24,6 +24,21 @@ from scipy.interpolate import interp2d
 
 
 # -----------------------------------------------------------
+def expand_dims(val):
+    """expand dimensions to 1D of number of dimensions is 0"""
+    if np.ndim(val) == 0:
+        return np.expand_dims(val,axis=0)
+    else:
+        return val
+    
+    
+# -----------------------------------------------------------
+def to_float(val):
+    """apply float to data array"""
+    return np.asarray(val, dtype=float)
+
+
+# -----------------------------------------------------------
 def from_dict_to_array(data_dict, loc_dict, shape, fill_zeros=0, decimals=1):
     """converts a dictionary to array, where keys of dictionary are rows and entries are columns"""
     data = np.hstack([data_dict[key] for key in data_dict.keys()])
@@ -292,7 +307,7 @@ def get_quick_dist(lon1, lat1, lon2, lat2):
 
 # -----------------------------------------------------------
 # def lhs(n_var, n_samp, dist=['normal'], low=None, high=None, return_prob=False):
-def lhs(n_var, n_samp, dist='normal', low=None, high=None, return_prob=False):
+def lhs(n_site, n_var, n_samp, dist='normal', low=None, high=None, return_prob=False):
     """
     Performs Latin-Hypercube Sampling and returns both the cdfs and the residuals for the user-specified distribution.
     
@@ -301,9 +316,10 @@ def lhs(n_var, n_samp, dist='normal', low=None, high=None, return_prob=False):
     """
     
     # permutation of bins
-    boxes = np.transpose([np.random.permutation(n_samp) for i in range(n_var)])
+    # boxes = np.transpose([np.random.permutation(n_samp) for i in range(n_var)])
+    boxes = np.asarray([np.transpose([np.random.permutation(n_samp) for i in range(n_var)]) for j in range(n_site)])
     # draw uniform samples from 0 to 1, add to bin permutations, and normalize by sample size to get cdfs
-    norm_uniform_samples = np.random.uniform(size=(n_samp,n_var))
+    norm_uniform_samples = np.random.uniform(size=(n_site,n_samp,n_var))
     cdfs = (boxes+norm_uniform_samples)/n_samp
     # residuals
     if 'norm' in dist.lower() and not 'trunc' in dist.lower():

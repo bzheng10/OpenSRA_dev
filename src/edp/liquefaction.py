@@ -33,21 +33,424 @@ from src.base_class import BaseModel
 class Liquefaction(BaseModel):
     "Inherited class specfic to liquefaction triggering"
     
-    _RETURN_PBEE_META = {
-        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
-        'type': 'liquefaction',       # Type of model (e.g., liquefaction, landslide, pipe strain)
-        'variable': [
-            'liq_susc',
-            'prob_liq'
-        ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _RETURN_PBEE_META = {
+    #     'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
+    #     'type': 'liquefaction',       # Type of model (e.g., liquefaction, landslide, pipe strain)
+    #     'variable': [
+    #         'prob_liq'
+    #     ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
 
     def __init__(self):
         super().__init__()
 
 
 # -----------------------------------------------------------
-class Hazus2014(Liquefaction):
+# class Robertson2009(Liquefaction):
+#     """
+#     Compute factor of safety against liquefaction for CPTs using Robertson (2009).
+    
+#     Parameters
+#     ----------
+#     From upstream PBEE:
+#     pga: float, np.ndarray or list
+#         [g] peak ground acceleration
+#     mag: float, np.ndarray or list
+#         moment magnitude
+        
+#     Geotechnical/geologic:
+#     gw_depth: float, np.ndarray or list
+#         [m] groundwater table depth
+        
+#     Fixed:
+#     qc: float, np.ndarray or list
+#         [MPa] measured tip resistance
+#     fs: float, np.ndarray or list
+#         [MPa] measured sleeve resistance
+#     z: float, np.ndarray or list
+#         [m] depth of measurements
+#     tot_sig_v0: float, np.ndarray or list
+#         [kPa] initial vertical total stress
+#     eff_sig_v0: float, np.ndarray or list
+#         [kPa] initial vertical effective stress
+
+#     Returns
+#     -------
+#     fs_liq : float, np.ndarray
+#         [] factor of safety against liquefaction
+#     qc1ncs : float, np.ndarray
+#         [] corrected tip resistance
+    
+#     References
+#     ----------
+#     .. [1] Reference...
+    
+#     """
+
+#     _NAME = 'Robertson (2009)'       # Name of the model
+#     _ABBREV = None                     # Abbreviated name of the model
+#     _REF = "".join([                     # Reference for the model
+#         'Robertson, P.K., 2009, ',
+#         'TBD',
+#         'TBD,
+#         'TBD',
+#     ])
+#     _RETURN_PBEE_DIST = {                            # Distribution information
+#         'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
+#         "desc": 'returned PBEE upstream random variables:',
+#         'params': {
+#             'fs_liq': {
+#                 'desc': 'factor of safety against liquefactino',
+#                 'unit': '',
+#             },
+#             'qc1ncs': {
+#                 'desc': 'corrected tip resistance',
+#                 'unit': '',
+#             }
+#         }
+#     }
+#     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+#         'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+#         "desc": 'PBEE upstream random variables:',
+#         'params': {
+#             'pga': {
+#                 'desc': 'peak ground acceleration (g)',
+#                 'unit': 'g',
+#             },
+#             'mag': {
+#                 'desc': 'moment magnitude',
+#                 'unit': '',
+#             },
+#         }
+#     }
+#     _INPUT_DIST_VARY_WITH_LEVEL = True
+#     _N_LEVEL = 3
+#     _MODEL_INPUT_INFRA = {
+#         "desc": 'Infrastructure random variables:',
+#         "params": {}
+#     }
+#     _MODEL_INPUT_GEO = {
+#         "desc": 'Geotechnical/geologic random variables:',
+#         'params': {
+#             'gw_depth': 'groundwater table depth (m)',
+#         }
+#     }
+#     _MODEL_INPUT_FIXED = {
+#         'desc': 'Fixed input variables:',
+#         'params': {
+#             'qc': 'measured tip resistance (MPa)',
+#             'fs': 'measured sleeve resistance (MPa)',
+#             'z': 'depth of measurements (m)',
+#             'tot_sig_v0': 'initial vertical total stress (kPa)',
+#             'eff_sig_v0': 'initial vertical effective stress (kPa)',
+#         }
+#     }
+#     _REQ_MODEL_RV_FOR_LEVEL = {
+#         'level1': ['gw_depth'],
+#         'level2': ['gw_depth'],
+#         'level3': ['gw_depth'],
+#     }
+#     _REQ_MODEL_FIXED_FOR_LEVEL = {
+#         # 'liq_susc'
+#     }
+#     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
+#     _MODEL_FORM_DETAIL = {}
+#     _MODEL_INPUT_RV = {}
+    
+    
+#     @staticmethod
+#     # @njit
+#     def _model(
+#         pga, mag, # upstream PBEE RV
+#         gw_depth, # geotechnical/geologic
+#         qc, fs, z, tot_sig_v0, eff_sig_v0, # fixed/toggles
+#         return_inter_params=False # to get intermediate params
+#     ):
+#         """Model"""
+        
+#         # run ZhuEtal2017 to get liquefaction susceptibility
+#         zhu_return = ZhuEtal2017._model(
+#             pgv=np.ones(pga.shape), # not used for liquefaction susceptibility category,
+#             pga=pga, mag=mag, # upstream PBEE RV
+#             vs30=vs30, precip=precip, dist_coast=dist_coast, # geotechnical/geologic
+#             dist_river=dist_river, dist_water=dist_water, gw_depth=gw_depth, # geotechnical/geologic
+#             return_inter_params=True
+#         )
+#         # get liquefaction susceptility category and value
+#         liq_susc_val = zhu_return['liq_susc_val']
+#         liq_susc = zhu_return['liq_susc']
+#         pga_mag = zhu_return['pga_mag']
+            
+#         # initialize arrays
+#         prob_liq_pga = np.zeros(pga.shape)
+#         p_ml = np.zeros(pga.shape)
+        
+#         # correction factor for moment magnitudes other than M=7.5, eq. 4-21
+#         k_mag = 0.0027*mag**3 - 0.0267*mag**2 - 0.2055*mag + 2.9188
+#         # correction for groudnwater depths other than 5 feet, eq. 4-22
+#         k_gw_depth = 0.022 * gw_depth*3.28 + 0.93
+        
+#         # get uncorrected p_liq given pga
+#         prob_liq_pga[liq_susc=='very high'] = np.maximum(np.minimum(9.09*pga[liq_susc=='very high']-0.82,1),0)
+#         prob_liq_pga[liq_susc=='high'] = np.maximum(np.minimum(7.67*pga[liq_susc=='high']-0.92,1),0)
+#         prob_liq_pga[liq_susc=='moderate'] = np.maximum(np.minimum(6.67*pga[liq_susc=='moderate']-1.00,1),0)
+#         prob_liq_pga[liq_susc=='low'] = np.maximum(np.minimum(5.57*pga[liq_susc=='low']-1.18,1),0)
+#         prob_liq_pga[liq_susc=='very low'] = np.maximum(np.minimum(4.16*pga[liq_susc=='very low']-1.08,1),0)
+#         prob_liq_pga[liq_susc=='none'] = 0
+        
+#         # get portion of map unit susceptible to liquefaction
+#         p_ml[liq_susc=='very high'] = 0.25
+#         p_ml[liq_susc=='high'] = 0.20
+#         p_ml[liq_susc=='moderate'] = 0.10
+#         p_ml[liq_susc=='low'] = 0.05
+#         p_ml[liq_susc=='very low'] = 0.02
+#         p_ml[liq_susc=='none'] = 0.00
+        
+#         # liquefaction likelihood, p_liq
+#         prob_liq = prob_liq_pga / k_mag / k_gw_depth * p_ml * 100 # %, eq. 4-20
+#         prob_liq = np.maximum(prob_liq,1e-3) # set prob to >= 1e-3 to avoid 0% in log
+        
+#         # Zhu et al. (2017) boundary constraints
+#         # for pga_mag < 0.1 g, set prob to 0
+#         prob_liq[pga_mag<0.1] = 1e-3
+#         # for vs30 > 620 m/s, set prob to 0
+#         prob_liq[vs30>620] = 1e-3
+#         # for precip > 1700 mm, set prob to 0
+#         prob_liq[precip>1700] = 1e-3
+
+#         # calculate sigma_mu
+#         sigma_mu = (np.exp(0.25)-1) * prob_liq
+        
+#         # prepare outputs
+#         output = {
+#             # 'prob_liq': prob_liq,
+#             'fs_liq': {
+#                 'mean': prob_liq,
+#                 'sigma': None,
+#                 'sigma_mu': sigma_mu,
+#                 'dist_type': 'normal',
+#                 'unit': '%'
+#             },
+#             'liq_susc_val': liq_susc_val
+#         }
+#         # get intermediate values if requested
+#         if return_inter_params:
+#             output['pga_mag'] = pga_mag
+#             output['liq_susc'] = liq_susc
+#             output['k_mag'] = k_mag
+#             output['k_gw_depth'] = k_gw_depth
+#             output['prob_liq_pga'] = prob_liq_pga
+#             output['p_ml'] = p_ml
+        
+#         # return
+#         return output
+        
+
+# -----------------------------------------------------------
+class Hazus2020_with_ZhuEtal2017(Liquefaction):
+    """
+    Compute probability of liquefaction using Hazus (FEMA, 2020), with liq. susc. category from Zhu et al. (2017).
+    
+    Parameters
+    ----------
+    From upstream PBEE:
+    pga: float, np.ndarray or list
+        [g] peak ground acceleration
+    mag: float, np.ndarray or list
+        moment magnitude
+        
+    Geotechnical/geologic:
+    vs30: float, np.ndarray or list
+        [m/s] time-averaged shear wave velocity in the upper 30-meters
+    precip: float, np.ndarray or list
+        [mm] mean annual precipitation
+    dist_coast: float, np.ndarray or list
+        [km] distance to nearest coast
+    dist_river: float, np.ndarray or list
+        [km] distance to nearest river
+    dist_water: float, np.ndarray or list
+        [km] distance to nearest river, lake, or coast
+    gw_depth: float, np.ndarray or list
+        [m] groundwater table depth
+        
+    Fixed:
+    # liq_susc: str, np.ndarray or list
+    #     susceptibility category to liquefaction (none, very low, low, moderate, high, very high)
+
+    Returns
+    -------
+    prob_liq : float, np.ndarray
+        [%] probability for liquefaciton
+    
+    References
+    ----------
+    .. [1] Federal Emergency Management Agency (FEMA), 2020, Hazus Earthquake Model - Technical Manual, Hazus 4.2 SP3, 436 pp. https://www.fema.gov/flood-maps/tools-resources/flood-map-products/hazus/user-technical-manuals.
+    .. [2] Liao, S.S., Veneziano, D., and Whitman, R.V., 1988, Regression Models for Evaluating Liquefaction Probability, Journal of Geotechnical Engineering, vol. 114, no. 4, pp. 389-411.
+    .. [3] Zhu, J., Baise, L.G., and Thompson, E.M., 2017, An Updated Geospatial Liquefaction Model for Global Application, Bulletin of the Seismological Society of America, vol. 107, no. 3, pp. 1365-1385.
+    
+    """
+
+    _NAME = 'Hazus (FEMA, 2014)'       # Name of the model
+    _ABBREV = None                     # Abbreviated name of the model
+    _REF = "".join([                     # Reference for the model
+        'Federal Emergency Management Agency (FEMA), 2020, ',
+        'Hazus Earthquake Model - Technical Manual, Hazus 4.2 SP3, ',
+        '436 pp.',
+        'https://www.fema.gov/flood-maps/tools-resources/flood-map-products/hazus/user-technical-manuals.',
+    ])
+    _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
+        "desc": 'returned PBEE upstream random variables:',
+        'params': {
+            'prob_liq': {
+                'desc': 'probability of liquefaction (%)',
+                'unit': '%',
+            },
+            'liq_susc_val': {
+                'desc': 'liquefaction susceptibility category value',
+                'unit': '',
+            }
+        }
+    }
+    _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+        "desc": 'PBEE upstream random variables:',
+        'params': {
+            'pga': {
+                'desc': 'peak ground acceleration (g)',
+                'unit': 'g',
+            },
+            'mag': {
+                'desc': 'moment magnitude',
+                'unit': '',
+            },
+        }
+    }
+    _INPUT_DIST_VARY_WITH_LEVEL = False
+    _N_LEVEL = 3
+    _MODEL_INPUT_INFRA = {
+        "desc": 'Infrastructure random variables:',
+        "params": {}
+    }
+    _MODEL_INPUT_GEO = {
+        "desc": 'Geotechnical/geologic random variables:',
+        'params': {
+            'vs30': 'time-averaged shear wave velocity in the upper 30-meters (m/s)',
+            'precip': 'mean annual precipitation (mm)',
+            'dist_coast': 'distance to nearest coast (km)',
+            'dist_river': 'distance to nearest river (km)',
+            'dist_water': 'distance to nearest river, lake, or coast (km)',
+            'gw_depth': 'groundwater table depth (m)',
+        }
+    }
+    _MODEL_INPUT_FIXED = {
+        'desc': 'Fixed input variables:',
+        'params': {
+            # 'liq_susc': 'liquefaction susceptibility category',
+        }
+    }
+    _REQ_MODEL_RV_FOR_LEVEL = {
+        'vs30', 'precip', 'dist_coast', 'dist_river', 'dist_water', 'gw_depth',
+    }
+    _REQ_MODEL_FIXED_FOR_LEVEL = {
+        # 'liq_susc'
+    }
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
+    _MODEL_FORM_DETAIL = {}
+    _MODEL_INPUT_RV = {}
+    
+    
+    @staticmethod
+    # @njit
+    def _model(
+        pga, mag, # upstream PBEE RV
+        vs30, precip, dist_coast, dist_river, dist_water, gw_depth, # geotechnical/geologic
+        model_transition=20, # fixed/toggles
+        return_inter_params=False # to get intermediate params
+    ):
+        """Model"""
+        
+        # run ZhuEtal2017 to get liquefaction susceptibility
+        zhu_return = ZhuEtal2017._model(
+            pgv=np.ones(pga.shape), # not used for liquefaction susceptibility category,
+            pga=pga, mag=mag, # upstream PBEE RV
+            vs30=vs30, precip=precip, dist_coast=dist_coast, # geotechnical/geologic
+            dist_river=dist_river, dist_water=dist_water, gw_depth=gw_depth, # geotechnical/geologic
+            return_inter_params=True
+        )
+        # get liquefaction susceptility category and value
+        liq_susc_val = zhu_return['liq_susc_val']
+        liq_susc = zhu_return['liq_susc']
+        pga_mag = zhu_return['pga_mag']
+            
+        # initialize arrays
+        prob_liq_pga = np.zeros(pga.shape)
+        p_ml = np.zeros(pga.shape)
+        
+        # correction factor for moment magnitudes other than M=7.5, eq. 4-21
+        k_mag = 0.0027*mag**3 - 0.0267*mag**2 - 0.2055*mag + 2.9188
+        # correction for groudnwater depths other than 5 feet, eq. 4-22
+        k_gw_depth = 0.022 * gw_depth*3.28 + 0.93
+        
+        # get uncorrected p_liq given pga
+        prob_liq_pga[liq_susc=='very high'] = np.maximum(np.minimum(9.09*pga[liq_susc=='very high']-0.82,1),0)
+        prob_liq_pga[liq_susc=='high'] = np.maximum(np.minimum(7.67*pga[liq_susc=='high']-0.92,1),0)
+        prob_liq_pga[liq_susc=='moderate'] = np.maximum(np.minimum(6.67*pga[liq_susc=='moderate']-1.00,1),0)
+        prob_liq_pga[liq_susc=='low'] = np.maximum(np.minimum(5.57*pga[liq_susc=='low']-1.18,1),0)
+        prob_liq_pga[liq_susc=='very low'] = np.maximum(np.minimum(4.16*pga[liq_susc=='very low']-1.08,1),0)
+        prob_liq_pga[liq_susc=='none'] = 0
+        
+        # get portion of map unit susceptible to liquefaction
+        p_ml[liq_susc=='very high'] = 0.25
+        p_ml[liq_susc=='high'] = 0.20
+        p_ml[liq_susc=='moderate'] = 0.10
+        p_ml[liq_susc=='low'] = 0.05
+        p_ml[liq_susc=='very low'] = 0.02
+        p_ml[liq_susc=='none'] = 0.00
+        
+        # liquefaction likelihood, p_liq
+        prob_liq = prob_liq_pga / k_mag / k_gw_depth * p_ml * 100 # %, eq. 4-20
+        prob_liq = np.maximum(prob_liq,1e-3) # set prob to >= 1e-3 to avoid 0% in log
+        
+        # Zhu et al. (2017) boundary constraints
+        # for pga_mag < 0.1 g, set prob to 0
+        prob_liq[pga_mag<0.1] = 1e-3
+        # for vs30 > 620 m/s, set prob to 0
+        prob_liq[vs30>620] = 1e-3
+        # for precip > 1700 mm, set prob to 0
+        prob_liq[precip>1700] = 1e-3
+
+        # calculate sigma_mu
+        sigma_mu = (np.exp(0.25)-1) * prob_liq
+        
+        # prepare outputs
+        output = {
+            # 'prob_liq': prob_liq,
+            'prob_liq': {
+                'mean': prob_liq,
+                'sigma': None,
+                # 'sigma_mu': np.ones(prob_liq.shape)*np.exp(0.25),
+                'sigma_mu': sigma_mu,
+                'dist_type': 'normal',
+                'unit': '%'
+            },
+            'liq_susc_val': liq_susc_val
+        }
+        # get intermediate values if requested
+        if return_inter_params:
+            output['pga_mag'] = pga_mag
+            output['liq_susc'] = liq_susc
+            output['k_mag'] = k_mag
+            output['k_gw_depth'] = k_gw_depth
+            output['prob_liq_pga'] = prob_liq_pga
+            output['p_ml'] = p_ml
+        
+        # return
+        return output
+
+
+# -----------------------------------------------------------
+class Hazus2020(Liquefaction):
     """
     Compute probability of liquefaction at a given location using a simplified method after Liao et al. (1988).
     
@@ -56,25 +459,25 @@ class Hazus2014(Liquefaction):
     From upstream PBEE:
     pga: float, np.ndarray or list
         [g] peak ground acceleration
+    mag: float, np.ndarray or list
+        moment magnitude
         
     Geotechnical/geologic:
     gw_depth: float, np.ndarray or list
         [m] groundwater table depth
         
     Fixed:
-    mag: float, np.ndarray or list
-        moment magnitude
     liq_susc: str, np.ndarray or list
         susceptibility category to liquefaction (none, very low, low, moderate, high, very high)
 
     Returns
     -------
-    prob_liq : float, np.ndarray or list
+    prob_liq : float, np.ndarray
         [%] probability for liquefaciton
     
     References
     ----------
-    .. [1] Federal Emergency Management Agency (FEMA), 2014, Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, National Institute of Building Sciences and Federal Emergency Management Agency, Washington, DC, 690 p.
+    .. [1] Federal Emergency Management Agency (FEMA), 2020, Hazus Earthquake Model - Technical Manual, Hazus 4.2 SP3, 436 pp. https://www.fema.gov/flood-maps/tools-resources/flood-map-products/hazus/user-technical-manuals.
     .. [2] Liao, S.S., Veneziano, D., and Whitman, R.V., 1988, Regression Models for Evaluating Liquefaction Probability, Journal of Geotechnical Engineering, vol. 114, no. 4, pp. 389-411.
     
     """
@@ -82,44 +485,32 @@ class Hazus2014(Liquefaction):
     _NAME = 'Hazus (FEMA, 2014)'       # Name of the model
     _ABBREV = None                     # Abbreviated name of the model
     _REF = "".join([                     # Reference for the model
-        'Federal Emergency Management Agency (FEMA), 2014, ',
-        'Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, ',
-        'National Institute of Building Sciences and Federal Emergency Management Agency, ',
-        'Washington, DC, 690 p.'
+        'Federal Emergency Management Agency (FEMA), 2020, ',
+        'Hazus Earthquake Model - Technical Manual, Hazus 4.2 SP3, ',
+        '436 pp.',
+        'https://www.fema.gov/flood-maps/tools-resources/flood-map-products/hazus/user-technical-manuals.',
     ])
     _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
             'prob_liq': {
                 'desc': 'probability of liquefaction (%)',
                 'unit': '%',
-                'mean': None,
-                'aleatory': 0.8,
-                'epistemic': {
-                    'coeff': 0.25, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
             },
         }
     }
-    _INPUT_PBEE_META = {
-        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        'variable': [
-            'pga'
-        ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
         'params': {
             'pga': {
                 'desc': 'peak ground acceleration (g)',
                 'unit': 'g',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': None,
-                'dist_type': 'lognormal'
+            },
+            'mag': {
+                'desc': 'moment magnitude',
+                'unit': '',
             }
         }
     }
@@ -138,7 +529,6 @@ class Hazus2014(Liquefaction):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            'mag': 'moment magnitude',
             'liq_susc': 'liquefaction susceptibility category',
         }
     }
@@ -146,12 +536,7 @@ class Hazus2014(Liquefaction):
         'gw_depth',
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'mag',
         'liq_susc'
-    }
-    _MODEL_INTERNAL = {
-        'n_sample': 1,
-        'n_site': 1,
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
@@ -161,9 +546,9 @@ class Hazus2014(Liquefaction):
     @staticmethod
     # @njit
     def _model(
-        pga, # upstream PBEE RV
+        pga, mag, # upstream PBEE RV
         gw_depth, # geotechnical/geologic
-        mag, liq_susc, # fixed/toggles
+        liq_susc, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
@@ -195,10 +580,22 @@ class Hazus2014(Liquefaction):
         
         # liquefaction likelihood, p_liq
         prob_liq = prob_liq_pga / k_mag / k_gw_depth * p_ml * 100 # %, eq. 4-20
+        prob_liq = np.maximum(prob_liq,1e-3) # set prob to >= 1e-3 to avoid 0% in log
 
+        # calculate sigma_mu
+        sigma_mu = (np.exp(0.25)-1) * prob_liq
+        
         # prepare outputs
         output = {
-            'prob_liq': prob_liq,
+            # 'prob_liq': prob_liq,
+            'prob_liq': {
+                'mean': prob_liq,
+                'sigma': None,
+                # 'sigma_mu': np.ones(prob_liq.shape)*0.25,
+                'sigma_mu': sigma_mu,
+                'dist_type': 'normal',
+                'unit': '%'
+            }
         }
         # get intermediate values if requested
         if return_inter_params:
@@ -224,6 +621,8 @@ class ZhuEtal2017(Liquefaction):
     From upstream PBEE:
     pgv: float, np.ndarray or list
         [cm/s] peak ground velocity
+    mag: float, np.ndarray or list
+        moment magnitude
     pga: float, np.ndarray or list
         [g] peak ground acceleration, only to check threshold where prob_liq(pga<0.1g)=0
         
@@ -242,17 +641,15 @@ class ZhuEtal2017(Liquefaction):
         [m] groundwater table depth
         
     Fixed:
-    mag: float, np.ndarray or list
-        moment magnitude
     # dist_water_cutoff: float, optional
     #     [km] distance to water cutoff for switching between global and coastal model, default = 20 km
 
     Returns
     -------
-    prob_liq : float, np.ndarray or list
+    prob_liq : float, np.ndarray
         [%] probability for liquefaciton
-    liq_susc : str, np.ndarray or list
-        liquefaction susceptibility category
+    liq_susc_val : str, np.ndarray
+        liquefaction susceptibility category value
     
     References
     ----------
@@ -269,58 +666,57 @@ class ZhuEtal2017(Liquefaction):
         'vol. 107, no. 3, pp. 1365-1385.'
     ])
     _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Input category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
             'prob_liq': {
                 'desc': 'probability of liquefaction (%)',
                 'unit': '%',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': {
-                    'coeff': 0.4, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
+                # 'mean': None,
+                # 'aleatory': None,
+                # 'epistemic': 0.25, # base model uncertainty, does not include input uncertainty,
+                # 'dist_type': 'lognormal',
             },
-            'liq_susc': {
-                'desc': 'liquefaction susceptibility category',
+            # 'liq_susc': {
+            'liq_susc_val': {
+                'desc': 'liquefaction susceptibility category value',
                 'unit': '',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': {
-                    'coeff': 0.4, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
+                # 'mean': None,
+                # 'dist_type': 'fixed',
             }
         }
     }
-    _INPUT_PBEE_META = {
-        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        'variable': [
-            'pgv', 'pga'
-        ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _INPUT_PBEE_META = {
+    #     'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+    #     'variable': [
+    #         'pgv', 'pga'
+    #     ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
         'params': {
             'pgv': {
                 'desc': 'peak ground velocity (cm/s)',
-                'unit': 'm',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': None,
-                'dist_type': 'lognormal'
+                'unit': 'cm/s',
+                # 'mean': None,
+                # 'aleatory': None,
+                # 'epistemic': None,
+                # 'dist_type': 'lognormal'
             },
             'pga': {
                 'desc': 'peak ground acceleration (g)',
                 'unit': 'g',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': None,
-                'dist_type': 'lognormal'
+                # 'mean': None,
+                # 'aleatory': None,
+                # 'epistemic': None,
+                # 'dist_type': 'lognormal'
+            },
+            'mag': {
+                'desc': 'moment magnitude',
+                'unit': '',
+                # 'mean': None,
+                # 'dist_type': 'fixed'
             }
         }
     }
@@ -344,7 +740,6 @@ class ZhuEtal2017(Liquefaction):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            'mag': 'moment magnitude',
             # 'coast_model_cutoff': 'cutoff distance to switch to coastal model (default: 20 km)',
         }
     }
@@ -352,11 +747,6 @@ class ZhuEtal2017(Liquefaction):
         'vs30', 'precip', 'dist_coast', 'dist_river', 'dist_water', 'gw_depth',
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'mag',
-    }
-    _MODEL_INTERNAL = {
-        'n_sample': 1,
-        'n_site': 1,
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
@@ -366,9 +756,9 @@ class ZhuEtal2017(Liquefaction):
     @staticmethod
     # @njit
     def _model(
-        pgv, pga, # upstream PBEE RV
+        pgv, pga, mag, # upstream PBEE RV
         vs30, precip, dist_coast, dist_river, dist_water, gw_depth, # geotechnical/geologic
-        mag, model_transition=20, # fixed/toggles
+        model_transition=20, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
@@ -388,32 +778,50 @@ class ZhuEtal2017(Liquefaction):
         
         # find where dist_water <= cutoff for model of 20 km
         # coastal model
-        ind_coastal = np.where(dist_water<=model_transition)[0]
+        # ind_coastal = np.where(dist_water<=model_transition)[0]
+        ind_coastal = dist_water<=model_transition
         # global model
-        ind_global = list(set(list(range(pgv.shape[0]))).difference(set(ind_coastal)))
+        # ind_global = list(set(list(range(pgv.shape[0]))).difference(set(ind_coastal)))
+        ind_global = ~(dist_water<=model_transition)
         
         # x = b0 + b1*var1 + ...
-        if len(ind_global) > 0:
-            # liquefaction susceptbility value, disregard pgv term
-            liq_susc_val[ind_global] = \
-                8.801 + \
-                -1.918   * np.log(vs30[ind_global]) + \
-                5.408e-4 * precip[ind_global] + \
-                -0.2054  * dist_water[ind_global] + \
-                -0.0333  * gw_depth[ind_global]
-            # x-term for logistic model = liq susc val + pgv term
-            x_logistic[ind_global] = liq_susc_val[ind_global] + 0.334*np.log(pgv_mag[ind_global])
-        if len(ind_coastal) > 0:
-            # liquefaction susceptbility value, disregard pgv term
-            liq_susc_val[ind_coastal] = \
-                12.435 + \
-                -2.615   * np.log(vs30[ind_coastal]) + \
-                5.556e-4 * precip[ind_coastal] + \
-                -0.0287  * np.sqrt(dist_coast[ind_coastal]) + \
-                0.0666   * dist_river[ind_coastal] + \
-                -0.0369  * dist_river[ind_coastal]*np.sqrt(dist_coast[ind_coastal])
-            # x-term for logistic model = liq susc val + pgv term
-            x_logistic[ind_coastal] = liq_susc_val[ind_coastal] + 0.301*np.log(pgv_mag[ind_coastal])
+        # if len(ind_global) > 0:
+        # liquefaction susceptbility value, disregard pgv term
+        liq_susc_val[ind_global] = \
+            8.801 + \
+            -1.918   * np.log(vs30[ind_global]) + \
+            5.408e-4 * precip[ind_global] + \
+            -0.2054  * dist_water[ind_global] + \
+            -0.0333  * gw_depth[ind_global]
+        # x-term for logistic model = liq susc val + pgv term
+        x_logistic[ind_global] = liq_susc_val[ind_global] + 0.334*np.log(pgv_mag[ind_global])
+        # if len(ind_coastal) > 0:
+        # liquefaction susceptbility value, disregard pgv term
+        liq_susc_val[ind_coastal] = \
+            12.435 + \
+            -2.615   * np.log(vs30[ind_coastal]) + \
+            5.556e-4 * precip[ind_coastal] + \
+            -0.0287  * np.sqrt(dist_coast[ind_coastal]) + \
+            0.0666   * dist_river[ind_coastal] + \
+            -0.0369  * dist_river[ind_coastal]*np.sqrt(dist_coast[ind_coastal])
+        # x-term for logistic model = liq susc val + pgv term
+        x_logistic[ind_coastal] = liq_susc_val[ind_coastal] + 0.301*np.log(pgv_mag[ind_coastal])
+
+        # probability of liquefaction
+        prob_liq = 1/(1+np.exp(-x_logistic)) * 100 # %
+        prob_liq = np.maximum(prob_liq,1e-3) # set prob to >= 1e-3 to avoid 0% in log
+        
+        # for pgv_mag < 3 cm/s, set prob to 0
+        prob_liq[pgv_mag<3] = 1e-3
+        # for pga_mag < 0.1 g, set prob to 0
+        prob_liq[pga_mag<0.1] = 1e-3
+        # for vs30 > 620 m/s, set prob to 0
+        prob_liq[vs30>620] = 1e-3
+        # for precip > 1700 mm, set prob to 0
+        prob_liq[precip>1700] = 1e-3
+
+        # calculate sigma_mu
+        sigma_mu = (np.exp(0.25)-1) * prob_liq
 
         # determine liquefaction susceptibility category
         liq_susc[liq_susc_val>-1.15] = 'very high'
@@ -422,30 +830,27 @@ class ZhuEtal2017(Liquefaction):
         liq_susc[liq_susc_val<=-3.15] = 'low'
         liq_susc[liq_susc_val<=-3.20] = 'very low'
         liq_susc[liq_susc_val<=-38.1] = 'none'
-
-        # probability of liquefaction
-        prob_liq = 1/(1+np.exp(-x_logistic)) * 100 # %
         
-        # for pgv_mag < 3 cm/s, set prob to 0
-        prob_liq[pgv_mag<3] = 0
-        # for pga_mag < 0.1 g, set prob to 0
-        prob_liq[pga_mag<0.1] = 0
-        # for vs30 > 620 m/s, set prob to 0
-        prob_liq[vs30>620] = 0
-        # for precip > 1700 mm, set prob to 0
-        prob_liq[precip>1700] = 0
-
         # prepare outputs
         output = {
-            'prob_liq': prob_liq,
-            'liq_susc': liq_susc
+            'prob_liq': {
+                'mean': prob_liq,
+                'sigma': None,
+                # 'sigma_mu': np.ones(prob_liq.shape)*0.25,
+                'sigma_mu': sigma_mu,
+                'dist_type': 'normal',
+                'unit': '%'
+            },
+            # 'liq_susc': liq_susc,
+            'liq_susc_val': liq_susc_val
         }
         # get intermediate values if requested
         if return_inter_params:
-            output['liq_susc_val'] = liq_susc_val
+            # output['liq_susc_val'] = liq_susc_val
             output['x_logistic'] = x_logistic
             output['pgv_mag'] = pgv_mag
             output['pga_mag'] = pga_mag
+            output['liq_susc'] = liq_susc
         
         # return
         return output
@@ -463,6 +868,8 @@ class ZhuEtal2015(Liquefaction):
     From upstream PBEE:
     pga: float, np.ndarray or list
         [g] peak ground acceleration
+    mag: float, np.ndarray or list
+        moment magnitude
     pgv: float, np.ndarray or list
         [cm/s] peak ground velocity, only to check threshold where prob_liq(pga<0.1g)=0
         
@@ -473,12 +880,10 @@ class ZhuEtal2015(Liquefaction):
         compound topographic index, also known as wetness index
         
     Fixed:
-    mag: float, np.ndarray or list
-        moment magnitude
 
     Returns
     -------
-    prob_liq : float, np.ndarray or list
+    prob_liq : float, np.ndarray
         [%] probability for liquefaciton
     
     References
@@ -496,46 +901,37 @@ class ZhuEtal2015(Liquefaction):
         'vol. 31, no. 3, pp. 1813-1837.'
     ])
     _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Input category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
             'prob_liq': {
                 'desc': 'probability of liquefaction (%)',
                 'unit': '%',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': {
-                    'coeff': 0.4, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
+                # 'dist_type': 'lognormal',
             },
         }
     }
-    _INPUT_PBEE_META = {
-        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        'variable': [
-            'pga', 'pgv'
-        ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _INPUT_PBEE_META = {
+    #     'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+    #     'variable': [
+    #         'pga', 'pgv', 'mag'
+    #     ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
         'params': {
             'pga': {
                 'desc': 'peak ground acceleration (g)',
                 'unit': 'g',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': None,
-                'dist_type': 'lognormal'
             },
             'pgv': {
                 'desc': 'peak ground velocity (cm/s)',
-                'unit': 'm',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': None,
-                'dist_type': 'lognormal'
+                'unit': 'cm/s',
+            },
+            'mag': {
+                'desc': 'moment magnitude',
+                'unit': '',
             },
         }
     }
@@ -555,33 +951,23 @@ class ZhuEtal2015(Liquefaction):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            'mag': 'moment magnitude',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
         'vs30', 'cti',
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'mag',
-    }
-    _MODEL_INTERNAL = {
-        'n_sample': 1,
-        'n_site': 1,
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
     _MODEL_INPUT_RV = {}
-    # _SUB_CLASS = [
-    #     '_BainEtAl2022_Clay', '_BainEtAl2022_Sand'
-    # ]
     
     
     @staticmethod
     # @njit
     def _model(
-        pgv, pga, # upstream PBEE RV
+        pgv, pga, mag, # upstream PBEE RV
         vs30, cti, # geotechnical/geologic
-        mag, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
@@ -599,17 +985,28 @@ class ZhuEtal2015(Liquefaction):
 
         # probability of liquefaction
         prob_liq = 1/(1+np.exp(-x_logistic)) * 100 # %
+        prob_liq = np.maximum(prob_liq,1e-3) # set prob to >= 1e-3 to avoid 0% in log
         
         # for pgv_mag < 3 cm/s, set prob to 0
-        prob_liq[pgv_mag<3] = 0
+        prob_liq[pgv_mag<3] = 1e-3
         # for pga_mag < 0.1 g, set prob to 0
-        prob_liq[pga_mag<0.1] = 0
+        prob_liq[pga_mag<0.1] = 1e-3
         # for vs30 > 620 m/s, set prob to 0
-        prob_liq[vs30>620] = 0
+        prob_liq[vs30>620] = 1e-3
+        
+        # calculate sigma_mu
+        sigma_mu = (np.exp(0.25)-1) * prob_liq
 
         # prepare outputs
         output = {
-            'prob_liq': prob_liq,
+            'prob_liq': {
+                'mean': prob_liq,
+                'sigma': None,
+                # 'sigma_mu': np.ones(prob_liq.shape)*0.25,
+                'sigma_mu': sigma_mu,
+                'dist_type': 'normal',
+                'unit': '%'
+            }
         }
         # get intermediate values if requested
         if return_inter_params:

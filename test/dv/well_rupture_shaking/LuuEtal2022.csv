@@ -1,0 +1,4 @@
+mode,moment_crit_rup_conductor,moment_crit_rup_surface,moment_crit_rup_production,moment_crit_rup_tubing,sigma_moment_crit_rup_conductor,sigma_moment_crit_rup_surface,sigma_moment_crit_rup_production,sigma_moment_crit_rup_tubing,sigma_mu_moment_crit_rup_conductor,sigma_mu_moment_crit_rup_surface,sigma_mu_moment_crit_rup_production,sigma_mu_moment_crit_rup_tubing
+1,1311917.834,564045.0387,211194.8578,27913.05453,0.2,0.2,0.2,0.2,0.25,0.25,0.25,0.25
+2,1311917.834,300336.8095,109907.6238,21532.92778,0.2,0.2,0.2,0.2,0.25,0.25,0.25,0.25
+4,1066185.86,435757.8627,162947.3442,12302.58423,0.2,0.2,0.2,0.2,0.25,0.25,0.25,0.25

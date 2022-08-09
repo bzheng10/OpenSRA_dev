@@ -86,7 +86,7 @@
                 "Length": {
                     "NameToDisplay": "Component Length (km)",
                     "WidgetType": "QComboBox",
-                    "ToDisplay": true,
+                    "ToDisplay": false,
                     "DefaultValue": false,
                     "Options": {
                         "ColumnHeaders": {
@@ -103,7 +103,7 @@
 		"Method": {
 			"NameToDisplay": "Sampling Method",
 			"WidgetType": "QComboBox",
-			"ToDisplay": true,
+			"ToDisplay": false,
 			"DefaultValue": "MonteCarlo",
 			"Options": {
 				"MonteCarlo": {
@@ -114,19 +114,19 @@
 						"Algorithm": {
 							"NameToDisplay": "Sampling Algorithm",
 							"WidgetType": "QComboBox",
-							"ToDisplay": true,
+							"ToDisplay": false,
 							"DefaultValue": "LatinHypercube",
 							"Options": {
 								"Random": {
 									"NameToDisplay": "Random",
 									"WidgetType": null,
-									"ToDisplay": true,
+									"ToDisplay": false,
 									"Params": {}
 								},
 								"LatinHypercube": {
 									"NameToDisplay": "Latin Hypercube",
 									"WidgetType": null,
-									"ToDisplay": true,
+									"ToDisplay": false,
 									"Params": {}
 								}
 							}
@@ -134,13 +134,13 @@
 						"NumberOfSamples": {
 							"NameToDisplay": "Number of Samples",
 							"WidgetType": "QLineEdit",
-							"ToDisplay": true,
+							"ToDisplay": false,
 							"DefaultValue": 3
 						},
 						"Seed": {
 							"NameToDisplay": "Seed Number (for Repeatability of Sampling)",
 							"WidgetType": "QLineEdit",
-							"ToDisplay": true,
+							"ToDisplay": false,
 							"DefaultValue": 1
 						}
 					}
@@ -153,13 +153,13 @@
 						"Branch": {
 							"NameToDisplay": "Branches",
 							"WidgetType": "QLineEdit",
-							"ToDisplay": true,
+							"ToDisplay": false,
 							"DefaultValue": [-1.65, 0, 1.65]
 						},
 						"Weights": {
 							"NameToDisplay": "Weights",
 							"WidgetType": "QLineEdit",
-							"ToDisplay": true,
+							"ToDisplay": false,
 							"DefaultValue": [0.2, 0.6, 0.2]
 						}
 					}
@@ -167,7 +167,7 @@
 				"PolynomialChaosExpansion": {
 					"NameToDisplay": "Polynomial Chaos (Under Development)",
 					"WidgetType": null,
-					"ToDisplay": true,
+					"ToDisplay": false,
 					"Params": {}
 				}
 			}
@@ -870,7 +870,7 @@
 				}
 			}
         },
-        "GroundSettlement": {
+        "Settlement": {
 			"NameToDisplay": "Ground Settlement",
 			"WidgetType": null,
 			"ToDisplay": true,
@@ -1606,8 +1606,8 @@
         }
     },
     "DecisionVariable": {
-        "PipeRupture": {
-			"NameToDisplay": "Pipe Rupture",
+        "PipeCompressiveRupture": {
+			"NameToDisplay": "Pipe Compressive Rupture",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -1629,7 +1629,7 @@
 								"steel_grade"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of pipe rupture [prob_rupture]\".",
+								"Description": "Return: This method returns \"probability of pipe compressive rupture [prob_comp_rupture]\".",
 								"ReturnParam": ["prob_rupture"]
 							},
 							"UpstreamDependency": {
@@ -1669,14 +1669,6 @@
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"welding": {
-									"NameToDisplay": "welding",
-									"VarType": "fixed",
-									"DescToDisplay": "flag for welding - \"True\" for welded, \"False\" for seamless or SMLS",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
 								"steel_grade": {
 									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
@@ -1685,6 +1677,68 @@
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
+							}
+						}
+					}
+				}
+			}
+        },
+        "PipeTensileRupture": {
+			"NameToDisplay": "Pipe Tensile Rupture",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "BainEtal2022",
+					"Options" : {
+						"BainEtal2022": {
+							"NameToDisplay": "Bain et al. (2022)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "Return: This method returns \"probability of pipe tensile rupture [prob_tensile_rupture]\".",
+								"ReturnParam": ["prob_rupture"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"pipe strain [pipe_strain]\" from the \"Damage Measure - Pipe Strain\" tab.",
+								"UpstreamParam": ["pipe strain"]
+							},
+							"Params": {
+							}
+						}
+					}
+				}
+			}
+        },
+        "PipeTensileLeakage": {
+			"NameToDisplay": "Pipe Tensile Leakage",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "BainEtal2022",
+					"Options" : {
+						"BainEtal2022": {
+							"NameToDisplay": "Bain et al. (2022)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "Return: This method returns \"probability of pipe tensile leakage [prob_tensile_leakage]\".",
+								"ReturnParam": ["prob_rupture"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"pipe strain [pipe_strain]\" from the \"Damage Measure - Pipe Strain\" tab.",
+								"UpstreamParam": ["pipe strain"]
+							},
+							"Params": {
 							}
 						}
 					}

@@ -1,0 +1,49 @@
+im domain vector
+
+left = -7, right = 2
+
+n domain bins = 1000
+
+
+1 workflow:
+
+IM ->   EDP                 ->    DM       ->    failure
+im -> landslide deformation -> pipe strain -> pipe rupture
+
+IM ->   EDP                 ->    DM       ->    failure
+im -> lateral spreading deformation -> pipe strain -> pipe rupture
+
+IM ->   EDP                 ->    DM       ->    failure
+im -> settlement deformation -> pipe strain -> pipe rupture
+
+at every IM value in domain vector
+
+-> get a and b value for 
+
+-> 
+
+
+make IM domain vector between -7 and 2
+
+EDP only landslide
+table of slope (n_IM_domain x n_site)
+table of intercept (n_IM_domain x n_site)
+table of sigma_mu (n_IM_domain x n_site)
+table of sigma (n_site)
+
+
+
+EDP domain vector - need to calculate, but do not need to store
+
+DM only landslide
+table of slope (n_EDP_domain x n_site)
+table of intercept (n_EDP_domain x n_site)
+table of sigma_mu (n_EDP_domain x n_site)
+table of sigma (n_site)
+
+
+
+
+DM domain vector
+
+dimensions = (n_DM_domain, n_IM_domain, n_site)

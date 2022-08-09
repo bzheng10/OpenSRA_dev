@@ -32,7 +32,7 @@ from scipy import sparse
 
 # efficient processing modules
 # import numba as nb
-from numba import njit
+# from numba import njit
 
 # plotting modules
 if importlib.util.find_spec('matplotlib') is not None:
@@ -102,24 +102,30 @@ class SeismicHazard(object):
             'lon': lon,
             'lat': lat,
             'vs30': vs30,
-            'z1p0': z1p0,
-            'z2p5': z2p5,
-            'vs30_source': vs30_source,
         }
+        if z1p0 is not None:
+            self.site_data['z1p0'] = z1p0
+        if z2p5 is not None:
+            self.site_data['z2p5'] = z2p5
+        if vs30_source is not None:
+            self.site_data['vs30_source'] = vs30_source
         # create site_id if None
         if site_id is None:
             self.site_data['site_id'] = np.arange(self._n_site)
         else:
             self.site_data['site_id'] = site_id
         # convert vs30 to numerics
-        if "Inferred" in self.site_data['vs30_source'] or "Measured" in self.site_data['vs30_source']:
-            _vs30_source = np.ones(self._n_site)
-            _vs30_source[self.site_data['vs30_source']=='Inferred'] = 0
-            self.site_data['vs30_source'] = _vs30_source
+        if 'vs30_source' in self.site_data:
+            if "Inferred" in self.site_data['vs30_source'] or "Measured" in self.site_data['vs30_source']:
+                _vs30_source = np.ones(self._n_site)
+                _vs30_source[self.site_data['vs30_source']=='Inferred'] = 0
+                self.site_data['vs30_source'] = _vs30_source
+        else:
+            self.site_data['vs30_source'] = np.zeros(self._n_site)
         logging.info(f"Finish setting sites for seismic hazard")
     
     
-    def init_ssc(self, ssc_name=None, ucerf_model_name=None, sm_dir=None, event_names=None, im_list=['pga','pgv']):
+    def init_ssc(self, ssc_name=None, ucerf_model_name=None, sm_dir=None, event_names=None, im_list=['pga','pgv'], user_def_rup_fpath=None):
         """
         Initializes seismic source
         If ssc_name is not specified, default to 'Mean UCERF3 FM3.1'
@@ -137,16 +143,26 @@ class SeismicHazard(object):
                 logging.info(f'Initialized "UCERF3": "{ucerf_model_name}"')
                 self.source = getattr(ssc, "UCERF")(ucerf_model_name)
                 self.event_id = self.source.df_rupture.SourceId.values
+            elif ssc_name == 'ShakeMap' or 'UserDefined' in ssc_name:
+                logging.info(f'Initialized "{ssc_name}" for SSC')
+                if ssc_name == 'ShakeMap':
+                    # self.source = getattr(ssc, ssc_name)(sm_dir=sm_dir, event_names=event_names, im_list=im_list)
+                    self.source = getattr(ssc, ssc_name)(sm_dir=sm_dir, event_names=event_names, im_list=im_list)
+                elif ssc_name == 'UserDefinedRupture':
+                    self.source = getattr(ssc, ssc_name)(fpath=user_def_rup_fpath)
+                elif ssc_name == 'UserDefinedGM':
+                    raise NotImplementedError("UserDefinedGM to be implemented")
+                else:
+                    raise NotImplementedError("Available options for SSC are UCERF3, ShakeMap, UserDefinedRupture, and UserDefinedGM")
             else:
-                logging.info(f'Initialized "{ssc_name}"')
-                self.source = getattr(ssc, ssc_name)(sm_dir=sm_dir, event_names=event_names, im_list=im_list)
+                raise NotImplementedError("Available options for SSC are UCERF3, ShakeMap, UserDefinedRupture, and UserDefinedGM")
         # update params
         self._n_event = self.source._n_event
         self.rate = self.source.df_rupture.MeanAnnualRate.values
         self.mag = self.source.df_rupture.Mag.values
     
     
-    def filter_rupture(self, 
+    def process_rupture(self, 
         max_dist=200, # km, for UCERF and user-defined faults, not ShakeMap
         mag_min=None, # all sources
         mag_max=None, # all sources
@@ -155,8 +171,8 @@ class SeismicHazard(object):
         mesh_spacing=1, # km
     ):
         """performs filter on rupture scenarios"""
-        if self.ssc_name == 'UCERF':
-            self.source.filter_rupture(
+        if self.ssc_name == 'UCERF' or self.ssc_name == 'UserDefinedRupture':
+            self.source.process_rupture(
                 lon=self.site_data['lon'],
                 lat=self.site_data['lat'],
                 max_dist=max_dist, # km,
@@ -168,15 +184,18 @@ class SeismicHazard(object):
             )
             # update params
             self._n_event = self.source._n_event
-            self.event_id = self.source.df_rupture.SourceId.values
+            if self.ssc_name == 'UCERF':
+                self.event_id = self.source.df_rupture.SourceId.values
+            elif self.ssc_name == 'UserDefinedRupture':
+                self.event_id = self.source.df_rupture.EventID.values
             self.rate = self.source.df_rupture.MeanAnnualRate.values
             self.mag = self.source.df_rupture.Mag.values
         elif self.ssc_name == 'ShakeMap':
-            self.source.filter_rupture(
+            self.source.process_rupture(
                 mag_min=mag_min,
                 mag_max=mag_max,
             )
-        elif self.ssc_name == 'UserDefined':
+        else:
             raise NotImplementedError("Under development.")
     
     
@@ -186,19 +205,23 @@ class SeismicHazard(object):
         If inputs are not specified, defaults to ASK14, BSSA14, CB14, CY14, equally weighted
         For full list of GMPEs, see src.im.gmc
         """
-        # pull generic class
-        self.gmpe = getattr(gmc, "WeightedGMPE")()
-        # first initialize GMPEs
-        if gmpe_names is None:
-            self.gmpe.set_gmpes_and_weights()
+        if self.ssc_name == 'ShakeMap':
+            # do not initiate if using ShakeMaps
+            logging.info("Using IMs from ShakeMaps, no need to initialize GMPEs")
         else:
-            if weights is None:
-                self.gmpe.set_gmpes_and_weights(gmpe_names)
+            # pull generic class
+            self.gmpe = getattr(gmc, "WeightedGMPE")()
+            # first initialize GMPEs
+            if gmpe_names is None:
+                self.gmpe.set_gmpes_and_weights()
             else:
-                self.gmpe.set_gmpes_and_weights(gmpe_names, weights)
-        logging.info(f"Initialized GMPEs:")
-        for each in self.gmpe.instance:
-            logging.info(f"\t- {each}: weight={self.gmpe.instance[each]['weight']}")
+                if weights is None:
+                    self.gmpe.set_gmpes_and_weights(gmpe_names)
+                else:
+                    self.gmpe.set_gmpes_and_weights(gmpe_names, weights)
+            logging.info(f"Initialized GMPEs:")
+            for each in self.gmpe.instance:
+                logging.info(f"\t- {each}: weight={self.gmpe.instance[each]['weight']}")
             
     
     def load_gm_pred_from_csv(self, fpath):
@@ -241,50 +264,83 @@ class SeismicHazard(object):
         self.event_id = rup_meta['event_id'].values.astype(int)
         
 
-    def calc_gm_pred(self, im_list=['pga','pgv'], njit_on=False, n_events_print=1e9):
-        """calculates ground motion predictions"""
+    def get_gm_pred_from_gmc(self, im_list=['pga','pgv'], njit_on=False, n_events_print=1e9):
+        """calculates/get ground motion predictions"""
         if self._n_site == 0:
             return f"No sites specified - run self.set_site_data(args)"
         elif self._n_event == 0:
             return f"No scenarios to run - pick from {self.supported_source_types}"
         else:
-            logging.info(f"Calculating ground motion predictions:")
-            logging.info(f"\t- Number of events: {self._n_event}")
-            logging.info(f"\t- Number of sites: {self._n_site}")
-            # check if GMPEs are initialized
-            if self.gmpe is None:
-                self.init_gmpe() # use default, which is NGAWest2
-            # setup
-            shape = (self._n_event, self._n_site)
-            self.gm_pred = {}
-            im_list = [im.lower() for im in im_list] # convert to lower case
-            self.im_list = im_list
-            for im in im_list:
-                self.gm_pred[im] = {
-                        'mean': np.ones(shape) * -10, # default gm value outside of max dist
-                        'sigma': np.zeros(shape),
-                        'sigma_mu': np.zeros(shape)
-                    }
-            logging.info(f"\t- Periods to calculate: {', '.join(self.im_list)}")
-            # loop through number of events
-            for i in range(self._n_event):
-                # each source type has its own version of generating inputs for running GMPE
-                # get inputs
-                kwargs = self.source._get_gmpe_input_for_event_i(i, im_list, self.site_data)
-                # run mean model
-                self.gmpe.run_model(kwargs, njit_on=njit_on)
-                # store outputs
-                for j, im in enumerate(im_list):
-                    self.gm_pred[im]['mean'][i,kwargs['site_id']] = self.gmpe.model_dist['mean'][j,:]
-                    self.gm_pred[im]['sigma'][i,kwargs['site_id']] = self.gmpe.model_dist['aleatory']['sigma'][j,:]
-                    self.gm_pred[im]['sigma_mu'][i,kwargs['site_id']] = self.gmpe.model_dist['epistemic'][j,:]
-                # print message to track number of events already ran
-                if (i+1) % n_events_print == 0:
-                    logging.info(f"\t\t- finished {i+1} events...")
-            logging.info(f">>>>>>>>>>> Finished calculating ground motion predictions")
+            if self.ssc_name == "ShakeMap":
+                # calculate IMs using GMC
+                logging.info(f"Getting ground motions from ShakeMap grids:")
+                logging.info(f"\t- Number of events: {self._n_event}")
+                logging.info(f"\t- Number of sites: {self._n_site}")
+                # setup
+                shape = (self._n_event, self._n_site)
+                self.gm_pred = {}
+                im_list = [im.lower() for im in im_list] # convert to lower case
+                self.im_list = im_list
+                for im in im_list:
+                    self.gm_pred[im] = {
+                            'mean': np.ones(shape) * -10, # default gm value outside of max dist
+                            'sigma': np.zeros(shape),
+                            'sigma_mu': np.zeros(shape)
+                        }
+                logging.info(f"\t- Periods to get: {', '.join(self.im_list)}")
+                # loop through number of events
+                for i in range(self._n_event):
+                    # perform sampling of IMs from ShakeMap
+                    site_gm, site_aleatory, site_epistemic = \
+                        self.source._sample_gm_from_map_i(i, self.site_data['lon'], self.site_data['lat'])
+                    # store outputs
+                    for j, im in enumerate(im_list):
+                        self.gm_pred[im]['mean'][i] = site_gm[:,j]
+                        self.gm_pred[im]['sigma'][i] = site_aleatory[:,j]
+                        self.gm_pred[im]['sigma_mu'][i] = site_epistemic[:,j]
+                    # print message to track number of events already ran
+                    if (i+1) % n_events_print == 0:
+                        logging.info(f"\t\t- finished sampling from {self.source.event_names[i]}...")
+                logging.info(f">>>>>>>>>>> Finished sampling ground motions from ShakeMaps")
+            else:
+                # calculate IMs using GMC
+                logging.info(f"Calculating ground motion predictions:")
+                logging.info(f"\t- Number of events: {self._n_event}")
+                logging.info(f"\t- Number of sites: {self._n_site}")
+                # check if GMPEs are initialized
+                if self.gmpe is None:
+                    self.init_gmpe() # use default, which is NGAWest2
+                # setup
+                shape = (self._n_event, self._n_site)
+                self.gm_pred = {}
+                im_list = [im.lower() for im in im_list] # convert to lower case
+                self.im_list = im_list
+                for im in im_list:
+                    self.gm_pred[im] = {
+                            'mean': np.ones(shape) * -10, # default gm value outside of max dist
+                            'sigma': np.zeros(shape),
+                            'sigma_mu': np.zeros(shape)
+                        }
+                logging.info(f"\t- Periods to calculate: {', '.join(self.im_list)}")
+                # loop through number of events
+                for i in range(self._n_event):
+                    # each source type has its own version of generating inputs for running GMPE
+                    # get inputs
+                    kwargs = self.source._get_gmpe_input_for_event_i(i, im_list, self.site_data)
+                    # run mean model
+                    self.gmpe.run_model(kwargs, njit_on=njit_on)
+                    # store outputs
+                    for j, im in enumerate(im_list):
+                        self.gm_pred[im]['mean'][i,kwargs['site_id']] = self.gmpe.model_dist['mean'][j,:]
+                        self.gm_pred[im]['sigma'][i,kwargs['site_id']] = self.gmpe.model_dist['aleatory']['sigma'][j,:]
+                        self.gm_pred[im]['sigma_mu'][i,kwargs['site_id']] = self.gmpe.model_dist['epistemic'][j,:]
+                    # print message to track number of events already ran
+                    if (i+1) % n_events_print == 0:
+                        logging.info(f"\t\t- finished {i+1} events...")
+                logging.info(f">>>>>>>>>>> Finished calculating ground motion predictions")
         
         
-    def export_gm_pred(self, sdir=None, stype='sparse'):
+    def export_gm_pred(self, sdir=None, stype=['sparse','csv']):
         """exports calculated ground motion predictions"""
         name_map = {
             'mean': 'MEAN',
@@ -301,6 +357,10 @@ class SeismicHazard(object):
             else:
                 # export
                 logging.info(f"Under: {sdir}")
+                # make sdir if not created
+                if not os.path.isdir(sdir):
+                    os.mkdir(sdir)
+                # loop through IMs
                 for im in self.im_list:
                     logging.info(f"\t- under {os.path.basename(sdir)}\{im.upper()}:")
                     if not os.path.isdir(os.path.join(sdir,im.upper())):
@@ -311,7 +371,7 @@ class SeismicHazard(object):
                         save_name = os.path.join(sdir,im.upper(),f'{name_map[item]}.npz')
                         # save_name = os.path.join(sdir,'TEMP.npz')
                         # save_name = save_name.replace('TEMP',f'{im}_{item}')
-                        if stype == 'sparse':
+                        if 'sparse' in stype:
                             # convert to sparse matrix
                             if item == 'mean':
                                 coo_out = sparse.coo_matrix(np.round(self.gm_pred[im][item]+10,decimals=3))
@@ -319,18 +379,20 @@ class SeismicHazard(object):
                                 coo_out = sparse.coo_matrix(np.round(self.gm_pred[im][item],decimals=3))
                             # export data
                             sparse.save_npz(save_name, coo_out)
-                        elif stype == 'csv':
+                            logging.info(f"\t\t- {os.path.basename(save_name)}")
+                        if 'csv' in stype:
                             save_name = save_name.replace('npz','csv')
                             df_out = pd.DataFrame.from_dict(self.gm_pred[im][item])
                             df_out.to_csv(save_name, index=False, header=False)
                             # np.savetxt(save_name, np.round(self.gm_pred[im][item],decimals=3), fmt='%.3f', delimiter=r'\t')
-                        logging.info(f"\t\t- {os.path.basename(save_name)}")
+                            logging.info(f"\t\t- {os.path.basename(save_name)}")
             # export other information
-            self._export_site_data(sdir)
+            if self.ssc_name == 'UCERF':
+                self._export_site_data(sdir)
             self._export_rupture_metadata(sdir)
     
     
-    def _export_rupture_metadata(self, sdir=None):
+    def _export_rupture_metadata(self, sdir=None, export_rup_geom=True):
         """exports rupture scenario metadata (mean annual rate and magnitude)"""
         if self.mag is None:
             return "Nothing to export - first run self.init_ssc (and self.filter_ucerf_rupture) to get ruptures"
@@ -349,6 +411,19 @@ class SeismicHazard(object):
                 np.vstack([event_id,mag,rate]).T,
                 columns=['event_id','magnitude','annual_rate']
             )
+            # also exports rupture geometry
+            if export_rup_geom:
+                name_map = {
+                    'dip': 'Dip',
+                    'rake': 'Rake',
+                    'dip_dir': 'DipDir',
+                    'z_tor': 'UpperDepth',
+                    'z_bor': 'LowerDepth',
+                    'fault_trace': 'FaultTrace'
+                }
+                for each in name_map:
+                    rup_meta_out[each] = self.source.df_rupture[name_map[each]].values
+            # export
             save_name = os.path.join(sdir,'RUPTURE_METADATA.csv')
             rup_meta_out.to_csv(save_name,index=False)
             logging.info(f"Exported rupture metadata to:")
@@ -378,7 +453,7 @@ class SeismicHazard(object):
             logging.info(f"\t- {os.path.join(sdir,'site_data.csv')}")
             
     
-    def get_haz_curve(self, site_num, im, x_vals=None, fractiles=[5,50,95], n_epi_sample=1000, to_plot=False, to_export=False, export_spath=None):
+    def get_haz_curve(self, site_num, im, x_vals=None, fractiles=[16,50,84], n_epi_sample=1000, to_plot=False, to_export=False, export_spath=None):
         """gets hazard curves for site for target IM"""
         # checks
         if self.gm_pred is None:
@@ -392,12 +467,12 @@ class SeismicHazard(object):
         if x_vals is None:
             if isinstance(im, str):
                 if im.lower() == 'pgv':
-                    x_vals = np.logspace(-2, 2, 41)
+                    x_vals = np.logspace(-1, 3, 41)
                 else:
                     x_vals = np.logspace(-3, 1, 41)
             else:
                 if im == -1: # PGV
-                    x_vals = np.logspace(-2, 2, 41)
+                    x_vals = np.logspace(-1, 3, 41)
                 else:
                     x_vals = np.logspace(-3, 1, 41)
         # calculate haz curve

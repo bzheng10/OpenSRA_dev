@@ -15,6 +15,7 @@
 # Python modules
 import os
 import logging
+import sys
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -26,6 +27,541 @@ from numba import jit, njit
 # OpenSRA modules and functions
 from src.edp import edp_util
 from src.util import *
+
+
+# -----------------------------------------------------------
+# @njit
+def get_regional_liq_susc(witter_geo_unit, bedrossian_geo_unit, gw_depth, get_mean=False):
+    """get liquefaction susceptibility category based on groundwater depth (m)"""
+    
+    # get dimensions
+    if get_mean is False:
+        n_sample = gw_depth.shape[1]
+    
+    # initialize output
+    liq_susc = np.empty_like(gw_depth, dtype="<U10")
+    
+    # find where gw_depth is at the following ranges
+    gw_depth_le_3m = gw_depth<=3
+    gw_depth_btw_3m_9m = np.logical_and(gw_depth>3,gw_depth<=9)
+    gw_depth_btw_9m_12m = np.logical_and(gw_depth>9,gw_depth<=12)
+    gw_depth_gt_12m = gw_depth>12
+    
+    # first check Witter et al. (2006)
+    ind_witter_geo_unit_avail = np.where(witter_geo_unit.notna())[0] # where Witter geo units exist
+    if len(ind_witter_geo_unit_avail) > 0:
+        # pull these geo units
+        witter_geo_unit_avail = witter_geo_unit[ind_witter_geo_unit_avail].values
+        # some units in Witter may end with a number or question mark, if so, map it to the unit without the added character
+        witter_geo_unit_avail = np.asarray([
+            val[:-1] if val[-1] == "?" or val[-1].isdigit() \
+            else val for val in witter_geo_unit_avail
+        ])
+        if get_mean:
+            witter_geo_unit_avail_expanded = witter_geo_unit_avail.copy()
+            # establish empty array for tracking liq_susc
+            liq_susc_witter = np.empty((len(ind_witter_geo_unit_avail)), dtype="<U10")
+        else:
+            witter_geo_unit_avail_expanded = np.tile(witter_geo_unit_avail,(n_sample,1)).T
+            # establish empty array for tracking liq_susc
+            liq_susc_witter = np.empty((len(ind_witter_geo_unit_avail), n_sample), dtype="<U10")
+        # start correlating to liq_susc
+        # artificial fill
+        curr_unit = 'af'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # artificial fill over estuarine mud
+        curr_unit = 'afem'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # artificial fill, levee
+        curr_unit = 'alf'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # artificial fill, channel
+        curr_unit = 'acf'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # artificial fill, dam
+        curr_unit = 'adf'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # gravel quarry
+        curr_unit = 'gq'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # artificial stream channel
+        curr_unit = 'ac'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'low'
+        # modern stream channel deposits
+        curr_unit = 'Qhc'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # latest holocene alluvial fan deposits
+        curr_unit = 'Qhfy'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'low'
+        # latest holocene alluvial fan levee deposits
+        curr_unit = 'Qhly'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'low'
+        # latest holocene stream terrace deposits
+        curr_unit = 'Qhty'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'low'
+        # latest holocene alluvial deposits undifferentiated
+        curr_unit = 'Qhay'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'low'
+        # holocene beach sand
+        curr_unit = 'Qhbs'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene dune sand
+        curr_unit = 'Qhds'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene SF Bay mud
+        curr_unit = 'Qhbm'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene basin deposits
+        curr_unit = 'Qhb'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene fine grained alluvial fan-estuarine complex deposits
+        curr_unit = 'Qhfe'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene estuarine delta deposits
+        curr_unit = 'Qhed'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene alluvial fan deposits
+        curr_unit = 'Qhf'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene alluvial fan deposits fine facies
+        curr_unit = 'Qhff'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene alluvial fan levee deposits
+        curr_unit = 'Qhl'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene stream terrace deposits
+        curr_unit = 'Qht'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene alluvial deposits, undifferentiated
+        curr_unit = 'Qha'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late pleistocene to holocene dune sand
+        curr_unit = 'Qds'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late pleistocene to holocene basin deposits
+        curr_unit = 'Qb'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late pleistocene to holocene alluvial fan deposits
+        curr_unit = 'Qf'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late pleistocene to holocene stream terrace deposits
+        curr_unit = 'Qt'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late pleistocene to holocene alluvial deposits, undifferentiated
+        curr_unit = 'Qa'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late pleistocene alluvial fan deposits
+        curr_unit = 'Qpf'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late pleistocene stream terrace deposits
+        curr_unit = 'Qpt'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late pleistocene alluvial deposits, undifferentiated
+        curr_unit = 'Qpa'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # pleistocene marine terrace deposits
+        curr_unit = 'Qmt'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # pleistocene bay terrace deposits
+        curr_unit = 'Qbt'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # early to late pleistocene pediment deposits
+        curr_unit = 'Qop'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # early to middle pleistocene alluvial fan deposits
+        curr_unit = 'Qof'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # early to middle pleistocene stream terrace deposits
+        curr_unit = 'Qot'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # early to middle pleistocene alluvial deposits, undifferentiated
+        curr_unit = 'Qoa'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_witter[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # early quaternary and older (>1.4 Ma) deposits and bedrock
+        curr_unit = 'br'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[where_curr_unit] = 'none'
+        # waterbodies
+        curr_unit = 'H2O'
+        where_curr_unit = witter_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_witter[where_curr_unit] = 'none'
+        # add to liq_susc dataframe
+        liq_susc[ind_witter_geo_unit_avail] = liq_susc_witter
+    
+    # next check Bedrossian et al. (2012)
+    ind_bedrossian_geo_unit_avail = np.where(bedrossian_geo_unit.notna())[0] # where geo units exist
+    if len(ind_bedrossian_geo_unit_avail) > 0:
+        # pull these geo units
+        bedrossian_geo_unit_avail = bedrossian_geo_unit[ind_bedrossian_geo_unit_avail].values
+        if get_mean:
+            bedrossian_geo_unit_avail_expanded = bedrossian_geo_unit_avail.copy()
+            # establish empty array for tracking liq_susc
+            liq_susc_bedrossian = np.empty((len(ind_bedrossian_geo_unit_avail)), dtype="<U10")
+        else:
+            bedrossian_geo_unit_avail_expanded = np.tile(bedrossian_geo_unit_avail,(n_sample,1)).T
+            # establish empty array for tracking liq_susc
+            liq_susc_bedrossian = np.empty((len(ind_bedrossian_geo_unit_avail), n_sample), dtype="<U10")
+        # start correlating to liq_susc
+        # late holocene - artificial fill
+        curr_unit = 'af'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late holocene - beach
+        curr_unit = 'Qb'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late holocene - wash
+        curr_unit = 'Qw'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'very high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late holocene - eolian and dune
+        curr_unit = 'Qe'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late holocene - alluvial fan
+        curr_unit = 'Qf'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late holocene - terrace
+        curr_unit = 'Qt'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late holocene - lacustrine, playa, estuarine
+        curr_unit = 'Ql'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late holocene - undifferentiated
+        curr_unit = 'Qsu'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late holocene - alluvial valley
+        curr_unit = 'Qa'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene to late pleistocene - wash
+        curr_unit = 'Qyw'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene to late pleistocene - eolian dune
+        curr_unit = 'Qye'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene to late pleistocene - alluvial fan
+        curr_unit = 'Qyf'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene to late pleistocene - terrace
+        curr_unit = 'Qyt'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene to late pleistocene - lacustrine, playa, estuarine
+        curr_unit = 'Qyl'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # holocene to late pleistocene - alluvial valley
+        curr_unit = 'Qya'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'high'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late to early pleistocene - wash
+        curr_unit = 'Qow'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late to early pleistocene - eolian and dune
+        curr_unit = 'Qoe'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'moderate'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late to early pleistocene - alluvial fan
+        curr_unit = 'Qof'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late to early pleistocene - alluvial valley
+        curr_unit = 'Qoa'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late to early pleistocene - terrace
+        curr_unit = 'Qot'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # late to early pleistocene - lacustrine, playa, estuarine
+        curr_unit = 'Qol'
+        where_curr_unit = bedrossian_geo_unit_avail_expanded==curr_unit
+        if True in where_curr_unit:
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_le_3m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_3m_9m)] = 'low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_btw_9m_12m)] = 'very low'
+            liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
+        # add to liq_susc dataframe
+        liq_susc[ind_bedrossian_geo_unit_avail] = liq_susc_bedrossian
+
+    # return
+    return liq_susc
 
 
 # -----------------------------------------------------------

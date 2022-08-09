@@ -18,7 +18,8 @@
 import logging
 import numpy as np
 from scipy import sparse
-from scipy.stats import norm
+# from scipy.stats import norm
+from numba_stats import norm
 
 # OpenSRA modules
 # import src.EDP.Fcn_EDP
@@ -29,13 +30,13 @@ from src.base_class import BaseModel
 class Landslide(BaseModel):
     "Inherited class specfic to landslide deformation"
     
-    _RETURN_PBEE_META = {
-        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
-        'type': 'landslide',       # Type of model (e.g., liquefaction, landslide, pipe strain)
-        'variable': [
-            'pgdef',
-        ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _RETURN_PBEE_META = {
+    #     'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
+    #     'type': 'landslide',       # Type of model (e.g., liquefaction, landslide, pipe strain)
+    #     'variable': [
+    #         'pgdef',
+    #     ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
 
     def __init__(self):
         super().__init__()
@@ -60,6 +61,8 @@ class BrayMacedo2019(Landslide):
     From upstream PBEE:
     pga: float, np.ndarray or list
         [g] peak ground acceleration
+    mag: float, np.ndarray or list
+        moment magnitude
         
     Geotechnical/geologic:
     slope: float, np.ndarray or list
@@ -74,13 +77,13 @@ class BrayMacedo2019(Landslide):
         [kPa] cohesion of soil
         
     Fixed:
-    mag: float, np.ndarray or list
-        moment magnitude
 
     Returns
     -------
-    pgdef : float, np.ndarray or list
-        [cm] permanent ground deformation
+    pgdef : float, np.ndarray
+        [m] permanent ground deformation
+    sigma_pgdef : float, np.ndarray
+        aleatory variability for ln(pgdef)
     
     References
     ----------
@@ -97,38 +100,47 @@ class BrayMacedo2019(Landslide):
         'vol. 145, pp. 12, 04019106.'
     ])
     _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
             'pgdef': {
-                'desc': 'permanent ground deformation (cm)',
-                'unit': 'cm',
-                'mean': None,
-                'aleatory': 0.72,
-                'epistemic': {
-                    'coeff': 0.25, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
-            }
+                'desc': 'permanent ground deformation (m)',
+                'unit': 'm',
+                # 'mean': None,
+                # 'aleatory': None,
+                # 'epistemic': 0.25, # base model uncertainty, does not include input uncertainty
+                # 'dist_type': 'lognormal',
+            },
+            # 'sigma_pgdef': {
+            #     'desc': 'aleatory variability for ln(pgdef)',
+            #     'unit': '',
+            #     'mean': None,
+            # },
         }
     }
-    _INPUT_PBEE_META = {
-        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        'variable': [
-            'pga'
-        ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _INPUT_PBEE_META = {
+    #     'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+    #     'variable': [
+    #         'pga'
+    #     ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
         'params': {
             'pga': {
                 'desc': 'peak ground acceleration (g)',
                 'unit': 'g',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': None,
-                'dist_type': 'lognormal'
+                # 'mean': None,
+                # 'aleatory': None,
+                # 'epistemic': None,
+                # 'dist_type': 'lognormal'
+            },
+            'mag': {
+                'desc': 'moment magnitude',
+                'unit': '',
+                # 'mean': None,
+                # 'dist_type': 'fixed'
             }
         }
     }
@@ -151,18 +163,12 @@ class BrayMacedo2019(Landslide):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            'mag': 'moment magnitude',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'beta', 't_beta', 'gamma_soil', 'phi_soil', 'coh_soil',
+        'slope', 't_slope', 'gamma_soil', 'phi_soil', 'coh_soil',
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'mag',
-    }
-    _MODEL_INTERNAL = {
-        'n_sample': 1,
-        'n_site': 1,
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
@@ -172,9 +178,8 @@ class BrayMacedo2019(Landslide):
     @staticmethod
     # @njit
     def _model(
-        pga, # upstream PBEE RV
+        pga, mag, # upstream PBEE RV
         slope, t_slope, gamma_soil, phi_soil, coh_soil, # geotechnical/geologic
-        mag, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
@@ -192,15 +197,22 @@ class BrayMacedo2019(Landslide):
             coh_soil/(
                 gamma_soil * t_slope * np.cos(slope_rad)**2 * \
                 (1+np.tan(phi_soil_rad)*np.tan(slope_rad)))
-        ky = np.maximum(ky,0.001) # to avoid ky = 0
+        ky = np.maximum(ky,0.01) # to avoid ky = 0
         
         # probability of zero displacement, eq. 2 with Ts=0
-        prob_d_eq_0 = 1 - norm.cdf(
+        # prob_d_eq_0 = 1 - norm.cdf(
+        # prob_d_eq_0 = np.round(1 - norm.cdf(
+        #     -2.480 + \
+        #     -2.970*np.log(ky) + \
+        #     -0.120*(np.log(ky))**2 + \
+        #     2.780*np.log(pga)
+        # ),decimals=15)
+        prob_d_eq_0 = np.round(1 - norm.cdf(
             -2.480 + \
             -2.970*np.log(ky) + \
             -0.120*(np.log(ky))**2 + \
-            2.780*np.log(pga)
-        )
+            2.780*np.log(pga),
+        loc=0, scale=1),decimals=15)
        
         # deformation, eq 3b
         ln_pgdef_trunc = \
@@ -214,17 +226,51 @@ class BrayMacedo2019(Landslide):
         # sigma = 0.72
         
         # apply non-zero displacement correction/condition, eq 11
-        prob_d_gt_0 = 1 - prob_d_eq_0
-        nonzero_median_cdf = np.maximum(1 - .5/prob_d_gt_0,0) # limit to 0 and bove
-        sigma = 0.72
-        nonzero_ln_pgdef = ln_pgdef_trunc + sigma*norm.ppf(nonzero_median_cdf)
-        pgdef = np.exp(nonzero_ln_pgdef)
-        # sigma = np.ones(pga.shape)*sigma
+        # prob_d_gt_0 = np.maximum(1 - prob_d_eq_0,1e-20) # limit to 1e-5 and above to avoid dividing by zero
+        # prob_d_gt_0 = np.round(1 - prob_d_eq_0,decimals=5)
+        # nonzero_median_cdf = np.ones(pga.shape)*-100 # initialize
+        # nonzero_median_cdf[prob_d_eq_0<1] = 1 - .5/(1-prob_d_eq_0[prob_d_eq_0<1])
+        
+        nonzero_median_cdf = 1 - .5/(1-prob_d_eq_0)
+        sigma_val = 0.72
+        nonzero_ln_pgdef = ln_pgdef_trunc.copy()
+        # nonzero_ln_pgdef[nonzero_median_cdf>0] = ln_pgdef_trunc[nonzero_median_cdf>0] + \
+        #     sigma_val*norm.ppf(nonzero_median_cdf[nonzero_median_cdf>0])
+        nonzero_ln_pgdef[nonzero_median_cdf>0] = ln_pgdef_trunc[nonzero_median_cdf>0] + \
+            sigma_val*norm.ppf(nonzero_median_cdf[nonzero_median_cdf>0], loc=0, scale=1)
+        pgdef = np.exp(nonzero_ln_pgdef)/100 # also convert from cm to m
+        sigma_pgdef = np.ones(pga.shape)*sigma_val
+        
+        # pgdef = np.exp(ln_pgdef_trunc)/100
+        
+        # print(prob_d_eq_0[3])
+        # print(ky[3])
+        # print(pga[3])
+        # print(mag[3])
+        # print(ln_pgdef_trunc[3])
+        
+        # print(prob_d_gt_0[3])
+        # print(nonzero_median_cdf[3])
+        # print(nonzero_ln_pgdef[3])
+        
+        # print(pgdef[3])
+        
+        
+        # sigma_mu
+        # sigma_mu_pgdef = np.ones(pga.shape)*0.25
         
         # prepare outputs
         output = {
-            'pgdef': pgdef,
-            # 'sigma': sigma,
+            'pgdef': {
+                'mean': pgdef,
+                'sigma': sigma_pgdef,
+                'sigma_mu': np.ones(pgdef.shape)*0.25,
+                'dist_type': 'lognormal',
+                'unit': 'm'
+            },
+            # 'pgdef': pgdef,
+            # 'sigma_pgdef': sigma_pgdef,
+            # 'sigma_mu_pgdef': sigma_mu_pgdef,
         }
         # get intermediate values if requested
         if return_inter_params:
@@ -254,6 +300,8 @@ class Jibson2007(Landslide):
     From upstream PBEE:
     pga: float, np.ndarray or list
         [g] peak ground acceleration
+    mag: float, np.ndarray or list
+        moment magnitude
         
     Geotechnical/geologic:
     slope: float, np.ndarray or list
@@ -268,13 +316,13 @@ class Jibson2007(Landslide):
         [kPa] cohesion of soil
         
     Fixed:
-    mag: float, np.ndarray or list
-        moment magnitude
 
     Returns
     -------
-    pgdef : float, np.ndarray or list
-        [cm] permanent ground deformation
+    pgdef : float, np.ndarray
+        [m] permanent ground deformation
+    sigma_pgdef : float, np.ndarray
+        aleatory variability for ln(pgdef)
     
     References
     ----------
@@ -291,43 +339,32 @@ class Jibson2007(Landslide):
         'vol. 91, no. 2, pp. 209–218.'
     ])
     _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
             'pgdef': {
-                'desc': 'permanent ground deformation (cm)',
-                'unit': 'cm',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': {
-                    'coeff': 0.25, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
-            },
-            'sigma': {
-                'desc': 'aleatory variability for ln(pgdef)',
-                'unit': '',
-                'mean': None,
+                'desc': 'permanent ground deformation (m)',
+                'unit': 'm',
             },
         }
     }
-    _INPUT_PBEE_META = {
-        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        'variable': [
-            'pga'
-        ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _INPUT_PBEE_META = {
+    #     'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+    #     'variable': [
+    #         'pga'
+    #     ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
         'params': {
             'pga': {
                 'desc': 'peak ground acceleration (g)',
                 'unit': 'g',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': None,
-                'dist_type': 'lognormal'
+            },
+            'mag': {
+                'desc': 'moment magnitude',
+                'unit': '',
             }
         }
     }
@@ -350,19 +387,17 @@ class Jibson2007(Landslide):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            'mag': 'moment magnitude',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'beta', 't_beta', 'gamma_soil', 'phi_soil', 'coh_soil',
+        'slope', 't_slope', 'gamma_soil', 'phi_soil', 'coh_soil',
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'mag',
     }
-    _MODEL_INTERNAL = {
-        'n_sample': 1,
-        'n_site': 1,
-    }
+    # _MODEL_INTERNAL = {
+    #     'n_sample': 1,
+    #     'n_site': 1,
+    # }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
     _MODEL_INPUT_RV = {}
@@ -371,16 +406,15 @@ class Jibson2007(Landslide):
     @staticmethod
     # @njit
     def _model(
-        pga, # upstream PBEE RV
+        pga, mag, # upstream PBEE RV
         slope, t_slope, gamma_soil, phi_soil, coh_soil, # geotechnical/geologic
-        mag, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
         
         # initialize arrays
         pgdef = np.empty(pga.shape)
-        sigma = np.empty(pga.shape)
+        sigma_pgdef = np.empty(pga.shape)
         
         # convert from deg to rad
         slope_rad = slope*np.pi/180
@@ -394,30 +428,46 @@ class Jibson2007(Landslide):
         ky = np.maximum((fs-1) * np.sin(slope_rad),0.01)
 
         # for magnitudes between 5.3 and 7.6
-        ind_mag_btw_5p3_7p6 = np.where(np.logical_and(mag>=5.3, mag<=7.6))[0]
-        if len(ind_mag_btw_5p3_7p6) > 0:
+        # ind_mag_btw_5p3_7p6 = np.where(np.logical_and(mag>=5.3, mag<=7.6))[0]
+        ind_mag_btw_5p3_7p6 = np.logical_and(mag>=5.3, mag<=7.6)
+        # if len(ind_mag_btw_5p3_7p6) > 0:
+        if True in ind_mag_btw_5p3_7p6:
+            # ratio = np.minimum(ky[ind_mag_btw_5p3_7p6]/pga[ind_mag_btw_5p3_7p6],0.99)
+            ratio = ky[ind_mag_btw_5p3_7p6]/pga[ind_mag_btw_5p3_7p6]
             pgdef[ind_mag_btw_5p3_7p6] = 10**(
                 -2.710 + np.log10(
-                    (1-ky[ind_mag_btw_5p3_7p6]/pga[ind_mag_btw_5p3_7p6])**2.335 * \
-                    (ky[ind_mag_btw_5p3_7p6]/pga[ind_mag_btw_5p3_7p6])**-1.478
+                    (1-ratio)**2.335 * (ratio)**-1.478
                 ) + 0.424*mag[ind_mag_btw_5p3_7p6]
-            )
-            sigma[ind_mag_btw_5p3_7p6] = 0.454 * np.log(10)
+            ) # limit ky/pga to be less than 1 to avoid negative number to non-integer power
+            sigma_pgdef[ind_mag_btw_5p3_7p6] = 0.454 * np.log(10)
         
         # for other magnitudes
-        ind_mag_other = list(set(list(range(pga.shape[0]))).difference(set(ind_mag_btw_5p3_7p6)))
-        pgdef[ind_mag_other] = 10**(
-            0.215 + np.log10(
-                (1-ky[ind_mag_other]/pga[ind_mag_other])**2.341 * \
-                (ky[ind_mag_other]/pga[ind_mag_other])**-1.438
+        # ind_mag_other = list(set(list(range(pga.shape[0]))).difference(set(ind_mag_btw_5p3_7p6)))
+        ind_mag_other = ~np.logical_and(mag>=5.3, mag<=7.6)
+        if True in ind_mag_other:
+            # ratio = np.minimum(ky[ind_mag_other]/pga[ind_mag_other],0.99)
+            ratio = ky[ind_mag_other]/pga[ind_mag_other]
+            pgdef[ind_mag_other] = 10**(
+                0.215 + np.log10(
+                    (1-ratio)**2.341 * (ratio)**-1.438
+                )
             )
-        )
-        sigma[ind_mag_other] = 0.510 * np.log(10)
+            sigma_pgdef[ind_mag_other] = 0.510 * np.log(10)
+        
+        # convert from cm to m
+        pgdef = pgdef/100
         
         # prepare outputs
         output = {
-            'pgdef': pgdef,
-            'sigma': sigma,
+            'pgdef': {
+                'mean': pgdef,
+                'sigma': sigma_pgdef,
+                'sigma_mu': np.ones(pgdef.shape)*0.25,
+                'dist_type': 'lognormal',
+                'unit': 'm'
+            },
+            # 'pgdef': pgdef,
+            # 'sigma_pgdef': sigma_pgdef,
         }
         # get intermediate values if requested
         if return_inter_params:

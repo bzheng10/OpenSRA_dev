@@ -28,9 +28,10 @@ from scipy.interpolate import interp1d
 
 # efficient processing modules
 # import numba as nb
-from numba import njit
+from numba import njit, float64, int64, typeof
 # from numba.core import types
 # from numba.typed import Dict
+from numba.types import Tuple
 
 # plotting modules
 # if importlib.util.find_spec('matplotlib') is not None:
@@ -40,6 +41,10 @@ from numba import njit
     # import contextily as ctx
 
 # OpenSRA modules
+
+
+# disable some numpy warnings
+np.seterr(divide='ignore', invalid='ignore')
 
 
 # -----------------------------------------------------------
@@ -103,7 +108,7 @@ class GMPE(object):
     _OUTPUT = []
     
     # Other backend parameters
-    _GMPE_COEFF_DIR = os.path.join('..','OpenSRA','lib','NGAW2_Supplement_Data')
+    _GMPE_COEFF_DIR = os.path.join('..','..','OpenSRA','lib','NGAW2_Supplement_Data')
     _PGA_PERIOD = 0
     _PGV_PERIOD = -1
     
@@ -1047,9 +1052,27 @@ class ASK14(GMPE):
         },
     }
     
-    
+
     @staticmethod
-    @njit
+    @njit(
+        # Tuple((float64[:,:],float64[:,:],float64[:,:]))(
+        #     float64[:],float64[:],float64[:],int64,
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],
+        #     float64[:],float64[:],int64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:]
+        # ),
+        fastmath=True,
+        cache=True
+    )
     def _model(
         # site params
         vs30, vs30_source, z1p0, f_region, 
@@ -1060,7 +1083,38 @@ class ASK14(GMPE):
         a8, a10, a11, a12, a13, a14, a15, a17, a43, a44, a45, 
         a46, a25, a28, a29, a31, a36, a37, a38, a39, a40, a41, 
         a42, s1e, s2e, s3, s4, s1m, s2m, s5, s6
-        ):
+    ):
+        
+        # print(typeof(vs30))
+        # print(typeof(vs30_source))
+        # print(typeof(z1p0))
+        # print(typeof(f_region))
+        
+        # print(typeof(mag))
+        # print(typeof(dip))
+        # print(typeof(rake))
+        # print(typeof(f_rv))
+        # print(typeof(f_nm))
+        # print(typeof(f_hw))
+        # print(typeof(r_rup))
+        # print(typeof(r_jb))
+        # print(typeof(r_x))
+        # print(typeof(r_y0))
+        # print(typeof(z_tor))
+        # print(typeof(z_bor))
+        
+        
+        # print(typeof(M1))
+        # print(typeof(Vlin))
+        # print(typeof(b))
+        # print(typeof(c))
+        # print(typeof(c4))
+        # print(typeof(a1))
+        # print(typeof(a2))
+        # print(typeof(a3))
+        # print(typeof(a4))
+        # print(typeof(a5))
+        # print(typeof(a6))
         
         
         #-------------------------------------------
@@ -1088,9 +1142,12 @@ class ASK14(GMPE):
         
         #-------------------------------------------
         # preset output matrices
-        ln_y = np.zeros(shape)
-        tau = np.zeros(shape)
-        phi = np.zeros(shape)
+        # ln_y = np.zeros(shape)
+        # tau = np.zeros(shape)
+        # phi = np.zeros(shape)
+        ln_y = np.empty(shape)
+        tau = np.empty(shape)
+        phi = np.empty(shape)
         
         #-------------------------------------------
         # precompute some terms
@@ -1503,7 +1560,22 @@ class BSSA14(GMPE):
     
     
     @staticmethod
-    @njit
+    @njit(
+        # Tuple((float64[:,:],float64[:,:],float64[:,:]))(
+        #     float64[:],float64[:],int64,
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:],float64[:],float64[:],float64[:],
+        #     float64[:],float64[:]
+        # ),
+        fastmath=True,
+        cache=True
+    )
     def _model(
         # site params
         vs30, z1p0, f_region, 
@@ -1513,8 +1585,7 @@ class BSSA14(GMPE):
         Period, e0, e1, e2, e3, e4, e5, e6, Mh, c1, c2, c3, Mref, Rref, h, 
         Dc3Global, Dc3ChinaTrk, Dc3ItalyJapan, c, Vc, Vref, f1, f3, f4, f5, 
         f6, f7, R1, R2, DfR, DfV, V1, V2, l1, l2, t1, t2
-        ):        
-        
+    ):
         
         #-------------------------------------------
         # dimensions
@@ -1524,9 +1595,12 @@ class BSSA14(GMPE):
         
         #-------------------------------------------
         # preset output matrices
-        ln_y = np.zeros(shape)
-        tau = np.zeros(shape)
-        phi = np.zeros(shape)
+        # ln_y = np.zeros(shape)
+        # tau = np.zeros(shape)
+        # phi = np.zeros(shape)
+        ln_y = np.empty(shape)
+        tau = np.empty(shape)
+        phi = np.empty(shape)
         
         #-------------------------------------------
         # adjust coefficients by region
@@ -1801,7 +1875,10 @@ class CB14(GMPE):
     
     
     @staticmethod
-    @njit
+    @njit(
+        fastmath=True,
+        cache=True
+    )
     def _model(
         # site params
         vs30, z2p5, f_region, 
@@ -2291,7 +2368,10 @@ class CY14(GMPE):
     
     
     @staticmethod
-    @njit
+    @njit(
+        fastmath=True,
+        cache=True
+    )
     def _model(
         # site params
         vs30, vs30_source, z1p0, f_region, 

@@ -21,6 +21,7 @@ import time
 import pathlib
 import warnings
 import copy
+import shutil
 from itertools import chain
 # import itertools
 
@@ -77,7 +78,7 @@ class GeoData(object):
     
     
     # class definitions
-    SUPPORTED_FTYPE = ['.shp','.tif','.xml', '.csv', '.from_args'] # supported file types
+    SUPPORTED_FTYPE = ['.shp', '.gdb','.tif','.xml', '.csv', '.from_args'] # supported file types
     
     
     # instantiation
@@ -119,6 +120,109 @@ class GeoData(object):
             raise NotImplementedError(
                 f'"{self.ftype}" is not a supported geodatafile type; supported file types include: {*self.supported_ftype,}'
             )
+    
+    
+    @classmethod
+    def sample_csv(cls, table, fpath, cols_to_get='all', 
+                   append_header_str='', interp_scheme='nearest', out_of_bound_value=np.nan,
+                   use_hull=True
+    ):
+        """sample values from CSV files for columns to get and update GeoDataFrame table, must be GeoDataFrame"""        
+        # import sample set
+        sample_set = LocationData(fpath=fpath).data
+        table = cls.sample_gdf(
+            table=table.copy(), sample_set=sample_set, cols_to_get=cols_to_get, 
+            append_header_str=append_header_str, interp_scheme=interp_scheme,
+            out_of_bound_value=out_of_bound_value, use_hull=use_hull
+        )
+        return table
+    
+    
+    @staticmethod
+    def sample_gdf(table, sample_set, cols_to_get='all', 
+                   append_header_str='', interp_scheme='nearest',
+                   out_of_bound_value=np.nan, use_hull=False
+    ):
+        """sample values from GeoDataFrame table (sample_set) and add to table; table must also be a GeoDataFrame"""
+        # check columns to get
+        if cols_to_get == 'all':
+            cols_to_get = sample_set.columns.drop('geometry')
+        if interp_scheme == 'nearest':
+            # first determine which locations are within and outside the convex hull of the sample set
+            sindex = table.sindex # spatial index for location data
+            if use_hull:
+                hull = sample_set.geometry.unary_union.convex_hull
+                loc_ind_in_hull = sindex.query(hull,predicate='intersects')
+                loc_ind_outside_hull = list(set(list(table.index)).difference(set(loc_ind_in_hull)))
+                # perform sampling for locations within convex hull
+                locs_in_hull = table.loc[loc_ind_in_hull].copy().reset_index(drop=True) # get subset of table in hull
+                nearest_pt_in_sample_set = sample_set.sindex.nearest(locs_in_hull.geometry,return_all=False) # sampling
+            else:
+                nearest_pt_in_sample_set = sample_set.sindex.nearest(table.geometry,return_all=False) # sampling
+            # update data table with samples
+            for col in cols_to_get:
+                # initialize
+                if col == 'vs30source':
+                    sampled_vals = np.empty(table.shape[0],dtype='<U10')
+                    if use_hull:
+                        sampled_vals[loc_ind_outside_hull] = 'Inferred'
+                else:
+                    sampled_vals = np.empty(table.shape[0])*out_of_bound_value
+                # get samples
+                if use_hull:
+                    sampled_vals[loc_ind_in_hull] = sample_set[col].loc[nearest_pt_in_sample_set[1]].values
+                else:
+                    sampled_vals = sample_set[col].loc[nearest_pt_in_sample_set[1]].values
+                # store samples
+                table[col+append_header_str] = sampled_vals
+            return table
+        else:
+            raise NotImplementedError('Only "nearest" is available as interpolation scheme')
+    
+    
+    @staticmethod
+    def sample_raster(table, fpath,
+                      band=1, store_name=None, interp_scheme='nearest',
+                      out_of_bound_value=np.nan, invalid_value=np.nan
+    ):
+        """sample values from raster file and update (Geo)DataFrame datatable"""
+        # create raster object
+        raster = RasterData(fpath)
+        x = table.geometry.x.values
+        y = table.geometry.y.values
+        # perform sampling
+        raster.get_sample(
+            x=x, y=y, band=band,
+            interp_scheme=interp_scheme, out_of_bound_value=out_of_bound_value, invalid_value=invalid_value
+        )
+        # update data table with samples
+        if store_name is None:
+            store_name = get_basename_without_extension(fpath) # use raster file name, without extension
+        table[store_name] = raster.sample
+        return table
+    
+    
+    @staticmethod
+    def sample_shapefile(table, fpath, attr, store_name=None):
+        """sample values from shapefile and update GeoDataFrame table, must be GeoDataFrame"""
+        # create shapefile object
+        shapefile = ShapefileData(fpath)
+        # perform sampling
+        shapefile.get_sample(attr=attr, site_geometry=table.geometry)
+        index = shapefile.site_index_with_sample
+        sample = shapefile.sample
+        # update data table with samples
+        if store_name is None:
+            store_name = get_basename_without_extension(fpath) # use raster file name, without extension
+        table[store_name] = np.nan # create new column and initialize all values as nan
+        table.loc[index, store_name] = sample
+        return table
+    
+    
+    @staticmethod
+    def sample_xml():
+        """sample values from XML file"""
+        raise NotImplementedError("Method to be implemented")
             
 
     def plot(self, show=True, figsize=[16,8], fignum=None):
@@ -181,7 +285,8 @@ class GeoData(object):
             # ctx.add_basemap(ax=self._ax[0,0], source=ctx.providers.Stamen.TonerLite, crs=self.crs)
             # ctx.add_basemap(ax=self._ax[0,0], source=ctx.providers.USGS.USTopo, crs=self.crs)
             if source is None:
-                source = ctx.providers.Stamen.TonerLite
+                # source = ctx.providers.Stamen.TonerLite
+                source = ctx.providers.Stamen.Terrain
             ctx.add_basemap(ax=self._ax[0,0], source=source, zoom=zoom, crs=self.crs)
         
     
@@ -209,13 +314,22 @@ class CSVData(GeoData):
     
 
     # instantiation
-    def __init__(self, fpath, lon_header=None, lat_header=None):
+    def __init__(self, fpath, lon_header, lat_header,
+                 shape_type='point', crs="EPSG:4326",
+                 lon_begin_header=None, lat_begin_header=None,
+                 lon_end_header=None, lat_end_header=None,
+        ):
         # invoke parent function
-        super().__init__(fpath)
+        super().__init__(fpath, crs=crs)
         
         # other inputs
+        self._shape_type = shape_type
         self._lon_header = lon_header
         self._lat_header = lat_header
+        self._lon_begin_header = lon_begin_header
+        self._lat_begin_header = lat_begin_header
+        self._lon_end_header = lon_end_header
+        self._lat_end_header = lat_end_header
         
         # read data
         self._read_data()
@@ -234,6 +348,9 @@ class CSVData(GeoData):
         """reads data"""
         if os.path.exists(self.fpath):
             self.data = pd.read_csv(self.fpath)
+            
+            
+            
         else:
             raise ValueError(f'CSV file "{os.path.basename(self.fpath)}" does not exist')
 
@@ -241,23 +358,45 @@ class CSVData(GeoData):
     def _convert_to_gdf(self):
         """converts to geopandas.GeoDataFrame"""
         # see if column ID for lon and lat are given
-        if self._lon_header is None or self._lat_header is None:
-            if self._lon_header is None:
-                try:
-                    self._lon_header = next(col for col in self.data.columns if 'lon' in col.lower())
-                except StopIteration:
-                    return ValueError('Program cannot automatically locate column with "Longitude" data; please specific "lon_header"')
-            if self._lat_header is None:
-                try:
-                    self._lat_header = next(col for col in self.data.columns if 'lat' in col.lower())
-                except StopIteration:
-                    return ValueError('Program cannot automatically locate column with "Latitude" data; please specific "lat_header"')
+        # if self._lon_header is None or self._lat_header is None:
+        #     if self._lon_header is None:
+        #         try:
+        #             self._lon_header = next(col for col in self.data.columns if 'lon' in col.lower())
+        #         except StopIteration:
+        #             return ValueError('Program cannot automatically locate column with "Longitude" data; please specific "lon_header"')
+        #     if self._lat_header is None:
+        #         try:
+        #             self._lat_header = next(col for col in self.data.columns if 'lat' in col.lower())
+        #         except StopIteration:
+        #             return ValueError('Program cannot automatically locate column with "Latitude" data; please specific "lat_header"')
         # convert to GeoDataFrame
-        self.data = GeoDataFrame(
-            self.data,
-            crs=self.crs,
-            geometry=[Point(xy) for xy in zip(self.data[self._lon_header], self.data[self._lat_header])]
-        )
+        if self._shape_type == 'point':
+            # make columns of lat lon using default header names
+            self.data['LON'] = self.data[self._lon_header].values
+            self.data['LAT'] = self.data[self._lat_header].values
+            # make GeoDataFrame
+            self.data = GeoDataFrame(
+                self.data,
+                crs=self.crs,
+                geometry=[Point(xy) for xy in zip(self.data.LON, self.data.LAT)]
+            )
+        elif self._shape_type == 'line':
+            # make columns of lat lon using default header names
+            self.data['LON_MID'] = self.data[self._lon_header].values
+            self.data['LAT_MID'] = self.data[self._lat_header].values
+            self.data['LON_BEGIN'] = self.data[self._lon_begin_header].values
+            self.data['LAT_BEGIN'] = self.data[self._lat_begin_header].values
+            self.data['LON_END'] = self.data[self._lon_end_header].values
+            self.data['LAT_END'] = self.data[self._lat_end_header].values
+            # make GeoDataFrame
+            begin_pair = list(zip(self.data.LON_BEGIN, self.data.LAT_BEGIN))
+            end_pair = list(zip(self.data.LON_END, self.data.LAT_END))
+            n_pair = len(begin_pair)
+            self.data = GeoDataFrame(
+                self.data,
+                crs=self.crs,
+                geometry=[LineString([begin_pair[i],end_pair[i]]) for i in range(n_pair)]
+            )
        
         
     def export_data_to_shp(self, spath=None):
@@ -379,7 +518,7 @@ class DataFromArgs(CSVData):
         # geometry coordinates
         # for exporting
 
-    
+    @staticmethod
     def _check_and_expand_dim(x):
         if np.ndim(x) == 0:
             return np.expand_dims(x)
@@ -449,16 +588,18 @@ class ShapefileData(GeoData):
     
 
     # instantiation
-    def __init__(self, fpath, crs='EPSG:4326', rows_to_keep=None):
+    def __init__(self, fpath, crs='EPSG:4326', rows_to_keep=None, minimal_init=False, to_cleanup=True):
         # invoke parent function
         super().__init__(fpath, crs)
         
-        # read data
-        self._read_data()
-        # clean up data: remove rows without geometry, expand multi-objects to individual (e.g., MultiLineString->LineString)
-        self._cleanup_data(rows_to_keep)
-        # other initial processing
-        self._geom_type = self.get_geometry_type(self.data)
+        if minimal_init == False:
+            # read data
+            self._read_data()
+            if to_cleanup:
+                # clean up data: remove rows without geometry, expand multi-objects to individual (e.g., MultiLineString->LineString)
+                self._cleanup_data(rows_to_keep)
+            # other initial processing
+            self._geom_type = self.get_geometry_type(self.data)
         
         # initialize other attributes
         # geometry coordinates
@@ -493,7 +634,7 @@ class ShapefileData(GeoData):
     
     def change_crs(self):
         """updates crs of locations"""
-        if self.ftype == '.shp':
+        if self.ftype == '.shp' or self.ftype == '.gdb':
             try:
                 self.data.to_crs(self.crs, inplace=True)
             except ValueError:
@@ -699,16 +840,28 @@ class ShapefileData(GeoData):
         self.site_geometry = site_geometry
         query = sindex.query_bulk(site_geometry, predicate='intersects')
         self.site_index_with_sample = query[0]
-        self.sample = self.data.loc[query[1], attr].values
+        if attr in self.data:
+            self.sample = self.data.loc[query[1], attr].values
+        else:
+            if attr.lower() in self.data:
+                self.sample = self.data.loc[query[1], attr.lower()].values
+            elif attr.upper() in self.data:
+                self.sample = self.data.loc[query[1], attr.lower()].values
     
     
-    def export_grid(self, export_grid=True, export_grid_node= True, grid_spath=None, grid_node_spath=None):
+    def export_grid(self, export_grid=True, export_grid_node=True, export_fdir=None, grid_spath=None, grid_node_spath=None):
         """exports grid and nodes to shapefile and CSV files"""
         spacing_string = str(self._grid_spacing).replace('.','p')
         # for grid
         if export_grid:
             if grid_spath is None:
-                self._grid_spath = self.fpath.replace('.shp',f"_GRID_{spacing_string}.shp") # file path
+                if export_fdir is None:
+                    self._grid_spath = self.fpath.replace('.shp',f"_GRID_{spacing_string}.shp") # file path
+                else:
+                    self._grid_spath = os.path.join(
+                        export_fdir,
+                        os.path.basename(self.fpath).replace('.shp',f"_GRID_{spacing_string}.shp")
+                    ) # file path
             else:
                 self._grid_spath = grid_spath
             self.grid.to_file(self._grid_spath) # export operation
@@ -717,8 +870,14 @@ class ShapefileData(GeoData):
         # for grid nodes
         if export_grid_node:
             if grid_node_spath is None:
-                self._grid_node_spath = self.fpath.replace('.shp',f"_GRID_NODE_{spacing_string}.csv") # file path
-                # self._grid_node_spath = os.path.join(os.path.dirname(self.fpath),'grid_nodes.csv')
+                    if export_fdir is None:
+                        self._grid_node_spath = self.fpath.replace('.shp',f"_GRID_NODE_{spacing_string}.csv") # file path
+                        # self._grid_node_spath = os.path.join(os.path.dirname(self.fpath),'grid_nodes.csv')
+                    else:
+                        self._grid_node_spath = os.path.join(
+                            export_fdir,
+                            os.path.basename(self.fpath).replace('.shp',f"_GRID_NODE_{spacing_string}.csv")
+                        ) # file path
             else:
                 self._grid_node_spath = grid_node_spath
             self.grid_node_table.to_csv(self._grid_node_spath, index=False)
@@ -787,7 +946,8 @@ class ShapefileData(GeoData):
 
 
 # -----------------------------------------------------------
-class LocationData(GeoData):
+# class LocationData(GeoData):
+class LocationData(ShapefileData):
     """[summary]
 
     Args:
@@ -803,20 +963,23 @@ class LocationData(GeoData):
             else:
                 fpath = "NONE.from_args"
         # invoke parent function
-        super().__init__(fpath)
+        # super().__init__(fpath, crs=crs)
+        super().__init__(fpath=fpath, crs=crs, minimal_init=True)
         
         # compile data into GeoDataFrame
-        if self.ftype == '.shp':
-            self.data = ShapefileData(fpath, crs=crs, rows_to_keep=rows_to_keep).data
+        if self.ftype == '.shp' or self.ftype == '.gdb':
+            self.data = ShapefileData(
+                fpath=fpath, rows_to_keep=rows_to_keep).data
         elif self.ftype == '.tif':
-            self.data = RasterData(fpath).data
+            self.data = RasterData(fpath=fpath).data
         elif self.ftype == '.xml':
             # self.data = XMLData(fpath).data
             raise NotImplementedError("Not implemented")
         elif self.ftype == '.csv':
-            self.data = CSVData(fpath,lon_header,lat_header).data
+            self.data = CSVData(
+                fpath=fpath,lon_header=lon_header,lat_header=lat_header).data
         elif self.ftype == '.from_args':
-            self.data = DataFromArgs(lon,lat).data
+            self.data = DataFromArgs(lon=lon,lat=lat).data
         
         # store other inputs
         self._lon_header = lon_header
@@ -849,68 +1012,6 @@ class LocationData(GeoData):
         else:
             self._x = self.data[self._lon_header].to_numpy()
             self._y = self.data[self._lat_header].to_numpy()
-    
-    
-    def sample_csv(self, fpath, cols_to_get, append_header_str='_OpenSHA', interp_scheme='nearest', out_of_bound_value=np.nan):
-        """sample values from CSV files with list of locations and parameters"""        
-        # import sample set
-        sample_set = LocationData(fpath=fpath).data
-        if interp_scheme == 'nearest':
-            # first determine which locations are within and outside the convex hull of the sample set
-            sindex = self.data.sindex # spatial index for location data
-            hull = sample_set.geometry.unary_union.convex_hull
-            print(hull)
-            loc_ind_in_hull = sindex.query_bulk(hull,predicate='intersects')[1]
-            loc_ind_outside_hull = list(set(list(self.data.index)).difference(set(loc_ind_in_hull)))
-            # perform sampling for locations within convex hull
-            locs_in_convex_hull = self.data.loc[loc_ind_in_hull].copy()
-            nearest_pt_in_sample_set = sample_set.sindex.nearest(locs_in_convex_hull.geometry)[1]
-            # update data table with samples
-            for col in cols_to_get:
-                if col == 'vs30source':
-                    sampled_vals = np.empty(self.data.shape[0],dtype='<U10')
-                    sampled_vals[loc_ind_outside_hull] = 'Inferred'
-                else:
-                    sampled_vals = np.empty(self.data.shape[0])*out_of_bound_value
-                sampled_vals[loc_ind_in_hull] = sample_set[col].loc[loc_ind_in_hull].values
-                self.data[col+append_header_str] = sampled_vals
-        else:
-            raise NotImplementedError('Only "nearest" is available for interpolation scheme')
-    
-    
-    def sample_raster(self, fpath, band=1, store_name=None, interp_scheme='nearest', out_of_bound_value=np.nan, invalid_value=np.nan):
-        """sample values from raster file"""
-        # create raster object
-        raster = RasterData(fpath)
-        # perform sampling
-        raster.get_sample(
-            x=self._x, y=self._y, band=band,
-            interp_scheme=interp_scheme, out_of_bound_value=out_of_bound_value, invalid_value=invalid_value
-        )
-        # update data table with samples
-        if store_name is None:
-            store_name = get_basename_without_extension(fpath) # use raster file name, without extension
-        self.data[store_name] = raster.sample
-    
-    
-    def sample_shapefile(self, fpath, attr, store_name=None):
-        """sample values from shapefile"""
-        # create shapefile object
-        shapefile = ShapefileData(fpath)
-        # perform sampling
-        shapefile.get_sample(attr=attr, site_geometry=self.data.geometry)
-        index = shapefile.site_index_with_sample
-        sample = shapefile.sample
-        # update data table with samples
-        if store_name is None:
-            store_name = get_basename_without_extension(fpath) # use raster file name, without extension
-        self.data[store_name] = np.nan # create new column and initialize all values as nan
-        self.data.loc[index, store_name] = sample
-    
-    
-    def sample_xml(self):
-        """sample values from XML file"""
-        raise NotImplementedError("Method to be implemented")
     
     
     def clip_loc_with_bound(self, bound=None, bound_fpath=None, buffer=0):
@@ -970,46 +1071,154 @@ class LocationData(GeoData):
         logging.info(f"Exported GeoDataFrame to:")
         logging.info(f"\t{self._spath}")
     
+
+    def make_component_table(self, attr_to_keep='all'):
+        """converts list of geometries to table of individual components (similar to make segments for networks)"""
+        # put information into lists
+        dict_loc = {
+            "LON": [],   "LAT": [],
+        }
+        dict_meta = {}
+        if attr_to_keep == 'all':
+            attr_to_keep = self.data.columns.drop('geometry')
+        for col in self.data.columns:
+            for attr in attr_to_keep:
+                if attr.lower() in col.lower():
+                    dict_meta[col.upper()] = {'attr_id': col, 'val': []}
+        # loop through all objects
+        for i in range(self.data.shape[0]):
+            # get geometry
+            geom = self.data.geometry[i]
+            # get segment coordinates
+            geom_coord = np.round(geom.coords,7)
+            dict_loc['LON'] += geom_coord[:,0].tolist()
+            dict_loc['LAT'] += geom_coord[:,1].tolist()
+            # get meta data from shapefile
+            for key in dict_meta:
+                dict_meta[key]['val'] += [self.data[dict_meta[key]['attr_id']][i]]
+        # form DataFrame
+        df_temp = pd.DataFrame.from_dict(dict_loc)
+        self.component_table = gpd.GeoDataFrame.from_dict(
+            df_temp,
+            geometry=gpd.points_from_xy(df_temp.LON, df_temp.LAT)
+        )
+        for key in dict_meta:
+            self.component_table[key] = dict_meta[key]['val']
+        self.component_table['ID'] = np.arange(self.component_table.shape[0])+1
+        # reorganize and put geometry last
+        self.component_table = self.component_table[['ID']+list(self.component_table.columns.drop('ID').drop('geometry'))+['geometry']]
     
-    def plot(self, show=True, figsize=[16,8], plot_base=True, plot_bound=False, facecolor='none', edgecolor='g', marker='o', markersize=6, add_basemap=False, zoom='auto'):
+    
+    def export_component_table(self, sdir=None, sname=None, to_replace=False):
+        """if requested, export DataFrame to CSV file"""
+        # if export is True:
+        if sdir is None:
+            self._component_table_sdir = os.path.join(os.path.dirname(self.fpath)) # directory
+        else:
+            self._component_table_sdir = sdir
+        if sname is None:
+            self._component_table_spath_csv = os.path.join(self._component_table_sdir,'components.csv')
+            self._component_table_spath_shp = os.path.join(self._component_table_sdir,'components.shp')
+        else:
+            self._component_table_spath_csv = os.path.join(self._component_table_sdir,sname+'.csv')
+            self._component_table_spath_shp = os.path.join(self._component_table_sdir,sname+'.shp')
+        if os.path.exists(self._component_table_spath_csv):
+            if to_replace:
+                # shutil.copyfile(self._component_table_spath_csv,self._component_table_spath_csv.replace('.csv','_OLD.csv'))
+                self.component_table.to_csv(self._component_table_spath_csv, index=False) # export operation
+        else:
+                self.component_table.to_csv(self._component_table_spath_csv, index=False) # export operation
+        self.component_table.to_file(self._component_table_spath_shp) # export operation
+        logging.info(f"Exported table with component data to:")
+        logging.info(f"\t{self._component_table_sdir}")
+        logging.info(f"\t\t- {os.path.basename(self._component_table_spath_csv)}")
+        logging.info(f"\t\t- {os.path.basename(self._component_table_spath_shp)}")
+    
+    
+    def get_nearest_grid_nodes(self):
+        # convert location of components to UTM
+        pt_utm_x, pt_utm_y, _, _ = wgs84_to_utm(
+            lon=self.component_table.LON.values,
+            lat=self.component_table.LAT.values,
+            force_zone_num=10
+        )
+        # convert grid nodes to UTM
+        grid_node_utm_x, grid_node_utm_y, _, _ = wgs84_to_utm(
+            lon=self.grid_node_table.LON.values,
+            lat=self.grid_node_table.LAT.values,
+            force_zone_num=10
+        )
+        # calculate distance between location and every grid point and find minimum distance for each location, keep uniques only
+        min_index = np.unique(np.argmin(
+            cdist(
+                list(zip(pt_utm_x,pt_utm_y)),
+                list(zip(grid_node_utm_x,grid_node_utm_y)),
+                metric='euclidean'
+            ), axis=1))
+        # add nearest points to component table
+        # self.nearest_node_table = self.grid_node_table[['LON','LAT']].loc[min_index].copy().reset_index(drop=True)
+        self.nearest_node_table = self.grid_node_table.loc[min_index].copy().reset_index(drop=True)
+        self.nearest_node_table.round(decimal_count(self._grid_spacing))
+    
+    
+    def export_nearest_node_table(self, spath=None):
+        """if requested, export DataFrame to CSV file"""
+        if spath is None:
+            self._nearest_node_table_spath = os.path.join(os.path.dirname(self.fpath),'nearest_grid_nodes.csv') # file path
+        else:
+            self._nearest_node_table_spath = spath
+        self.nearest_node_table.to_csv(self._nearest_node_table_spath, index=False) # export operation
+        logging.info(f"Exported table with nearest grid nodes to:")
+        logging.info(f"\t{self._nearest_node_table_spath}")
+    
+    
+    def plot(self, show=True, figsize=[16,8], plot_base=True, 
+             plot_bound=False, facecolor='none', edgecolor='g', marker='o', markersize=6, 
+             attr_to_plot=None, vmin=None, vmax=None, cmap='Pastel2', add_basemap=False, 
+             plot_nearest_grid_node=False, plot_grid=True, plot_grid_nodes=False, zoom='auto'):
         """plots geodata"""
         # if matplotlib is loaded, make plot
         if not 'matplotlib' in sys.modules:
             logging.info('The "matplotlib" module is not installed; cannot generate figure')
         else:
             # invoke parent function
-            super().plot(show=False)
+            # super().plot(show=False)
+            super().plot(
+                show=False, figsize=figsize, plot_base=plot_base,
+                attr_to_plot=attr_to_plot, vmin=vmin, vmax=vmax, cmap=cmap, plot_grid=plot_grid,
+                plot_grid_nodes=plot_grid_nodes)
             # plot shapedata
             if plot_base:
-                self.data.geometry.plot(ax=self._ax[0,0], facecolor=facecolor, edgecolor=edgecolor, marker=marker, markersize=markersize)
+                self.data.geometry.plot(
+                    ax=self._ax[0,0], facecolor=facecolor, edgecolor=edgecolor, 
+                    marker=marker, markersize=markersize
+                )
             # plot boundary
-            if self.bound is not None:
-                self.bound.geometry.plot(ax=self._ax[0,0], facecolor='none', edgecolor='k', linewidth=3)
-            # plot approximate boundary of grid obtained via convex hull
             if plot_bound:
-                if self._bound_coord is None:
-                    self.get_bound()
-                self._ax[0,0].plot(self._bound_coord[:,0], self._bound_coord[:,1], 'k')
+                if self.bound is not None:
+                    self.bound.geometry.plot(ax=self._ax[0,0], facecolor='none', edgecolor='k', linewidth=3)
+            # plot approximate boundary of grid obtained via convex hull
+            # if plot_bound:
+            #     if self._bound_coord is None:
+            #         self.get_bound()
+            #     self._ax[0,0].plot(self._bound_coord[:,0], self._bound_coord[:,1], 'k')
+            # plot nearest points
+            if plot_nearest_grid_node:
+                if self.nearest_node_table is not None:
+                    self._ax[0,0].scatter(self.nearest_node_table.LON,self.nearest_node_table.LAT,c='orange',s=6)
+                else:
+                    logging.info(f'Nearest grid nodes have not been obtained; first run "get_nearest_grid_nodes"')
             # add basemap
             if add_basemap:
                 self.add_basemap(zoom=zoom)
             # show or not
             if show is True:
                 plt.show()
-                
-                
-class test(GeoData):
-    def __init__(self, fpath,lon_header='LON_MID',lat_header='LON_MID'):
-        if fpath.endswith('csv'):
-            self.__class__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__class__)
-            self.__dict__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__dict__)
-        elif fpath.endswith('shp'):
-            self.__class__ = copy.deepcopy(ShapefileData(fpath).__class__)
-            self.__dict__ = copy.deepcopy(ShapefileData(fpath).__dict__)
 
 
 # -----------------------------------------------------------
 class NetworkData(ShapefileData):
+# class NetworkData(GeoData):
     """[summary]
 
     Args:
@@ -1018,11 +1227,16 @@ class NetworkData(ShapefileData):
     
 
     # instantiation
-    def __init__(self, fpath, crs='EPSG:4326', rows_to_keep=None):
-        # invoke parent function
-        super().__init__(fpath, crs, rows_to_keep)
+    # def __init__(self, fpath, crs='EPSG:4326', rows_to_keep=None):
+    #     # invoke parent function
+    #     super().__init__(fpath, crs, rows_to_keep)
     
-    def __init__(self, fpath=None, lon=None, lat=None, lon_header='LON', lat_header='LAT'):
+    def __init__(self, fpath=None,
+                 shape_type='line', crs="EPSG:4326", rows_to_keep=None,
+                 lon=None, lat=None, lon_header='LON', lat_header='LAT',
+                 lon_begin=None, lat_begin=None, lon_begin_header='LON_BEGIN', lat_begin_header='LAT_BEGIN',
+                 lon_end=None, lat_end=None, lon_end_header='LON_END', lat_end_header='LAT_END'
+        ):
         """initialize"""
         if fpath is None:
             if lon is None or lat is None:
@@ -1030,39 +1244,38 @@ class NetworkData(ShapefileData):
             else:
                 fpath = "NONE.from_args"
         # invoke parent function
-        super().__init__(fpath)
+        super().__init__(fpath=fpath, crs=crs, minimal_init=True)
         
         # compile data into GeoDataFrame
-        if self.ftype == '.shp':
-            self.data = ShapefileData(fpath).data
-        elif self.ftype == '.tif':
-            self.data = RasterData(fpath).data
-        elif self.ftype == '.xml':
-            # self.data = XMLData(fpath).data
-            raise NotImplementedError("Not implemented")
+        if self.ftype == '.shp' or self.ftype == '.gdb':
+            self.data = ShapefileData(fpath=fpath, crs=crs, rows_to_keep=rows_to_keep).data
         elif self.ftype == '.csv':
-            self.data = CSVData(fpath,lon_header,lat_header).data
+            self.data = CSVData(
+                fpath=fpath,shape_type=shape_type,
+                lon_header=lon_header,lat_header=lat_header,
+                lon_begin_header=lon_begin_header,lat_begin_header=lat_begin_header,
+                lon_end_header=lon_end_header,lat_end_header=lat_end_header,
+            ).data
         elif self.ftype == '.from_args':
-            self.data = DataFromArgs(lon,lat).data
-        
-        # store other inputs
-        self._lon_header = lon_header
-        self._lat_header = lat_header
-        
-        # get x and y values for sampling
-        self._get_xy()
-        
-        # initialize other attributes
-        # geometry coordinates
-        self.bound = None
-        self._bound_coord = None
-        # for exporting
-        self._spath = None
+            self.data = DataFromArgs(
+                shape_type=shape_type,
+                lon=lon,lat=lat,
+                lon_begin=lon_begin,lat_begin=lat_begin,
+                lon_end=lon_end,lat_end=lat_end,
+            ).data
+        # clean up data: remove rows without geometry, expand multi-objects to individual (e.g., MultiLineString->LineString)
+        self._cleanup_data(rows_to_keep)
+        # count number of segments in each geometry
+        self.data['NUM_SEG'] = [len(geom.coords)-1 for geom in self.data.geometry]
+        # get total number of components
+        self._num_seg_total = np.sum(self.data.NUM_SEG)
+        # other initial processing
+        self._geom_type = self.get_geometry_type(self.data)
         
         # initialize other attributes        
         # for individual line segments
         self.segment_table = None
-        self._num_seg_total = None
+        # self._num_seg_total = None
         # for boundary
         self.bound = None
         self._bound_coord = None
@@ -1075,6 +1288,7 @@ class NetworkData(ShapefileData):
         
     def split_network_by_max_length(self, l_max=1):
         """split network geometry if exceed max length (in km)"""
+        # self._l_max = l_max*1.01 # for roundoff errors
         self._l_max = l_max
         # loop through list of geometries
         for i,geom in enumerate(self.data.geometry):
@@ -1125,7 +1339,9 @@ class NetworkData(ShapefileData):
         # count number of segments in each geometry
         self.data['NUM_SEG'] = [len(geom.coords)-1 for geom in self.data.geometry]
         # get total number of components
-        self._num_seg_total = np.sum(self.data.NUM_SEG)
+        self._num_seg_total = int(np.sum(self.data.NUM_SEG))
+        if self._num_seg_total == 0:
+            raise ValueError("No segments remain after clipping with boundary. Rerun with different boundary.")
 
     
     def export_processed_data(self, spath=None):
@@ -1141,7 +1357,7 @@ class NetworkData(ShapefileData):
         
     # def make_segment_table(self, attr_to_keep=['diam','owner']):
     def make_segment_table(self, attr_to_keep='all'):
-        """converts list of geometries to table of individual segments"""
+        """converts list of geometries to table of individual segments with midpoints as geometry"""
         # put information into lists
         dict_loc = {
             "LON_BEGIN": [], "LAT_BEGIN": [],
@@ -1151,25 +1367,14 @@ class NetworkData(ShapefileData):
         }
         dict_meta = {}
         if attr_to_keep == 'all':
-            attr_to_keep = self.data.columns.drop('geometry')
+            attr_to_keep = list(self.data.columns.drop('geometry'))
+            for each in dict_loc:
+                if each in attr_to_keep:
+                    attr_to_keep.remove(each)
         for col in self.data.columns:
             for attr in attr_to_keep:
-                if attr.lower() in col.lower():
+                if attr.lower() == col.lower():
                     dict_meta[col.upper()] = {'attr_id': col, 'val': []}
-            # if 'diam' in col.lower():
-            #     _dict_meta[col.upper()] = {'attr_id': col, 'val': []}
-            # elif 'owner' in col.lower():
-            #     _dict_meta[col.upper()] = {'attr_id': col, 'val': []}
-            # if 'geom' in col.lower():
-            #     pass
-            # elif 'split' in col.lower():
-            #     pass
-            # elif 'n_seg' in col.lower():
-            #     pass
-            # elif 'length' in col.lower() or '_len' in col.lower() or 'len_' in col.lower(): # don't include any length
-            #     _dict_meta[f"TOTAL_PIPE_{col.upper()}"] = {'attr_id': col, 'val': []}
-            # else:
-            #     _dict_meta[col.upper()] = {'attr_id': col, 'val': []}
         # initialize list for tracking sub segment ids
         sub_seg_id = []
         # loop through all objects
@@ -1190,34 +1395,45 @@ class NetworkData(ShapefileData):
             # get geometry
             geom = self.data.geometry[i]
             # get segment coordinates
-            geom_coord = np.round(geom.coords,5)
+            geom_coord = np.round(geom.coords,10)
             dict_loc['LON_BEGIN'] += geom_coord[:-1,0].tolist()
             dict_loc['LAT_BEGIN'] += geom_coord[:-1,1].tolist()
             dict_loc['LON_END'] += geom_coord[1:,0].tolist()
             dict_loc['LAT_END'] += geom_coord[1:,1].tolist()
-            dict_loc['LON_MID'] += np.round((geom_coord[:-1,0] + geom_coord[1:,0])/2,5).tolist()
-            dict_loc['LAT_MID'] += np.round((geom_coord[:-1,1] + geom_coord[1:,1])/2,5).tolist()
+            dict_loc['LON_MID'] += np.round((geom_coord[:-1,0] + geom_coord[1:,0])/2,10).tolist()
+            dict_loc['LAT_MID'] += np.round((geom_coord[:-1,1] + geom_coord[1:,1])/2,10).tolist()
             dict_loc['LENGTH_KM'] += np.round(get_haversine_dist(
                 lon1=geom_coord[:-1,0], lat1=geom_coord[:-1,1],
                 lon2=geom_coord[1:,0], lat2=geom_coord[1:,1],
                 unit='km'
-            ),3).tolist()
+            ),6).tolist()
             # get meta data from shapefile
             for key in dict_meta:
                 dict_meta[key]['val'] += [self.data[dict_meta[key]['attr_id']][i]]*num_seg
             # for tracking previous id
             obj_id_prev = obj_id
         # form DataFrame
-        self.segment_table = pd.DataFrame.from_dict(dict_loc)
+        # self.segment_table = pd.DataFrame.from_dict(dict_loc)
+        df_temp = pd.DataFrame.from_dict(dict_loc)
+        self.segment_table = gpd.GeoDataFrame.from_dict(
+            df_temp,
+            geometry=gpd.points_from_xy(df_temp.LON_MID, df_temp.LAT_MID)
+        )
         for key in dict_meta:
             self.segment_table[key] = dict_meta[key]['val']
-        self.segment_table = pd.concat([
-            pd.DataFrame(np.arange(self.segment_table.shape[0])+1,columns=['ID']),
-            self.segment_table
-        ],axis=1)
+        # self.segment_table = pd.concat([
+        #     pd.DataFrame(np.arange(self.segment_table.shape[0])+1,columns=['ID']),
+        #     self.segment_table
+        # ],axis=1)
+        self.segment_table['ID'] = np.arange(self.segment_table.shape[0])+1
+        self.segment_table = self.segment_table[['ID']+list(self.segment_table.columns.drop('ID').drop('geometry'))+['geometry']]
         # add sub segment ID
         self.segment_table['SUB_SEGMENT_ID'] = np.hstack(sub_seg_id)
         self.segment_table.drop('NUM_SEG',axis=1,inplace=True)
+        # reorganize and put geometry last
+        self.segment_table = self.segment_table[list(self.segment_table.columns.drop('geometry'))+['geometry']]
+        # drop segments with zero length
+        self.segment_table = self.segment_table[self.segment_table['LENGTH_KM']>=0].reset_index(drop=True)
         
     
     def get_nearest_grid_nodes(self):
@@ -1246,17 +1462,31 @@ class NetworkData(ShapefileData):
         self.nearest_node_table.round(decimal_count(self._grid_spacing))
     
     
-    def export_segment_table(self, spath=None):
+    def export_segment_table(self, sdir=None, sname=None, to_replace=False):
         """if requested, export DataFrame to CSV file"""
         # if export is True:
         # self._segment_table_spath = os.path.join(os.path.dirname(self.fpath),'site_data.csv') # file path
-        if spath is None:
-            self._segment_table_spath = os.path.join(os.path.dirname(self.fpath),'site_data.csv') # file path
+        if sdir is None:
+            self._segment_table_sdir = os.path.join(os.path.dirname(self.fpath)) # directory
         else:
-            self._segment_table_spath = spath
-        self.segment_table.to_csv(self._segment_table_spath, index=False) # export operation
+            self._segment_table_sdir = sdir
+        if sname is None:
+            self._segment_table_spath_csv = os.path.join(self._segment_table_sdir,'segments.csv')
+            self._segment_table_spath_shp = os.path.join(self._segment_table_sdir,'segments.shp')
+        else:
+            self._segment_table_spath_csv = os.path.join(self._segment_table_sdir,sname+'.csv')
+            self._segment_table_spath_shp = os.path.join(self._segment_table_sdir,sname+'.shp')
+        if os.path.exists(self._segment_table_spath_csv):
+            if to_replace:
+                # shutil.copyfile(self._segment_table_spath_csv,self._segment_table_spath_csv.replace('.csv','_OLD.csv'))
+                self.segment_table.to_csv(self._segment_table_spath_csv, index=False) # export operation
+        else:
+            self.segment_table.to_csv(self._segment_table_spath_csv, index=False) # export operation
+        self.segment_table.to_file(self._segment_table_spath_shp) # export operation
         logging.info(f"Exported table with network segment data to:")
-        logging.info(f"\t{self._segment_table_spath}")
+        logging.info(f"\t{self._segment_table_sdir}")
+        logging.info(f"\t\t- {os.path.basename(self._segment_table_spath_csv)}")
+        logging.info(f"\t\t- {os.path.basename(self._segment_table_spath_shp)}")
     
     
     def export_nearest_node_table(self, spath=None):
@@ -1271,7 +1501,7 @@ class NetworkData(ShapefileData):
     
     
     def plot(self, show=True, figsize=[16,8], plot_seg_midpt=False, plot_base=True,
-             facecolor='none', edgecolor='k', linewidth=2,
+             plot_bound=False, facecolor='none', edgecolor='k', linewidth=2,
              attr_to_plot=None, vmin=None, vmax=None, cmap='Pastel2', add_basemap=False,
              plot_nearest_grid_node=False, plot_grid=True, plot_grid_nodes=False, zoom='auto'):
         """plots geodata"""
@@ -1290,8 +1520,9 @@ class NetworkData(ShapefileData):
                 if self.segment_table is not None:
                     self._ax[0,0].scatter(self.segment_table.LON_MID,self.segment_table.LAT_MID,c='red',s=6)
             # plot boundary
-            if self.bound is not None:
-                self.bound.geometry.plot(ax=self._ax[0,0], facecolor='none', edgecolor='k', linewidth=3)
+            if plot_bound:
+                if self.bound is not None:
+                    self.bound.geometry.plot(ax=self._ax[0,0], facecolor='none', edgecolor='k', linewidth=3)
             # plot nearest points
             if plot_nearest_grid_node:
                 if self.nearest_node_table is not None:
@@ -1336,7 +1567,7 @@ class RasterData(GeoData):
         if os.path.exists(self.fpath):
             self.data = rio.open(self.fpath)
         else:
-            raise ValueError(f'Raster file "{os.path.basename(fpath)}" does not exist')
+            raise ValueError(f'Raster file "{os.path.basename(self.fpath)}" does not exist')
     
     
     def close(self):
@@ -1445,4 +1676,18 @@ class XMLData(GeoData):
     
     
     
+                
+                
+# -----------------------------------------------------------
+class test(GeoData):
+    def __init__(self, fpath,lon_header='LON_MID',lat_header='LON_MID'):
+        if fpath.endswith('csv'):
+            self.__class__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__class__)
+            self.__dict__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__dict__)
+        elif fpath.endswith('shp'):
+            self.__class__ = copy.deepcopy(ShapefileData(fpath).__class__)
+            self.__dict__ = copy.deepcopy(ShapefileData(fpath).__dict__)
+            
+            
+            
 # -----------------------------------------------------------

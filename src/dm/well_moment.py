@@ -25,16 +25,16 @@ from src.base_class import BaseModel
 class WellMoment(BaseModel):
     "Inherited class specfic to well strain"
 
-    _RETURN_PBEE_META = {
-        'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
-        'type': 'well moment',       # Type of model (e.g., liquefaction, landslide, pipe strain)
-        'variable': [
-            # 'moment_conductor',  # conductor casing
-            'moment_surface',  # surface casing
-            'moment_production',  # production casing
-            'moment_tubing'   # tubing
-        ] # Return variable for PBEE category, e.g., pgdef, eps_p
-    }
+    # _RETURN_PBEE_META = {
+    #     'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
+    #     'type': 'well moment',       # Type of model (e.g., liquefaction, landslide, pipe strain)
+    #     'variable': [
+    #         'moment_conductor',
+    #         'moment_surface',
+    #         'moment_production',
+    #         'moment_tubing',
+    #     ] # Return variable for PBEE category, e.g., pgdef, eps_p
+    # }
 
     def __init__(self):
         super().__init__()
@@ -73,14 +73,22 @@ class LuuEtal2022(WellMoment):
 
     Returns
     -------
-    # moment_conductor : float
-    #     [TBD] moment for conductor casing
-    moment_surface : float
-        [TBD] moment for surface casing
-    moment_production : float
-        [TBD] moment for production casing
-    moment_tubing : float
-        [TBD] moment for tubing
+    moment_conductor : float, np.ndarray
+        [N-m] moment for conductor casing
+    moment_surface : float, np.ndarray
+        [N-m] moment for surface casing
+    moment_production : float, np.ndarray
+        [N-m] moment for production casing
+    moment_tubing : float, np.ndarray
+        [N-m] moment for tubing
+    sigma_moment_conductor : float, np.ndarray
+        aleatory variability for ln(moment_conductor)
+    sigma_moment_surface : float, np.ndarray
+        aleatory variability for ln(moment_surface)
+    sigma_moment_production : float, np.ndarray
+        aleatory variability for ln(moment_production)
+    sigma_moment_tubing : float, np.ndarray
+        aleatory variability for ln(moment_tubing)
     
     References
     ----------
@@ -97,72 +105,34 @@ class LuuEtal2022(WellMoment):
         'vol. xx, no. yy, pp. zz-zz.'
     ])
     _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
-            # 'moment_conductor': {
-            #     'desc': 'moment for conductor casing (TBD)',
-            #     'unit': 'TBD',
-            #     'mean': None,
-            #     'aleatory': None,
-            #     'epistemic': {
-            #         'coeff': None, # base uncertainty, based on coeffcients
-            #         'input': None, # sigma_mu uncertainty from input parameters
-            #         'total': None # SRSS of coeff and input sigma_mu uncertainty
-            #     },
-            #     'dist_type': 'lognormal',
-            # },
+            'moment_conductor': {
+                'desc': 'moment for conductor casing (N-m)',
+                'unit': 'N-m',
+            },
             'moment_surface': {
-                'desc': 'moment for surface casing (TBD)',
-                'unit': 'TBD',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': {
-                    'coeff': None, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
+                'desc': 'moment for surface casing (N-m)',
+                'unit': 'N-m',
             },
             'moment_production': {
-                'desc': 'moment for production casing (TBD)',
-                'unit': 'TBD',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': {
-                    'coeff': None, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
+                'desc': 'moment for production casing (N-m)',
+                'unit': 'N-m',
             },
             'moment_tubing': {
-                'desc': 'moment for tubing (TBD)',
-                'unit': 'TBD',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': {
-                    'coeff': None, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
-            }
+                'desc': 'moment for tubing (N-m)',
+                'unit': 'N-m',
+            },
         }
     }
-    _INPUT_PBEE_META = {
-        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        'variable': 'pga'        # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
         'params': {
             'pga': {
                 'desc': 'peak ground acceleration (g)',
                 'unit': 'g',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': None,
-                'dist_type': 'lognormal'
             }
         }
     }
@@ -185,9 +155,6 @@ class LuuEtal2022(WellMoment):
         'desc': 'Fixed input variables:',
         'params': {
             'mode': 'well mode type: 1, 2, 4',
-            # 'conductor_flag': 'conductor casing presence (True/False)',
-            # 'surface_flag': 'surface casing presence (True/False)',
-            # 'production_flag': 'production casing presence (True/False)',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
@@ -195,25 +162,20 @@ class LuuEtal2022(WellMoment):
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
         'mode'
-        # 'mode', 'conductor_flag', 'surface_flag', 'production_flag'
-    }
-    _MODEL_INTERNAL = {
-        'n_sample': 1,
-        'n_site': 1,
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
     _MODEL_FORM_DETAIL = {
-        # 'mode_1_conductor': {
-        #     'b0': {'mean': 10.76168    , 'sigma': 0.123135 },
-        #     'b1': {'mean':  0.658693   , 'sigma': 0.073107 },
-        #     'b2': {'mean': -0.066265051, 'sigma': 0.011974 },
-        #     'b3': {'mean':  0.001758   , 'sigma': 0.001685 },
-        #     'b4': {'mean':  0          , 'sigma': 0.       },
-        #     'b5': {'mean':  0.001374   , 'sigma': 4.25E-05 },
-        #     'b6': {'mean': -3.74E-07   , 'sigma': 1.95E-08 },
-        #     'b7': {'mean':  0.632604   , 'sigma': 0.003829 },
-        #     'b8': {'mean': -0.019615648, 'sigma': 0.002022 },
-        # },
+        'mode_1_conductor': {
+            'b0': {'mean': 10.76168    , 'sigma': 0.123135 },
+            'b1': {'mean':  0.658693   , 'sigma': 0.073107 },
+            'b2': {'mean': -0.066265051, 'sigma': 0.011974 },
+            'b3': {'mean':  0.001758   , 'sigma': 0.001685 },
+            'b4': {'mean':  0          , 'sigma': 0.       },
+            'b5': {'mean':  0.001374   , 'sigma': 4.25E-05 },
+            'b6': {'mean': -3.74E-07   , 'sigma': 1.95E-08 },
+            'b7': {'mean':  0.632604   , 'sigma': 0.003829 },
+            'b8': {'mean': -0.019615648, 'sigma': 0.002022 },
+        },
         'mode_1_surface': {
             'b0': {'mean':  9.527197057, 'sigma': 0.1250119 },
             'b1': {'mean':  0.665763982, 'sigma': 0.08460407},
@@ -247,17 +209,17 @@ class LuuEtal2022(WellMoment):
             'b7': {'mean':  0.263827344, 'sigma': 0.00316585},
             'b8': {'mean': -0.136420913, 'sigma': 0.00167168},
         },
-        # 'mode_2_conductor': {
-        #     'b0': {'mean': 15.360203887, 'sigma': 1.36737252},
-        #     'b1': {'mean':  1.080489976, 'sigma': 0.06984432},
-        #     'b2': {'mean': -0.136677368, 'sigma': 0.01141489},
-        #     'b3': {'mean': -0.262816399, 'sigma': 0.07646939},
-        #     'b4': {'mean':  0.003674085, 'sigma': 0.00106167},
-        #     'b5': {'mean':  0.000551472, 'sigma': 6.87E-06  },
-        #     'b6': {'mean':  0          , 'sigma': 0.        },
-        #     'b7': {'mean':  0.611786781, 'sigma': 0.00370157},
-        #     'b8': {'mean': -0.025841966, 'sigma': 0.00195457},
-        # },
+        'mode_2_conductor': {
+            'b0': {'mean': 15.360203887, 'sigma': 1.36737252},
+            'b1': {'mean':  1.080489976, 'sigma': 0.06984432},
+            'b2': {'mean': -0.136677368, 'sigma': 0.01141489},
+            'b3': {'mean': -0.262816399, 'sigma': 0.07646939},
+            'b4': {'mean':  0.003674085, 'sigma': 0.00106167},
+            'b5': {'mean':  0.000551472, 'sigma': 6.87E-06  },
+            'b6': {'mean':  0          , 'sigma': 0.        },
+            'b7': {'mean':  0.611786781, 'sigma': 0.00370157},
+            'b8': {'mean': -0.025841966, 'sigma': 0.00195457},
+        },
         'mode_2_surface': {
             'b0': {'mean':  8.480328407, 'sigma': 0.12720121},
             'b1': {'mean':  1.119292226, 'sigma': 0.08464293},
@@ -291,15 +253,15 @@ class LuuEtal2022(WellMoment):
             'b7': {'mean':  0.195671799, 'sigma': 0.00284793},
             'b8': {'mean': -0.138078864, 'sigma': 0.00150381},
         },
-        # 'mode_4_conductor': {
-        #     'b0': {'mean': 10.54768231 , 'sigma': 0.1056165 },
-        #     'b1': {'mean':  1.065652806, 'sigma': 0.07027991},
-        #     'b2': {'mean': -0.139158606, 'sigma': 0.011495  },
-        #     'b3': {'mean':  0.000559665, 'sigma': 6.94E-06  },
-        #     'b4': {'mean':  0          , 'sigma': 0.        },
-        #     'b5': {'mean':  0.606700068, 'sigma': 0.00374419},
-        #     'b6': {'mean': -0.027203298, 'sigma': 0.00197707},
-        # },
+        'mode_4_conductor': {
+            'b0': {'mean': 10.54768231 , 'sigma': 0.1056165 },
+            'b1': {'mean':  1.065652806, 'sigma': 0.07027991},
+            'b2': {'mean': -0.139158606, 'sigma': 0.011495  },
+            'b3': {'mean':  0.000559665, 'sigma': 6.94E-06  },
+            'b4': {'mean':  0          , 'sigma': 0.        },
+            'b5': {'mean':  0.606700068, 'sigma': 0.00374419},
+            'b6': {'mean': -0.027203298, 'sigma': 0.00197707},
+        },
         'mode_4_surface': {
             'b0': {'mean':  9.083362489, 'sigma': 0.12269242},
             'b1': {'mean':  0.8919632  , 'sigma': 0.08303432},
@@ -347,25 +309,36 @@ class LuuEtal2022(WellMoment):
                 np.exp(b0 + b1*h_wh + b2*h_wh**2 + b3*mpl_wh + b4*mpl_wh**2 + \
                 b5*np.log(pga) + b6*np.log(pga)**2),
         },
-        'aleatory': {
-            
+        'sigma': {
+            'mode_1_conductor': 0.3351434,
+            'mode_1_surface': 0.3878656,
+            'mode_1_production': 0.4117031,
+            'mode_1_tubing': 0.2770733,
+            'mode_2_conductor': 0.3239599,
+            'mode_2_surface': 0.3946591,
+            'mode_2_production': 0.4220353,
+            'mode_2_tubing': 0.2770733,
+            'mode_4_conductor': 0.3276896,
+            'mode_4_surface': 0.3806691,
+            'mode_4_production': 0.4416239,
+            'mode_4_tubing': 0.2299108,
+        },
+        'sigma_mu': {
+            'mode_1_conductor': 0.25,
+            'mode_1_surface': 0.25,
+            'mode_1_production': 0.25,
+            'mode_1_tubing': 0.25,
+            'mode_2_conductor': 0.25,
+            'mode_2_surface': 0.25,
+            'mode_2_production': 0.25,
+            'mode_2_tubing': 0.25,
+            'mode_4_conductor': 0.25,
+            'mode_4_surface': 0.25,
+            'mode_4_production': 0.25,
+            'mode_4_tubing': 0.25,
         },
         'func_string': {},
         'string': {}
-    }
-    _MODEL_ALEATORY = {
-        # 'mode_1_conductor': 0.3351434,
-        'mode_1_surface': 0.3878656,
-        'mode_1_production': 0.4117031,
-        'mode_1_tubing': 0.2770733,
-        # 'mode_2_conductor': 0.3239599,
-        'mode_2_surface': 0.3946591,
-        'mode_2_production': 0.4220353,
-        'mode_2_surface': 0.2770733,
-        # 'mode_4_conductor': 0.3276896,
-        'mode_4_surface': 0.3806691,
-        'mode_4_production': 0.4416239,
-        'mode_4_tubing  ': 0.2299108,
     }
     
 
@@ -414,16 +387,28 @@ class LuuEtal2022(WellMoment):
         # moment_surface = np.empty_like(pga)
         # moment_production = np.empty_like(pga)
         # moment_tubing = np.empty_like(pga)
-        # moment_conductor = np.zeros(pga.shape)
+        moment_conductor = np.zeros(pga.shape)
         moment_surface = np.zeros(pga.shape)
         moment_production = np.zeros(pga.shape)
         moment_tubing = np.zeros(pga.shape)
+        sigma_moment_conductor = np.zeros(pga.shape)
+        sigma_moment_surface = np.zeros(pga.shape)
+        sigma_moment_production = np.zeros(pga.shape)
+        sigma_moment_tubing = np.zeros(pga.shape)
+        sigma_mu_moment_conductor = np.zeros(pga.shape)
+        sigma_mu_moment_surface = np.zeros(pga.shape)
+        sigma_mu_moment_production = np.zeros(pga.shape)
+        sigma_mu_moment_tubing = np.zeros(pga.shape)
+        
+        # other params
+        modes = [1,2,4]
         
         # determine cases
         # find indices for each mode
         ind_mode = {
-            num: np.where(mode==num)[0]
-            for num in [1, 2, 4]
+            # num: np.where(mode==num)[0]
+            num: mode==num
+            for num in modes
         }
         # find indices for cases where casings are present
         # ind_part_present = {}
@@ -432,7 +417,7 @@ class LuuEtal2022(WellMoment):
             # print(part, np.where(locals()[f'{part}_flag']!=True)[0])
         
         # loop through modes, then tubing/casing, then cementation condition
-        for num in [1, 2, 4]:
+        for num in modes:
             # set_ind_1 = set(ind_mode[num])
             # run if current mode exist
             # if len(set_ind_1) > 0:
@@ -440,8 +425,8 @@ class LuuEtal2022(WellMoment):
                 # case name
                 model_case = f'mode_{num}'
                 # the casings
-                # for part in ['conductor', 'surface', 'production', 'tubing']:
-                for part in ['surface', 'production', 'tubing']:
+                for part in ['conductor', 'surface', 'production', 'tubing']:
+                # for part in ['surface', 'production', 'tubing']:
                     # continue if at least 1 well has part
                     # if len(ind_part_present[part]) > 0:
                     # model coeffs
@@ -467,6 +452,10 @@ class LuuEtal2022(WellMoment):
                             inds=ind_mode[num]
                         )
                     )
+                    # get sigma
+                    locals()[f'sigma_moment_{part}'][ind_mode[num]] = cls._MODEL_FORM['sigma'][coeff_case]
+                    # get sigma_mu
+                    locals()[f'sigma_mu_moment_{part}'][ind_mode[num]] = cls._MODEL_FORM['sigma_mu'][coeff_case]
                 
                 # # always run tubing
                 # # model coeffs
@@ -489,10 +478,42 @@ class LuuEtal2022(WellMoment):
 
         # prepare outputs
         output = {
+            'moment_conductor': {
+                'mean': moment_conductor,
+                'sigma': sigma_moment_conductor,
+                'sigma_mu': sigma_mu_moment_conductor,
+                'dist_type': 'lognormal',
+                'unit': 'N-m'
+            },
+            'moment_surface': {
+                'mean': moment_surface,
+                'sigma': sigma_moment_surface,
+                'sigma_mu': sigma_mu_moment_surface,
+                'dist_type': 'lognormal',
+                'unit': 'N-m'
+            },
+            'moment_production': {
+                'mean': moment_production,
+                'sigma': sigma_moment_production,
+                'sigma_mu': sigma_mu_moment_production,
+                'dist_type': 'lognormal',
+                'unit': 'N-m'
+            },
+            'moment_tubing': {
+                'mean': moment_tubing,
+                'sigma': sigma_moment_tubing,
+                'sigma_mu': sigma_mu_moment_tubing,
+                'dist_type': 'lognormal',
+                'unit': 'N-m'
+            },
             # 'moment_conductor': moment_conductor,
-            'moment_surface': moment_surface,
-            'moment_production': moment_production,
-            'moment_tubing': moment_tubing,
+            # 'moment_surface': moment_surface,
+            # 'moment_production': moment_production,
+            # 'moment_tubing': moment_tubing,
+            # 'sigma_moment_conductor': sigma_moment_conductor,
+            # 'sigma_moment_surface': sigma_moment_surface,
+            # 'sigma_moment_production': sigma_moment_production,
+            # 'sigma_moment_tubing': sigma_moment_tubing,
         }
         # get intermediate values if requested
         if return_inter_params:

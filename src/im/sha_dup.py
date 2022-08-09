@@ -31,11 +31,12 @@ import jpype
 from jpype import imports
 from jpype.types import *
 
-# OpenSRA modules
-from src.util import check_common_member, get_closest_pt, get_haversine_dist
 
 # Using JPype to load OpenSHA in JVM
-opensha_dir = os.path.join(os.path.dirname(os.getcwd()),'OpenSRA','lib','OpenSHA')
+# opensha_dir = os.path.join(os.path.dirname(os.getcwd()),'OpenSRA','lib','OpenSHA')
+opensra_dir = os.path.join(os.path.dirname(os.getcwd()))
+sys.path.append(opensra_dir)
+opensha_dir = os.path.join(opensra_dir,'lib','OpenSHA')
 jpype.addClassPath(os.path.join(opensha_dir,'OpenSHA-1.5.2.jar'))
 # jpype.addClassPath('../../lib/OpenSHA/OpenSHA-1.5.2.jar')
 if not jpype.isJVMStarted():
@@ -80,14 +81,16 @@ from org.opensha.sha.gcim.imr.param.IntensityMeasureParams import *
 from org.opensha.sha.gcim.imr.param.EqkRuptureParams import *
 from org.opensha.sha.gcim.calc import *
 
+# OpenSRA modules
+from src.util import check_common_member, get_closest_pt, get_haversine_dist
 
-class OpenSHA(object):
+# class OpenSHA(object):
     
     
     
     
     
-def 
+# def 
 
 
 

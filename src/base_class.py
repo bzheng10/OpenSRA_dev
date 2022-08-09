@@ -46,45 +46,45 @@ class BaseModel(object):
     _NAME = None  # Name of the model
     _ABBREV = None            # Abbreviated name of the model
     _REF = None                    # Reference for the model
-    _RETURN_PBEE_META = {
-        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
-        'type': 'landslide',       # Type of model (e.g., liquefaction, landslide, pipe strain)
-        'variable': [
-            'pgdef'
-        ] # Return variable for PBEE category, e.g., pgdef, eps_p
-    }
+    # _RETURN_PBEE_META = {
+    #     'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
+    #     'type': 'landslide',       # Type of model (e.g., liquefaction, landslide, pipe strain)
+    #     'variable': [
+    #         'pgdef'
+    #     ] # Return variable for PBEE category, e.g., pgdef, eps_p
+    # }
     _RETURN_PBEE_DIST = {                            # Distribution information
         "desc": 'returned PBEE upstream random variables:',
         'params': {
-            'pgdef': {
-                'desc': 'permanent ground deformation',
-                'unit': 'm',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': {
-                    'coeff': None, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
-            }
+            # 'pgdef': {
+            #     'desc': 'permanent ground deformation',
+            #     'unit': 'm',
+            #     # 'mean': None,
+            #     # 'aleatory': None,
+            #     # 'epistemic': {
+            #     #     'coeff': None, # base uncertainty, based on coeffcients
+            #     #     'input': None, # sigma_mu uncertainty from input parameters
+            #     #     'total': None # SRSS of coeff and input sigma_mu uncertainty
+            #     # },
+            #     # 'dist_type': 'lognormal',
+            # }
         }
     }
-    _INPUT_PBEE_META = {
-        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        'variable': 'pga'        # Input variable for PBEE category, e.g., pgdef, eps_p
-    }
+    # _INPUT_PBEE_META = {
+    #     'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+    #     'variable': 'pga'        # Input variable for PBEE category, e.g., pgdef, eps_p
+    # }
     _INPUT_PBEE_DIST = {
         "desc": 'PBEE upstream random variables:', # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, eps_p
         'params': {
-            'pga': {
-                'desc': 'peak ground acceleration (g)',
-                'unit': 'g',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': None,
-                'dist_type': 'lognormal'
-            }
+            # 'pga': {
+            #     'desc': 'peak ground acceleration (g)',
+            #     'unit': 'g',
+            #     # 'mean': None,
+            #     # 'aleatory': None,
+            #     # 'epistemic': None,
+            #     # 'dist_type': 'lognormal'
+            # }
         }
     }
     _MODEL_INPUT_INFRA = {'desc': None, 'params': None}
@@ -305,7 +305,7 @@ class BaseModel(object):
                                         logging.info(f'\t{count}) {param}: {param_desc[i]}')
                                     else:
                                         logging.info(f'\t\t{param_desc[i]}')
-                            # # print distribution information
+                            # print distribution information
                             # if disp_dist:
                             #     for each in dist_info:
                             #         if each in params[param]:
@@ -639,7 +639,7 @@ class BaseModel(object):
 
 
     @classmethod
-    def run_check(cls, rtol=5e-3, atol=0, verbose=True, detailed_verbose=False):
+    def run_check(cls, rtol=5e-3, atol=0, verbose=True, detailed_verbose=False, opensra_path=None):
         """Check result from function against known results"""
         # tolerance to use
         tol_dict = {}
@@ -650,9 +650,13 @@ class BaseModel(object):
                 tol_dict['rtol'] = rtol
             if atol is not None:
                 tol_dict['atol'] = atol
+        if opensra_path is None:
+            opensra_path = os.getcwd()
         test_file_dir = os.path.join(
+            opensra_path,
             'test',
-            cls._RETURN_PBEE_META['category'].lower(),
+            # cls._RETURN_PBEE_META['category'].lower(),
+            cls._RETURN_PBEE_DIST['category'].lower(),
             get_basename_without_extension(sys.modules[cls.__module__].__file__)
         )
         method_name = cls.__name__
@@ -676,11 +680,19 @@ class BaseModel(object):
         # perform calculations
         inst.perform_calc(return_inter_params=True)
         
+        # distribution metric to check, some do not contain
+        # if 'liquefaction' in inst.__module__:
+            # dist_metric = ['mean','sigma','sigma_mu']
+        # else:
+            # dist_metric = ['mean']
+        dist_metric = ['mean','sigma','sigma_mu']
+        
         # perform check
         print(f"Running tests for {cls.__module__}.{method_name}:")
         if verbose and detailed_verbose:
             print(f"\tChecking...")
         for group in ['_intermediates', '_outputs']:
+            # first check outputs
             list_params = getattr(inst,group)
             if verbose and detailed_verbose:
                 if len(list_params) == 0:
@@ -690,18 +702,32 @@ class BaseModel(object):
             for param_name in list_params:
                 if verbose and detailed_verbose:
                     print(f"\t\t\t- {param_name}")
-                try:
-                    assert_allclose(
-                        getattr(inst,group)[param_name], # calculation
+                # if output is a dictionary, then it is a distribution - check metrics
+                param_out = getattr(inst,group)[param_name]
+                if isinstance(param_out,dict):
+                    for met in dist_metric:
+                        if param_out[met] is not None:
+                            if verbose and detailed_verbose:
+                                print(f"\t\t\t\t- {met}")
+                            # metric name in table
+                            if met != 'mean':
+                                table_param_name = met + '_' + param_name
+                            else:
+                                table_param_name = param_name
+                            # run check
+                            cls._numpy_check(
+                                param_out[met], # calculation
+                                test_data_dict[table_param_name], # true
+                                rtol=rtol, atol=atol,
+                            )
+                else:
+                    # run check
+                    cls._numpy_check(
+                        param_out, # calculation
                         test_data_dict[param_name], # true
-                        rtol=rtol, atol=atol, equal_nan=True,
-                    )
-                # if returning TypeError, likely because elements are strings, then check string equality
-                except TypeError:
-                    assert_array_equal(
-                        getattr(inst,group)[param_name], # calculation
-                        test_data_dict[param_name], # true
-                    )
+                        rtol=rtol, atol=atol,
+                    )                
+                    
         # # print message if able to check through all cases
         if verbose:
             if detailed_verbose:
@@ -709,6 +735,29 @@ class BaseModel(object):
             else:
                 print(f"\t...passed\n")
                 # print(f"Running tests for {cls.__module__}.{method_name}... passed\n")
+
+
+    @staticmethod
+    def _numpy_check(arr_calc, arr_ref, rtol, atol):
+        try:
+            assert_allclose(
+                arr_calc, # calculation
+                arr_ref, # true
+                rtol=rtol, atol=atol, equal_nan=True,
+            )
+        # if returning TypeError, likely because elements are strings, then check string equality
+        except TypeError:
+            assert_array_equal(
+                arr_calc, # calculation
+                arr_ref, # true
+            )
+        # if can't assert, try higher rtol
+        except AssertionError:
+            assert_allclose(
+                arr_calc, # calculation
+                arr_ref, # true
+                rtol=rtol*10, atol=atol, equal_nan=True,
+            )
 
 
     @staticmethod

@@ -1,0 +1,19 @@
+Unit Abbreviation,Unit Description,Friction Angle - Mean (degrees),Friction Angle - Median (degrees),Friction Angle - Sigma (degrees),Cohesion - Mean (kPa),Cohesion - Median (kPa),Cohesion - Sigma (kPa)
+adf,Artificial dam fill (Latest Holocene),9999,9999,9999,9999,9999,9999
+Qi,"Intertidal mud, including mud around the San Francisco Bay and similar mud around the Sacramento/San Joaquin delta and Humboldt Bay (Quaternary)",17,19,9,15.75260517,11.97006472,8.235404529
+af/Qi,Artificial fill over intertidal mud around the San Francisco Bay and similar areas (Latest Holocene over Quaternary),9999,9999,9999,9999,9999,9999
+Qal1,Quaternary (Holocene) alluvium in areas of very low slopes (less than 0.5%),23,23,11,32.46281553,23.94012944,26.76506472
+Qal2,Quaternary (Holocene) alluvium in areas of moderate slopes (0.5 – 2.0%),23,23,11,32.46281553,23.94012944,26.76506472
+Qal3,Quaternary (Holocene) alluvium in areas of steep slopes (>2%),23,23,11,32.46281553,23.94012944,26.76506472
+Qoa,Quaternary (Pleistocene) alluvium,29,30,11,33.13313915,23.94012944,35.09622977
+Qs,"Quaternary (Pleistocene) sand deposits, such as the Merritt Sand in the Oakland area",36,37,5,10.58153721,4.788025889,18.00297734
+QT,"Quaternary to Tertiary (Pleistocene to Pliocene) alluvial deposits, such as the Saugus Formation of Southern California, the Paso Robles Formation of the central Coast Ranges, and the Santa Clara Formation of the San Francisco Bay area",26,26,11,43.33163429,35.91019417,34.13862459
+Tsh,"Tertiary shale and siltstone units, such as the Repetto, Fernando, Puente, and Modelo Formations of the Los Angeles area",27,27,11,40.79398057,29.92516181,47.78449837
+Tss,"Tertiary shale and siltstone units, such as the Topanga Formation in the Los Angeles area and the Butano Formation in the San Francisco area",27,27,11,40.79398057,29.92516181,47.78449837
+Tv,Tertiary volcanic units including the Conejo Volcanics in the Santa Monica Mountains and the Leona Rhyolite in the East Bay Hills,30,29,14,25.56805825,27.53114886,16.47080906
+sp,Serpentinite,28,26,12,48.16754044,35.91019417,46.53961164
+Kss,Cretaceous sandstone of the Great Valley Sequence in the central Coast Ranges,24,24,10,36.48475727,28.72815533,31.2179288
+KJf,"Franciscan complex rocks, including mélange, sandstone, shale, chert, and greenstone",26,25,10,43.23587378,29.20695792,48.93362458
+crystalline,"Crystalline rocks, including Cretaceous granitic rocks, Jurassic metamorphic rocks, schist, and Precambrian gneiss",26,26,9,18.14661812,16.75809061,15.03440129
+crystalin2,"Crystalline rocks including granites, granodiorites, and diorites in the Sierra Nevada",40,40,10,23.94012944,23.94012944,23.94012944
+water,Water,40,40,10,23.94012944,23.94012944,23.94012944

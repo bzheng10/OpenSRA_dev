@@ -29,13 +29,13 @@ from src.base_class import BaseModel
 class PipeStrain(BaseModel):
     "Inherited class specfic to pipe strain"
     
-    _RETURN_PBEE_META = {
-        'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
-        'type': 'pipe strain',       # Type of model (e.g., liquefaction, landslide, pipe strain)
-        'variable': [
-            'eps_pipe'
-        ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _RETURN_PBEE_META = {
+    #     'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
+    #     'type': 'pipe strain',       # Type of model (e.g., liquefaction, landslide, pipe strain)
+    #     'variable': [
+    #         'eps_pipe'
+    #     ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
 
     def __init__(self):
         super().__init__()
@@ -57,12 +57,6 @@ class BainEtal2022(PipeStrain):
         [mm] pipe outside diameter
     t_pipe: float, np.ndarray or list
         [mm] pipe wall thickness
-    sigma_y: float, np.ndarray or list
-        [kpa] pipe yield stress
-    n_param: float, np.ndarray or list
-        Ramberg-Osgood parameter
-    r_param: float, np.ndarray or list
-        Ramberg-Osgood parameter
         
     Geotechnical/geologic:
     Clay:
@@ -88,15 +82,15 @@ class BainEtal2022(PipeStrain):
     Fixed:
     soil_type: str, np.ndarray or list
         soil type (sand/clay) for model
-    welding: boolean, np.ndarray or list
-        welded or seamless for SMLS
     steel_grade: str, np.ndarray or list
         steel grade: Grade-B, X-42, X-52, X-60, X-70, X-80
 
     Returns
     -------
-    eps_pipe : float
+    eps_pipe : float, np.ndarray
         [%] longitudinal pipe strain
+    sigma_eps_pipe : float, np.ndarray
+        aleatory variability for ln(eps_pipe)
     
     References
     ----------
@@ -113,36 +107,39 @@ class BainEtal2022(PipeStrain):
         'vol. xx, no. yy, pp. zz-zz.'
     ])
     _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
             'eps_pipe': {
                 'desc': 'longitudinal pipe strain (%)',
                 'unit': '%',
-                'mean': None,
-                'aleatory': 0.45,
-                'epistemic': {
-                    'coeff': 0.4, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
-            }
+                # 'mean': None,
+                # 'aleatory': None,
+                # 'epistemic': 0.25, # base model uncertainty, does not include input uncertainty
+                # 'dist_type': 'lognormal',
+            },
+            # 'sigma_eps_pipe': {
+            #     'desc': 'aleatory variability for ln(eps_pipe)',
+            #     'unit': '',
+            #     # 'mean': None,
+            # },
         }
     }
-    _INPUT_PBEE_META = {
-        'category': 'EDP',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        'variable': 'pgdef'        # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _INPUT_PBEE_META = {
+    #     'category': 'EDP',        # Input category in PBEE framework, e.g., IM, EDP, DM
+    #     'variable': 'pgdef'        # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
         'params': {
             'pgdef': {
                 'desc': 'permanent ground deformation (m)',
                 'unit': 'm',
-                'mean': None,
-                'aleatory': None,
-                'epistemic': None,
-                'dist_type': 'lognormal'
+                # 'mean': None,
+                # 'aleatory': None,
+                # 'epistemic': None,
+                # 'dist_type': 'lognormal'
             }
         }
     }
@@ -174,7 +171,6 @@ class BainEtal2022(PipeStrain):
         'desc': 'Fixed input variables:',
         'params': {
             'soil_type': 'soil type (sand/clay) for model',
-            'welding': 'welded or seamless (for SMLS)',
             'steel_grade': 'steel grade: Grade-B, X-42, X-52, X-60, X-70, X-80',
         }
     }
@@ -193,19 +189,19 @@ class BainEtal2022(PipeStrain):
     _REQ_MODEL_FIXED_FOR_LEVEL = {
         'clay': {
             'level1': ['soil_type'],
-            'level2': ['soil_type', 'weld_flag', 'steel_grade'],
-            'level3': ['soil_type', 'weld_flag', 'steel_grade'],
+            'level2': ['soil_type'],
+            'level3': ['soil_type'],
         },
         'sand': {
             'level1': ['soil_type'],
-            'level2': ['soil_type', 'weld_flag', 'steel_grade'],
-            'level3': ['soil_type', 'weld_flag', 'steel_grade'],
+            'level2': ['soil_type'],
+            'level3': ['soil_type'],
         }
     }
-    _MODEL_INTERNAL = {
-        'n_sample': 1,
-        'n_site': 1,
-    }
+    # _MODEL_INTERNAL = {
+    #     'n_sample': 1,
+    #     'n_site': 1,
+    # }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
     _MODEL_FORM_DETAIL = {}
     _MODEL_INPUT_RV = {}
@@ -222,7 +218,9 @@ class BainEtal2022(PipeStrain):
     @classmethod
     def get_req_rv_and_fix_params(cls, kwargs):
         """uses soil_type to determine what model parameters to use"""
-        soil_type = kwargs.get('soil_type')
+        soil_type = kwargs.get('soil_type', None)
+        if soil_type is None:
+            soil_type = ['clay','sand']
         req_rvs_by_level = {}
         req_fixed_by_level = {}
         soils = []
@@ -250,7 +248,7 @@ class BainEtal2022(PipeStrain):
         d_pipe, t_pipe, sigma_y, n_param, r_param, # infrastructure
         alpha_backfill, s_u_backfill, def_length, # clay
         h_cover, gamma_backfill, phi_backfill, delta_backfill, # sand
-        soil_type, welding=None, steel_grade=None, # fixed/toggles
+        soil_type, steel_grade, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
@@ -285,12 +283,57 @@ class BainEtal2022(PipeStrain):
         circum = pi * d_pipe/1000 # m
         area = pi * ((d_pipe/1000)**2 - (d_in/1000)**2) / 4 # m^2
 
+        # ind_steel_grade_avail = steel_grade!='NA'
+        # get other params based on steel_grade
+        # sigma_y = np.ones(pgdef.shape)*359*1000 # X-52 default
+        # n_param = np.ones(pgdef.shape)*8 # X-52 default
+        # r_param = np.ones(pgdef.shape)*10 # X-52 default
+        
+        # if steel-grade is provided, use properties informed by steel grade
+        # otherwise use user-defined params for n, r, sigma_y
+        # Grade-B
+        grade = 'Grade-B'
+        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 241*1000 # kPa
+        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 3
+        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 8
+        # Grade X-42
+        grade = 'X-42'
+        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 290*1000 # kPa
+        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 3
+        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 9
+        # Grade X-52
+        grade = 'X-52'
+        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 359*1000 # kPa
+        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 8
+        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 10
+        # Grade X-60
+        grade = 'X-60'
+        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 414*1000 # kPa
+        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 8
+        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 12
+        # Grade X-70
+        grade = 'X-70'
+        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 483*1000 # kPa
+        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 14
+        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 15
+        # Grade X-80
+        grade = 'X-80'
+        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 552*1000 # kPa
+        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 15
+        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 20
+        
         # calculations
         # find indices with sand and clay
-        ind_sand = np.where(soil_type=='sand')[0]
-        ind_clay = np.where(soil_type=='clay')[0]
+        # ind_sand = np.where(soil_type=='sand')[0]
+        # ind_clay = np.where(soil_type=='clay')[0]
+        ind_sand = soil_type=='sand'
+        ind_clay = soil_type=='clay'
         # for sand
-        if len(ind_sand) > 0:
+        # if len(ind_sand) > 0:
+        if True in ind_sand:
+            # print(pgdef.shape)
+            # print(np.where(ind_sand)[0])
+            # print(np.where(ind_sand)[1])
             t_u[ind_sand] = gamma_backfill[ind_sand] * h_cover[ind_sand] \
                             * np.tan(phi_rad[ind_sand]*delta_backfill[ind_sand]) \
                             * circum[ind_sand]
@@ -301,20 +344,83 @@ class BainEtal2022(PipeStrain):
                         +   c7_s*np.log(delta_backfill[ind_sand])   +   c8_s*np.log(pgdef[ind_sand])
             )
         # for clay
-        if len(ind_clay) > 0:
+        # if len(ind_clay) > 0:
+        if True in ind_clay:
             t_u[ind_clay] = alpha_backfill[ind_clay] * s_u_backfill[ind_clay] * circum[ind_clay]
             l_e[ind_clay] = np.exp(
                 c0_c    +   c1_c*np.log(t_pipe[ind_clay])       +   c2_c*np.log(sigma_y[ind_clay]) \
                         +   c3_c*np.log(s_u_backfill[ind_clay]) +   c4_c*np.log(alpha_backfill[ind_clay]) \
                         +   c5_c*np.log(pgdef[ind_clay])
             )
+            
+            
+        # pgdef, # upstream PBEE RV
+        # d_pipe, t_pipe, # infrastructure
+        # alpha_backfill, s_u_backfill, def_length, # clay
+        # h_cover, gamma_backfill, phi_backfill, delta_backfill, # sand
+        # soil_type, steel_grade, # fixed/toggles
+        
+        # print(d_pipe.shape)
+        # print(t_pipe.shape)
+        # print(alpha_backfill.shape)
+        # print(s_u_backfill.shape)
+        # print(def_length.shape)
+        # print(h_cover.shape)
+        # print(gamma_backfill.shape)
+        # print(phi_backfill.shape)
+        
+        # print(np.unique(d_pipe))
+        # print(np.unique(t_pipe))
+        # print(np.unique(alpha_backfill))
+        # print(np.unique(s_u_backfill))
+        # print(np.unique(def_length))
+        # print(np.unique(h_cover))
+        # print(np.unique(gamma_backfill))
+        # print(np.unique(phi_backfill))
+        
         # other calcs
         l_to_use = np.minimum(def_length/2, l_e)
         beta_p = t_u/area
-        eps_pipe = beta_p*l_to_use/young_mod * (1 + n_param/(1+r_param)*(beta_p*l_to_use/sigma_y)**r_param) * 100 # %
-
+        eps_pipe = beta_p*l_to_use/young_mod * (1 + n_param/(1+r_param)*(beta_p*l_to_use/sigma_y)**r_param)
+        # if True in np.isnan(np.log(eps_pipe)):
+        #     ind = np.where(np.isnan(np.log(eps_pipe)))
+            # print(ind)
+            # print('pgdef')
+            # print(pgdef[ind])
+            # print('t_u')
+            # print(t_u[ind])
+            # print('l_e')
+            # print(l_e[ind])
+            # print('l_to_use')
+            # print(l_to_use[ind])
+            # print('beta_p')
+            # print(beta_p[ind])
+            # print('n_param')
+            # print(n_param[ind])
+            # print('r_param')
+            # print(r_param[ind])
+            # print('sigma_y')
+            # print(sigma_y[ind])
+            # print('eps_pipe')
+            # print(eps_pipe[ind])
+        # sigma_eps_pipe = np.ones(pgdef.shape)*0.45
+        
+        # if True in np.isnan(np.log(eps_pipe)):
+        #     print(eps_pipe)
+        #     sys.exit()
+        
         # prepare outputs
-        output = {'eps_pipe': eps_pipe}
+        output = {
+            'eps_pipe': {
+                'mean': eps_pipe * 100, # convert to %
+                'sigma': np.ones(eps_pipe.shape)*0.45,
+                'sigma_mu': np.ones(eps_pipe.shape)*0.25,
+                'dist_type': 'lognormal',
+                'unit': '%'
+            },
+            # 'eps_pipe': eps_pipe,
+            # 'sigma_eps_pipe': sigma_eps_pipe
+        }
         # get intermediate values if requested
         if return_inter_params:
             output['t_u'] = t_u

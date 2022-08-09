@@ -11,6 +11,7 @@ test_arg.py
 test.json
 *.log
 test_env/
+pc_coeff/
 
 # src level
 src/PreProcess_Combine_RRPGV_RRPGD.py
@@ -31,8 +32,12 @@ src/PreProcess_Combine_RRPGV_RRPGD.py
 # ScenarioConnectivity.csv
 # lib/OpenSHA/**
 **/FiniteSourceConnectivity.csv
-lib/OpenSHA/ERF/Mean\ UCERF3
-lib/OpenSHA/ERF/Mean\ UCERF3.2
+lib/OpenSHA/ERF/Mean\ UCERF3/
+lib/OpenSHA/ERF/Mean\ UCERF\ FM3.1/
+lib/OpenSHA/ERF/Mean\ UCERF\ FM3.2/
+lib/Datasets/
+lib/Datasets.zip
+lib/OpenSHA.zip
 
 # others
 **/superseded

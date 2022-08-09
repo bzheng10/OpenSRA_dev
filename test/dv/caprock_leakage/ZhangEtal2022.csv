@@ -1,2 +1,2 @@
-prob_leakage,ln_leakage,expected_ln_leakage,leakage
-0.089,5.7886219,5.8776219,356.9593465
+prob_leak,ln_leak,expected_ln_leak,leak,sigma_prob_leak,sigma_mu_prob_leak
+8.9,5.7886219,5.8776219,356.9593465,1.00E-05,0.85993

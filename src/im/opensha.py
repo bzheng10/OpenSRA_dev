@@ -19,7 +19,7 @@ import os
 import logging
 import json
 import time
-# import sys
+import sys
 import numpy as np
 import pandas as pd
 from scipy import sparse
@@ -31,11 +31,10 @@ import jpype
 from jpype import imports
 from jpype.types import *
 
-# OpenSRA modules
-from src.util import check_common_member, get_closest_pt, get_haversine_dist
-
 # Using JPype to load OpenSHA in JVM
-opensha_dir = os.path.join(os.path.dirname(os.getcwd()),'OpenSRA','lib','OpenSHA')
+opensra_dir = os.path.join(os.path.dirname(os.getcwd()))
+sys.path.append(opensra_dir)
+opensha_dir = os.path.join(opensra_dir,'lib','OpenSHA')
 jpype.addClassPath(os.path.join(opensha_dir,'OpenSHA-1.5.2.jar'))
 # jpype.addClassPath('../../lib/OpenSHA/OpenSHA-1.5.2.jar')
 if not jpype.isJVMStarted():
@@ -80,6 +79,8 @@ from org.opensha.sha.gcim.imr.param.IntensityMeasureParams import *
 from org.opensha.sha.gcim.imr.param.EqkRuptureParams import *
 from org.opensha.sha.gcim.calc import *
 
+# OpenSRA modules
+# from src.util import check_common_member, get_closest_pt, get_haversine_dist
 
 # -----------------------------------------------------------
 def get_fault_xing_opensha(src_list, start_loc, end_loc, trace_set, save_name,

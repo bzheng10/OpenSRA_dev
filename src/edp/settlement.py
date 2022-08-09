@@ -28,13 +28,13 @@ from src.base_class import BaseModel
 class GroundSettlement(BaseModel):
     "Inherited class specfic to liquefaction-induced ground settlement"
     
-    _RETURN_PBEE_META = {
-        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
-        'type': 'ground settlement',       # Type of model (e.g., liquefaction, landslide, pipe strain)
-        'variable': [
-            'pgdef',
-        ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _RETURN_PBEE_META = {
+    #     'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
+    #     'type': 'ground settlement',       # Type of model (e.g., liquefaction, landslide, pipe strain)
+    #     'variable': [
+    #         'pgdef',
+    #     ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
 
     def __init__(self):
         super().__init__()
@@ -79,8 +79,10 @@ class CetinEtal2009(GroundSettlement):
 
     Returns
     -------
-    pgdef : float
-        [cm] permanent ground deformation
+    pgdef : float, np.ndarray
+        [m] permanent ground deformation
+    sigma_pgdef : float, np.ndarray
+        aleatory variability for ln(pgdef)
 
     References
     ----------
@@ -97,31 +99,48 @@ class CetinEtal2009(GroundSettlement):
         'vol. 135, no. 3, pp. 387-398.'
     ])
     _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
             'pgdef': {
-                'desc': 'permanent ground deformation (cm)',
-                'unit': 'cm',
-                'mean': None,
-                'aleatory': 0.689,
-                'epistemic': {
-                    'coeff': 0.4, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
+                'desc': 'permanent ground deformation (m)',
+                'unit': 'm',
+                # 'mean': None,
+                # 'aleatory': None,
+                # 'epistemic': 0.25, # base model uncertainty, does not include input uncertainty,
+                # 'dist_type': 'lognormal',
             },
+            # 'sigma_pgdef': {
+            #     'desc': 'aleatory variability for ln(pgdef)',
+            #     'unit': '',
+            #     # 'mean': None,
+            # },
         }
     }
-    _INPUT_PBEE_META = {
-        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        'variable': [
-            'pga'
-        ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _INPUT_PBEE_META = {
+    #     'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+    #     'variable': [
+    #         'pga'
+    #     ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
         'params': {
+            'pga': {
+                'desc': 'peak ground acceleration (g)',
+                'unit': 'g',
+                # 'mean': None,
+                # 'aleatory': None,
+                # 'epistemic': None,
+                # 'dist_type': 'lognormal'
+            },
+            'mag': {
+                'desc': 'moment magnitude',
+                'unit': '',
+                # 'mean': None,
+                # 'dist_type': 'fixed'
+            }
         }
     }
     _INPUT_DIST_VARY_WITH_LEVEL = True
@@ -146,7 +165,7 @@ class CetinEtal2009(GroundSettlement):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            'mag': 'moment magnitude',
+            # 'mag': 'moment magnitude',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
@@ -155,14 +174,14 @@ class CetinEtal2009(GroundSettlement):
         'level3': ['n1_60_cs', 'sv0_tot', 'sv0_eff', 'r_d', 'd_r', 'd_h', 'prob_liq'],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'level1': ['mag'],
-        'level2': ['mag'],
-        'level3': ['mag'],
+        'level1': [],
+        'level2': [],
+        'level3': [],
     }
-    _MODEL_INTERNAL = {
-        'n_sample': 1,
-        'n_site': 1,
-    }
+    # _MODEL_INTERNAL = {
+    #     'n_sample': 1,
+    #     'n_site': 1,
+    # }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
     _MODEL_INPUT_RV = {}
@@ -171,9 +190,9 @@ class CetinEtal2009(GroundSettlement):
     @staticmethod
     # @njit
     def _model(
-        pga, # upstream PBEE RV
+        pga, mag, # upstream PBEE RV
         n1_60_cs, sv0_tot, sv0_eff, r_d, d_r, d_h, prob_liq, # geotechnical/geologic
-        mag, vs12=None, # fixed/toggles
+        vs12=None, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
@@ -203,7 +222,8 @@ class CetinEtal2009(GroundSettlement):
         denom_bot = 16.258 + 0.201*np.exp(0.341*(0.0785*vs12 + 7.586))
         r_d = (1 + numer/denom_top) / (1 + numer/denom_bot)
         # for depth >= 20 meters
-        ind_z_ge_20 = np.where(z_mid>=20)[0]
+        # ind_z_ge_20 = np.where(z_mid>=20)[0]
+        # ind_z_ge_20 = z_mid>=20
         denom_top = 16.258 + 0.201*np.exp(0.341*(-20 + 0.0785*vs12 + 7.586))
         r_d[z_mid>=20] = (1 + numer[z_mid>=20]/denom_top[z_mid>=20]) / \
                          (1 + numer[z_mid>=20]/denom_bot[z_mid>=20])
@@ -241,9 +261,23 @@ class CetinEtal2009(GroundSettlement):
         # condition on prob_liq
         pgdef *= prob_liq/100
         
+        # convert from cm to m
+        pgdef = pgdef/100
+        
+        # sigma
+        # sigma_pgdef = np.ones(pgdef.shape)*0.689
+        
         # prepare outputs
         output = {
-            'pgdef': pgdef,
+            'pgdef': {
+                'mean': pgdef,
+                'sigma': np.ones(pgdef.shape)*0.689,
+                'sigma_mu': np.ones(pgdef.shape)*0.25,
+                'dist_type': 'lognormal',
+                'unit': 'm'
+            },
+            # 'pgdef': pgdef,
+            # 'sigma_pgdef': sigma_pgdef,
         }
         # get intermediate values if requested
         if return_inter_params:
@@ -261,7 +295,7 @@ class CetinEtal2009(GroundSettlement):
 
 
 # -----------------------------------------------------------
-class Hazus2014(GroundSettlement):
+class Hazus2020(GroundSettlement):
     """
     Compute volumetric settlement at a given location using a simplified deterministic approach (after Tokimatsu and Seed, 1987).
     
@@ -279,12 +313,14 @@ class Hazus2014(GroundSettlement):
 
     Returns
     -------
-    pgdef : float, np.ndarray or list
-        [cm] permanent ground deformation
+    pgdef : float, np.ndarray
+        [m] permanent ground deformation
+    sigma_pgdef : float, np.ndarray
+        aleatory variability for ln(pgdef)
     
     References
     ----------
-    .. [1] Federal Emergency Management Agency (FEMA), 2014, Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, National Institute of Building Sciences and Federal Emergency Management Agency, Washington, DC, 690 p.
+    .. [1] Federal Emergency Management Agency (FEMA), 2020, Hazus Earthquake Model - Technical Manual, Hazus 4.2 SP3, 436 pp. https://www.fema.gov/flood-maps/tools-resources/flood-map-products/hazus/user-technical-manuals.
     .. [2] Tokimatsu, K., and Seed, H.B., 1987, Evaluation of Settlements in Sands Due to Earthquake Shaking. Journal of Geotechnical Engineering, vol. 113, no. 8, pp. 861-878.
 
     
@@ -293,34 +329,34 @@ class Hazus2014(GroundSettlement):
     _NAME = 'Hazus (FEMA, 2014)'       # Name of the model
     _ABBREV = None                     # Abbreviated name of the model
     _REF = "".join([                     # Reference for the model
-        'Federal Emergency Management Agency (FEMA), 2014, ',
-        'Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, ',
-        'National Institute of Building Sciences and Federal Emergency Management Agency, ',
-        'Washington, DC, 690 p.'
+        'Federal Emergency Management Agency (FEMA), 2020, ',
+        'Hazus Earthquake Model - Technical Manual, Hazus 4.2 SP3, ',
+        '436 pp.',
+        'https://www.fema.gov/flood-maps/tools-resources/flood-map-products/hazus/user-technical-manuals.',
     ])
     _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
             'pgdef': {
-                'desc': 'permanent ground deformation (cm)',
-                'unit': 'cm',
-                'mean': None,
-                'aleatory': 0.8,
-                'epistemic': {
-                    'coeff': 0.25, # base uncertainty, based on coeffcients
-                    'input': None, # sigma_mu uncertainty from input parameters
-                    'total': None # SRSS of coeff and input sigma_mu uncertainty
-                },
-                'dist_type': 'lognormal',
+                'desc': 'permanent ground deformation (m)',
+                'unit': 'm',
+                # 'dist_type': 'lognormal',
             },
+            # 'sigma_pgdef': {
+            #     'desc': 'aleatory variability for ln(pgdef)',
+            #     'unit': '',
+            #     'mean': None,
+            # },
         }
     }
-    _INPUT_PBEE_META = {
-        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        'variable': [
-        ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    }
+    # _INPUT_PBEE_META = {
+    #     'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+    #     'variable': [
+    #     ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
         'params': {
         }
@@ -349,10 +385,10 @@ class Hazus2014(GroundSettlement):
     _REQ_MODEL_FIXED_FOR_LEVEL = {
         'liq_susc'
     }
-    _MODEL_INTERNAL = {
-        'n_sample': 1,
-        'n_site': 1,
-    }
+    # _MODEL_INTERNAL = {
+    #     'n_sample': 1,
+    #     'n_site': 1,
+    # }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
     _MODEL_INPUT_RV = {}
@@ -376,14 +412,29 @@ class Hazus2014(GroundSettlement):
         pgdef[liq_susc=='moderate'] = 5
         pgdef[liq_susc=='low'] = 2.5
         pgdef[liq_susc=='very low'] = 1
-        pgdef[liq_susc=='none'] = 0
+        pgdef[liq_susc=='none'] = 1e-3
         
         # condition with prob_liq
         pgdef = pgdef * prob_liq/100
         
+        # convert from cm to m
+        pgdef = pgdef/100
+        
+        # limit deformations to 1e-5
+        pgdef = np.maximum(pgdef,1e-5)
+        
         # prepare outputs
         output = {
-            'pgdef': pgdef,
+            'pgdef': {
+                'mean': pgdef,
+                'sigma': np.ones(pgdef.shape)*0.8,
+                'sigma_mu': np.ones(pgdef.shape)*0.25,
+                'dist_type': 'lognormal',
+                'unit': 'm'
+            },
+            # 'pgdef': pgdef,
+            # 'sigma_pgdef': sigma_pgdef,
+            # 'sigma_mu_pgdef': sigma_mu_pgdef,
         }
         # get intermediate values if requested
         if return_inter_params:

@@ -41,7 +41,7 @@ def main(work_dir):
         
     # make directories
     # check current directory, if not at OpenSRA level, go up a level (happens during testing)
-    if not os.path.basename(os.getcwd()) == 'OpenSRA':
+    if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
         os.chdir('..')
         print(work_dir)
     input_dir = os.path.join(work_dir,'Input')

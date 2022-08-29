@@ -27,6 +27,9 @@ import pandas as pd
 # suppress warning that may come up
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
+# append OpenSRA base dir to path
+sys.path.append('..')
+
 # OpenSRA modules
 from src.site import geodata
 from src.im import haz
@@ -41,7 +44,7 @@ def main(work_dir):
         
     # make directories
     # check current directory, if not at OpenSRA level, go up a level (happens during testing)
-    if not os.path.basename(os.getcwd()) == 'OpenSRA':
+    if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
         os.chdir('..')
         print(work_dir)
     input_dir = os.path.join(work_dir,'Input')
@@ -308,15 +311,16 @@ def make_workflow(setup_config, processed_input_dir, to_export=True):
         'landslide': "Landslide",
         'surface_fault_rupture': "SurfaceFaultRupture",
         'pipe_strain': "PipeStrain",
+        'pipe_strain_settlement': "SettlementInducedPipeStrain",
+        'pipe_strain_landslide': "LandslideInducedPipeStrain",
         'pipe_comp_rupture': "PipeCompressiveRupture",
         'pipe_tensile_rupture': "PipeTensileRupture",
         'pipe_tensile_leakage': "PipeTensileLeakage",
         # above ground
         'wellhead_rotation': "WellheadRotation",
         'wellhead_strain': "WellheadStrain",
-        'wellhead_comp_rupture': "WellheadCompressiveRupture",
-        'wellhead_tensile_rupture': "WellheadTensileRupture",
-        'wellhead_tensile_leakage': "WellheadTensileLeakage",
+        'wellhead_rupture': "WellheadRupture",
+        'wellhead_leakage': "WellheadLeakage",
         'vessel_moment_ratio': "VesselMomentRatio",
         'vessel_rupture': "VesselRupture",
     }

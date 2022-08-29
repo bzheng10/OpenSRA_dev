@@ -8,20 +8,13 @@
     "Infrastructure": {
 		"InfrastructureType": "below_ground",
 		"DataType": "Shapefile",
-        "SiteDataFile": "Input/Clipped_State_Network_Balboa",
-		"SiteLocationParams": {
-            "LatMid": "LAT_MID",
-            "LonMid": "LON_MID",
-            "LatBegin": "LAT_BEGIN",
-            "LonBegin": "LON_BEGIN",
-            "LatEnd": "LAT_END",
-            "LonEnd": "LON_END"
-		}
+        "CRS": "EPSG:3857",
+        "SiteDataFile": "Clipped_State_Network_Balboa/BalboaBlvdTrim.shp"
     },
     "IntensityMeasure": {
         "SourceForIM": {
             "ShakeMap": {
-                "Directory": "Input/ShakeMaps",
+                "Directory": "ShakeMaps",
                 "Events": [
                     "1994_Northridge"
                 ]

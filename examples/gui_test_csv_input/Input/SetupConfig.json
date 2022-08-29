@@ -69,7 +69,9 @@
             "PipeStrain": {
                 "ToInclude": true,
                 "Method": {
-					"BainEtal2022": 1
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
 				},
                 "OtherParameters": {}
             }
@@ -82,21 +84,27 @@
             "PipeCompressiveRupture": {
                 "ToInclude": true,
                 "Method": {
-					"BainEtal2022": 1
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
 				},
                 "OtherParameters": {}
             },
             "PipeTensileRupture": {
                 "ToInclude": true,
                 "Method": {
-					"BainEtal2022": 1
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
 				},
                 "OtherParameters": {}
             },
             "PipeTensileLeakage": {
                 "ToInclude": true,
                 "Method": {
-					"BainEtal2022": 1
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
 				},
                 "OtherParameters": {}
             }

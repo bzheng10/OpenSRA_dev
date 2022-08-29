@@ -640,8 +640,8 @@
 								}
 							}
 						},
-						"Hazus2014": {
-							"NameToDisplay": "Hazus (2014)",
+						"Hazus2020": {
+							"NameToDisplay": "Hazus (FEMA, 2020)",
 							"ToDisplay": true,
 							"Return": {
 								"Description": "Return: This method returns \"probability of liquefaction [prob_liq]\".",
@@ -674,8 +674,8 @@
 								}
 							}
 						},
-						"Hazus2014_with_ZhuEtal2017": {
-							"NameToDisplay": "Hazus (2014) with Zhu et al. (2017) for liquefaction susceptibility",
+						"Hazus2020_with_ZhuEtal2017": {
+							"NameToDisplay": "Hazus (FEMA, 2020) with Zhu et al. (2017) for liquefaction susceptibility",
 							"ToDisplay": true,
 							"Return": {
 								"Description": "Return: This method returns \"probability of liquefaction [prob_liq]\".",
@@ -764,10 +764,10 @@
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "Hazus2014",
+					"DefaultValue": "Hazus2020",
 					"Options" : {
-						"Hazus2014": {
-							"NameToDisplay": "Hazus (2014)",
+						"Hazus2020": {
+							"NameToDisplay": "Hazus (2020)",
 							"ToDisplay": true,
 							"DisplayOrder": [
 								"dist_water",
@@ -879,10 +879,10 @@
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "Hazus2014",
+					"DefaultValue": "Hazus2020",
 					"Options" : {
 						"Hazus2014": {
-							"NameToDisplay": "Hazus (2014)",
+							"NameToDisplay": "Hazus (2020)",
 							"ToDisplay": true,
 							"DisplayOrder": [
 								"dist_water",
@@ -1403,21 +1403,48 @@
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "Thompson2020",
+					"DefaultValue": "Thompson2021",
 					"Options" : {
 						"Thompson2020": {
-							"NameToDisplay": "Thompson (2020)",
+							"NameToDisplay": "Thompson (2021)",
 							"ToDisplay": true,
+							"DisplayOrder": [],
+							"Return": {
+								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
+								"ReturnParam": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
+								"UpstreamParam": ["mag"]
+							},
+							"Params": {}
+						},
+						"Hazus2020": {
+							"NameToDisplay": "Hazus (FEMA, 2020)",
+							"ToDisplay": true,
+							"DisplayOrder": [],
+							"Return": {
+								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
+								"ReturnParam": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
+								"UpstreamParam": ["mag"]
+							},
 							"Params": {}
 						},
 						"WellsCoppersmith1994": {
 							"NameToDisplay": "Wells and Coppersmith (1994)",
 							"ToDisplay": true,
-							"Params": {}
-						},
-						"Hazus2014": {
-							"NameToDisplay": "Hazus (FEMA, 2014)",
-							"ToDisplay": true,
+							"DisplayOrder": [],
+							"Return": {
+								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
+								"ReturnParam": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
+								"UpstreamParam": ["mag"]
+							},
 							"Params": {}
 						}
 					}

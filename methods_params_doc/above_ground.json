@@ -662,6 +662,14 @@
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
+                                "welding": {
+                                    "NameToDisplay": "welding",
+                                    "VarType": "fixed",
+                                    "DescToDisplay": "\"welded\" or \"seamless\" for SMLS - required for \"level 2 and 3\" analysis",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                },
 								"steel_grade": {
 									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",

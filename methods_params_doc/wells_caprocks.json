@@ -786,12 +786,14 @@
 									"NameToDisplay": "dist_water [km]: distance to nearest water body",
 									"VarType": "random",
 									"WidgetType": "QLabel",
+                                    "DescToDisplay": "[km] distance to nearest water body",
 									"ToDisplay": true
 								},
 								"liq_susc": {
 									"NameToDisplay": "liq_susc: liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
 									"VarType": "fixed",
 									"WidgetType": "QLabel",
+                                    "DescToDisplay": "liq_susc: liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
 									"ToDisplay": true
 								}
 							}

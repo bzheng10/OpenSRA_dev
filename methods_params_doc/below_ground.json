@@ -365,7 +365,7 @@
 					"ToDisplay": true,
 					"DefaultValue": "Hazus2020",
 					"Options" : {
-						"Hazus2014": {
+						"Hazus2020": {
 							"NameToDisplay": "Hazus (2020)",
 							"ToDisplay": true,
 							"DisplayOrder": [
@@ -889,7 +889,7 @@
 					"ToDisplay": true,
 					"DefaultValue": "Thompson2021",
 					"Options" : {
-						"Thompson2020": {
+						"Thompson2021": {
 							"NameToDisplay": "Thompson (2021)",
 							"ToDisplay": true,
 							"DisplayOrder": [],
@@ -901,7 +901,16 @@
 								"Description": "Upstream Dependency: This method requires \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
 								"UpstreamParam": ["mag"]
 							},
-							"Params": {}
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+                            }
 						},
 						"Hazus2020": {
 							"NameToDisplay": "Hazus (FEMA, 2020)",
@@ -915,7 +924,16 @@
 								"Description": "Upstream Dependency: This method requires \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
 								"UpstreamParam": ["mag"]
 							},
-							"Params": {}
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+                            }
 						},
 						"WellsCoppersmith1994": {
 							"NameToDisplay": "Wells and Coppersmith (1994)",
@@ -929,7 +947,16 @@
 								"Description": "Upstream Dependency: This method requires \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
 								"UpstreamParam": ["mag"]
 							},
-							"Params": {}
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+                            }
 						}
 					}
 				}
@@ -1227,6 +1254,14 @@
 								"UpstreamParam": ["pipe strain"]
 							},
 							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
 							}
 						}
 					}
@@ -1258,6 +1293,14 @@
 								"UpstreamParam": ["pipe strain"]
 							},
 							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
 							}
 						}
 					}

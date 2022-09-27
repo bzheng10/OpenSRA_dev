@@ -20,6 +20,9 @@ CreatedConfigParams.json
 front_end_todo.txt
 model_params.xlsx
 SetupConfig_backup.json
+StoreSourceTraceToZip.py
+GetERFSolutions.py
+MethodsAndParams.json
 
 # src level
 src/PreProcess_Combine_RRPGV_RRPGD.py

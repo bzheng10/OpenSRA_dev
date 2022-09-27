@@ -909,10 +909,10 @@ def main(work_dir, logging_level='info'):
 
     # -----------------------------------------------------------
     # Export summary file
-    sdir = os.path.join(work_dir,'working_results')
+    sdir = os.path.join(work_dir,'Results')
     if not os.path.isdir(sdir):
         os.mkdir(sdir)
-    spath = os.path.join(sdir,f'fractiles.xlsx')
+    spath = os.path.join(sdir,f'results.xlsx')
     with pd.ExcelWriter(spath) as writer:
         df_workflow.to_excel(writer, sheet_name='case_summary')
         for case in workflow_order_list:

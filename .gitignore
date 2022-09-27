@@ -13,12 +13,13 @@ test.json
 test_env/
 pc_coeff/
 to_do_list.txt
-test_arg.py
 OpenSRA_backup.py
 ucerf3_preprocess.py
 AppendJavaPath.cmd
 CreatedConfigParams.json
 front_end_todo.txt
+model_params.xlsx
+SetupConfig_backup.json
 
 # src level
 src/PreProcess_Combine_RRPGV_RRPGD.py

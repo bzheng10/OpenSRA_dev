@@ -1,3 +1,5 @@
+test gitignore
+
 backend structure & efficiency
 
 - remove for loops for logic tree by adding 3rd degree for samples

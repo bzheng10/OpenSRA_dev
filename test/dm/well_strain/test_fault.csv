@@ -1,0 +1,2 @@
+EventID,EventName,Mag,MeanAnnualRate,Dip,Rake,DipDir,UpperDepth,LowerDepth,FaultTrace
+1,SanGabriel,6.5,1,76,-150,68,1.0095,4.8542,"[[-118.570394,34.425859,1.00951],[-118.595603,34.476694,1.00951]]"

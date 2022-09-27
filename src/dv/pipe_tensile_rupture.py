@@ -79,7 +79,7 @@ class BainEtal2022(PipeTensileRupture):
         'category': 'DV',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
-            'eps_crit_rup': {
+            'eps_tens_crit_rup': {
                 'desc': 'critical tensile pipe strain for rupture (%)',
                 'unit': '%',
                 # 'mean': None,
@@ -112,7 +112,7 @@ class BainEtal2022(PipeTensileRupture):
             # }
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = True
+    _INPUT_DIST_VARY_WITH_LEVEL = False
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -154,12 +154,12 @@ class BainEtal2022(PipeTensileRupture):
         # model coefficients
 
         # calculations
-        eps_crit_rup = 4.68 # %
+        eps_tens_crit_rup = 4.68 # %
         
         # prepare outputs
         output = {
-            'eps_crit_rup': {
-                'mean': eps_crit_rup,
+            'eps_tens_crit_rup': {
+                'mean': eps_tens_crit_rup,
                 'sigma': 0.3,
                 'sigma_mu': 0.25,
                 'dist_type': 'lognormal',

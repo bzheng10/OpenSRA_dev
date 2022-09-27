@@ -1,4 +1,4 @@
-soil_type,d_pipe,t_pipe,steel_grade,sigma_y,n_param,r_param,alpha_backfill,s_u_backfill,gamma_backfill,h_cover,def_length,phi_backfill,delta_backfill,pgdef,t_u,beta_p,l_e,l_to_use,eps_pipe,sigma_eps_pipe,sigma_mu_eps_pipe
+soil_type,d_pipe,t_pipe,steel_grade,sigma_y,n_param,r_param,alpha_backfill,s_u_backfill,gamma_backfill,h_pipe,def_length,phi_backfill,delta_backfill,pgdef,t_u,beta_p,l_e,l_to_use,eps_pipe,sigma_eps_pipe,sigma_mu_eps_pipe
 sand,610,10.2,X-52,359000,8,10,0.75,40,19,1.2,100,38,0.75,0.5,23.72351032,1234.304878,307.9588775,50,0.0308576,0.45,0.25
 sand,560,7.1,X-60,414000,8,12,0.6,33.5,18,1.2,100,32,0.55,0.3,12.05453361,977.4523628,398.0164682,50,0.0244363,0.45,0.25
 sand,560,7.1,X-60,414000,8,12,0.7,48,19,1.8,200,38,0.65,0.6,27.67408795,2243.977539,209.5216071,100,0.1122433,0.45,0.25

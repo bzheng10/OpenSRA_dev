@@ -840,6 +840,12 @@ class ShapefileData(GeoData):
         self.site_geometry = site_geometry
         query = sindex.query_bulk(site_geometry, predicate='intersects')
         self.site_index_with_sample = query[0]
+        # if attr not specified:
+        if attr is None:
+            # set the first attribute that does is not "geometry" as attr
+            attr = list(self.data.columns.drop('geometry'))[0]
+            print(f'Since "attr" to sample from Shapefile is not given, will sample the first attribute: "{attr}"')
+        # get value
         if attr in self.data:
             self.sample = self.data.loc[query[1], attr].values
         else:

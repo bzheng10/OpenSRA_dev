@@ -89,7 +89,7 @@ class BainEtal2022(PipeCompressiveRupture):
         'category': 'DV',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
-            'eps_crit_rup': {
+            'eps_comp_crit_rup': {
                 'desc': 'critical compressive pipe strain for rupture (%)',
                 'unit': '%',
                 # 'mean': None,
@@ -205,19 +205,21 @@ class BainEtal2022(PipeCompressiveRupture):
         # specifically for above ground case
         grade = 'above_ground_model'
         sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 360.4*1000 # kPa
+        # if any of the params are still missing, use default grade of X-52
+        sigma_y[np.isnan(sigma_y)] = 359*1000 # kPa
 
         # calculations
         sigma_h = op_press * d_pipe/t_pipe / 2 # kPa, pipe hoop stress
         # eps_pipe_eq = eps_pipe / (1 + sigma_h/sigma_y) # %, zero internal pressure equivalent compressive pipe strain
         # prob = norm.sf((c0 + c1*np.log(eps_pipe_eq/100) + c2*np.log(d_pipe/t_pipe)) / cls.DIST['ALEATORY']) # survival function
-        eps_crit_rup = np.exp(-(np.log(1 + sigma_h/sigma_y) + 1.617*np.log(d_pipe/t_pipe) - 2.130))
+        eps_comp_crit_rup = np.exp(-(np.log(1 + sigma_h/sigma_y) + 1.617*np.log(d_pipe/t_pipe) - 2.130))
         
         # prepare outputs
         output = {
-            'eps_crit_rup': {
-                'mean': eps_crit_rup * 100, # convert to %
-                'sigma': np.ones(eps_crit_rup.shape)*0.5,
-                'sigma_mu': np.ones(eps_crit_rup.shape)*0.25,
+            'eps_comp_crit_rup': {
+                'mean': eps_comp_crit_rup * 100, # convert to %
+                'sigma': np.ones(eps_comp_crit_rup.shape)*0.5,
+                'sigma_mu': np.ones(eps_comp_crit_rup.shape)*0.3,
                 'dist_type': 'lognormal',
                 'unit': '%'
             },

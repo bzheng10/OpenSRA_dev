@@ -52,10 +52,12 @@ class LuuEtal2022(WellMoment):
         [g] peak ground acceleration
 
     Infrastructure:
-    h_wh: float, np.ndarray or list
+    height_wh: float, np.ndarray or list
         [m] wellhead height, for all modes
-    mpl_wh: float, np.ndarray or list, optional
-        [kg/m] wellhead mass per length, for all modes
+    mass_wh: float, np.ndarray or list
+        [kg] wellhead mass, for all modes
+    # mpl_wh: float, np.ndarray or list, optional
+    #     [kg/m] wellhead mass per length, for all modes
     
     Geotechnical/geologic:
     phi_soil: float, np.ndarray or list, optional
@@ -141,8 +143,9 @@ class LuuEtal2022(WellMoment):
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
         'params': {
-            'h_wh': 'wellhead height (m), for all modes',
-            'mpl_wh': 'wellhead mass per length (kg/m), for all modes',
+            'height_wh': 'wellhead height (m), for all modes',
+            'mass_wh': 'wellhead mass (kg), for all modes',
+            # 'mpl_wh': 'wellhead mass per length (kg/m), for all modes',
         }
     }
     _MODEL_INPUT_GEO = {
@@ -154,14 +157,18 @@ class LuuEtal2022(WellMoment):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            'mode': 'well mode type: 1, 2, 4',
+            # 'mode': 'well mode type: 1, 2, 4',
+            'd_production_casing': 'outer diameter of production casing (m)',
+            'd_tubing': 'outer diameter of tubing (m)',
+            'casing_flow': 'flag for whether well is configured for casing flow (True/False)',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'h_wh', 'mpl_wh', 'phi_soil'
+        'height_wh', 'mass_wh', 'phi_soil'
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'mode'
+        # 'mode'
+        'd_production_casing', 'd_tubing', 'casing_flow'
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
     _MODEL_FORM_DETAIL = {
@@ -295,18 +302,18 @@ class LuuEtal2022(WellMoment):
         'func': {
             'mode_1': \
                 lambda b0, b1, b2, b3, b4, b5, b6, b7, b8,
-                pga, h_wh, mpl_wh, phi_soil: \
-                np.exp(b0 + b1*h_wh + b2*h_wh**2 + b3*phi_soil + b4*phi_soil**2 + \
+                pga, height_wh, mpl_wh, phi_soil: \
+                np.exp(b0 + b1*height_wh + b2*height_wh**2 + b3*phi_soil + b4*phi_soil**2 + \
                 b5*mpl_wh + b6*mpl_wh**2 + b7*np.log(pga) + b8*np.log(pga)**2),
             'mode_2': \
                 lambda b0, b1, b2, b3, b4, b5, b6, b7, b8,
-                pga, h_wh, mpl_wh, phi_soil: \
-                np.exp(b0 + b1*h_wh + b2*h_wh**2 + b3*phi_soil + b4*phi_soil**2 + \
+                pga, height_wh, mpl_wh, phi_soil: \
+                np.exp(b0 + b1*height_wh + b2*height_wh**2 + b3*phi_soil + b4*phi_soil**2 + \
                 b5*mpl_wh + b6*mpl_wh**2 + b7*np.log(pga) + b8*np.log(pga)**2),
             'mode_4': \
                 lambda b0, b1, b2, b3, b4, b5, b6,
-                pga, h_wh, mpl_wh: \
-                np.exp(b0 + b1*h_wh + b2*h_wh**2 + b3*mpl_wh + b4*mpl_wh**2 + \
+                pga, height_wh, mpl_wh: \
+                np.exp(b0 + b1*height_wh + b2*height_wh**2 + b3*mpl_wh + b4*mpl_wh**2 + \
                 b5*np.log(pga) + b6*np.log(pga)**2),
         },
         'sigma': {
@@ -337,6 +344,30 @@ class LuuEtal2022(WellMoment):
             'mode_4_production': 0.25,
             'mode_4_tubing': 0.25,
         },
+        'sigma_mu_analytical': {
+            'mode_1': \
+                lambda b0, b1, b2, b3, b4, b5, b6, b7, b8,
+                height_wh, sigma_mu_height_wh,
+                mpl_wh, sigma_mu_mpl_wh,
+                phi_soil, sigma_mu_phi_soil: \
+                (b1 + 2*b2*height_wh)**2 * sigma_mu_height_wh**2 + \
+                (b3 + 2*b4*phi_soil)**2 + sigma_mu_phi_soil**2 + \
+                (b5 + 2*b6*mpl_wh)**2 + sigma_mu_mpl_wh**2,
+            'mode_2': \
+                lambda b0, b1, b2, b3, b4, b5, b6, b7, b8,
+                height_wh, sigma_mu_height_wh,
+                mpl_wh, sigma_mu_mpl_wh,
+                phi_soil, sigma_mu_phi_soil: \
+                (b1 + 2*b2*height_wh)**2 * sigma_mu_height_wh**2 + \
+                (b3 + 2*b4*phi_soil)**2 + sigma_mu_phi_soil**2 + \
+                (b5 + 2*b6*mpl_wh)**2 + sigma_mu_mpl_wh**2,
+            'mode_4': \
+                lambda b0, b1, b2, b3, b4, b5, b6,
+                height_wh, sigma_mu_height_wh,
+                mpl_wh, sigma_mu_mpl_wh: \
+                (b1 + 2*b2*height_wh)**2 * sigma_mu_height_wh**2 + \
+                (b3 + 2*b4*mpl_wh)**2 + sigma_mu_mpl_wh**2,
+        },
         'func_string': {},
         'string': {}
     }
@@ -351,7 +382,14 @@ class LuuEtal2022(WellMoment):
     @classmethod
     def get_req_rv_and_fix_params(cls, kwargs):
         """uses soil_type to determine what model parameters to use"""
-        mode = kwargs.get('mode')
+        # get well modes
+        # mode = kwargs.get('mode')
+        # get inputs
+        d_production_casing = kwargs.get('d_production_casing',None)
+        d_tubing = kwargs.get('d_tubing',None)
+        casing_flow = kwargs.get('casing_flow',None)
+        # get well modes
+        mode = cls.get_well_mode(d_production_casing, d_tubing, casing_flow)
         # modes present
         modes = [num for num in [1, 2, 4] if num in mode]
         # loop through modes, then tubing/casing, then cementation condition
@@ -370,14 +408,48 @@ class LuuEtal2022(WellMoment):
         req_fixed_by_level = cls._REQ_MODEL_FIXED_FOR_LEVEL
         return req_rvs_by_level, req_fixed_by_level
     
+    
+    @staticmethod
+    def get_well_mode(
+        d_production_casing,
+        d_tubing,
+        casing_flow
+    ):
+        """determine the well mode based on diameters and flow configuration"""
+        # intermediate calculation
+        d_production_casing_inch = d_production_casing *100/2.54 # meter to inch
+        d_tubing_inch = d_tubing *100/2.54 # meter to inch
+        tubing_flow = np.empty_like(casing_flow,dtype=bool)
+        tubing_flow[casing_flow==False] = True
+        tubing_flow[casing_flow==True] = False
+        # determine well mode
+        mode = np.ones(d_tubing.shape)*2 # default to 2 to simplify check
+        # -> if well is configured for tubing flow
+        tubing_flow_true = tubing_flow==True
+        if True in tubing_flow_true:
+            d_tubing_cond_true = d_tubing_inch<3+1/8
+            d_tubing_cond_false = ~d_tubing_cond_true
+            mode[np.logical_and(tubing_flow_true,d_tubing_cond_true)] = 4
+            mode[np.logical_and(tubing_flow_true,np.logical_and(
+                d_tubing_cond_false,d_production_casing_inch>7+3/4))] = 1
+        # -> if well is not configured for tubing flow
+        tubing_flow_false = ~tubing_flow_true
+        if True in tubing_flow_false:
+            mode[np.logical_and(tubing_flow_false,d_production_casing_inch>=8+5/8)] = 1
+            mode[np.logical_and(tubing_flow_false,d_production_casing_inch<=6+5/8)] = 4
+        # return
+        return mode
+    
 
     @classmethod
     # @njit
     def _model(cls, 
         pga, # upstream PBEE RV
-        h_wh, mpl_wh, # infrastructure
+        # height_wh, mpl_wh, # infrastructure
+        height_wh, mass_wh, # infrastructure
         phi_soil, # geotechnical/geologic
-        mode, # fixed/toggles
+        # mode, # fixed/toggles
+        d_production_casing, d_tubing, casing_flow, # fixed/toggles
         # mode, conductor_flag, surface_flag, production_flag, # fixed/toggles
         return_inter_params=False # to get intermediate params    
     ):
@@ -400,8 +472,12 @@ class LuuEtal2022(WellMoment):
         sigma_mu_moment_production = np.zeros(pga.shape)
         sigma_mu_moment_tubing = np.zeros(pga.shape)
         
+        # get well modes
+        mode = cls.get_well_mode(d_production_casing, d_tubing, casing_flow)
+        
         # other params
         modes = [1,2,4]
+        mpl_wh = mass_wh/height_wh # mass per unit length (kg/m)
         
         # determine cases
         # find indices for each mode
@@ -517,7 +593,8 @@ class LuuEtal2022(WellMoment):
         }
         # get intermediate values if requested
         if return_inter_params:
-            pass
+            output['mode'] = mode
+            output['mpl_wh'] = mpl_wh
         
         # return
         return output

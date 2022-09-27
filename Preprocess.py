@@ -28,11 +28,13 @@ import pandas as pd
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
 # append OpenSRA base dir to path
-sys.path.append('..')
+# sys.path.append('..')
 
 # OpenSRA modules
 from src.site import geodata
 from src.im import haz
+from src.site.get_pipe_crossing import get_pipe_crossing
+from src.site.get_well_crossing import *
 
 
 def main(work_dir):
@@ -64,7 +66,7 @@ def main(work_dir):
     print(f'\t\t\t- {processed_input_dir}')
     print('\t\tInensity measure directory:')
     print(f'\t\t\t- {im_dir}')
-    counter += 1 
+    counter += 1
     
     # read important info from setup_config file
     setup_config_fpath = os.path.join(input_dir,'SetupConfig.json')
@@ -137,6 +139,54 @@ def main(work_dir):
     print(f'{counter}. Read input tables for random, fixed variables, and infrastructure data in input directory')
     counter += 1
     
+    ##--------------------------
+    # get crossings - may move to another location in Preprocess
+    avail_data_summary = None # initialize
+    
+    if infra_type == 'below_ground':
+        # load json with available datasets
+        avail_data_summary_fpath = os.path.join('lib','AvailableDataset.json')
+        with open(avail_data_summary_fpath,'r') as f:
+            avail_data_summary = json.load(f)
+        # landslide
+        cat = 'EDP'
+        haz = 'landslide'
+        if cat in workflow and haz in workflow[cat]:
+            file_key = 'ca_landslide_inventory'
+            fpath = avail_data_summary['Parameters'][file_key]['Datasets']['Set1']['Path']
+            # site_data_crossing = get_pipe_crossing(
+            site_data = get_pipe_crossing(
+                path_to_def_shp=fpath,
+                infra_site_data=site_data.copy(),
+                export_dir=processed_input_dir,
+                def_type=haz
+            )
+            print(f'{counter}. Obtained pipeline crossing for landslide')
+            counter += 1
+            
+    elif infra_type == 'wells_caprocks':
+        # load json with available datasets
+        avail_data_summary_fpath = os.path.join('lib','AvailableDataset.json')
+        with open(avail_data_summary_fpath,'r') as f:
+            avail_data_summary = json.load(f)
+        # landslide
+        cat = 'EDP'
+        haz = 'landslide'
+        if cat in workflow and haz in workflow[cat]:
+            file_key = 'ca_landslide_inventory'
+            fpath = avail_data_summary['Parameters'][file_key]['Datasets']['Set1']['Path']
+            # site_data_crossing = get_pipe_crossing(
+            site_data = get_pipe_crossing(
+                path_to_def_shp=fpath,
+                infra_site_data=site_data.copy(),
+                export_dir=processed_input_dir,
+                def_type=haz
+            )
+            print(f'{counter}. Obtained pipeline crossing for landslide')
+            counter += 1
+        
+    ##--------------------------
+    
     # rvs and fixed params split by preferred andf user provided
     pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, \
     pref_fixed, user_prov_table_fixed, user_prov_gis_fixed = \
@@ -152,8 +202,14 @@ def main(work_dir):
     counter += 1
     
     # get param_dist_meta from user-provided information
+    if 'UserGISFile' in setup_config['General']['Directory']:
+        user_prov_gis_fdir = setup_config['General']['Directory']['UserGISFile']
+    else:
+        user_prov_gis_fdir = ''
     param_dist_meta, param_dist_table = get_param_dist_from_user_prov_table(
-        user_prov_table_rvs, user_prov_table_fixed, pref_rvs, pref_fixed, site_data
+        user_prov_table_rvs, user_prov_table_fixed,
+        user_prov_gis_rvs, user_prov_gis_fixed,
+        pref_rvs, pref_fixed, site_data, user_prov_gis_fdir
     )
     print(f'{counter}. Get user provided distributions from infrastructure table')
     counter += 1
@@ -189,6 +245,7 @@ def main(work_dir):
         pref_param_dist_const_with_level,
         pref_param_fixed,
         workflow,
+        avail_data_summary,
         export_path_dist_table=os.path.join(processed_input_dir,'param_dist.csv'),
         export_path_dist_json=os.path.join(processed_input_dir,'param_dist_meta.json'),
         infra_type=infra_type
@@ -310,12 +367,14 @@ def make_workflow(setup_config, processed_input_dir, to_export=True):
         'settlement': "Settlement",
         'landslide': "Landslide",
         'surface_fault_rupture': "SurfaceFaultRupture",
-        'pipe_strain': "PipeStrain",
+        # 'pipe_strain': "PipeStrain",
         'pipe_strain_settlement': "SettlementInducedPipeStrain",
         'pipe_strain_landslide': "LandslideInducedPipeStrain",
+        'pipe_strain_lateral_spread': "LateralSpreadInducedPipeStrain",
         'pipe_comp_rupture': "PipeCompressiveRupture",
         'pipe_tensile_rupture': "PipeTensileRupture",
         'pipe_tensile_leakage': "PipeTensileLeakage",
+        
         # above ground
         'wellhead_rotation': "WellheadRotation",
         'wellhead_strain': "WellheadStrain",
@@ -323,6 +382,8 @@ def make_workflow(setup_config, processed_input_dir, to_export=True):
         'wellhead_leakage': "WellheadLeakage",
         'vessel_moment_ratio': "VesselMomentRatio",
         'vessel_rupture': "VesselRupture",
+        
+        # wells and caprocks
     }
     for cat in cat_map:
         workflow[cat] = {}
@@ -331,8 +392,11 @@ def make_workflow(setup_config, processed_input_dir, to_export=True):
             if haz_map[haz] in haz_list and haz_list[haz_map[haz]]['ToInclude']:
                 workflow[cat][haz] = {}
                 method_list = haz_list[haz_map[haz]]['Method']
+                # for getting model weights
                 for method in method_list:
-                    workflow[cat][haz][method] = method_list[method]
+                    workflow[cat][haz][method] = {
+                        'ModelWeight': method_list[method]['ModelWeight']
+                    }
     # export workflow
     if to_export:
         workflow_fpath = os.path.join(processed_input_dir,'workflow.json')
@@ -458,9 +522,12 @@ def get_param_dist_from_user_prov_gis(
 def get_param_dist_from_user_prov_table(
     user_prov_table_rvs,
     user_prov_table_fixed,
+    user_prov_gis_rvs,
+    user_prov_gis_fixed,
     pref_rvs,
     pref_fixed,
     site_data,
+    user_prov_gis_fdir,
     param_dist_meta={},
 ):
     """gets inputs for parameters flagged as 'From infrastructure table'"""
@@ -554,6 +621,128 @@ def get_param_dist_from_user_prov_table(
             param_dist_table[col_name] = curr_param_dist[met]
             curr_param_dist[met] = col_name
         param_dist_meta[param] = curr_param_dist.copy()
+        
+    # see if there are any random parameters where the values are from user defined GIS files
+    if user_prov_gis_rvs.shape[0] > 0:
+        # get coordinates
+        if 'LON_MID' in site_data:
+            locs = geodata.LocationData(
+                lon=site_data.LON_MID.values,
+                lat=site_data.LAT_MID.values
+            )
+        elif 'LON' in site_data:
+            locs = geodata.LocationData(
+                lon=site_data.LON.values,
+                lat=site_data.LAT.values
+            )
+        else:
+            raise ValueError("Cannot locate lon/lat")
+    # first loop through user provided GIS data
+    for i in range(user_prov_gis_rvs.shape[0]):
+        param = user_prov_gis_rvs.Name[i]
+        curr_param_dist = {
+            'source': user_prov_gis_rvs.Source[i]
+        }
+        # distribution type
+        if isinstance(user_prov_gis_rvs.loc[i,metric_map['dist_type']],float) and \
+            np.isnan(user_prov_gis_rvs.loc[i,metric_map['dist_type']]):
+            curr_param_dist['dist_type'] = 'normal'
+        else:
+            curr_param_dist['dist_type'] = user_prov_gis_rvs.loc[i,metric_map['dist_type']].lower()
+        # mean
+        # currently can sample Shapefiles or raster
+        # get full file path for GIS map
+        curr_user_prov_gis_fdir = os.path.join(user_prov_gis_fdir,user_prov_gis_rvs['Mean or Median'][i])
+        # find files under fdir
+        files = os.listdir(curr_user_prov_gis_fdir)
+        # look for either ".tif" for raster of ".shp" for Shapefile
+        curr_user_prov_gis_fpath = None
+        for f in files:
+            if f.endswith('.tif') or f.endswith('.shp'):
+                if f.endswith('.tif'):
+                    gis_type = 'raster'
+                else:
+                    gis_type = 'shapefile'
+                curr_user_prov_gis_fpath = os.path.join(curr_user_prov_gis_fdir,f)
+                break
+        if curr_user_prov_gis_fpath is None:
+            print('Cannot locate user provided GIS file: file must end with ".tif" or ".shp"')
+        else:
+            # with file path, now sample
+            if gis_type == 'raster':
+                # get sample from GIS file
+                locs.data = locs.sample_raster(
+                    table=locs.data,
+                    fpath=curr_user_prov_gis_fpath,
+                    store_name=param
+                )
+            elif gis_type == 'shapefile':
+                locs.data = locs.sample_shapefile(
+                    table=locs.data,
+                    fpath=geo_unit_fpath,
+                    attr=None,
+                    store_name=param
+                )
+            # check for lognormal and apply correction
+            if curr_param_dist['dist_type'] == 'lognormal':
+                curr_param_dist['mean'] = np.log(locs.data[param].values)
+            else:
+                curr_param_dist['mean'] = locs.data[param].values
+        # sigma/cov
+        if np.isnan(user_prov_gis_rvs.loc[i,metric_map['sigma']]) and \
+            np.isnan(user_prov_gis_rvs.loc[i,metric_map['cov']]):
+            curr_param_dist['sigma'] = np.zeros(n_site)
+        else:
+            # check if sigma is given
+            if not np.isnan(user_prov_gis_rvs.loc[i,metric_map['sigma']]):
+                try: # try converting to float, if can't then it's a column name
+                    curr_param_dist['sigma'] = float(user_prov_gis_rvs.loc[i,metric_map['sigma']])
+                except ValueError:
+                    curr_param_dist['sigma'] = site_data[user_prov_gis_rvs.loc[i,metric_map['sigma']]].values
+            # check if cov is given
+            elif not np.isnan(user_prov_gis_rvs.loc[i,metric_map['cov']]):
+                try: # try converting to float, if can't then it's a column name
+                    curr_cov = float(user_prov_gis_rvs.loc[i,metric_map['cov']])
+                except ValueError:
+                    curr_cov = site_data[user_prov_gis_rvs.loc[i,metric_map['cov']]].values
+                # calculate sigma from cov
+                if curr_param_dist['dist_type'] == 'normal':
+                    curr_param_dist['sigma'] = curr_cov/100 * curr_param_dist['mean']
+                elif curr_param_dist['dist_type'] == 'lognormal':
+                    curr_param_dist['sigma'] = np.log(1+curr_cov/100)
+        # low and high
+        for each in ['low','high']:
+            if np.isnan(user_prov_gis_rvs.loc[i,metric_map[each]]):
+                if each == 'low':
+                    curr_param_dist[each] = -np.inf
+                elif each == 'high':
+                    curr_param_dist[each] = np.inf
+            else:
+                curr_param_dist[each] = float(user_prov_gis_rvs.loc[i,metric_map[each]])
+                if curr_param_dist['dist_type'] == 'lognormal':
+                    if each == 'low' and curr_param_dist[each] == 0:
+                        curr_param_dist[each] = -np.inf
+                    else:
+                        curr_param_dist[each] = np.log(curr_param_dist[each])
+        # repeat for number of sites if dimension is 0, also check if still contains NaN
+        curr_param_dist['still_need_pref'] = {}
+        for each in ['mean','sigma','low','high']:
+            # repeat for number of sites if dimension is 0
+            if np.ndim(curr_param_dist[each]) == 0:
+                curr_param_dist[each] = np.ones(n_site) * curr_param_dist[each]
+            # convert to dtype to float
+            curr_param_dist[each] = curr_param_dist[each].astype(float)
+            # see if still contains np.isnan
+            curr_param_dist['still_need_pref'][each] = False
+            ind = np.where(np.isnan(curr_param_dist[each]))[0]
+            if len(ind) > 0:
+                curr_param_dist['still_need_pref'][each] = True
+        # store to param_dist_meta and site_data
+        for met in ['mean','sigma','low','high','dist_type']:
+            col_name = f'{param}_{met}'
+            param_dist_table[col_name] = curr_param_dist[met]
+            curr_param_dist[met] = col_name
+        param_dist_meta[param] = curr_param_dist.copy()
 
     # next loop through user provided fixed params
     for i in range(user_prov_table_fixed.shape[0]):
@@ -564,7 +753,87 @@ def get_param_dist_from_user_prov_table(
         try: # try converting to float, if can't then it's a column name
             curr_param_dist['value'] = float(user_prov_table_fixed.loc[i,'Value'])
         except ValueError:
-            curr_param_dist['value'] = site_data[user_prov_table_fixed.loc[i,'Value'].upper()].values
+            # if is column name, then pull values from column, else use as value
+            if user_prov_table_fixed.loc[i,'Value'].upper() in site_data:
+                curr_param_dist['value'] = site_data[user_prov_table_fixed.loc[i,'Value'].upper()].values
+            else:
+                curr_param_dist['value'] = [user_prov_table_fixed.loc[i,'Value'].lower()] * site_data.shape[0]
+        curr_param_dist['dist_type'] = 'fixed'
+        # some specific processing
+        if param == 'soil_type':
+            # make sure entries are lower case if possible
+            curr_param_dist['value'] = np.array([
+                x.lower() if isinstance(x, str) else x
+                 for x in curr_param_dist['value']
+            ])
+        # check if still contains NaN
+        curr_param_dist['still_need_pref'] = {}
+        count = sum([1 for j,x in enumerate(curr_param_dist['value']) if isinstance(x, float) and np.isnan(x)])
+        if count > 0:
+            curr_param_dist['still_need_pref']['value'] = True
+        # store to param_dist_meta and site_data
+        param_dist_table[param] = curr_param_dist['value']
+        curr_param_dist['value'] = param
+        param_dist_meta[param] = curr_param_dist.copy()
+    
+    # see if there are any fixed parameters where the values are from user defined GIS files
+    if user_prov_gis_fixed.shape[0] > 0 and not locs in locals():
+        # get coordinates
+        if 'LON_MID' in site_data:
+            locs = geodata.LocationData(
+                lon=site_data.LON_MID.values,
+                lat=site_data.LAT_MID.values
+            )
+        elif 'LON' in site_data:
+            locs = geodata.LocationData(
+                lon=site_data.LON.values,
+                lat=site_data.LAT.values
+            )
+        else:
+            raise ValueError("Cannot locate lon/lat")
+    # next loop through user provided fixed params
+    for i in range(user_prov_gis_fixed.shape[0]):
+        param = user_prov_gis_fixed.Name[i]
+        curr_param_dist = {
+            'source': user_prov_gis_fixed.Source[i]
+        }
+        # value
+        # currently can sample Shapefiles or raster
+        # get full file path for GIS map
+        curr_user_prov_gis_fdir = os.path.join(user_prov_gis_fdir,user_prov_gis_fixed['Value'][i])
+        # find files under fdir
+        files = os.listdir(curr_user_prov_gis_fdir)
+        # look for either ".tif" for raster of ".shp" for Shapefile
+        curr_user_prov_gis_fpath = None
+        for f in files:
+            if f.endswith('.tif') or f.endswith('.shp'):
+                if f.endswith('.tif'):
+                    gis_type = 'raster'
+                else:
+                    gis_type = 'shapefile'
+                curr_user_prov_gis_fpath = os.path.join(curr_user_prov_gis_fdir,f)
+                break
+        if curr_user_prov_gis_fpath is None:
+            print('Cannot locate user provided GIS file: file must end with ".tif" or ".shp"')
+        else:
+            # with file path, now sample
+            if gis_type == 'raster':
+                # get sample from GIS file
+                locs.data = locs.sample_raster(
+                    table=locs.data,
+                    fpath=curr_user_prov_gis_fpath,
+                    store_name=param
+                )
+            elif gis_type == 'shapefile':
+                locs.data = locs.sample_shapefile(
+                    table=locs.data,
+                    fpath=geo_unit_fpath,
+                    attr=None,
+                    store_name=param
+                )
+            # store to param_dist
+            curr_param_dist['value'] = locs.data[param].values
+        # dist type
         curr_param_dist['dist_type'] = 'fixed'
         # some specific processing
         if param == 'soil_type':
@@ -713,6 +982,7 @@ def get_pref_dist_for_params(
     pref_param_dist_const_with_level,
     pref_param_fixed,
     workflow,
+    avail_data_summary,
     export_path_dist_table=None,
     export_path_dist_json=None,
     infra_type='below_ground',
@@ -721,11 +991,7 @@ def get_pref_dist_for_params(
     """get rest of the missing distribution metrics"""
     
     met_list = ['dist_type','mean','sigma','low','high']
-    
-    # load json with available datasets
-    avail_data_summary_fpath = os.path.join('lib','AvailableDataset.json')
-    with open(avail_data_summary_fpath,'r') as f:
-        avail_data_summary = json.load(f)
+    crossing_params = ['l_anchor','beta_crossing','psi_dip','theta_slip']
     
     # first load geologic units from various geologic maps
     if infra_type == 'below_ground':
@@ -744,71 +1010,76 @@ def get_pref_dist_for_params(
             raise ValueError("Cannot locate lon/lat")
         
         # CGS geologic unit, may take this out
+        soil_prop_map = {}
         if 'EDP' in workflow and 'landslide' in workflow['EDP']:
-            if default_statewide_geo_map == 'wills':
-                file_key = 'level1_geo_unit_wills15'
-                store_name = avail_data_summary['Parameters'][file_key]['ColumnNameToStoreAs']
-                geo_unit_fpath = avail_data_summary['Parameters'][file_key]['Datasets']['Set1']['Path']
-                locs.data = locs.sample_shapefile(
-                    table=locs.data,
-                    fpath=geo_unit_fpath,
-                    attr='PTYPE',
-                    store_name=store_name
-                )
-                param_dist_table[store_name] = locs.data[store_name].values
-                print(f'\tRead CGS geologic units')
-            
-                # load strength params from Bain et al. (2022)
-                slate_geo_prop_fpath = avail_data_summary['Parameters']['phi_soil']['Datasets']['Set1']['Path']
-                slate_geo_prop = pd.read_excel(slate_geo_prop_fpath)
-                unique_geo_unit = np.unique(param_dist_table[store_name])
-                geo_unit_desc = np.empty_like(param_dist_table[store_name])
-                for each in unique_geo_unit:
-                    geo_unit_desc[param_dist_table[store_name].values==each] = \
-                        slate_geo_prop['Unit Description CGS'][slate_geo_prop['Unit Abbreviation'].values==each]
-                param_dist_table['cgs_geo_unit_desc'] = geo_unit_desc
-                soil_prop_map = {
-                    'phi_soil': {
-                        'mean': 'Friction Angle - Mean (degrees)',
-                        'sigma': 'Friction Angle - Sigma (degrees)',
-                        'dist_type': 'normal'
-                    },
-                    'coh_soil': {
-                        'mean': 'Cohesion - Mean (kPa)',
-                        'sigma': 'Cohesion - Sigma (kPa)',
-                        'low': 0,
-                        'high': np.inf,
-                        'dist_type': 'normal'
-                    }
-                }
+            if ('phi_soil' in param_dist_meta and param_dist_meta['phi_soil']['source'] == 'Preferred') or \
+               ('coh_soil' in param_dist_meta and param_dist_meta['coh_soil']['source'] == 'Preferred'):
+                if default_statewide_geo_map == 'wills':
+                    file_key = 'level1_geo_unit_wills15'
+                    store_name = avail_data_summary['Parameters'][file_key]['ColumnNameToStoreAs']
+                    geo_unit_fpath = avail_data_summary['Parameters'][file_key]['Datasets']['Set1']['Path']
+                    locs.data = locs.sample_shapefile(
+                        table=locs.data,
+                        fpath=geo_unit_fpath,
+                        attr='Geologic_U',
+                        store_name=store_name
+                    )
+                    param_dist_table[store_name] = locs.data[store_name].values
                 
-            elif default_statewide_geo_map == 'cgs':
-                file_key = 'level1_geo_unit_cgs10'
-                store_name = avail_data_summary['Parameters'][file_key]['ColumnNameToStoreAs']
-                geo_unit_fpath = avail_data_summary['Parameters'][file_key]['Datasets']['Set1']['Path']
-                locs.data = locs.sample_shapefile(
-                    table=locs.data,
-                    fpath=geo_unit_fpath,
-                    attr='PTYPE',
-                    store_name=store_name
-                )
-                param_dist_table[store_name] = locs.data[store_name].values
-                print(f'\tRead CGS geologic units')
-            
-                # load Slate's site data table with soil properties based on geologic units, for temporary use
-                slate_geo_prop_fpath = avail_data_summary['Parameters']['phi_soil']['Datasets']['Set1']['Path']
-                slate_geo_prop = pd.read_csv(slate_geo_prop_fpath)
-                unique_geo_unit = np.unique(param_dist_table[store_name])
-                geo_unit_desc = np.empty_like(param_dist_table[store_name])
-                for each in unique_geo_unit:
-                    geo_unit_desc[param_dist_table[store_name].values==each] = \
-                        slate_geo_prop['Unit Description CGS'][slate_geo_prop['Unit Abbreviation'].values==each]
-                param_dist_table['cgs_geo_unit_desc'] = geo_unit_desc
-                soil_prop_map = {
-                    'phi_soil': 'Friction Angle (degrees)',
-                    'coh_soil': 'Cohesion (kPa)',
-                    'gamma_soil': 'Unit Weight (kN/m3)',
-                }
+                    # load strength params from Bain et al. (2022)
+                    default_geo_prop_fpath = avail_data_summary['Parameters']['phi_soil']['Datasets']['Set1']['Path']
+                    default_geo_prop = pd.read_csv(default_geo_prop_fpath)
+                    unique_geo_unit = np.unique(param_dist_table[store_name])
+                    geo_unit_desc = np.empty_like(param_dist_table[store_name])
+                    for each in unique_geo_unit:
+                        geo_unit_desc[param_dist_table[store_name].values==each] = \
+                            default_geo_prop['Unit Abbreviation'][default_geo_prop['Unit Abbreviation'].values==each]
+                            # default_geo_prop['Unit Description'][default_geo_prop['Unit Abbreviation'].values==each]
+                    param_dist_table['wills_geo_unit_desc'] = geo_unit_desc
+                    if 'phi_soil' in param_dist_meta and param_dist_meta['phi_soil']['source'] == 'Preferred':
+                        soil_prop_map['phi_soil'] = {
+                            'mean': 'Friction Angle - Median (degrees)',
+                            'cov': 'Friction Angle - CoV (%)',
+                            'low': 'Friction Angle - Min (degrees)',
+                            'high': 'Friction Angle - Max (degrees)',
+                            'dist_type': 'lognormal'
+                        }
+                    if 'coh_soil' in param_dist_meta and param_dist_meta['coh_soil']['source'] == 'Preferred':
+                        soil_prop_map['coh_soil'] = {
+                            'mean': 'Cohesion - Median (kPa)',
+                            'cov': 'Cohesion - CoV (%)',
+                            'low': 'Cohesion - Min (kPa)',
+                            'high': 'Cohesion - Max (kPa)',
+                            'dist_type': 'lognormal'
+                        }
+                    
+                # elif default_statewide_geo_map == 'cgs':
+                #     file_key = 'level1_geo_unit_cgs10'
+                #     store_name = avail_data_summary['Parameters'][file_key]['ColumnNameToStoreAs']
+                #     geo_unit_fpath = avail_data_summary['Parameters'][file_key]['Datasets']['Set1']['Path']
+                #     locs.data = locs.sample_shapefile(
+                #         table=locs.data,
+                #         fpath=geo_unit_fpath,
+                #         attr='PTYPE',
+                #         store_name=store_name
+                #     )
+                #     param_dist_table[store_name] = locs.data[store_name].values
+                #     print(f'\tRead CGS geologic units')
+                
+                #     # load Slate's site data table with soil properties based on geologic units, for temporary use
+                #     slate_geo_prop_fpath = avail_data_summary['Parameters']['phi_soil']['Datasets']['Set1']['Path']
+                #     slate_geo_prop = pd.read_csv(slate_geo_prop_fpath)
+                #     unique_geo_unit = np.unique(param_dist_table[store_name])
+                #     geo_unit_desc = np.empty_like(param_dist_table[store_name])
+                #     for each in unique_geo_unit:
+                #         geo_unit_desc[param_dist_table[store_name].values==each] = \
+                #             slate_geo_prop['Unit Description CGS'][slate_geo_prop['Unit Abbreviation'].values==each]
+                #     param_dist_table['cgs_geo_unit_desc'] = geo_unit_desc
+                #     soil_prop_map = {
+                #         'phi_soil': 'Friction Angle (degrees)',
+                #         'coh_soil': 'Cohesion (kPa)',
+                #         'gamma_soil': 'Unit Weight (kN/m3)',
+                #     }
             
         # if liq susc is needed, then sample regional geologic units
         if 'liq_susc' in param_dist_meta and param_dist_meta['liq_susc']['source'] == 'Preferred':
@@ -888,17 +1159,19 @@ def get_pref_dist_for_params(
                                 # if nan, get from cov
                                 pref_val = pref_param_dist[f'level{level}']['cov'][row_for_param]
                                 # update distribution metric
-                                if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+                                if param_dist_table[f'{param}_dist_type'][0] == 'normal':
                                     param_dist_table.loc[rows_comb,f'{param}_sigma'] = \
                                         pref_val/100 * param_dist_table.loc[rows_comb,f'{param}_mean']
                                 elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                                    param_dist_table.loc[rows_comb,f'{param}_sigma'] = np.log(1+pref_val/100)
+                                    param_dist_table.loc[rows_comb,f'{param}_sigma'] = \
+                                        np.log(1+pref_val/100) * param_dist_table.loc[rows_comb,f'{param}_mean']
                             else:
                                 # update distribution metric
                                 param_dist_table.loc[rows_comb,f'{param}_sigma'] = pref_val
                         else:
                             # check for lognormal and apply correction
                             if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+                                print(param, pref_val)
                                 pref_val = np.log(pref_val)
                             if met == 'low' or met == 'high':
                                 if np.isnan(pref_val):
@@ -916,98 +1189,125 @@ def get_pref_dist_for_params(
         elif param in list(pref_param_dist_const_with_level.rv_label):
             # row for param in preferred distribution table
             row_for_param = np.where(pref_param_dist_const_with_level.rv_label==param)[0][0]
-            # loop through missing metrics
-            for met in met_list:
-                if met in params_with_missing_dist_metric[param]:
-                    # find rows where null
-                    rows_nan = np.where(param_dist_table[f'{param}_{met}'].isnull())[0]
-                    # get preferred value
-                    pref_val = pref_param_dist_const_with_level[met][row_for_param]
-                    # specifically for mean
-                    if met == 'mean':
-                        # specific properties for landslide, use Slate's param values for mean for now
-                        if pref_val == 'user provided' and param in soil_prop_map:
-                            # for each unique geologic unit
-                            for each in unique_geo_unit:
-                                # get rows with geo unit
-                                rows_with_geo_unit = np.where(param_dist_table['geo_unit'].values==each)[0]
-                                # intersection of geo unit and NaN
-                                rows_comb = list(set(rows_nan).intersection(set(rows_with_geo_unit)))
-                                # get preferred value from Slate's table
-                                rows_for_param = np.where(slate_geo_prop['Unit Abbreviation'].values==each)[0][0]
-                                pref_val = slate_geo_prop[soil_prop_map[param]][rows_for_param]
+            
+            # specific properties for landslide, use Wills et al. geo properties developed by Chris Bain
+            if pref_param_dist_const_with_level['mean'][row_for_param] == 'depends' and \
+                param in soil_prop_map:
+                # for each unique geologic unit
+                for each in unique_geo_unit:
+                    # get rows with geo unit
+                    rows_with_geo_unit = np.where(param_dist_table['wills_geo_unit_desc'].values==each)[0]
+                    # intersection of geo unit and NaN
+                    rows_comb = list(set(rows_nan).intersection(set(rows_with_geo_unit)))
+                    # get preferred value from Chris Bain's table
+                    rows_for_param = np.where(default_geo_prop['Unit Abbreviation'].values==each)[0][0]                    # get dist metrics
+                    # dist type
+                    param_dist_table.loc[rows_comb,f'{param}_dist_type'] = 'lognormal'
+                    # mean
+                    pref_val = default_geo_prop[soil_prop_map[param]['mean']][rows_for_param]
+                    param_dist_table.loc[rows_comb,f'{param}_mean'] = np.log(pref_val)
+                    # sigma
+                    pref_val = default_geo_prop[soil_prop_map[param]['cov']][rows_for_param]
+                    param_dist_table.loc[rows_comb,f'{param}_sigma'] = \
+                        np.log(1+pref_val/100) * param_dist_table.loc[rows_comb,f'{param}_mean'].values
+                    # low
+                    pref_val = default_geo_prop[soil_prop_map[param]['low']][rows_for_param]
+                    param_dist_table.loc[rows_comb,f'{param}_low'] = np.log(pref_val)
+                    # high
+                    pref_val = default_geo_prop[soil_prop_map[param]['high']][rows_for_param]
+                    param_dist_table.loc[rows_comb,f'{param}_high'] = np.log(pref_val)
+                    
+                    # # get preferred value from Slate's table
+                    # rows_for_param = np.where(slate_geo_prop['Unit Abbreviation'].values==each)[0][0]
+                    # pref_val = default_geo_prop[soil_prop_map[param]][rows_for_param]
+                    # # check for lognormal and apply correction
+                    # if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+                    #     pref_val = np.log(pref_val)
+                    # # update value
+                    # param_dist_table.loc[rows_comb,f'{param}_mean'] = pref_val
+
+            # all other cases
+            else:
+                # loop through missing metrics
+                for met in met_list:
+                    if met in params_with_missing_dist_metric[param]:
+                        # find rows where null
+                        rows_nan = np.where(param_dist_table[f'{param}_{met}'].isnull())[0]
+                        # get preferred value
+                        pref_val = pref_param_dist_const_with_level[met][row_for_param]
+                        # specifically for mean
+                        if met == 'mean':
+                            # get crossing from site datatable
+                            if pref_val == 'depends' and param in crossing_params:
+                                param_dist_table.loc[rows_nan,f'{param}_mean'] = site_data[param][rows_nan].values
+                            # using internal GIS maps
+                            elif pref_val == 'internal gis dataset':
+                                # path for GIS file
+                                gis_fpath = avail_data_summary['Parameters'][param]['Datasets']['Set1']['Path']
+                                locs.data = locs.sample_raster(
+                                    table=locs.data,
+                                    fpath=gis_fpath,
+                                    store_name=param
+                                )
+                                # check for lognormal and apply correction
+                                if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+                                    pref_val = np.log(locs.data[param].values)
+                                else:
+                                    pref_val = locs.data[param].values
+                                # pref_val = locs.data[param].values
+                                param_dist_table.loc[rows_nan,f'{param}_mean'] = pref_val[rows_nan]
+                            else:
                                 # check for lognormal and apply correction
                                 if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
                                     pref_val = np.log(pref_val)
-                                # update value
-                                param_dist_table.loc[rows_comb,f'{param}_mean'] = pref_val
-                        # using internal GIS maps
-                        elif pref_val == 'internal gis dataset':
-                            # path for GIS file
-                            gis_fpath = avail_data_summary['Parameters'][param]['Datasets']['Set1']['Path']
-                            locs.data = locs.sample_raster(
-                                table=locs.data,
-                                fpath=gis_fpath,
-                                store_name=param
-                            )
-                            # check for lognormal and apply correction
-                            if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                                pref_val = np.log(locs.data[param].values)
+                                param_dist_table.loc[rows_nan,f'{param}_mean'] = pref_val
+                        # specifically for sigma, check CoV
+                        elif met == 'sigma':
+                            if np.isnan(pref_val):
+                                # if nan, get from cov
+                                pref_val = pref_param_dist_const_with_level['cov'][row_for_param]
+                                # update distribution metric
+                                if param_dist_table[f'{param}_dist_type'][0] == 'normal':
+                                    param_dist_table.loc[rows_nan,f'{param}_sigma'] = \
+                                        pref_val/100 * param_dist_table.loc[rows_nan,f'{param}_mean'].values
+                                elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+                                    param_dist_table.loc[rows_nan,f'{param}_sigma'] = \
+                                        np.log(1+pref_val/100) * param_dist_table.loc[rows_nan,f'{param}_mean'].values
                             else:
-                                pref_val = locs.data[param].values
-                            # pref_val = locs.data[param].values
-                            param_dist_table.loc[rows_nan,f'{param}_mean'] = pref_val[rows_nan]
+                                param_dist_table.loc[rows_nan,f'{param}_sigma'] = pref_val
                         else:
-                            # check for lognormal and apply correction
-                            if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                                pref_val = np.log(pref_val)
-                            param_dist_table.loc[rows_nan,f'{param}_mean'] = pref_val
-                    # specifically for sigma, check CoV
-                    elif met == 'sigma':
-                        if np.isnan(pref_val):
-                            # if nan, get from cov
-                            pref_val = pref_param_dist_const_with_level['cov'][row_for_param]
-                            # update distribution metric
-                            if param_dist_table[f'{param}_dist_type'][0] == 'normal':
-                                param_dist_table.loc[rows_nan,f'{param}_sigma'] = \
-                                    pref_val/100 * param_dist_table.loc[rows_nan,f'{param}_mean'].values
-                            elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                                param_dist_table.loc[rows_nan,f'{param}_sigma'] = np.log(1+pref_val/100)
-                        else:
-                            param_dist_table.loc[rows_nan,f'{param}_sigma'] = pref_val
-                    else:
-                        # for specific cases where it says "depends"
-                        if pref_val == 'depends':
-                            if param == 'dist_coast' or param == 'dist_river' or param == 'dist_water':
-                                if met == 'low':
-                                    # check for lognormal and apply correction
-                                    if param_dist_table[f'{param}_dist_type'][0] == 'normal':
-                                        pref_val = np.maximum(param_dist_table[f'{param}_mean'].values - 50, 0) # limit to 0
-                                    elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                                        pref_val = np.log(np.maximum(np.exp(param_dist_table[f'{param}_mean'].values) - 50, 0)) # limit to 0
-                                    # pref_val = np.maximum(param_dist_table[f'{param}_mean'].values - 50, 0) # limit to 0
-                                    param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val[rows_nan]
-                                elif met == 'high':
-                                    # check for lognormal and apply correction
-                                    if param_dist_table[f'{param}_dist_type'][0] == 'normal':
-                                        pref_val = param_dist_table[f'{param}_mean'].values + 50 # 50 km over mean
-                                    elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                                        pref_val = param_dist_table[f'{param}_mean'] + 50 # 50 km over mean
-                                    # pref_val = param_dist_table[f'{param}_mean'].values + 50 # 50 km over mean
-                                    param_dist_table.loc[rows_nan,f'{param}_{met}'] = \
-                                        param_dist_table.loc[rows_nan,f'{param}_mean'] + 50 # 50 km over mean
-                                    param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val[rows_nan]
-                        else:
-                            # check for lognormal and apply correction
-                            if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                                pref_val = np.log(pref_val)
-                            if met == 'low' or met == 'high':
-                                if np.isnan(pref_val):
+                            # for specific cases where it says "depends"
+                            if pref_val == 'depends':
+                                if param == 'dist_coast' or param == 'dist_river' or param == 'dist_water':
                                     if met == 'low':
-                                        pref_val = -np.inf
+                                        # check for lognormal and apply correction
+                                        if param_dist_table[f'{param}_dist_type'][0] == 'normal':
+                                            pref_val = np.maximum(param_dist_table[f'{param}_mean'].values - 50, 0) # limit to 0
+                                        elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+                                            pref_val = np.log(np.maximum(np.exp(param_dist_table[f'{param}_mean'].values) - 50, 0)) # limit to 0
+                                        # pref_val = np.maximum(param_dist_table[f'{param}_mean'].values - 50, 0) # limit to 0
+                                        param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val[rows_nan]
                                     elif met == 'high':
-                                        pref_val = np.inf
-                            param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val
+                                        # check for lognormal and apply correction
+                                        if param_dist_table[f'{param}_dist_type'][0] == 'normal':
+                                            pref_val = param_dist_table[f'{param}_mean'].values + 50 # 50 km over mean
+                                        elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+                                            pref_val = param_dist_table[f'{param}_mean'] + 50 # 50 km over mean
+                                        # pref_val = param_dist_table[f'{param}_mean'].values + 50 # 50 km over mean
+                                        param_dist_table.loc[rows_nan,f'{param}_{met}'] = \
+                                            param_dist_table.loc[rows_nan,f'{param}_mean'] + 50 # 50 km over mean
+                                        param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val[rows_nan]
+                            else:
+                                # check for lognormal and apply correction
+                                if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+                                    pref_val = np.log(pref_val)
+                                if met == 'low' or met == 'high':
+                                    if np.isnan(pref_val):
+                                        if met == 'low':
+                                            pref_val = -np.inf
+                                        elif met == 'high':
+                                            pref_val = np.inf
+                                param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val
             # remove param from missing param list
             params_with_missing_dist_metric.pop(param,None)          
 
@@ -1015,7 +1315,6 @@ def get_pref_dist_for_params(
     param_list = list(param_dist_meta) # all params
     for param in param_list:
         if param == 'n_param' or param == 'r_param':
-            
             if met == 'low':
                 param_dist_table[f'{param}_low'] = \
                     np.maximum(

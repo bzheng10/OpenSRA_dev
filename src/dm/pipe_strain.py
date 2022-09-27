@@ -71,8 +71,8 @@ class BainEtal2022(PipeStrain):
     def_length: float, np.ndarray or list
         [m] length of ground deformation zon
     gamma_backfill: float, np.ndarray or list
-        total unit weight of backfill soil [kN/m^3]
-    h_cover: float, np.ndarray or list
+        [kN/m^3] total unit weight of backfill soil
+    h_pipe: float, np.ndarray or list
         [m] burial depth to pipe centerline
     phi_backfill: float, np.ndarray or list
         [deg] friction angle of backfill
@@ -89,8 +89,6 @@ class BainEtal2022(PipeStrain):
     -------
     eps_pipe : float, np.ndarray
         [%] longitudinal pipe strain
-    sigma_eps_pipe : float, np.ndarray
-        aleatory variability for ln(eps_pipe)
     
     References
     ----------
@@ -113,22 +111,9 @@ class BainEtal2022(PipeStrain):
             'eps_pipe': {
                 'desc': 'longitudinal pipe strain (%)',
                 'unit': '%',
-                # 'mean': None,
-                # 'aleatory': None,
-                # 'epistemic': 0.25, # base model uncertainty, does not include input uncertainty
-                # 'dist_type': 'lognormal',
             },
-            # 'sigma_eps_pipe': {
-            #     'desc': 'aleatory variability for ln(eps_pipe)',
-            #     'unit': '',
-            #     # 'mean': None,
-            # },
         }
     }
-    # _INPUT_PBEE_META = {
-    #     'category': 'EDP',        # Input category in PBEE framework, e.g., IM, EDP, DM
-    #     'variable': 'pgdef'        # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
         'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
@@ -136,10 +121,6 @@ class BainEtal2022(PipeStrain):
             'pgdef': {
                 'desc': 'permanent ground deformation (m)',
                 'unit': 'm',
-                # 'mean': None,
-                # 'aleatory': None,
-                # 'epistemic': None,
-                # 'dist_type': 'lognormal'
             }
         }
     }
@@ -161,7 +142,7 @@ class BainEtal2022(PipeStrain):
             'def_length': 'length of ground deformation zone (m) - for clay and sand',
             'alpha_backfill': 'adhesion factor for clay - for clay',
             's_u_backfill': 'undrained shear strength (kPa) - for clay',
-            'h_cover': 'soil cover to centerline of pipeline (m) - for sand',
+            'h_pipe': 'burial depth to pipe centerline (m) - for sand',
             'gamma_backfill': 'total unit weight of backfill soil (kN/m^3) - for sand',
             'phi_backfill': 'backfill friction angle (deg) - for sand',
             'delta_backfill': 'sand/pipe interface friction angle ratio - for sand',
@@ -183,7 +164,7 @@ class BainEtal2022(PipeStrain):
         'sand': {
             'level1': [],
             'level2': ['d_pipe', 't_pipe', 'sigma_y'],
-            'level3': ['d_pipe', 't_pipe', 'sigma_y', 'def_length', 'h_cover', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+            'level3': ['d_pipe', 't_pipe', 'sigma_y', 'def_length', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
         }
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
@@ -198,16 +179,9 @@ class BainEtal2022(PipeStrain):
             'level3': ['soil_type'],
         }
     }
-    # _MODEL_INTERNAL = {
-    #     'n_sample': 1,
-    #     'n_site': 1,
-    # }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
     _MODEL_FORM_DETAIL = {}
     _MODEL_INPUT_RV = {}
-    # _SUB_CLASS = [
-    #     '_BainEtAl2022_Clay', '_BainEtAl2022_Sand'
-    # ]
 
 
     def __init__(self):
@@ -247,18 +221,22 @@ class BainEtal2022(PipeStrain):
         pgdef, # upstream PBEE RV
         d_pipe, t_pipe, sigma_y, n_param, r_param, # infrastructure
         alpha_backfill, s_u_backfill, def_length, # clay
-        h_cover, gamma_backfill, phi_backfill, delta_backfill, # sand
+        h_pipe, gamma_backfill, phi_backfill, delta_backfill, # sand
         soil_type, steel_grade, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
+        # initialize arrays
+        t_u = np.empty_like(pgdef)
+        l_e = np.empty_like(pgdef)
+        
         # model coefficients
         # sand
         c0_s =  0.188     # constant
         c1_s =  0.853     # ln(t_pipe)
         c2_s =  0.018     # ln(d_pipe)
         c3_s =  0.751     # ln(sigma_y)
-        c4_s = -0.862     # ln(h_cover)
+        c4_s = -0.862     # ln(h_pipe)
         c5_s = -0.863     # ln(gamma_backfill)
         c6_s = -1.005     # ln(phi_backfill)
         c7_s = -1.000     # ln(delta_backfill)
@@ -275,8 +253,6 @@ class BainEtal2022(PipeStrain):
         # --------------------
         young_mod = 200000000 # kpa, hard-coded now
         # --------------------
-        t_u = np.empty_like(pgdef)
-        l_e = np.empty_like(pgdef)
         phi_rad = np.radians(phi_backfill)
         pi = np.pi
         d_in = d_pipe - 2*t_pipe # mm
@@ -334,12 +310,12 @@ class BainEtal2022(PipeStrain):
             # print(pgdef.shape)
             # print(np.where(ind_sand)[0])
             # print(np.where(ind_sand)[1])
-            t_u[ind_sand] = gamma_backfill[ind_sand] * h_cover[ind_sand] \
+            t_u[ind_sand] = gamma_backfill[ind_sand] * h_pipe[ind_sand] \
                             * np.tan(phi_rad[ind_sand]*delta_backfill[ind_sand]) \
                             * circum[ind_sand]
             l_e[ind_sand] = np.exp(
                 c0_s    +   c1_s*np.log(t_pipe[ind_sand])           +   c2_s*np.log(d_pipe[ind_sand])
-                        +   c3_s*np.log(sigma_y[ind_sand])          +   c4_s*np.log(h_cover[ind_sand])
+                        +   c3_s*np.log(sigma_y[ind_sand])          +   c4_s*np.log(h_pipe[ind_sand])
                         +   c5_s*np.log(gamma_backfill[ind_sand])   +   c6_s*np.log(phi_backfill[ind_sand])
                         +   c7_s*np.log(delta_backfill[ind_sand])   +   c8_s*np.log(pgdef[ind_sand])
             )
@@ -357,7 +333,7 @@ class BainEtal2022(PipeStrain):
         # pgdef, # upstream PBEE RV
         # d_pipe, t_pipe, # infrastructure
         # alpha_backfill, s_u_backfill, def_length, # clay
-        # h_cover, gamma_backfill, phi_backfill, delta_backfill, # sand
+        # h_pipe, gamma_backfill, phi_backfill, delta_backfill, # sand
         # soil_type, steel_grade, # fixed/toggles
         
         # print(d_pipe.shape)
@@ -365,7 +341,7 @@ class BainEtal2022(PipeStrain):
         # print(alpha_backfill.shape)
         # print(s_u_backfill.shape)
         # print(def_length.shape)
-        # print(h_cover.shape)
+        # print(h_pipe.shape)
         # print(gamma_backfill.shape)
         # print(phi_backfill.shape)
         
@@ -374,7 +350,7 @@ class BainEtal2022(PipeStrain):
         # print(np.unique(alpha_backfill))
         # print(np.unique(s_u_backfill))
         # print(np.unique(def_length))
-        # print(np.unique(h_cover))
+        # print(np.unique(h_pipe))
         # print(np.unique(gamma_backfill))
         # print(np.unique(phi_backfill))
         

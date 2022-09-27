@@ -41,8 +41,26 @@ def main(detailed_verbose):
             }
         },
         'DM': {
-            'pipe_strain': {
+            # 'pipe_strain': {
+                # 'BainEtal2022',
+            # },
+            'pipe_strain_lateral_spread': {
+                # 'BainEtal2022_and_HutabaratEtal2022',
+            },
+            'pipe_strain_settlement': {
+                'HutabaratEtal2022',
+            },
+            'pipe_strain_landslide': {
+                # 'HutabaratEtal2022',
+            },
+            '_pipe_strain_base_models': {
                 'BainEtal2022',
+                'HutabaratEtal2022_Normal',
+                'HutabaratEtal2022_Reverse',
+                'HutabaratEtal2022_SSComp',
+                'HutabaratEtal2022_SSTens_5to85',
+                'HutabaratEtal2022_SSTens_85to90',
+                'HutabaratEtal2022_SSTens',
             },
             'well_strain': {
                 'SasakiEtal2022',
@@ -67,13 +85,10 @@ def main(detailed_verbose):
             'pipe_tensile_leakage': {
                 'BainEtal2022'
             },
-            'wellhead_comp_rupture': {
+            'wellhead_rupture': {
                 'BainEtal2022'
             },
-            'wellhead_tensile_rupture': {
-                'BainEtal2022'
-            },
-            'wellhead_tensile_leakage': {
+            'wellhead_leakage': {
                 'BainEtal2022'
             },
             'caprock_leakage': {

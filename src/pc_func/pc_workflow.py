@@ -32,6 +32,23 @@ def sum_pc_terms(pc_coeffs, hermite_prob_table):
     pc_sum = np.maximum(np.minimum(pc_sum,1),0)
     # return
     return pc_sum
+
+def sum_pc_terms_v2(pc_coeffs, hermite_prob_table):
+    """sum up pc terms, where pc_coeffs has dimensions of (n_site x n_pc_terms) and hermite_prob_table has dimensions of (n_pc_terms x n_samples)"""
+    # get dims
+    n_site = pc_coeffs.shape[0]
+    n_pc_terms = pc_coeffs.shape[1]
+    n_samples = hermite_prob_table.shape[1]
+    # loop through pc terms
+    pc_sum = np.inner(pc_coeffs,hermite_prob_table)
+    # pc_sum = np.transpose([
+    #     np.sum(np.outer(pc_coeffs[:,i],hermite_prob_table[i]),axis=1)
+    #     for i in range(n_pc_terms)
+    # ])
+    # keep sum within 0 and 1
+    pc_sum = np.maximum(np.minimum(pc_sum,1),0)
+    # return
+    return pc_sum
     
 
 def main(work_dir):
@@ -192,17 +209,19 @@ def prepare_methods(workflow, n_site):
                         list(mods_dict[cat.lower()][haz]['method'][model].return_pbee_dist['params'])
                     mods_dict[cat.lower()][haz]['return_params'] += \
                         list(mods_dict[cat.lower()][haz]['method'][model].return_pbee_dist['params'])
+                    # additional parameters for model
+                    if workflow[cat][haz][model] is None:
+                        mods_dict[cat.lower()][haz]['weight'].append(1)
+                    else:
+                        items = list(workflow[cat][haz][model])
+                        for item in items:
+                            if item != 'ModelWeight':
+                                additional_params[item] = workflow[cat][haz][model][item]
                     # get weights
                     if workflow[cat][haz][model] is None:
                         mods_dict[cat.lower()][haz]['weight'].append(1)
                     else:
                         mods_dict[cat.lower()][haz]['weight'].append(workflow[cat][haz][model]['ModelWeight'])
-                    # additional parameters for model
-                    if workflow[cat][haz][model] is not None:
-                        items = list(workflow[cat][haz][model])
-                        for item in items:
-                            if item != 'ModelWeight':
-                                additional_params[item] = workflow[cat][haz][model][item]
                     upstream_cat.append(mods_dict[cat.lower()][haz]['method'][model].input_pbee_dist['category'])
                 # keep unique upstream params
                 mods_dict[cat.lower()][haz]['upstream_params'] = list(set(mods_dict[cat.lower()][haz]['upstream_params']))
@@ -244,22 +263,16 @@ def get_workflow_order_list(methods_dict, infra_type='below_ground', verbose=Tru
     starting_cat = 'DV'
     count = 1
     if infra_type == 'above_ground':
-        if 'wellhead_comp_rupture' in methods_dict['dv']:
+        if 'wellhead_rupture' in methods_dict['dv']:
             workflow_order_list[f'case_{count}'] = {
                 'cat_list': ['IM', 'EDP', 'DM', 'DV'],
-                'haz_list': ['im', 'wellhead_rotation', 'wellhead_strain', 'wellhead_comp_rupture'],
+                'haz_list': ['im', 'wellhead_rotation', 'wellhead_strain', 'wellhead_rupture'],
                 'n_pbee_dim': 4,
             }
             count += 1
             workflow_order_list[f'case_{count}'] = {
                 'cat_list': ['IM', 'EDP', 'DM', 'DV'],
-                'haz_list': ['im', 'wellhead_rotation', 'wellhead_strain', 'wellhead_tensile_rupture'],
-                'n_pbee_dim': 4,
-            }
-            count += 1
-            workflow_order_list[f'case_{count}'] = {
-                'cat_list': ['IM', 'EDP', 'DM', 'DV'],
-                'haz_list': ['im', 'wellhead_rotation', 'wellhead_strain', 'wellhead_tensile_leakage'],
+                'haz_list': ['im', 'wellhead_rotation', 'wellhead_strain', 'wellhead_leakage'],
                 'n_pbee_dim': 4,
             }
             count += 1
@@ -498,7 +511,7 @@ def process_methods_for_mean_and_sigma_of_mu(
            
             # get mean of mu
             track_rvs_mean[param] = store_rvs[param].mean(axis=1)
-
+            
             # get average sigma over domain
             store_sigma[param] = np.sqrt(np.mean(store_sigma[param]**2,axis=1))
 
@@ -732,7 +745,7 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
     return haz_results, liq_susc
 
 
-def get_fractiles(pc_samples, fractiles=[5,16,50,84,95]):
+def get_fractiles(pc_samples, site_id, fractiles=[5,16,50,84,95]):
     """get fractiles and mean"""
     frac_return = np.vstack([
         np.percentile(pc_samples*100,fractiles,axis=0),
@@ -743,7 +756,8 @@ def get_fractiles(pc_samples, fractiles=[5,16,50,84,95]):
     # index = list(fractiles)+['mean']
     # headers = columns=['site_'+str(i+1) for i in range(pc_samples.shape[1])]
     headers = [f'{val}th' for val in list(fractiles)]+['mean']
-    index = ['site_'+str(i+1) for i in range(pc_samples.shape[1])]
+    # index = ['site_'+str(i+1) for i in range(pc_samples.shape[1])]
+    index = [f'site_{each}' for each in site_id]
     df_frac = DataFrame(frac_return,index=index,columns=headers).round(decimals=3)
     return df_frac
     # return frac_return

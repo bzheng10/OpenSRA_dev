@@ -177,17 +177,21 @@ class SasakiEtal2022(WellStrain):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            'mode': 'well mode type: 1, 2, 4',
-            # 'tubing_cement_flag': 'cemented tubing (True/False)',
-            # 'casing_cement_flag': 'cemented casing (True/False)',
-            'cement_flag': 'cemented casing/tubing (True/False)',
+            # 'mode': 'well mode type: 1, 2, 4',
+            # 'cement_flag': 'cemented casing/tubing (True/False)',
+            'z_top_of_cement': 'depth to top of cement (m)',
+            'z_crossing': 'depth to fault crossing (m)',
+            'd_production_boring': 'diameter of production boring (m)',
+            'd_production_casing': 'outer diameter of production casing (m)',
+            'd_tubing': 'outer diameter of tubing (m)',
+            'casing_flow': 'flag for whether well is configured for casing flow (True/False)',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        # 'mode', 'tubing_cement_flag', 'casing_cement_flag',
-        'mode', 'cement_flag',
+        # 'mode', 'cement_flag',
+        'z_top_of_cement', 'd_production_boring', 'd_production_casing', 'd_tubing', 'casing_flow'
     }
     # _MODEL_INTERNAL = {
     #     'n_sample': 1,
@@ -392,10 +396,21 @@ class SasakiEtal2022(WellStrain):
     @classmethod
     def get_req_rv_and_fix_params(cls, kwargs):
         """determine what model parameters to use"""
-        mode = kwargs.get('mode')
+        # mode = kwargs.get('mode')
         # tubing_cement_flag = kwargs.get('tubing_cement_flag')
         # casing_cement_flag = kwargs.get('casing_cement_flag')
-        cement_flag = kwargs.get('cement_flag')
+        # cement_flag = kwargs.get('cement_flag')
+        # get inputs
+        z_top_of_cement = kwargs.get('z_top_of_cement',None)
+        z_crossing = kwargs.get('z_crossing',None)
+        d_production_boring = kwargs.get('d_production_boring',None)
+        d_production_casing = kwargs.get('d_production_casing',None)
+        d_tubing = kwargs.get('d_tubing',None)
+        casing_flow = kwargs.get('casing_flow',None)
+        # get well modes and cement flag
+        mode, cement_flag = cls.get_well_mode(
+            z_top_of_cement, d_production_boring, d_production_casing, d_tubing, casing_flow
+        )
         # modes present
         modes = [num for num in [1, 2, 4] if num in mode]
         # find indices for cases with cement
@@ -446,12 +461,118 @@ class SasakiEtal2022(WellStrain):
     
 
     @classmethod
+    def get_well_mode(
+        cls,
+        z_top_of_cement,
+        z_crossing,
+        d_production_boring,
+        d_production_casing,
+        d_tubing,
+        casing_flow
+    ):
+        """determine the well mode based on diameters and flow configuration"""
+        # intermediate calculation
+        d_production_boring_inch = d_production_boring *100/2.54 # meter to inch
+        d_production_casing_inch = d_production_casing *100/2.54 # meter to inch
+        d_tubing_inch = d_tubing *100/2.54 # meter to inch
+        # get diameter differences
+        boring_casing = d_production_boring_inch - d_production_casing_inch
+        boring_tubing = d_production_boring_inch - d_tubing_inch
+        casing_tubing = d_production_casing_inch - d_tubing_inch
+        # boring-casing checks
+        boring_casing_closest_mode_1 = np.abs(boring_casing-(3+5/8))
+        boring_casing_closest_mode_2 = np.abs(boring_casing-(2+7/8))
+        boring_casing_closest_mode_4 = np.abs(boring_casing-(4+0/8))
+        boring_casing_argmin = np.argmin(np.vstack((
+                boring_casing_closest_mode_1,
+                boring_casing_closest_mode_2,
+                boring_casing_closest_mode_4,
+            )), axis=0)
+        boring_casing_control_mode = np.zeros(casing_flow.shape)
+        boring_casing_control_mode[boring_casing_argmin==0] = 1
+        boring_casing_control_mode[boring_casing_argmin==1] = 2
+        boring_casing_control_mode[boring_casing_argmin==2] = 4
+        # boring-tubing checks
+        boring_tubing_closest_mode_1 = np.abs(boring_tubing-(8+3/4))
+        boring_tubing_closest_mode_2 = np.abs(boring_tubing-(6+3/8))
+        boring_tubing_closest_mode_4 = np.abs(boring_tubing-(7+3/4))
+        boring_tubing_argmin = np.argmin(np.vstack((
+                boring_tubing_closest_mode_1,
+                boring_tubing_closest_mode_2,
+                boring_tubing_closest_mode_4,
+            )), axis=0)
+        boring_tubing_control_mode = np.zeros(casing_flow.shape)
+        boring_tubing_control_mode[boring_tubing_argmin==0] = 1
+        boring_tubing_control_mode[boring_tubing_argmin==1] = 2
+        boring_tubing_control_mode[boring_tubing_argmin==2] = 4
+        # casing-tubing checks
+        casing_tubing_closest_mode_1 = np.abs(casing_tubing-(5+1/8))
+        casing_tubing_closest_mode_2 = np.abs(casing_tubing-(3+1/2))
+        casing_tubing_closest_mode_4 = np.abs(casing_tubing-(3+3/4))
+        casing_tubing_argmin = np.argmin(np.vstack((
+                casing_tubing_closest_mode_1,
+                casing_tubing_closest_mode_2,
+                casing_tubing_closest_mode_4,
+            )), axis=0)
+        casing_tubing_control_mode = np.zeros(casing_flow.shape)
+        casing_tubing_control_mode[casing_tubing_argmin==0] = 1
+        casing_tubing_control_mode[casing_tubing_argmin==1] = 2
+        casing_tubing_control_mode[casing_tubing_argmin==2] = 4
+        # get cement flag for cementation at fault depth
+        cement_flag = cls.get_cement_flag(z_top_of_cement,z_crossing)
+        cement_flag_true = cement_flag==True
+        cement_flag_false = ~cement_flag_true
+        # condtions for whether well is configured for casing flow
+        casing_flow_true = casing_flow==True
+        casing_flow_false = ~casing_flow_true
+        # determine well mode
+        mode = np.ones(d_tubing.shape)*2 # default to 2 to simplify check
+        # -> if cemented at fault depth
+        if True in cement_flag_true:
+            # ---> if well is configured for casing flow
+            joint_cond = np.logical_and(cement_flag_true,casing_flow_true)
+            if True in joint_cond:
+                mode[np.logical_and(joint_cond,d_production_casing_inch>=8+5/8)] = 1
+                mode[np.logical_and(joint_cond,d_production_casing_inch<=6+5/8)] = 4
+            # ---> if well is not configured for casing flow
+            joint_cond = np.logical_and(cement_flag_true,casing_flow_false)
+            if True in joint_cond:
+                mode[joint_cond] = casing_tubing_control_mode[joint_cond]
+        # -> if not cemented at fault depth
+        if True in cement_flag_false:
+            # ---> if well is configured for casing flow
+            joint_cond = np.logical_and(cement_flag_false,casing_flow_true)
+            if True in joint_cond:
+                mode[joint_cond] = boring_casing_control_mode[joint_cond]
+            # ---> if well is not configured for casing flow
+            joint_cond = np.logical_and(cement_flag_false,casing_flow_false)
+            if True in joint_cond:
+                mode[joint_cond] = boring_tubing_control_mode[joint_cond]
+        # return
+        return mode, cement_flag        
+    
+    
+    @staticmethod
+    def get_cement_flag(
+        z_top_of_cement,
+        z_crossing
+    ):
+        """determine the cementation based on depth to cementation and fault crossing depth"""
+        cement_flag = np.empty_like(z_top_of_cement,dtype=bool)
+        cement_flag[z_top_of_cement>z_crossing] = False
+        cement_flag[z_top_of_cement<=z_crossing] = True
+        return cement_flag
+    
+
+    @classmethod
     # @njit
     def _model(cls, 
         pgdef, # upstream PBEE RV
         phi_cmt, ucs_cmt, # infrastructure
         theta, w_fc, w_dz, e_rock, # geotechnical/geologic
-        mode, cement_flag, # fixed/toggles
+        # mode, cement_flag, # fixed/toggles
+        z_top_of_cement, z_crossing, # fixed/toggles
+        d_production_boring, d_production_casing, d_tubing, casing_flow, # fixed/toggles
         # mode, tubing_cement_flag, casing_cement_flag, # fixed/toggles
         return_inter_params=False # to get intermediate params    
     ):
@@ -471,6 +592,12 @@ class SasakiEtal2022(WellStrain):
         
         # apply a pgdef cap of 0.25m to prevent model from blowing up
         # pgdef = np.minimum(pgdef,0.25)
+        
+        # get well modes and cement flag
+        mode, cement_flag = cls.get_well_mode(
+            z_top_of_cement, z_crossing, d_production_boring, d_production_casing, d_tubing, casing_flow
+        )
+        # cement_flag = cls.get_cement_flag(z_top_of_cement, z_crossing)
         
         # other params
         modes = [1,2,4]
@@ -613,6 +740,8 @@ class SasakiEtal2022(WellStrain):
         }
         # get intermediate values if requested
         if return_inter_params:
+            output['mode'] = mode
+            output['cement_flag'] = cement_flag
             output['dist_type_eps_tubing'] = dist_type_eps_tubing
             output['dist_type_eps_casing'] = dist_type_eps_casing
         

@@ -290,7 +290,7 @@ class Hazus2020_with_ZhuEtal2017(Liquefaction):
     
     """
 
-    _NAME = 'Hazus (FEMA, 2014)'       # Name of the model
+    _NAME = 'Hazus (FEMA, 2020)'       # Name of the model
     _ABBREV = None                     # Abbreviated name of the model
     _REF = "".join([                     # Reference for the model
         'Federal Emergency Management Agency (FEMA), 2020, ',
@@ -482,7 +482,7 @@ class Hazus2020(Liquefaction):
     
     """
 
-    _NAME = 'Hazus (FEMA, 2014)'       # Name of the model
+    _NAME = 'Hazus (FEMA, 2020)'       # Name of the model
     _ABBREV = None                     # Abbreviated name of the model
     _REF = "".join([                     # Reference for the model
         'Federal Emergency Management Agency (FEMA), 2020, ',
@@ -892,7 +892,7 @@ class ZhuEtal2015(Liquefaction):
     
     """
 
-    _NAME = 'Zhu et al. (2017)'       # Name of the model
+    _NAME = 'Zhu et al. (2015)'       # Name of the model
     _ABBREV = None                     # Abbreviated name of the model
     _REF = "".join([                     # Reference for the model
         'Zhu, J., Daley, D., Baise, L.G., Thompson, E.M., Wald, D.J., and Knudsen, K.L., 2017, ',
@@ -1803,7 +1803,7 @@ def ZhuEtal2017_superseded(**kwargs):
 
 
 # -----------------------------------------------------------
-def Hazus2014_superseded(**kwargs):
+def Hazus2020_superseded(**kwargs):
     """
     Compute probability of liquefaction at a given location using a simplified method after Liao et al. (1988).
 
@@ -1825,7 +1825,7 @@ def Hazus2014_superseded(**kwargs):
 
     References
     ----------
-    .. [1] Federal Emergency Management Agency (FEMA), 2014, Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, National Institute of Building Sciences and Federal Emergency Management Agency, Washington, DC, 690 p.
+    .. [1] Federal Emergency Management Agency (FEMA), 2020, Multi-Hazard Loss Estimation Methodology, Earthquake Model, Hazus MH 2.1 Technical Manual, National Institute of Building Sciences and Federal Emergency Management Agency, Washington, DC, 690 p.
     .. [2] Liao, S.S., Veneziano, D., and Whitman, R.V., 1988, Regression Models for Evaluating Liquefaction Probability, Journal of Geotechnical Engineering, vol. 114, no. 4, pp. 389-411.
 
     """

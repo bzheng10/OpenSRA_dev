@@ -256,6 +256,19 @@
 					"ConversionToOutputUnit": null
 				}
 			}
+		},
+		"ca_landslide_inventory": {
+			"ColumnNameToStoreAs": "NA",
+			"Datasets": {
+				"Set1": {
+					"FileType": "Shapefile",
+					"Source": "TBD",
+					"Path": "lib/Datasets/CA_LandslideInventory_SlipDirection/CA_LandslideInventory_Intersect_SlipDirection.shp",
+					"UnitForData": null,
+					"TargetUnit": null,
+					"ConversionToOutputUnit": null
+				}
+			}
 		}
 	}
 }

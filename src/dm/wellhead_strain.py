@@ -599,6 +599,8 @@ class PantoliEtal2022(WellheadStrain):
                                     output_mean['eps_'+case] = output_mean['eps_'+case] * 100
                                     # for rotation cases that do not match the site conditions, set to np.exp(-10)
                                     output_mean['eps_'+case][ind_zero_strain] = 1e-10
+                                    # get shape for sigmas
+                                    _shape = output_mean['eps_'+case].shape
                                     
                                     ###
                                     # get sigma
@@ -608,10 +610,10 @@ class PantoliEtal2022(WellheadStrain):
                                     eps_model_case = f"eps_{rot}_{p}_lowOP"
                                     output_sigma['eps_'+case] = output_sigma['eps_'+case] + \
                                         cls._MODEL_FORM['sigma'][eps_model_case]**2 * (1-high_pressure_weight)
-                                    output_sigma['eps_'+case] = np.sqrt(output_sigma['eps_'+case])
+                                    output_sigma['eps_'+case] = np.sqrt(output_sigma['eps_'+case]) * np.ones(_shape)
                                     
                                     # get sigma_mu
-                                    output_sigma_mu['eps_'+case] = np.ones(rot_sys2_4E90_jointA_xdir_pos.shape)*0.25
+                                    output_sigma_mu['eps_'+case] = np.ones(_shape)*0.25
         
         # prepare output
         output = {}

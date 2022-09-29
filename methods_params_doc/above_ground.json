@@ -453,8 +453,8 @@
         }
     },
     "EngineeringDemandParameter": {
-        "SubsystemRotation": {
-			"NameToDisplay": "Subsystem Rotation",
+        "WellheadRotation": {
+			"NameToDisplay": "Wellhead Rotation",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -468,17 +468,18 @@
 							"NameToDisplay": "Pantoli et al. (2022)",
 							"ToDisplay": true,
 							"Return": {
-								"Description": "Return: This method returns \"probability of liquefaction [prob_liq]\".",
-								"ReturnParam": ["prob_liq"]
+								"Description": "Return: This method returns \"rotation [rot]\" for wellhead components due to PGA.",
+								"ReturnParam": ["rot"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"PGA [pga]\", \"PGV [pgv]\", and \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
-								"UpstreamParam": ["pga", "pgv", "mag"]
+								"Description": "Upstream Dependency: This method requires \"PGA [pga]\" from the \"Intensity Measure\" tab.",
+								"UpstreamParam": ["pga"]
 							},
                             "DisplayOrder": [
                                 "h_tree",
                                 "l_p2",
-                                "l_p6",
+                                "l_p6_sys23",
+                                "l_p6_sys4",
                                 "w_valve",
                                 "sys_type",
                                 "tee_flag",
@@ -501,10 +502,18 @@
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"l_p6": {
-									"NameToDisplay": "l_p6",
+								"l_p6_sys23": {
+									"NameToDisplay": "l_p6_sys23",
 									"VarType": "random",
-									"DescToDisplay": "[m] length of pipe segment S6, for all subsystem types",
+									"DescToDisplay": "[m] length of pipe segment S6, for subsystem types 2 and 3",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"l_p6_sys4": {
+									"NameToDisplay": "l_p6_sys4",
+									"VarType": "random",
+									"DescToDisplay": "[m] length of pipe segment S6, for all subsystem type 4",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -549,8 +558,8 @@
         }
     },
     "DamageMeasure": {
-        "SubsystemStrain": {
-			"NameToDisplay": "Subsystem Strain",
+        "WellheadStrain": {
+			"NameToDisplay": "Wellhead Strain",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -565,15 +574,17 @@
 							"ToDisplay": true,
 							"DisplayOrder": [
 								"high_pressure_weight",
-                                "sys_type"
+                                "sys_type",
+                                "tee_flag",
+                                "elbow_flag"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"longitudinal pipe strain [pipe_strain]\".",
-								"ReturnParam": ["pipe_strain"]
+								"Description": "Return: This method returns \"tensile strain [eps]\" for wellhead components due to rotation induced by PGA.",
+								"ReturnParam": ["eps"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from \"lateral spread\", \"ground settlement\", \"landslide\", and/or \"surface fault rupture\" under the \"Engineering Demand Parameter\" tab.",
-								"UpstreamParam": ["pgdef"]
+								"Description": "Upstream Dependency: This method requires \"rotation [rot]\" from \"wellhead rotation\" under the \"Engineering Demand Parameter\" tab.",
+								"UpstreamParam": ["rot"]
 							},
 							"Params": {
 								"high_pressure_weight": {
@@ -590,6 +601,98 @@
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
+								},
+								"tee_flag": {
+									"NameToDisplay": "tee_flag",
+									"VarType": "fixed",
+									"DescToDisplay": "flag for tee-joints in subsystem: True/False",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"elbow_flag": {
+									"NameToDisplay": "elbow_flag",
+									"VarType": "fixed",
+									"DescToDisplay": "flag for elbows in subsystem: True/False",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								}
+							}
+						}
+					}
+				}
+			}
+        },
+        "VesselMomentRatio": {
+			"NameToDisplay": "Pressure Vessel Moment Ratio",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "PantoliEtal2022",
+					"Options" : {
+						"PantoliEtal2022": {
+							"NameToDisplay": "Pantoli et al. (2022)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+								"h_vessel",
+                                "h_d_ratio_vessel",
+                                "p_vessel",
+                                "d_anchor",
+								"stretch_length_flag"
+							],
+							"Return": {
+								"Description": "Return: This method returns \"moment ratio [moment_ratio]\" for pressure vessels due to PGA.",
+								"ReturnParam": ["moment_ratio"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"PGA [pga]\" from the \"Intensity Measure\" tab.",
+								"UpstreamParam": ["pga"]
+							},
+							"Params": {
+								"h_vessel": {
+									"NameToDisplay": "h_vessel",
+									"VarType": "random",
+									"DescToDisplay": "[m] height of pressure vessels",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"h_d_ratio_vessel": {
+									"NameToDisplay": "h_d_ratio_vessel",
+									"VarType": "random",
+									"DescToDisplay": "height-to-diameter ratio for pressure vessels",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"p_vessel": {
+									"NameToDisplay": "sys_type",
+									"VarType": "random",
+									"DescToDisplay": "[MPa] design pressure for pressure vessels",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"d_anchor": {
+									"NameToDisplay": "sys_type",
+									"VarType": "random",
+									"DescToDisplay": "[mm] diameter for anchors",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"stretch_length_flag": {
+									"NameToDisplay": "stretch_length_flag",
+									"VarType": "fixed",
+									"DescToDisplay": "flag for presence of stretch length for anchors: True/False",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
 								}
 							}
 						}
@@ -599,93 +702,8 @@
         }
     },
     "DecisionVariable": {
-        "SubsystemCompressiveRupture": {
-			"NameToDisplay": "Subsystem Compressive Rupture",
-			"WidgetType": null,
-			"ToDisplay": true,
-			"Params": {
-				"Method": {
-					"NameToDisplay": "Available Method(s)",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "BainEtal2022",
-					"Options" : {
-						"BainEtal2022": {
-							"NameToDisplay": "Bain et al. (2022)",
-							"ToDisplay": true,
-							"DisplayOrder": [
-								"d_sys",
-								"t_sys",
-								"sigma_y",
-								"op_press",
-								"welding",
-								"steel_grade"
-							],
-							"Return": {
-								"Description": "Return: This method returns \"probability of compressive rupture of subsystem components [prob_comp_rupture]\".",
-								"ReturnParam": ["prob_rupture"]
-							},
-							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"subsystem strain [subsystem_strain]\" from the \"Damage Measure - Subsystem Strain\" tab.",
-								"UpstreamParam": ["subsystem strain"]
-							},
-							"Params": {
-								"d_sys": {
-									"NameToDisplay": "d_sys",
-									"VarType": "random",
-									"DescToDisplay": "[mm] outside diameter for subsystem components",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"t_sys": {
-									"NameToDisplay": "t_sys",
-									"VarType": "random",
-									"DescToDisplay": "[mm] pipe wall thickness for subsystem components",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"sigma_y": {
-									"NameToDisplay": "sigma_y",
-									"VarType": "random",
-									"DescToDisplay": " [kPa] yield stress for subsystem components",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"op_press": {
-									"NameToDisplay": "op_press",
-									"VarType": "random",
-									"DescToDisplay": "[kPa] internal operating pressure for subsystem components",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-                                "welding": {
-                                    "NameToDisplay": "welding",
-                                    "VarType": "fixed",
-                                    "DescToDisplay": "\"welded\" or \"seamless\" for SMLS - required for \"level 2 and 3\" analysis",
-                                    "WidgetType": "QLabel",
-                                    "ToDisplay": true,
-                                    "DefaultValue": null
-                                },
-								"steel_grade": {
-									"NameToDisplay": "steel_grade",
-									"VarType": "fixed",
-									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\", \"above_ground_model\"",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								}
-							}
-						}
-					}
-				}
-			}
-        },
-        "SubsystemTensileRupture": {
-			"NameToDisplay": "Subsystem Tensile Rupture",
+        "WellheadRupture": {
+			"NameToDisplay": "Wellhead Rupture",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -701,12 +719,12 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of tensile rupture for subsystem components [prob_tensile_rupture]\".",
+								"Description": "Return: This method returns \"probability of rupture [prob_rupture]\" in tension for wellhead components due to tensile strain.",
 								"ReturnParam": ["prob_rupture"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"subsystem strain [subsystem_strain]\" from the \"Damage Measure - Subsystem Strain\" tab.",
-								"UpstreamParam": ["subsystem strain"]
+								"Description": "Upstream Dependency: This method requires \"tensile strain [eps]\" from \"wellhead strain\" under the \"Damage Measure\" tab.",
+								"UpstreamParam": ["eps"]
 							},
 							"Params": {
 							}
@@ -715,8 +733,8 @@
 				}
 			}
         },
-        "SubsystemTensileLeakage": {
-			"NameToDisplay": "Subsystem Tensile Leakage",
+        "WellheadLeakage": {
+			"NameToDisplay": "Wellhead Leakage",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -732,12 +750,43 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of tensile leakage for subsystem components [prob_tensile_leakage]\".",
+								"Description": "Return: This method returns \"probability of leakage [prob_leakage]\" in tension for wellhead components due to tensile strain.",
+								"ReturnParam": ["prob_leakage"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"tensile strain [eps]\" from \"wellhead strain\" under the \"Damage Measure\" tab.",
+								"UpstreamParam": ["eps"]
+							},
+							"Params": {
+							}
+						}
+					}
+				}
+			}
+        },
+        "VesselLeakage": {
+			"NameToDisplay": "Vessel Rupture",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "BainEtal2022",
+					"Options" : {
+						"BainEtal2022": {
+							"NameToDisplay": "Bain et al. (2022)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "Return: This method returns \"probability of rupture [prob_rupture]\" in tension for pressure vessels due to induced moment from PGA.",
 								"ReturnParam": ["prob_rupture"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"subsystem strain [pipe_strain]\" from the \"Damage Measure - Subsystem Strain\" tab.",
-								"UpstreamParam": ["subsystem strain"]
+								"Description": "Upstream Dependency: This method requires \"moment ratio [moment_ratio]\" from \"pressure vessel moment ratio\" under the \"Damage Measure\" tab.",
+								"UpstreamParam": ["moment_ratio"]
 							},
 							"Params": {
 							}

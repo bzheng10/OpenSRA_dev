@@ -777,7 +777,7 @@ def main(work_dir, logging_level='info'):
                 if pbee_dim == 2:
                     pc_coeffs[param_i] = pc_coeffs_single_int(**pc_kwargs)
                 # 2 integral
-                if pbee_dim == 3:
+                elif pbee_dim == 3:
                     pc_coeffs[param_i] = pc_coeffs_double_int(**pc_kwargs)
                 # 3 integrals
                 elif pbee_dim == 4:

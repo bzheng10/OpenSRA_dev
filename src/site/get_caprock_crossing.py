@@ -1,13 +1,15 @@
 """
 """
 
-# scientific processing
+# Python base modules
 import os
 import json
+
+# scientific processing
 import pandas as pd
 import numpy as np
 
-# geoprocessing
+# geoprocessing modules
 import geopandas as gpd
 from shapely.geometry import Polygon, LineString
 from pyproj import Transformer

@@ -1,15 +1,22 @@
 # workflow functions used by PC
+
+# Python base modules
 import importlib
 import copy
 import os
 import time
+
+# scientific processing modules
 import numpy as np
 from pandas import DataFrame
+
+# precompile
 from numba_stats import norm
 from numba import njit, float64
 
-from src.pc_func.pc_util import res_to_samples, hermite_prob
+# OpenSRA modules and functionsx
 from src.util import lhs
+from src.pc_func.pc_util import res_to_samples, hermite_prob
 
 
 @njit(

@@ -24,14 +24,15 @@
 
 
 # -----------------------------------------------------------
-# Python modules
+# Python base modules
 import os
 import logging
 import sys
 import argparse
 import json
 import time
-# import zipfile
+
+# scientific processing modules
 import numpy as np
 import pandas as pd
 

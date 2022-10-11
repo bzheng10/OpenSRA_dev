@@ -7,12 +7,17 @@ Created on Wed Jun 22 11:58:50 2022
 This version implements the anchor block length calculation
 """
 
+# Python base modules
 import math
 import os
 import sys
+
+# scientific processing modules
 import pandas as pd
 import numpy as np
 import geopandas as gpd
+
+# geoprocessing modules
 # import pyproj
 from shapely.geometry import Point, LineString, MultiLineString
 from shapely.ops import cascaded_union

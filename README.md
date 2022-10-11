@@ -1,18 +1,20 @@
+<!---
 **Builds Status**
 
 | **Windows** | **Mac** |
 |---|---|
 [![Build Status]()]()|[![Build Status]()]()
+-->
 
 # OpenSRA
-This repository contains the source code to OpenSRA_backend, developed by [Slate Geotechnical Consultants](http://slategeotech.com/), with assistance from [NHERI SimCenter](https://simcenter.designsafe-ci.org/) and [UC Berkeley](https://ce.berkeley.edu/).
+This repository contains the source code to OpenSRA_backend, developed by [Slate Geotechnical Consultants (Slate)](http://slategeotech.com/), with assistance from [NHERI SimCenter](https://simcenter.designsafe-ci.org/) and [UC Berkeley](https://ce.berkeley.edu/).
 
 ## Developers
-Barry Zheng, PhD, @ Slate: http://slategeotech.com/
+Barry Zheng, PhD @ [Slate](https://slategeotech.com/people/)
 
-Steve Gavrilovic, PhD, @ NHERI SimCenter: https://simcenter.designsafe-ci.org/about/people/
+Steve Gavrilovic, PhD @ NHERI SimCenter: [LinkedIn](https://www.linkedin.com/in/stevan-gavrilovic-berkeley/)
 
-Maxime Lacour, PhD, @ UC Berkeley: [LinkedIn](https://www.linkedin.com/in/maxime-lacour-637a8b79)
+Maxime Lacour, PhD @ UC Berkeley: [LinkedIn](https://www.linkedin.com/in/maxime-lacour-637a8b79)
 
 ## Dependencies
 
@@ -52,14 +54,17 @@ From "pip"
 [tables (3.7.0)](https://www.pytables.org/usersguide/installation.html/)
 
 ## User's Guide
-To run OpenSRA in the command prompt, nagivate to the root folder of OpenSRA and run the command:
-```
-python OpenSRA.py -i PATH_TO_INPUT_FOLDER
-```
+To run OpenSRA in the command prompt:
 
+1. Nagivate to the root folder of OpenSRA.
+2. Run preprocess command on the working directory using the command:
+```
+python Preprocess.py -w FULL_PATH_TO_INPUT_FOLDER
+```
+3. Once preprocessing is finished, run the main script for OpenSRA using the command:
 To clean results from the previous run, run the command:
 ```
-python OpenSRA.py -i PATH_TO_INPUT_FOLDER -c yes
+python OpenSRA.py -w FULL_PATH_TO_INPUT_FOLDER
 ```
 
 ## Developer's Guide

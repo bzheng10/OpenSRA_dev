@@ -27,12 +27,9 @@ import pandas as pd
 # suppress warning that may come up
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
-# append OpenSRA base dir to path
-# sys.path.append('..')
-
 # OpenSRA modules
-from src.site import geodata
 from src.im import haz
+from src.site import geodata
 from src.site.get_pipe_crossing import get_pipe_crossing
 from src.site.get_well_crossing import get_well_crossing
 from src.site.get_caprock_crossing import get_caprock_crossing

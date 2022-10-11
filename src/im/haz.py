@@ -135,14 +135,17 @@ class SeismicHazard(object):
         if ssc_name is None:
             logging.info(f'Initialized "UCERF3": "Mean UCERF3 FM3.1"')
             self.source = getattr(ssc, "UCERF")('Mean UCERF3 FM3.1')
-            self.event_id = self.source.df_rupture.SourceId.values
+            # self.event_id = self.source.df_rupture.SourceId.values
         else:
+            ##########################################
+            # for full inventory
             if ssc_name == 'UCERF':
                 if ucerf_model_name is None:
                     ucerf_model_name = 'Mean UCERF3 FM3.1'
                 logging.info(f'Initialized "UCERF3": "{ucerf_model_name}"')
                 self.source = getattr(ssc, "UCERF")(ucerf_model_name)
-                self.event_id = self.source.df_rupture.SourceId.values
+                # self.event_id = self.source.df_rupture.SourceId.values # for full inventory
+            ##########################################
             elif ssc_name == 'ShakeMap' or 'UserDefined' in ssc_name:
                 logging.info(f'Initialized "{ssc_name}" for SSC')
                 if ssc_name == 'ShakeMap':
@@ -158,8 +161,8 @@ class SeismicHazard(object):
                 raise NotImplementedError("Available options for SSC are UCERF3, ShakeMap, UserDefinedRupture, and UserDefinedGM")
         # update params
         self._n_event = self.source._n_event
-        self.rate = self.source.df_rupture.MeanAnnualRate.values
-        self.mag = self.source.df_rupture.Mag.values
+        self.rate = self.source.df_rupture.AnnualRate.values
+        self.mag = self.source.df_rupture.Magnitude.values
     
     
     def process_rupture(self, 
@@ -184,17 +187,23 @@ class SeismicHazard(object):
             )
             # update params
             self._n_event = self.source._n_event
-            if self.ssc_name == 'UCERF':
-                self.event_id = self.source.df_rupture.SourceId.values
-            elif self.ssc_name == 'UserDefinedRupture':
-                self.event_id = self.source.df_rupture.EventID.values
-            self.rate = self.source.df_rupture.MeanAnnualRate.values
-            self.mag = self.source.df_rupture.Mag.values
+            ###############################
+            # for full inventory
+            # if self.ssc_name == 'UCERF':
+                # self.event_id = self.source.df_rupture.SourceId.values
+            ###############################
+            # elif self.ssc_name == 'UserDefinedRupture':
+            #     self.event_id = self.source.df_rupture.EventID.values
+            self.event_id = self.source.df_rupture.EventID.values
+            self.rate = self.source.df_rupture.AnnualRate.values
+            self.mag = self.source.df_rupture.Magnitude.values
         elif self.ssc_name == 'ShakeMap':
             self.source.process_rupture(
                 mag_min=mag_min,
                 mag_max=mag_max,
             )
+            # update params
+            self._n_event = self.source._n_event
         else:
             raise NotImplementedError("Under development.")
     
@@ -277,6 +286,7 @@ class SeismicHazard(object):
                 logging.info(f"\t- Number of events: {self._n_event}")
                 logging.info(f"\t- Number of sites: {self._n_site}")
                 # setup
+                
                 shape = (self._n_event, self._n_site)
                 self.gm_pred = {}
                 im_list = [im.lower() for im in im_list] # convert to lower case
@@ -290,6 +300,7 @@ class SeismicHazard(object):
                 logging.info(f"\t- Periods to get: {', '.join(self.im_list)}")
                 # loop through number of events
                 for i in range(self._n_event):
+                # for i, rup_ind in self.source.rupture_in_maxdist:
                     # perform sampling of IMs from ShakeMap
                     site_gm, site_aleatory, site_epistemic = \
                         self.source._sample_gm_from_map_i(i, self.site_data['lon'], self.site_data['lat'])
@@ -311,7 +322,9 @@ class SeismicHazard(object):
                 if self.gmpe is None:
                     self.init_gmpe() # use default, which is NGAWest2
                 # setup
+                # shape = (self._n_event, self._n_site)
                 shape = (self._n_event, self._n_site)
+                # print(self._n_event, shape)
                 self.gm_pred = {}
                 im_list = [im.lower() for im in im_list] # convert to lower case
                 self.im_list = im_list
@@ -324,22 +337,36 @@ class SeismicHazard(object):
                 logging.info(f"\t- Periods to calculate: {', '.join(self.im_list)}")
                 # loop through number of events
                 for i in range(self._n_event):
+                # for i, rup_ind in enumerate(self.source.rupture_in_maxdist):
                     # each source type has its own version of generating inputs for running GMPE
+                    # see if current event contains sites within r_max 
+                    # if i in self.source.sites_for_rupture_in_maxdist:
                     # get inputs
                     kwargs = self.source._get_gmpe_input_for_event_i(i, im_list, self.site_data)
                     # run mean model
                     self.gmpe.run_model(kwargs, njit_on=njit_on)
                     # store outputs
+                    # try:
                     for j, im in enumerate(im_list):
                         self.gm_pred[im]['mean'][i,kwargs['site_id']] = self.gmpe.model_dist['mean'][j,:]
                         self.gm_pred[im]['sigma'][i,kwargs['site_id']] = self.gmpe.model_dist['aleatory']['sigma'][j,:]
                         self.gm_pred[im]['sigma_mu'][i,kwargs['site_id']] = self.gmpe.model_dist['epistemic'][j,:]
+                    # except:
+                    #     print(i)
+                    # else:
+                    #     # store outputs
+                    #     for j, im in enumerate(im_list):
+                    #         self.gm_pred[im]['mean'][i,:] = -10
+                    #         self.gm_pred[im]['sigma'][i,:] = 0.001
+                    #         self.gm_pred[im]['sigma_mu'][i,:] = 0.0
+                        
                     # print message to track number of events already ran
-                    if (i+1) % n_events_print == 0:
-                        logging.info(f"\t\t- finished {i+1} events...")
+                    # if (i+1) % n_events_print == 0:
+                    #     logging.info(f"\t\t- finished {i+1} events...")
                 logging.info(f">>>>>>>>>>> Finished calculating ground motion predictions")
         
         
+    # def export_gm_pred(self, sdir=None, stype=['sparse','csv'], addl_rup_meta=None):
     def export_gm_pred(self, sdir=None, stype=['sparse','csv']):
         """exports calculated ground motion predictions"""
         name_map = {
@@ -389,9 +416,11 @@ class SeismicHazard(object):
             # export other information
             if self.ssc_name == 'UCERF':
                 self._export_site_data(sdir)
+            # self._export_rupture_metadata(sdir, addl_rup_meta=addl_rup_meta)
             self._export_rupture_metadata(sdir)
     
     
+    # def _export_rupture_metadata(self, sdir=None, export_rup_geom=True, addl_rup_meta=None):
     def _export_rupture_metadata(self, sdir=None, export_rup_geom=True):
         """exports rupture scenario metadata (mean annual rate and magnitude)"""
         if self.mag is None:
@@ -403,7 +432,7 @@ class SeismicHazard(object):
             else:
                 rate = self.rate
             if self.event_id is None:
-                event_id = np.arange(self._n_event)
+                event_id = np.arange(self._n_event)+1
             else:
                 event_id = self.event_id
             # make DataFrame
@@ -482,12 +511,12 @@ class SeismicHazard(object):
         means = means[ind_im_mean_gt_m10]
         sigmas = self.gm_pred[im]['sigma'][ind_im_mean_gt_m10, site_num]
         sigma_mus = self.gm_pred[im]['sigma_mu'][ind_im_mean_gt_m10, site_num]
-        # rates = self.source.df_rupture.MeanAnnualRate[ind_im_mean_gt_m10].values
+        # rates = self.source.df_rupture.AnnualRate[ind_im_mean_gt_m10].values
         if self.rate is not None:
             rates = self.rate[ind_im_mean_gt_m10]
         elif self.source is not None:
             if getattr(self.source,'df_rupture',None) is not None:
-                rates = self.source.df_rupture.MeanAnnualRate[ind_im_mean_gt_m10].values
+                rates = self.source.df_rupture.AnnualRate[ind_im_mean_gt_m10].values
             else:
                 rates = np.ones(len(ind_im_mean_gt_m10))/len(ind_im_mean_gt_m10)
         else:

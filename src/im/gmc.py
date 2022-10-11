@@ -15,6 +15,7 @@
 # Python base modules
 import os
 import logging
+import sys
 
 # data manipulation modules
 import numpy as np
@@ -41,6 +42,7 @@ from numba.types import Tuple
     # import contextily as ctx
 
 # OpenSRA modules
+# sys.append('..')
 
 
 # disable some numpy warnings
@@ -108,7 +110,11 @@ class GMPE(object):
     _OUTPUT = []
     
     # Other backend parameters
-    _GMPE_COEFF_DIR = os.path.join('..','..','OpenSRA','lib','NGAW2_Supplement_Data')
+    if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
+        os.chdir('..')
+    _OPENSRA_DIR = os.getcwd()
+    # _GMPE_COEFF_DIR = os.path.join('..','..','OpenSRA','lib','NGAW2_Supplement_Data')
+    _GMPE_COEFF_DIR = os.path.join(_OPENSRA_DIR,'lib','NGAW2_Supplement_Data')
     _PGA_PERIOD = 0
     _PGV_PERIOD = -1
     

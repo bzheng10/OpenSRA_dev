@@ -30,9 +30,9 @@ class ShearInducedWellRupture(BaseModel):
     #     'category': 'DV',        # Return category in PBEE framework, e.g., IM, EDP, DM
     #     'type': 'shaking-induced well rupture',       # Type of model (e.g., liquefaction, landslide, pipe strain)
     #     'variable': [
-    #         'eps_crit_rup_casing',
-    #         'eps_crit_rup_tubing',
-    #     ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
+    #         'strain_crit_rup_casing',
+    #         'strain_crit_rup_tubing',
+    #     ] # Return variable for PBEE category, e.g., pgdef, strain_pipe
     # }
 
     def __init__(self):
@@ -50,14 +50,14 @@ class SasakiEtal2022(ShearInducedWellRupture):
     
     Returns
     -------
-    eps_crit_rup_casing : float, np.ndarray
-        [N-m] mean critical moment for rupture for production casing
-    eps_crit_rup_tubing : float, np.ndarray
-        [N-m] mean critical moment for rupture for tubing
-    sigma_eps_crit_rup_casing : float, np.ndarray
-        aleatory variability for ln(eps_crit_rup_casing)
-    sigma_eps_crit_rup_tubing : float, np.ndarray
-        aleatory variability for ln(eps_crit_rup_tubing)
+    strain_crit_rup_casing : float, np.ndarray
+        [N-m] mean critical shear strain for rupture for production casing
+    strain_crit_rup_tubing : float, np.ndarray
+        [N-m] mean critical shear strain for rupture for tubing
+    sigma_strain_crit_rup_casing : float, np.ndarray
+        aleatory variability for ln(strain_crit_rup_casing)
+    sigma_strain_crit_rup_tubing : float, np.ndarray
+        aleatory variability for ln(strain_crit_rup_tubing)
     
     References
     ----------
@@ -77,8 +77,8 @@ class SasakiEtal2022(ShearInducedWellRupture):
         'category': 'DV',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
-            'eps_crit_rup_casing': {
-                'desc': 'mean critical pipe strain for rupture for production casing (%)',
+            'strain_crit_rup_casing': {
+                'desc': 'mean critical shear strain for rupture for production casing (%)',
                 'unit': '%',
                 # 'mean': None,
                 # 'aleatory': None,
@@ -89,8 +89,8 @@ class SasakiEtal2022(ShearInducedWellRupture):
                 # },
                 # 'dist_type': 'lognormal',
             },
-            'eps_crit_rup_tubing': {
-                'desc': 'mean critical pipe strain for rupture for tubing (%)',
+            'strain_crit_rup_tubing': {
+                'desc': 'mean critical shear strain for rupture for tubing (%)',
                 'unit': '%',
                 # 'mean': None,
                 # 'aleatory': None,
@@ -101,13 +101,13 @@ class SasakiEtal2022(ShearInducedWellRupture):
                 # },
                 # 'dist_type': 'lognormal',
             },
-            # 'sigma_eps_crit_rup_casing': {
-            #     'desc': 'aleatory variability for ln(eps_crit_rup_casing)',
+            # 'sigma_strain_crit_rup_casing': {
+            #     'desc': 'aleatory variability for ln(strain_crit_rup_casing)',
             #     'unit': '',
             #     'mean': None,
             # },
-            # 'sigma_eps_crit_rup_tubing': {
-            #     'desc': 'aleatory variability for ln(eps_crit_rup_tubing)',
+            # 'sigma_strain_crit_rup_tubing': {
+            #     'desc': 'aleatory variability for ln(strain_crit_rup_tubing)',
             #     'unit': '',
             #     'mean': None,
             # },
@@ -115,7 +115,7 @@ class SasakiEtal2022(ShearInducedWellRupture):
     }
     # _INPUT_PBEE_META = {
     #     # 'category': 'DM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-    #     # 'variable': 'eps_pipe'        # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    #     # 'variable': 'strain_pipe'        # Input variable for PBEE category, e.g., pgdef, strain_pipe
     # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
         'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
@@ -123,7 +123,7 @@ class SasakiEtal2022(ShearInducedWellRupture):
         'params': {
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = True
+    _INPUT_DIST_VARY_WITH_LEVEL = False
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -136,21 +136,15 @@ class SasakiEtal2022(ShearInducedWellRupture):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'level1': [],
-        'level2': [],
-        'level3': [],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'level1': ['mode'],
-        'level2': ['mode'],
-        'level3': ['mode'],
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
     _MODEL_INPUT_RV = {}
     # _SUB_CLASS = None
     # OUTPUT = [                      # List of available outputs
-    #     'eps_crit_rupture',
+    #     'strain_crit_rupture',
     # ]
 
 
@@ -168,39 +162,39 @@ class SasakiEtal2022(ShearInducedWellRupture):
         """Model"""
         
         # mean
-        # eps_crit_rup_casing = np.empty_like(mode)
-        # eps_crit_rup_tubing = np.empty_like(mode)
+        # strain_crit_rup_casing = np.empty_like(mode)
+        # strain_crit_rup_tubing = np.empty_like(mode)
         
         # by mode
-        # eps_crit_rup_casing = 4.073354318 # %
-        # eps_crit_rup_tubing = 4.005356698 # %
-        # eps_crit_rup_casing = np.ones(1)*4.073354318 # %
-        # eps_crit_rup_tubing = np.ones(1)*4.005356698 # %
+        # strain_crit_rup_casing = 4.073354318 # %
+        # strain_crit_rup_tubing = 4.005356698 # %
+        # strain_crit_rup_casing = np.ones(1)*4.073354318 # %
+        # strain_crit_rup_tubing = np.ones(1)*4.005356698 # %
         
         # sigma
-        # sigma_eps_crit_rup_casing = np.ones(1)*0.185657455
-        # sigma_eps_crit_rup_tubing = np.ones(1)*0.392014819
+        # sigma_strain_crit_rup_casing = np.ones(1)*0.185657455
+        # sigma_strain_crit_rup_tubing = np.ones(1)*0.392014819
         
         # prepare outputs
         output = {
-            'eps_crit_rup_casing': {
+            'strain_crit_rup_casing': {
                 'mean': np.exp(4.073354318),
                 'sigma': 0.185657455,
                 'sigma_mu': 0.102984227,
                 'dist_type': 'lognormal',
                 'unit': '%'
             },
-            'eps_crit_rup_tubing': {
+            'strain_crit_rup_tubing': {
                 'mean': np.exp(4.005356698),
                 'sigma': 0.392014819,
                 'sigma_mu': 0.261343213,
                 'dist_type': 'lognormal',
                 'unit': '%'
             },
-            # 'eps_crit_rup_casing': eps_crit_rup_casing,
-            # 'eps_crit_rup_tubing': eps_crit_rup_tubing,
-            # 'sigma_eps_crit_rup_casing': sigma_eps_crit_rup_casing,
-            # 'sigma_eps_crit_rup_tubing': sigma_eps_crit_rup_tubing,
+            # 'strain_crit_rup_casing': strain_crit_rup_casing,
+            # 'strain_crit_rup_tubing': strain_crit_rup_tubing,
+            # 'sigma_strain_crit_rup_casing': sigma_strain_crit_rup_casing,
+            # 'sigma_strain_crit_rup_tubing': sigma_strain_crit_rup_tubing,
         }
         # get intermediate values if requested
         if return_inter_params:

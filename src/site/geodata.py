@@ -160,10 +160,11 @@ class GeoData(object):
             else:
                 nearest_pt_in_sample_set = sample_set.sindex.nearest(table.geometry,return_all=False) # sampling
             # update data table with samples
+            str_cols = ['vs30source', 'vs30_ref', 'z1p0_ref', 'z2p5_ref']
             for col in cols_to_get:
                 # initialize
-                if col == 'vs30source':
-                    sampled_vals = np.empty(table.shape[0],dtype='<U10')
+                if col in str_cols:
+                    sampled_vals = np.empty(table.shape[0],dtype='<U30')
                     if use_hull:
                         sampled_vals[loc_ind_outside_hull] = 'Inferred'
                 else:
@@ -1041,11 +1042,15 @@ class LocationData(ShapefileData):
             bound_polygon = Polygon(self.bound.geometry.to_list())
         # get points in boundary
         loc_in_bound = self.clip_data_with_polygon(self.data.copy(),bound_polygon,buffer=buffer)
+        # loc_outside_bound = np.asarray(list(set(np.arange(self.data.shape[0])).difference(set(loc_in_bound))))
         # map points to rtree and query
         # sindex = self.data.sindex
         # query = sindex.query_bulk(bound_polygon, predicate='intersects')
         # update data with query results and reset index
         self.data = self.data.loc[loc_in_bound].reset_index(drop=True)
+        # self.data = self.data.iloc[loc_in_bound]
+        self.loc_in_bound = loc_in_bound
+        # self.loc_outside_bound = loc_outside_bound
     
 
     def export_data_to_shp(self, spath=None):

@@ -72,10 +72,11 @@ def smart_round(number, decimal=None):
         return np.round(number,decimal)
 
 
-#
+# -----------------------------------------------------------
 def decimals(number):
     """determine number of decimals after rounding"""
     return int(abs(np.round(np.log(number)/np.log(10))))
+
 
 # -----------------------------------------------------------
 def decimal_count(number):

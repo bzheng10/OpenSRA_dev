@@ -2,6 +2,7 @@
 import importlib
 import copy
 import os
+import time
 import numpy as np
 from pandas import DataFrame
 from numba_stats import norm
@@ -243,8 +244,9 @@ def prepare_methods(workflow, n_site):
                             print(f'\t- {cat.lower()}.{haz} does not depend pga or pgv, do not include IM dependency')
                             mods_dict[cat.lower()][haz]['upstream_category'] = None
                     else:
-                        print(f'\t- {cat.lower()}.{haz} depends on {upstream_cat[0].lower()}')
-                        mods_dict[cat.lower()][haz]['upstream_category'] = upstream_cat[0]
+                        if upstream_cat[0] is not None:
+                            print(f'\t- {cat.lower()}.{haz} depends on {upstream_cat[0].lower()}')
+                            mods_dict[cat.lower()][haz]['upstream_category'] = upstream_cat[0]
                 elif len(upstream_cat) == 0:
                     print(f'\t- {cat.lower()}.{haz} does not have any upstream dependency')
                     mods_dict[cat.lower()][haz]['upstream_category'] = None
@@ -296,6 +298,16 @@ def get_workflow_order_list(methods_dict, infra_type='below_ground', verbose=Tru
                 'cat_list': ['IM', 'DM', 'DV'],
                 'haz_list': ['im', 'well_moment', 'well_rupture_shaking'],
                 'n_pbee_dim': 3,
+            }
+            count += 1
+        if 'caprock_leakage' in methods_dict['dv']:
+            workflow_order_list[f'case_{count}'] = {
+                # 'cat_list': ['IM', 'DV'],
+                # 'haz_list': ['im', 'caprock_leakage'],
+                # 'n_pbee_dim': 2,
+                'cat_list': ['DV'],
+                'haz_list': ['caprock_leakage'],
+                'n_pbee_dim': 1,
             }
             count += 1
     elif infra_type == 'below_ground':
@@ -394,7 +406,6 @@ def get_workflow_order_list(methods_dict, infra_type='below_ground', verbose=Tru
 def get_samples_for_params(dist, n_sample, n_site):
     """get samples for list of parameters with distributions"""
     # setup
-    processed_dist = {}
     samples = {}
     # loop through to find non-fixed params
     count = 0
@@ -413,17 +424,21 @@ def get_samples_for_params(dist, n_sample, n_site):
     count = 0
     for i, each in enumerate(dist):
         if dist[each]['dist_type'] != 'fixed':
-            samples[each] = np.zeros((n_site,n_sample))
-            for j in range(n_site):
-                samples[each][j,:] = res_to_samples(
-                    samples=res[j,:,count],
-                    mean=dist[each]['mean'][j],
-                    sigma=dist[each]['sigma'][j],
-                    low=dist[each]['low'][j],
-                    high=dist[each]['high'][j],
-                    dist_type=dist[each]['dist_type']
-                )
-            count += 1
+            # skip param entirely if 'event_dependent' is flagged with any of the sites
+            if isinstance(dist[each]['mean'][0],str) and dist[each]['mean'][0] == 'event_dependent':
+                pass
+            else:
+                samples[each] = np.zeros((n_site,n_sample))
+                for j in range(n_site):
+                    samples[each][j,:] = res_to_samples(
+                        samples=res[j,:,count],
+                        mean=dist[each]['mean'][j],
+                        sigma=dist[each]['sigma'][j],
+                        low=dist[each]['low'][j],
+                        high=dist[each]['high'][j],
+                        dist_type=dist[each]['dist_type']
+                    )
+                count += 1
         else:
             samples[each] = np.tile(dist[each]['value'],(n_sample,1)).T
     # return
@@ -446,7 +461,10 @@ def process_methods_for_mean_and_sigma_of_mu(
     # if using only mean of inputs for analysis
     if use_input_mean:
         input_samples = get_mean_kwargs(input_dist)
-
+    
+    # print('\n')
+    # time_start1 = time.time()
+    
     # loop through method
     for count,method in enumerate(methods):
         # get upstream params for current method
@@ -469,6 +487,9 @@ def process_methods_for_mean_and_sigma_of_mu(
             **internal_params,
             **input_samples
         )
+        
+        # print(f'\taa. time: {time.time()-time_start1} seconds')
+        # time_start1 = time.time()
         
         # loop through and search for return var and sigma, some methods have multiple conditions
         for param in return_params:
@@ -503,6 +524,7 @@ def process_methods_for_mean_and_sigma_of_mu(
                     store_rvs[param] = ones_arr*store_rvs[param]
             else:
                 ind_normal = np.where(store_dist_type[param]=='normal')
+                store_rvs[param] = np.empty((n_site,n_sample))
                 if len(ind_normal)>0:
                     store_rvs[param][ind_normal,:] = out[param]['mean'][ind_normal,:]
                 ind_lognormal = np.where(store_dist_type[param]=='lognormal')
@@ -530,6 +552,9 @@ def process_methods_for_mean_and_sigma_of_mu(
                 'sigma': store_sigma[param],
                 'dist_type': store_dist_type[param]
             }
+            
+        # print(f'\tbb. time: {time.time()-time_start1} seconds')
+        # time_start1 = time.time()
     
     # combine results from methods
     haz_results = {}
@@ -565,6 +590,10 @@ def process_methods_for_mean_and_sigma_of_mu(
             'sigma': sigma_down,
             'dist_type': store_dist_type[param]
         }
+    
+    # print(f'\tcc. time: {time.time()-time_start1} seconds')
+    # time_start1 = time.time()
+    # print('\n')
 
     # return
     return haz_results_by_method, haz_results
@@ -592,6 +621,8 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
     if get_liq_susc:
         liq_susc_val = {}
 
+    time_start1 = time.time()
+
     # loop through method
     for count,method in enumerate(methods):
         # get upstream params for current method
@@ -615,8 +646,11 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
             **upstream_params_for_method,
             **internal_params,
             **input_samples
-        )        
-                
+        )
+        
+        print(f'\taa. time: {time.time()-time_start1} seconds')
+        time_start1 = time.time()
+        
         # get liq susc
         if get_liq_susc:
             if 'liq_susc_val' in out:
@@ -676,6 +710,8 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
                     'sigma_of_mu': sigma_of_mu_vector_method_down,
                     'dist_type': store_dist_type[param]
                 }
+        print(f'\bb. time: {time.time()-time_start1} seconds')
+        time_start1 = time.time()
     
     # combine methods
     haz_results = {}
@@ -712,6 +748,9 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
             'dist_type': store_dist_type[param]
         }
         
+    print(f'\tcc. time: {time.time()-time_start1} seconds')
+    time_start1 = time.time()
+    
     # combine methods and samples of liq_susc
     if get_liq_susc:
         if get_mean_over_samples:
@@ -745,7 +784,7 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
     return haz_results, liq_susc
 
 
-def get_fractiles(pc_samples, site_id, fractiles=[5,16,50,84,95]):
+def get_fractiles(pc_samples, site_id, infra_type, fractiles=[5,16,50,84,95]):
     """get fractiles and mean"""
     frac_return = np.vstack([
         np.percentile(pc_samples*100,fractiles,axis=0),
@@ -757,7 +796,16 @@ def get_fractiles(pc_samples, site_id, fractiles=[5,16,50,84,95]):
     # headers = columns=['site_'+str(i+1) for i in range(pc_samples.shape[1])]
     headers = [f'{val}th' for val in list(fractiles)]+['mean']
     # index = ['site_'+str(i+1) for i in range(pc_samples.shape[1])]
-    index = [f'site_{each}' for each in site_id]
-    df_frac = DataFrame(frac_return,index=index,columns=headers).round(decimals=3)
+    if infra_type == 'below_ground':
+        tag = 'segment'
+    elif infra_type == 'wells_caprocks':
+        tag = 'well'
+    elif infra_type == 'above_ground':
+        tag = 'component'
+    else:
+        tag = 'site'
+    index = [f'{tag}_{each}' for each in site_id]
+    # df_frac = DataFrame(frac_return,index=index,columns=headers).round(decimals=3)
+    df_frac = DataFrame(frac_return,index=index,columns=headers)
     return df_frac
     # return frac_return

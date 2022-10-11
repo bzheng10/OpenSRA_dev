@@ -54,10 +54,10 @@ class LuuEtal2022(WellMoment):
     Infrastructure:
     height_wh: float, np.ndarray or list
         [m] wellhead height, for all modes
-    mass_wh: float, np.ndarray or list
-        [kg] wellhead mass, for all modes
-    # mpl_wh: float, np.ndarray or list, optional
-    #     [kg/m] wellhead mass per length, for all modes
+    # mass_wh: float, np.ndarray or list
+    #     [kg] wellhead mass, for all modes
+    mpl_wh: float, np.ndarray or list, optional
+        [kg/m] wellhead mass per length, for all modes
     
     Geotechnical/geologic:
     phi_soil: float, np.ndarray or list, optional
@@ -144,8 +144,8 @@ class LuuEtal2022(WellMoment):
         "desc": 'Infrastructure random variables:',
         'params': {
             'height_wh': 'wellhead height (m), for all modes',
-            'mass_wh': 'wellhead mass (kg), for all modes',
-            # 'mpl_wh': 'wellhead mass per length (kg/m), for all modes',
+            # 'mass_wh': 'wellhead mass (kg), for all modes',
+            'mpl_wh': 'wellhead mass per length (kg/m), for all modes',
         }
     }
     _MODEL_INPUT_GEO = {
@@ -157,10 +157,10 @@ class LuuEtal2022(WellMoment):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            # 'mode': 'well mode type: 1, 2, 4',
             'd_production_casing': 'outer diameter of production casing (m)',
             'd_tubing': 'outer diameter of tubing (m)',
             'casing_flow': 'flag for whether well is configured for casing flow (True/False)',
+            # 'mode': 'well mode type: 1, 2, 4',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
@@ -170,7 +170,7 @@ class LuuEtal2022(WellMoment):
         # 'mode'
         'd_production_casing', 'd_tubing', 'casing_flow'
     }
-    _REQ_PARAMS_VARY_WITH_CONDITIONS = True
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {
         'mode_1_conductor': {
             'b0': {'mean': 10.76168    , 'sigma': 0.123135 },
@@ -379,34 +379,34 @@ class LuuEtal2022(WellMoment):
         super().__init__()
     
     
-    @classmethod
-    def get_req_rv_and_fix_params(cls, kwargs):
-        """uses soil_type to determine what model parameters to use"""
-        # get well modes
-        # mode = kwargs.get('mode')
-        # get inputs
-        d_production_casing = kwargs.get('d_production_casing',None)
-        d_tubing = kwargs.get('d_tubing',None)
-        casing_flow = kwargs.get('casing_flow',None)
-        # get well modes
-        mode = cls.get_well_mode(d_production_casing, d_tubing, casing_flow)
-        # modes present
-        modes = [num for num in [1, 2, 4] if num in mode]
-        # loop through modes, then tubing/casing, then cementation condition
-        req_rvs_by_level = []
-        req_fixed_by_level = []
-        # make list of coefficients to get track
-        coeffs = [f"b{i}" for i in range(10)]
-        # 
-        for num in modes:
-            case = f'mode_{num}'
-            req_rvs_by_level += [
-                param for param in cls._MODEL_FORM['func'][case].__code__.co_varnames
-                if not param in coeffs
-            ]
-        req_rvs_by_level = sorted(list(set(req_rvs_by_level)))
-        req_fixed_by_level = cls._REQ_MODEL_FIXED_FOR_LEVEL
-        return req_rvs_by_level, req_fixed_by_level
+    # @classmethod
+    # def get_req_rv_and_fix_params(cls, kwargs):
+    #     """uses soil_type to determine what model parameters to use"""
+    #     # get well modes
+    #     # mode = kwargs.get('mode')
+    #     # get inputs
+    #     d_production_casing = kwargs.get('d_production_casing',None)
+    #     d_tubing = kwargs.get('d_tubing',None)
+    #     casing_flow = kwargs.get('casing_flow',None)
+    #     # get well modes
+    #     mode = cls.get_well_mode(d_production_casing, d_tubing, casing_flow)
+    #     # modes present
+    #     modes = [num for num in [1, 2, 4] if num in mode]
+    #     # loop through modes, then tubing/casing, then cementation condition
+    #     req_rvs_by_level = []
+    #     req_fixed_by_level = []
+    #     # make list of coefficients to get track
+    #     coeffs = [f"b{i}" for i in range(10)]
+    #     # 
+    #     for num in modes:
+    #         case = f'mode_{num}'
+    #         req_rvs_by_level += [
+    #             param for param in cls._MODEL_FORM['func'][case].__code__.co_varnames
+    #             if not param in coeffs
+    #         ]
+    #     req_rvs_by_level = sorted(list(set(req_rvs_by_level)))
+    #     req_fixed_by_level = cls._REQ_MODEL_FIXED_FOR_LEVEL
+    #     return req_rvs_by_level, req_fixed_by_level
     
     
     @staticmethod
@@ -445,8 +445,8 @@ class LuuEtal2022(WellMoment):
     # @njit
     def _model(cls, 
         pga, # upstream PBEE RV
-        # height_wh, mpl_wh, # infrastructure
-        height_wh, mass_wh, # infrastructure
+        height_wh, mpl_wh, # infrastructure
+        # height_wh, mass_wh, # infrastructure
         phi_soil, # geotechnical/geologic
         # mode, # fixed/toggles
         d_production_casing, d_tubing, casing_flow, # fixed/toggles
@@ -477,7 +477,7 @@ class LuuEtal2022(WellMoment):
         
         # other params
         modes = [1,2,4]
-        mpl_wh = mass_wh/height_wh # mass per unit length (kg/m)
+        # mpl_wh = mass_wh/height_wh # mass per unit length (kg/m)
         
         # determine cases
         # find indices for each mode

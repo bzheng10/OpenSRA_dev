@@ -14,6 +14,7 @@
 # -----------------------------------------------------------
 # Python modules
 import numpy as np
+from numba import njit
 
 # OpenSRA modules and classes
 from src.base_class import BaseModel
@@ -610,22 +611,35 @@ class PantoliEtal2022(WellheadRotation):
         # subsystem types present
         sys_types_present = [num for num in [2, 3, 4] if num in sys_type]
         # initialize
-        req_rvs_by_level = []
-        req_fixed_by_level = []
+        # req_rvs_by_level = []
+        # req_fixed_by_level = []
+        req_rvs_by_level = {
+            'level1': [],
+            'level2': [],
+            'level3': [],
+        }
+        req_fixed_by_level = {
+            'level1': list(cls._REQ_MODEL_FIXED_FOR_LEVEL),
+            'level2': list(cls._REQ_MODEL_FIXED_FOR_LEVEL),
+            'level3': list(cls._REQ_MODEL_FIXED_FOR_LEVEL),
+        }
         # make list of coefficients to get track
         coeffs = [f"b{i}" for i in range(10)]
         # loop through subsystem types
         for num in sys_types_present:
             case = f'sys{num}'
-            req_rvs_by_level += [
+            temp_params = [
                 param for param in cls._MODEL_FORM['func'][case].__code__.co_varnames
                 if not param in coeffs
             ]
-        req_rvs_by_level = sorted(list(set(req_rvs_by_level)))
-        req_fixed_by_level = cls._REQ_MODEL_FIXED_FOR_LEVEL
+            for level in range(1, 4):
+                req_rvs_by_level[f'level{level}'] += temp_params
+        for level in range(1, 4):
+            req_rvs_by_level[f'level{level}'] = sorted(list(set(req_rvs_by_level)))
+        # req_fixed_by_level = list(cls._REQ_MODEL_FIXED_FOR_LEVEL)
         return req_rvs_by_level, req_fixed_by_level
     
-
+    
     @classmethod
     # @njit
     def _model(cls, 
@@ -674,7 +688,6 @@ class PantoliEtal2022(WellheadRotation):
                                     # get sigma and sigma mu
                                     output_sigma[rot_case] = np.ones(pga.shape)*cls._MODEL_FORM['sigma'][rot_case]
                                     output_sigma_mu[rot_case] = np.ones(pga.shape)*cls._MODEL_FORM['sigma_mu'][rot_case]        
-                                    # run calc using lambda function
                                     output_mean[rot_case] = \
                                         cls._MODEL_FORM['func'][sys_case](
                                             # mean coefficients

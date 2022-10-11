@@ -117,18 +117,15 @@ class LuuEtal2022(ShakingInducedWellRupture):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            'mode': 'well mode type: 1, 2, 4',
+            'd_production_casing': 'outer diameter of production casing (m)',
+            'd_tubing': 'outer diameter of tubing (m)',
+            'casing_flow': 'flag for whether well is configured for casing flow (True/False)',
+            # 'mode': 'well mode type: 1, 2, 4',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'level1': [],
-        'level2': [],
-        'level3': [],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'level1': ['mode'],
-        'level2': ['mode'],
-        'level3': ['mode'],
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
@@ -142,12 +139,48 @@ class LuuEtal2022(ShakingInducedWellRupture):
 
 
     @staticmethod
+    def get_well_mode(
+        d_production_casing,
+        d_tubing,
+        casing_flow
+    ):
+        """determine the well mode based on diameters and flow configuration"""
+        # intermediate calculation
+        d_production_casing_inch = d_production_casing *100/2.54 # meter to inch
+        d_tubing_inch = d_tubing *100/2.54 # meter to inch
+        tubing_flow = np.empty_like(casing_flow,dtype=bool)
+        tubing_flow[casing_flow==False] = True
+        tubing_flow[casing_flow==True] = False
+        # determine well mode
+        mode = np.ones(d_tubing.shape)*2 # default to 2 to simplify check
+        # -> if well is configured for tubing flow
+        tubing_flow_true = tubing_flow==True
+        if True in tubing_flow_true:
+            d_tubing_cond_true = d_tubing_inch<3+1/8
+            d_tubing_cond_false = ~d_tubing_cond_true
+            mode[np.logical_and(tubing_flow_true,d_tubing_cond_true)] = 4
+            mode[np.logical_and(tubing_flow_true,np.logical_and(
+                d_tubing_cond_false,d_production_casing_inch>7+3/4))] = 1
+        # -> if well is not configured for tubing flow
+        tubing_flow_false = ~tubing_flow_true
+        if True in tubing_flow_false:
+            mode[np.logical_and(tubing_flow_false,d_production_casing_inch>=8+5/8)] = 1
+            mode[np.logical_and(tubing_flow_false,d_production_casing_inch<=6+5/8)] = 4
+        # return
+        return mode
+
+
+    @classmethod
     # @njit
-    def _model(
-        mode, # fixed/toggles
+    def _model(cls,
+        d_production_casing, d_tubing, casing_flow, # fixed/toggles
+        # mode, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
+        # get well modes
+        mode = cls.get_well_mode(d_production_casing, d_tubing, casing_flow)
+                
         # mean
         moment_crit_rup_conductor = np.empty_like(mode)
         moment_crit_rup_surface = np.empty_like(mode)
@@ -201,8 +234,7 @@ class LuuEtal2022(ShakingInducedWellRupture):
         }
         # get intermediate values if requested
         if return_inter_params:
-            pass
-            # output['sigma_h'] = sigma_h
+            output['mode'] = mode
         
         # return
         return output

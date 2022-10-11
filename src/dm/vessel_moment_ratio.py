@@ -118,7 +118,7 @@ class PantoliEtal2022(VesselMomentRatio):
     _REQ_MODEL_FIXED_FOR_LEVEL = {
         'stretch_length_flag'
     }
-    _REQ_PARAMS_VARY_WITH_CONDITIONS = True
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {
         'no_stretch_length_model': {
             'b0':  {'mean': -13.43384  , 'sigma': 0},

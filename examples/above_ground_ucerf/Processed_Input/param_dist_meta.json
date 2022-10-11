@@ -1,0 +1,214 @@
+{
+    "d_anchor": {
+        "dist_type": "d_anchor_dist_type",
+        "high": "d_anchor_high",
+        "low": "d_anchor_low",
+        "mean": "d_anchor_mean",
+        "sigma": "d_anchor_sigma",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {
+            "high": false,
+            "low": false,
+            "mean": false,
+            "sigma": false
+        }
+    },
+    "d_sys": {
+        "dist_type": "d_sys_dist_type",
+        "high": "d_sys_high",
+        "low": "d_sys_low",
+        "mean": "d_sys_mean",
+        "sigma": "d_sys_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "elbow_flag": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "elbow_flag"
+    },
+    "h_d_ratio_vessel": {
+        "dist_type": "h_d_ratio_vessel_dist_type",
+        "high": "h_d_ratio_vessel_high",
+        "low": "h_d_ratio_vessel_low",
+        "mean": "h_d_ratio_vessel_mean",
+        "sigma": "h_d_ratio_vessel_sigma",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {
+            "high": false,
+            "low": false,
+            "mean": false,
+            "sigma": false
+        }
+    },
+    "h_tree": {
+        "dist_type": "h_tree_dist_type",
+        "high": "h_tree_high",
+        "low": "h_tree_low",
+        "mean": "h_tree_mean",
+        "sigma": "h_tree_sigma",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {
+            "high": false,
+            "low": false,
+            "mean": false,
+            "sigma": false
+        }
+    },
+    "h_vessel": {
+        "dist_type": "h_vessel_dist_type",
+        "high": "h_vessel_high",
+        "low": "h_vessel_low",
+        "mean": "h_vessel_mean",
+        "sigma": "h_vessel_sigma",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {
+            "high": false,
+            "low": false,
+            "mean": false,
+            "sigma": false
+        }
+    },
+    "l_p2": {
+        "dist_type": "l_p2_dist_type",
+        "high": "l_p2_high",
+        "low": "l_p2_low",
+        "mean": "l_p2_mean",
+        "sigma": "l_p2_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "l_p6_sys23": {
+        "dist_type": "l_p6_sys23_dist_type",
+        "high": "l_p6_sys23_high",
+        "low": "l_p6_sys23_low",
+        "mean": "l_p6_sys23_mean",
+        "sigma": "l_p6_sys23_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "l_p6_sys4": {
+        "dist_type": "l_p6_sys4_dist_type",
+        "high": "l_p6_sys4_high",
+        "low": "l_p6_sys4_low",
+        "mean": "l_p6_sys4_mean",
+        "sigma": "l_p6_sys4_sigma",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {
+            "high": false,
+            "low": false,
+            "mean": false,
+            "sigma": false
+        }
+    },
+    "op_press": {
+        "dist_type": "op_press_dist_type",
+        "high": "op_press_high",
+        "low": "op_press_low",
+        "mean": "op_press_mean",
+        "sigma": "op_press_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "p_vessel": {
+        "dist_type": "p_vessel_dist_type",
+        "high": "p_vessel_high",
+        "low": "p_vessel_low",
+        "mean": "p_vessel_mean",
+        "sigma": "p_vessel_sigma",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {
+            "high": false,
+            "low": false,
+            "mean": false,
+            "sigma": false
+        }
+    },
+    "sigma_y": {
+        "dist_type": "sigma_y_dist_type",
+        "high": "sigma_y_high",
+        "low": "sigma_y_low",
+        "mean": "sigma_y_mean",
+        "sigma": "sigma_y_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "stretch_length_flag": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "stretch_length_flag"
+    },
+    "sys_type": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "sys_type"
+    },
+    "t_sys": {
+        "dist_type": "t_sys_dist_type",
+        "high": "t_sys_high",
+        "low": "t_sys_low",
+        "mean": "t_sys_mean",
+        "sigma": "t_sys_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "tee_flag": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "tee_flag"
+    },
+    "w_valve": {
+        "dist_type": "w_valve_dist_type",
+        "high": "w_valve_high",
+        "low": "w_valve_low",
+        "mean": "w_valve_mean",
+        "sigma": "w_valve_sigma",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {
+            "high": false,
+            "low": false,
+            "mean": false,
+            "sigma": false
+        }
+    }
+}

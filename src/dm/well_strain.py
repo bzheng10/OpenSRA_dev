@@ -29,9 +29,9 @@ class WellStrain(BaseModel):
     #     'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
     #     'type': 'well strain',       # Type of model (e.g., liquefaction, landslide, pipe strain)
     #     'variable': [
-    #         'eps_tubing',
-    #         'eps_casing',
-    #     ]        # Return variable for PBEE category, e.g., pgdef, eps_p
+    #         'strain_tubing',
+    #         'strain_casing',
+    #     ]        # Return variable for PBEE category, e.g., pgdef, strain_p
     # }
 
     def __init__(self):
@@ -75,14 +75,14 @@ class SasakiEtal2022(WellStrain):
 
     Returns
     -------
-    eps_tubing : float, np.ndarray
-        [%] tubing strain
-    eps_casing : float, np.ndarray
-        [%] casing strain
-    sigma_eps_tubing : float, np.ndarray
-        aleatory variability for ln(eps_tubing)
-    sigma_eps_casing : float, np.ndarray
-        aleatory variability for ln(eps_casing)
+    strain_tubing : float, np.ndarray
+        [%] tubing shear strain
+    strain_casing : float, np.ndarray
+        [%] casing shear strain
+    sigma_strain_tubing : float, np.ndarray
+        aleatory variability for ln(strain_tubing)
+    sigma_strain_casing : float, np.ndarray
+        aleatory variability for ln(strain_casing)
     
     References
     ----------
@@ -102,8 +102,8 @@ class SasakiEtal2022(WellStrain):
         'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
-            'eps_casing': {
-                'desc': 'casing strain (%)',
+            'strain_casing': {
+                'desc': 'casing shear strain (%)',
                 'unit': '%',
                 # 'mean': None,
                 # 'aleatory': None,
@@ -114,8 +114,8 @@ class SasakiEtal2022(WellStrain):
                 # },
                 # 'dist_type': 'lognormal',
             },
-            'eps_tubing': {
-                'desc': 'tubing strain (%)',
+            'strain_tubing': {
+                'desc': 'tubing shear strain (%)',
                 'unit': '%',
                 # 'mean': None,
                 # 'aleatory': None,
@@ -126,13 +126,13 @@ class SasakiEtal2022(WellStrain):
                 # },
                 # 'dist_type': 'lognormal',
             },
-            # 'sigma_eps_tubing': {
-            #     'desc': 'aleatory variability for ln(eps_casing)',
+            # 'sigma_strain_tubing': {
+            #     'desc': 'aleatory variability for ln(strain_casing)',
             #     'unit': '',
             #     'mean': None,
             # },
-            # 'sigma_eps_casing': {
-            #     'desc': 'aleatory variability for ln(eps_tubing)',
+            # 'sigma_strain_casing': {
+            #     'desc': 'aleatory variability for ln(strain_tubing)',
             #     'unit': '',
             #     'mean': None,
             # },
@@ -140,7 +140,7 @@ class SasakiEtal2022(WellStrain):
     }
     # _INPUT_PBEE_META = {
     #     'category': 'EDP',        # Input category in PBEE framework, e.g., IM, EDP, DM
-    #     'variable': 'pgdef'        # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    #     'variable': 'pgdef'        # Input variable for PBEE category, e.g., pgdef, strain_pipe
     # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
         'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
@@ -171,23 +171,24 @@ class SasakiEtal2022(WellStrain):
             'theta': 'fault angle (deg) - for all cases (modes + cementation)',
             'w_fc': 'fault core width (m) - for all modes + cemented tubing only',
             'w_dz': 'damage zone width (m) - for all modes + cemented tubing only',
+            'z_crossing': 'depth to fault crossing (m)',
             'e_rock': "Young's modulus of rock (GPa) - for mode 1 + cemented tubing only",
         }
     }
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            # 'mode': 'well mode type: 1, 2, 4',
-            # 'cement_flag': 'cemented casing/tubing (True/False)',
             'z_top_of_cement': 'depth to top of cement (m)',
-            'z_crossing': 'depth to fault crossing (m)',
             'd_production_boring': 'diameter of production boring (m)',
             'd_production_casing': 'outer diameter of production casing (m)',
             'd_tubing': 'outer diameter of tubing (m)',
             'casing_flow': 'flag for whether well is configured for casing flow (True/False)',
+            # 'mode': 'well mode type: 1, 2, 4',
+            # 'cement_flag': 'cemented casing/tubing (True/False)',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
+        'phi_cmt', 'ucs_cmt', 'theta', 'w_fc', 'w_dz', 'z_crossing', 'e_rock'
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
         # 'mode', 'cement_flag',
@@ -197,7 +198,7 @@ class SasakiEtal2022(WellStrain):
     #     'n_sample': 1,
     #     'n_site': 1,
     # }
-    _REQ_PARAMS_VARY_WITH_CONDITIONS = True
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {
         'mode_1_uncemented_tubing': {
             'b0': {'mean': -22.79563382 , 'sigma': 0.50913421},
@@ -393,71 +394,71 @@ class SasakiEtal2022(WellStrain):
         super().__init__()
     
     
-    @classmethod
-    def get_req_rv_and_fix_params(cls, kwargs):
-        """determine what model parameters to use"""
-        # mode = kwargs.get('mode')
-        # tubing_cement_flag = kwargs.get('tubing_cement_flag')
-        # casing_cement_flag = kwargs.get('casing_cement_flag')
-        # cement_flag = kwargs.get('cement_flag')
-        # get inputs
-        z_top_of_cement = kwargs.get('z_top_of_cement',None)
-        z_crossing = kwargs.get('z_crossing',None)
-        d_production_boring = kwargs.get('d_production_boring',None)
-        d_production_casing = kwargs.get('d_production_casing',None)
-        d_tubing = kwargs.get('d_tubing',None)
-        casing_flow = kwargs.get('casing_flow',None)
-        # get well modes and cement flag
-        mode, cement_flag = cls.get_well_mode(
-            z_top_of_cement, d_production_boring, d_production_casing, d_tubing, casing_flow
-        )
-        # modes present
-        modes = [num for num in [1, 2, 4] if num in mode]
-        # find indices for cases with cement
-        ind_cement = {
-            # key: np.where(cement_flag==val)[0]
-            key: cement_flag==val
-            for key,val in {'cemented': True, 'uncemented': False}.items()
-            # if len(np.where(cement_flag==val)[0]) > 0
-            if True in (cement_flag==val)
-        }
-        # # tubing cementation cases
-        # tubing_cement = [
-        #     key for key,val in {'cemented': True, 'uncemented': False}.items()
-        #     if val in tubing_cement_flag
-        # ]
-        # # casing cementation cases
-        # casing_cement = [
-        #     key for key,val in {'cemented': True, 'uncemented': False}.items()
-        #     if val in casing_cement_flag
-        # ]
-        # loop through modes, then tubing/casing, then cementation condition
-        req_rvs_by_level = []
-        req_fixed_by_level = []
-        # make list of coefficients to get track
-        coeffs = [f"b{i}" for i in range(10)]
-        # for different modes
-        for num in modes:
-            for key in ind_cement:
-                # if len(ind_cement[key]) > 0:
-                for part in ['tubing', 'casing']:
-                    case = f'mode_{num}_{key}_{part}'
-                    req_rvs_by_level += [
-                        param for param in cls._MODEL_FORM['func'][case].__code__.co_varnames
-                        if not param in coeffs
-                    ]
-        # for num in modes:
-        #     for part in ['tubing', 'casing']:
-        #         for key in ['uncemented', 'cemented']:
-        #             if key in locals()[f'{part}_cement']:
-        #                 case = f'mode_{num}_{key}_{part}'
-        #                 req_rvs_by_level += [
-        #                     param for param in cls._MODEL_FORM['func'][case].__code__.co_varnames
-        #                     if not param in coeffs
-        #                 ]
-        req_rvs_by_level = sorted(list(set(req_rvs_by_level)))
-        req_fixed_by_level = cls._REQ_MODEL_FIXED_FOR_LEVEL
-        return req_rvs_by_level, req_fixed_by_level
+    # @classmethod
+    # def get_req_rv_and_fix_params(cls, kwargs):
+    #     """determine what model parameters to use"""
+    #     # mode = kwargs.get('mode')
+    #     # tubing_cement_flag = kwargs.get('tubing_cement_flag')
+    #     # casing_cement_flag = kwargs.get('casing_cement_flag')
+    #     # cement_flag = kwargs.get('cement_flag')
+    #     # get inputs
+    #     z_top_of_cement = kwargs.get('z_top_of_cement',None)
+    #     z_crossing = kwargs.get('z_crossing',None)
+    #     d_production_boring = kwargs.get('d_production_boring',None)
+    #     d_production_casing = kwargs.get('d_production_casing',None)
+    #     d_tubing = kwargs.get('d_tubing',None)
+    #     casing_flow = kwargs.get('casing_flow',None)
+    #     # get well modes and cement flag
+    #     mode, cement_flag = cls.get_well_mode(
+    #         z_top_of_cement, d_production_boring, d_production_casing, d_tubing, casing_flow
+    #     )
+    #     # modes present
+    #     modes = [num for num in [1, 2, 4] if num in mode]
+    #     # find indices for cases with cement
+    #     ind_cement = {
+    #         # key: np.where(cement_flag==val)[0]
+    #         key: cement_flag==val
+    #         for key,val in {'cemented': True, 'uncemented': False}.items()
+    #         # if len(np.where(cement_flag==val)[0]) > 0
+    #         if True in (cement_flag==val)
+    #     }
+    #     # # tubing cementation cases
+    #     # tubing_cement = [
+    #     #     key for key,val in {'cemented': True, 'uncemented': False}.items()
+    #     #     if val in tubing_cement_flag
+    #     # ]
+    #     # # casing cementation cases
+    #     # casing_cement = [
+    #     #     key for key,val in {'cemented': True, 'uncemented': False}.items()
+    #     #     if val in casing_cement_flag
+    #     # ]
+    #     # loop through modes, then tubing/casing, then cementation condition
+    #     req_rvs_by_level = []
+    #     req_fixed_by_level = []
+    #     # make list of coefficients to get track
+    #     coeffs = [f"b{i}" for i in range(10)]
+    #     # for different modes
+    #     for num in modes:
+    #         for key in ind_cement:
+    #             # if len(ind_cement[key]) > 0:
+    #             for part in ['tubing', 'casing']:
+    #                 case = f'mode_{num}_{key}_{part}'
+    #                 req_rvs_by_level += [
+    #                     param for param in cls._MODEL_FORM['func'][case].__code__.co_varnames
+    #                     if not param in coeffs
+    #                 ]
+    #     # for num in modes:
+    #     #     for part in ['tubing', 'casing']:
+    #     #         for key in ['uncemented', 'cemented']:
+    #     #             if key in locals()[f'{part}_cement']:
+    #     #                 case = f'mode_{num}_{key}_{part}'
+    #     #                 req_rvs_by_level += [
+    #     #                     param for param in cls._MODEL_FORM['func'][case].__code__.co_varnames
+    #     #                     if not param in coeffs
+    #     #                 ]
+    #     req_rvs_by_level = sorted(list(set(req_rvs_by_level)))
+    #     req_fixed_by_level = cls._REQ_MODEL_FIXED_FOR_LEVEL
+    #     return req_rvs_by_level, req_fixed_by_level
     
 
     @classmethod
@@ -483,11 +484,18 @@ class SasakiEtal2022(WellStrain):
         boring_casing_closest_mode_1 = np.abs(boring_casing-(3+5/8))
         boring_casing_closest_mode_2 = np.abs(boring_casing-(2+7/8))
         boring_casing_closest_mode_4 = np.abs(boring_casing-(4+0/8))
-        boring_casing_argmin = np.argmin(np.vstack((
-                boring_casing_closest_mode_1,
-                boring_casing_closest_mode_2,
-                boring_casing_closest_mode_4,
-            )), axis=0)
+        
+        boring_casing_argmin_stack = np.empty((3,*casing_flow.shape))
+        boring_casing_argmin_stack[0] = boring_casing_closest_mode_1
+        boring_casing_argmin_stack[1] = boring_casing_closest_mode_2
+        boring_casing_argmin_stack[2] = boring_casing_closest_mode_4
+        boring_casing_argmin = np.argmin(boring_casing_argmin_stack, axis=0)
+        # boring_casing_argmin = np.argmin(np.vstack((
+        #         boring_casing_closest_mode_1,
+        #         boring_casing_closest_mode_2,
+        #         boring_casing_closest_mode_4,
+        #     )), axis=0)
+        
         boring_casing_control_mode = np.zeros(casing_flow.shape)
         boring_casing_control_mode[boring_casing_argmin==0] = 1
         boring_casing_control_mode[boring_casing_argmin==1] = 2
@@ -496,11 +504,18 @@ class SasakiEtal2022(WellStrain):
         boring_tubing_closest_mode_1 = np.abs(boring_tubing-(8+3/4))
         boring_tubing_closest_mode_2 = np.abs(boring_tubing-(6+3/8))
         boring_tubing_closest_mode_4 = np.abs(boring_tubing-(7+3/4))
-        boring_tubing_argmin = np.argmin(np.vstack((
-                boring_tubing_closest_mode_1,
-                boring_tubing_closest_mode_2,
-                boring_tubing_closest_mode_4,
-            )), axis=0)
+        
+        boring_tubing_argmin_stack = np.empty((3,*casing_flow.shape))
+        boring_tubing_argmin_stack[0] = boring_tubing_closest_mode_1
+        boring_tubing_argmin_stack[1] = boring_tubing_closest_mode_2
+        boring_tubing_argmin_stack[2] = boring_tubing_closest_mode_4
+        boring_tubing_argmin = np.argmin(boring_tubing_argmin_stack, axis=0)
+        # boring_tubing_argmin = np.argmin(np.vstack((
+        #         boring_tubing_closest_mode_1,
+        #         boring_tubing_closest_mode_2,
+        #         boring_tubing_closest_mode_4,
+        #     )), axis=0)
+        
         boring_tubing_control_mode = np.zeros(casing_flow.shape)
         boring_tubing_control_mode[boring_tubing_argmin==0] = 1
         boring_tubing_control_mode[boring_tubing_argmin==1] = 2
@@ -509,11 +524,18 @@ class SasakiEtal2022(WellStrain):
         casing_tubing_closest_mode_1 = np.abs(casing_tubing-(5+1/8))
         casing_tubing_closest_mode_2 = np.abs(casing_tubing-(3+1/2))
         casing_tubing_closest_mode_4 = np.abs(casing_tubing-(3+3/4))
-        casing_tubing_argmin = np.argmin(np.vstack((
-                casing_tubing_closest_mode_1,
-                casing_tubing_closest_mode_2,
-                casing_tubing_closest_mode_4,
-            )), axis=0)
+        
+        casing_tubing_argmin_stack = np.empty((3,*casing_flow.shape))
+        casing_tubing_argmin_stack[0] = casing_tubing_closest_mode_1
+        casing_tubing_argmin_stack[1] = casing_tubing_closest_mode_2
+        casing_tubing_argmin_stack[2] = casing_tubing_closest_mode_4
+        casing_tubing_argmin = np.argmin(casing_tubing_argmin_stack, axis=0)
+        # casing_tubing_argmin = np.argmin(np.vstack((
+        #         casing_tubing_closest_mode_1,
+        #         casing_tubing_closest_mode_2,
+        #         casing_tubing_closest_mode_4,
+        #     )), axis=0)
+        
         casing_tubing_control_mode = np.zeros(casing_flow.shape)
         casing_tubing_control_mode[casing_tubing_argmin==0] = 1
         casing_tubing_control_mode[casing_tubing_argmin==1] = 2
@@ -569,26 +591,25 @@ class SasakiEtal2022(WellStrain):
     def _model(cls, 
         pgdef, # upstream PBEE RV
         phi_cmt, ucs_cmt, # infrastructure
-        theta, w_fc, w_dz, e_rock, # geotechnical/geologic
+        theta, w_fc, w_dz, z_crossing, e_rock, # geotechnical/geologic
         # mode, cement_flag, # fixed/toggles
-        z_top_of_cement, z_crossing, # fixed/toggles
-        d_production_boring, d_production_casing, d_tubing, casing_flow, # fixed/toggles
+        z_top_of_cement, d_production_boring, d_production_casing, d_tubing, casing_flow, # fixed/toggles
         # mode, tubing_cement_flag, casing_cement_flag, # fixed/toggles
         return_inter_params=False # to get intermediate params    
     ):
         """Model"""
         # initialize intermediate and output arrays
         # inflect = np.empty_like(pgdef)
-        # eps_tubing = np.empty_like(pgdef)
-        # eps_casing = np.empty_like(pgdef)
-        eps_tubing = np.zeros(pgdef.shape)
-        eps_casing = np.zeros(pgdef.shape)
-        sigma_eps_tubing = np.zeros(pgdef.shape)
-        sigma_eps_casing = np.zeros(pgdef.shape)
-        sigma_mu_eps_tubing = np.zeros(pgdef.shape)
-        sigma_mu_eps_casing = np.zeros(pgdef.shape)
-        dist_type_eps_tubing = np.empty(pgdef.shape,dtype="<U10")
-        dist_type_eps_casing = np.empty(pgdef.shape,dtype="<U10")
+        # strain_tubing = np.empty_like(pgdef)
+        # strain_casing = np.empty_like(pgdef)
+        strain_tubing = np.zeros(pgdef.shape)
+        strain_casing = np.zeros(pgdef.shape)
+        sigma_strain_tubing = np.zeros(pgdef.shape)
+        sigma_strain_casing = np.zeros(pgdef.shape)
+        sigma_mu_strain_tubing = np.zeros(pgdef.shape)
+        sigma_mu_strain_casing = np.zeros(pgdef.shape)
+        dist_type_strain_tubing = np.empty(pgdef.shape,dtype="<U10")
+        dist_type_strain_casing = np.empty(pgdef.shape,dtype="<U10")
         
         # apply a pgdef cap of 0.25m to prevent model from blowing up
         # pgdef = np.minimum(pgdef,0.25)
@@ -640,8 +661,9 @@ class SasakiEtal2022(WellStrain):
                     # set_ind_2 = locals()[f'ind_cement'][key]
                     set_ind_2 = ind_cement[key]
                     # ind_joint = list(set_ind_1.intersection(set_ind_2))
-                    ind_joint = (set_ind_1 & set_ind_2)
                     # continue if length of intersection list is at least 1
+                    set_ind_3 = theta>0 # only if fault angle > 0
+                    ind_joint = (set_ind_1 & set_ind_2 & set_ind_3)
                     # if len(ind_joint) > 0:
                     if True in ind_joint:
                         # loop through well parts
@@ -649,7 +671,7 @@ class SasakiEtal2022(WellStrain):
                             # case name
                             case = f'mode_{num}_{key}_{part}'
                             # run calc using lambda function
-                            locals()[f'eps_{part}'][ind_joint] = cls._MODEL_FORM['func'][case](
+                            locals()[f'strain_{part}'][ind_joint] = cls._MODEL_FORM['func'][case](
                                 # mean coefficients
                                 **cls._get_mean_coeff_for_lambda_func(
                                     cls._MODEL_FORM_DETAIL[case],
@@ -663,27 +685,36 @@ class SasakiEtal2022(WellStrain):
                                 )
                             )
                             # get sigma
-                            locals()[f'sigma_eps_{part}'][ind_joint] = cls._MODEL_FORM['sigma'][case]
+                            locals()[f'sigma_strain_{part}'][ind_joint] = cls._MODEL_FORM['sigma'][case]
                             # get sigma_mu
-                            locals()[f'sigma_mu_eps_{part}'][ind_joint] = cls._MODEL_FORM['sigma_mu'][case]
+                            locals()[f'sigma_mu_strain_{part}'][ind_joint] = cls._MODEL_FORM['sigma_mu'][case]
                             # get dist_type
-                            locals()[f'dist_type_eps_{part}'][ind_joint] = cls._MODEL_FORM['dist_type'][case]
+                            locals()[f'dist_type_strain_{part}'][ind_joint] = cls._MODEL_FORM['dist_type'][case]
+        
         
         # some contraints on mean
-        eps_tubing = np.minimum(np.maximum(eps_tubing * 100,0),200) # convert to %, limit to 0 to 200%
-        eps_casing = np.minimum(np.maximum(eps_casing * 100,0),200) # convert to %, limit to 0 to 200%
-        
+        strain_tubing = np.minimum(np.maximum(strain_tubing * 100,1e-5),200) # convert to %, limit to 0 to 200%
+        strain_casing = np.minimum(np.maximum(strain_casing * 100,1e-5),200) # convert to %, limit to 0 to 200%
+
         # if dist_type is normal, then convert sigma to %
-        sigma_eps_tubing[dist_type_eps_tubing=='normal'] = sigma_eps_tubing[dist_type_eps_tubing=='normal']*100
-        sigma_eps_casing[dist_type_eps_casing=='normal'] = sigma_eps_casing[dist_type_eps_casing=='normal']*100
+        sigma_strain_tubing[dist_type_strain_tubing=='normal'] = \
+            sigma_strain_tubing[dist_type_strain_tubing=='normal']*100
+        sigma_strain_casing[dist_type_strain_casing=='normal'] = \
+            sigma_strain_casing[dist_type_strain_casing=='normal']*100
         # if dist_type is normal, then sigma_mu = exp(0.25), geometric sigma
-        sigma_mu_eps_tubing[dist_type_eps_tubing=='normal'] = \
-            np.exp(sigma_mu_eps_tubing[dist_type_eps_tubing=='normal'])
-            # np.exp(sigma_mu_eps_tubing[dist_type_eps_tubing=='normal']) * eps_tubing[dist_type_eps_tubing=='normal']
-        sigma_mu_eps_casing[dist_type_eps_casing=='normal'] = \
-            np.exp(sigma_mu_eps_casing[dist_type_eps_casing=='normal'])
-            # np.exp(sigma_mu_eps_casing[dist_type_eps_casing=='normal']) * eps_casing[dist_type_eps_casing=='normal']
-            
+        sigma_mu_strain_tubing[dist_type_strain_tubing=='normal'] = \
+            np.exp(sigma_mu_strain_tubing[dist_type_strain_tubing=='normal'])
+            # np.exp(sigma_mu_strain_tubing[dist_type_strain_tubing=='normal']) * strain_tubing[dist_type_strain_tubing=='normal']
+        sigma_mu_strain_casing[dist_type_strain_casing=='normal'] = \
+            np.exp(sigma_mu_strain_casing[dist_type_strain_casing=='normal'])
+            # np.exp(sigma_mu_strain_casing[dist_type_strain_casing=='normal']) * strain_casing[dist_type_strain_casing=='normal']
+
+        # limit sigma to be above 0 to avoid PC error
+        sigma_strain_tubing[theta<=0] = 0.001
+        sigma_strain_casing[theta<=0] = 0.001
+        # limit sigma to be above 0 to avoid PC error
+        sigma_mu_strain_tubing[theta<=0] = 0
+        sigma_mu_strain_casing[theta<=0] = 0
             
             # run if current mode exist
             # if len(set_ind_1) > 0:
@@ -697,7 +728,7 @@ class SasakiEtal2022(WellStrain):
             #             # continue if length of intersection list is at least 1
             #             if len(ind_joint) > 0:
             #                 # run calc using lambda function
-            #                 locals()[f'eps_{part}'][ind_joint] = cls._MODEL_FORM['func'][case](
+            #                 locals()[f'strain_{part}'][ind_joint] = cls._MODEL_FORM['func'][case](
             #                     # mean coefficients
             #                     **cls._get_mean_coeff_for_lambda_func(
             #                         cls._MODEL_FORM_DETAIL[case],
@@ -713,37 +744,37 @@ class SasakiEtal2022(WellStrain):
 
         # prepare outputs
         output = {
-            'eps_tubing': {
-                'mean': eps_tubing,
-                # 'mean': np.minimum(np.maximum(eps_tubing * 100,0),200),
-                # 'mean': np.maximum(eps_tubing * 100,0), # convert to %, limit to 0 to 500%
-                'sigma': sigma_eps_tubing,
-                'sigma_mu': sigma_mu_eps_tubing,
+            'strain_tubing': {
+                'mean': strain_tubing,
+                # 'mean': np.minimum(np.maximum(strain_tubing * 100,0),200),
+                # 'mean': np.maximum(strain_tubing * 100,0), # convert to %, limit to 0 to 500%
+                'sigma': sigma_strain_tubing,
+                'sigma_mu': sigma_mu_strain_tubing,
                 # 'dist_type': 'lognormal',
-                'dist_type': dist_type_eps_tubing,
+                'dist_type': dist_type_strain_tubing,
                 'unit': '%'
             },
-            'eps_casing': {
-                'mean': eps_casing, # convert to %, limit to 0 to 500%
-                # 'mean': np.minimum(np.maximum(eps_casing * 100,0),200), # convert to %, limit to 0 to 500%
-                # 'mean': np.maximum(eps_casing * 100,0), # convert to %, limit to 0 to 500%
-                'sigma': sigma_eps_casing,
-                'sigma_mu': sigma_mu_eps_casing,
+            'strain_casing': {
+                'mean': strain_casing, # convert to %, limit to 0 to 500%
+                # 'mean': np.minimum(np.maximum(strain_casing * 100,0),200), # convert to %, limit to 0 to 500%
+                # 'mean': np.maximum(strain_casing * 100,0), # convert to %, limit to 0 to 500%
+                'sigma': sigma_strain_casing,
+                'sigma_mu': sigma_mu_strain_casing,
                 # 'dist_type': 'lognormal',
-                'dist_type': dist_type_eps_casing,
+                'dist_type': dist_type_strain_casing,
                 'unit': '%'
             },
-            # 'eps_tubing': eps_tubing*100, # convert to %
-            # 'eps_casing': eps_casing*100, # convert to %
-            # 'sigma_eps_tubing': sigma_eps_tubing,
-            # 'sigma_eps_casing': sigma_eps_casing,
+            # 'strain_tubing': strain_tubing*100, # convert to %
+            # 'strain_casing': strain_casing*100, # convert to %
+            # 'sigma_strain_tubing': sigma_strain_tubing,
+            # 'sigma_strain_casing': sigma_strain_casing,
         }
         # get intermediate values if requested
         if return_inter_params:
             output['mode'] = mode
             output['cement_flag'] = cement_flag
-            output['dist_type_eps_tubing'] = dist_type_eps_tubing
-            output['dist_type_eps_casing'] = dist_type_eps_casing
+            output['dist_type_strain_tubing'] = dist_type_strain_tubing
+            output['dist_type_strain_casing'] = dist_type_strain_casing
         
         # return
         return output

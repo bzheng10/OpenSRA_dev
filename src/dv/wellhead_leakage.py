@@ -227,14 +227,8 @@ class BainEtal2022(WellheadLeakage):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'level1': [],
-        'level2': [],
-        'level3': [],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'level1': [],
-        'level2': [],
-        'level3': [],
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}

@@ -1,0 +1,100 @@
+{
+    "General": {
+        "AnalysisID" : "TEST",
+		"Directory": {
+			"Working": "",
+			"UserGISFile": ""
+		},
+        "OutputFileType": "csv"
+    },
+    "Infrastructure": {
+		"InfrastructureType": "wells_caprocks",
+		"DataType": "CSV",
+        "SiteDataFile": "Input/site_data.csv",
+		"SiteLocationParams": {
+            "Lat": "LAT_TOP",
+            "Lon": "LON_TOP"
+		},
+		"WellTraceDir": "Input/well_traces",
+		"PathToCaprockShapefile": "Input/caprock_shapefile"
+    },
+    "IntensityMeasure": {
+        "SourceForIM": {
+            "UserDefinedRupture": {
+                "FaultFile": "Input/virtual_fault.csv"
+			}
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "SurfaceFaultRupture": {
+                "ToInclude": true,
+                "Method": {
+                    "Thompson2021": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+		},
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "WellStrain": {
+                "ToInclude": true,
+                "Method": {
+                    "SasakiEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "WellMoment": {
+                "ToInclude": true,
+                "Method": {
+					"LuuEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "ShearInducedWellRupture": {
+                "ToInclude": true,
+                "Method": {
+					"SasakiEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "ShakingInducedWellRupture": {
+                "ToInclude": true,
+                "Method": {
+					"LuuEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "CaprockLeakage": {
+                "ToInclude": true,
+                "Method": {
+					"ZhangEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    }
+}

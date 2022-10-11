@@ -32,10 +32,13 @@ def get_pipe_crossing(
     #rough estimate of landslide direction for now
     landslides = gpd.read_file(path_to_def_shp)
     
+    # crs
+    crs_wg84 = 4326
+    
     # convert DataFrame to GeoDataFrame
     infra_site_data_gdf = gpd.GeoDataFrame(
         infra_site_data,
-        crs=4326,
+        crs=crs_wg84,
         geometry=[
             LineString([
                 (infra_site_data['LON_BEGIN'][i], infra_site_data['LAT_BEGIN'][i]),
@@ -142,7 +145,7 @@ def get_pipe_crossing(
         crs=crs,
         geometry=landslide_geometries_pd.geometry
     )
-    landslide_geometries.to_crs(4326,inplace=True)
+    landslide_geometries.to_crs(crs_wg84,inplace=True)
     
     # reorder to make obj_id first
     if 'obj_id' in landslide_geometries.columns:
@@ -247,5 +250,4 @@ def InwardVector(seg, fault, fault_id, crs='EPSG:4326'):
         if p2dist > p1dist:
             p_in = p2
             p_out = p1
-
         return gpd.GeoDataFrame(geometry=[LineString([p_in, p_out])], crs=crs)

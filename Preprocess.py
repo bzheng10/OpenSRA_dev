@@ -34,7 +34,8 @@ warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 from src.site import geodata
 from src.im import haz
 from src.site.get_pipe_crossing import get_pipe_crossing
-from src.site.get_well_crossing import *
+from src.site.get_well_crossing import get_well_crossing
+from src.site.get_caprock_crossing import get_caprock_crossing
 
 
 def main(work_dir):
@@ -48,7 +49,7 @@ def main(work_dir):
     # check current directory, if not at OpenSRA level, go up a level (happens during testing)
     if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
         os.chdir('..')
-        print(work_dir)
+    opensra_dir = os.getcwd()
     input_dir = os.path.join(work_dir,'Input')
     processed_input_dir = os.path.join(work_dir,'Processed_Input')
     if not os.path.isdir(processed_input_dir):
@@ -58,6 +59,8 @@ def main(work_dir):
         os.mkdir(im_dir)
     print(f'{counter}. Check and create file directories')
     print('\tPerforming preprocessing of methods and input variables for OpenSRA')
+    print('\t\tOpenSRA backend directory')
+    print(f'\t\t\t- {opensra_dir}')
     print('\t\tWorking directory given:')
     print(f'\t\t\t- {work_dir}')
     print('\t\tInput directory implied:')
@@ -116,6 +119,10 @@ def main(work_dir):
     if im_source == 'ShakeMap':
         sm_dir = os.path.join(work_dir,setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Directory'])
         sm_events = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events']
+    elif im_source == 'UserDefinedRupture':
+        rup_fpath = os.path.join(work_dir,setup_config['IntensityMeasure']['SourceForIM']['UserDefinedRupture']['FaultFile'])
+    elif im_source == 'UCERF':
+        rup_fpath = None
     else:
         raise NotImplementedError("To be added into preprocess...")
     print(f'{counter}. Processed setup configuration file')
@@ -138,6 +145,7 @@ def main(work_dir):
     rvs_input, fixed_input, site_data = read_input_tables(input_dir, processed_input_dir)
     print(f'{counter}. Read input tables for random, fixed variables, and infrastructure data in input directory')
     counter += 1
+    
     
     ##--------------------------
     # get crossings - may move to another location in Preprocess
@@ -163,29 +171,8 @@ def main(work_dir):
             )
             print(f'{counter}. Obtained pipeline crossing for landslide')
             counter += 1
-            
-    elif infra_type == 'wells_caprocks':
-        # load json with available datasets
-        avail_data_summary_fpath = os.path.join('lib','AvailableDataset.json')
-        with open(avail_data_summary_fpath,'r') as f:
-            avail_data_summary = json.load(f)
-        # landslide
-        cat = 'EDP'
-        haz = 'landslide'
-        if cat in workflow and haz in workflow[cat]:
-            file_key = 'ca_landslide_inventory'
-            fpath = avail_data_summary['Parameters'][file_key]['Datasets']['Set1']['Path']
-            # site_data_crossing = get_pipe_crossing(
-            site_data = get_pipe_crossing(
-                path_to_def_shp=fpath,
-                infra_site_data=site_data.copy(),
-                export_dir=processed_input_dir,
-                def_type=haz
-            )
-            print(f'{counter}. Obtained pipeline crossing for landslide')
-            counter += 1
-        
     ##--------------------------
+    
     
     # rvs and fixed params split by preferred andf user provided
     pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, \
@@ -254,48 +241,223 @@ def main(work_dir):
     counter += 1
     
     # get IM predictions
-    get_im_pred(im_source, sm_dir, sm_events, im_dir, site_data, infra_loc_header)
+    if im_source == "ShakeMap":
+        get_im_pred(
+            im_source, im_dir, site_data, infra_loc_header,
+            # for ShakeMaps
+            sm_dir=sm_dir,
+            sm_events=sm_events,
+        )
+    elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
+        get_im_pred(
+            im_source, im_dir, site_data, infra_loc_header,
+            # for user-defind ruptures
+            opensra_dir=opensra_dir,
+            processed_input_dir=processed_input_dir,
+            rup_fpath=rup_fpath,
+        )
     print(f'{counter}. Obtained IM predictions from {im_source} and stored to:')
     print(f"\t{im_dir}")
     counter += 1
+    
+    ##--------------------------
+    # get well and caprock crossings - may move to another location in Preprocess
+    # well_crossing_ordered_by_faults = None
+            
+    if infra_type == 'wells_caprocks':
+        # get well crossings
+        well_trace_dir = os.path.join(
+            work_dir,setup_config['Infrastructure']['WellTraceDir']
+        )
+        # well_crossing_ordered_by_faults, _ = get_well_crossing(
+        get_well_crossing(
+            im_dir=im_dir,
+            infra_site_data=site_data.copy(),
+            col_with_well_trace_file_names='file_name',
+            well_trace_dir=well_trace_dir,
+        )
+        print(f'{counter}. Obtained well crossings for fault rupture')
+        counter += 1
+        
+        # get caprock crossings
+        if 'CaprockLeakage' in setup_config['DecisionVariable']['Type']:
+            # get shapefile for caprock
+            caprock_fdir = os.path.join(
+                work_dir,
+                setup_config['Infrastructure']['PathToCaprockShapefile']
+            )
+            for f in os.listdir(caprock_fdir):
+                if f.endswith('.shp'):
+                    caprock_shp_file = os.path.join(caprock_fdir,f)
+                    break
+            # project directory
+            # rup_fpath = os.path.join(
+            #     work_dir,
+            #     rup_fpath
+            # )
+            # run caprock crossing algorith
+            get_caprock_crossing(
+                caprock_shp_file=caprock_shp_file,
+                # rup_fpath=rup_fpath,
+                im_dir=im_dir,
+                processed_input_dir=processed_input_dir
+            )
+        print(f'{counter}. Obtained caprock crossings for fault rupture')
+        counter += 1
+        
+    ##--------------------------
+    
     
     # end of preprocess
     print('... End of preprocessing for OpenSRA')
 
 
-def get_im_pred(im_source, sm_dir, sm_events, im_dir, site_data, infra_loc_header):
+def get_im_pred(
+    im_source, im_dir, site_data, infra_loc_header,
+    # for ShakeMaps
+    sm_dir=None, sm_events=None,
+    # for user-defined ruptures
+    opensra_dir=None, processed_input_dir=None, rup_fpath=None
+):
     """get IM predictions from backend"""
+    # initialize seismic hazard class
     seismic_hazard = getattr(haz, 'SeismicHazard')()
+    
+    # get IM predictions based on IM source
     if im_source == "ShakeMap":
-        # print(f'\tRunning ShakeMaps scenarios:')
-        # for each in sm_events:
-        #     print(f'\t\t- {each}')
-        seismic_hazard.init_ssc('ShakeMap',sm_dir=sm_dir,event_names=sm_events)
-        seismic_hazard.init_gmpe()
-        seismic_hazard.process_rupture()
+        # set sites and site params
         if 'LON_MID' in site_data:
             seismic_hazard.set_site_data(
                 # lon=site_data[infra_loc_header['lon_header']],
                 # lat=site_data[infra_loc_header['lat_header']],
-                lon=site_data.LON_MID,
-                lat=site_data.LAT_MID,
+                lon=site_data.LON_MID.values,
+                lat=site_data.LAT_MID.values,
                 vs30=np.zeros(site_data.shape[0])
             )
         elif 'LON' in site_data:
             seismic_hazard.set_site_data(
                 # lon=site_data[infra_loc_header['lon_header']],
                 # lat=site_data[infra_loc_header['lat_header']],
-                lon=site_data.LON,
-                lat=site_data.LAT,
+                lon=site_data.LON.values,
+                lat=site_data.LAT.values,
                 vs30=np.zeros(site_data.shape[0])
             )
-        seismic_hazard.get_gm_pred_from_gmc()
-        seismic_hazard.export_gm_pred(
-            sdir=im_dir,
-            stype=['sparse','csv']
+        seismic_hazard.init_ssc(im_source,sm_dir=sm_dir,event_names=sm_events)  # initialize source
+        
+    elif im_source == 'UserDefinedRupture' or im_source == 'UCERF':
+        # prepackaged site data
+        gmc_site_data_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed','Grid')
+        cols_to_get = ['vs30','vs30source','z1p0','z2p5']
+        
+        # create LocationData class to make use of nearest neighbor sampling schemes
+        if 'LON_MID' in site_data:
+            _infra = geodata.LocationData(
+                lon=site_data.LON_MID.values,
+                lat=site_data.LAT_MID.values,
+            )
+        elif 'LON' in site_data:
+            _infra = geodata.LocationData(
+                lon=site_data.LON.values,
+                lat=site_data.LAT.values,
+            )
+        # create component table, needed as a preprocessing phase
+        _infra.make_component_table()
+        
+        # initialize temporary nearest_node_table as None
+        temp_nearest_node_table = None
+        # intiialize remaining_loc to track remaining locations
+        remaining_loc = np.arange(_infra.data.shape[0])
+
+        # go through each region and get site data from prepackaged files
+        for region in ['Bay_Area_Basin','LA_Basin','California_State']:
+            # get spacing
+            if 'California' in region:
+                spacing = 0.05
+            elif 'LA_Basin' in region:
+                spacing = 0.01
+            elif 'Bay_Area_Basin' in region:
+                spacing = 0.01
+            # generate path to boundary file
+            spacing_string = str(spacing).replace('.','p')
+            bound_path = os.path.join(opensra_dir,'lib','OtherData','Boundaries',region,'Boundary.shp')
+            region_dir = os.path.join(gmc_site_data_dir,region)
+            gmc_site_data_path = os.path.join(region_dir,f'{spacing_string}_nodes_withSiteParam.csv')
+
+            # make copy of _infra to track locations within each region
+            _infra_curr_bound = copy.deepcopy(_infra)
+            # reduce data table with locations that have already been accounted for in previous boundary
+            _infra_curr_bound.data = _infra_curr_bound.data.loc[remaining_loc].reset_index(drop=True)
+            # clip data with boundary
+            _infra_curr_bound.clip_loc_with_bound(bound_fpath=bound_path)
+            
+            # if there are locations within the boundary, then proceed to get data
+            if len(_infra_curr_bound.loc_in_bound) > 0:
+                # get grid nodes from prepackaged site data files
+                _grid_nodes = geodata.LocationData(fpath=gmc_site_data_path)
+                _infra_curr_bound.get_grid_nodes(_grid_nodes.data)
+                # find nearest grid and get values
+                _infra_curr_bound.get_nearest_grid_nodes()
+                # break
+                # store results back to original_infra structure 
+                if temp_nearest_node_table is None:
+                    temp_nearest_node_table = _infra_curr_bound.nearest_node_table.copy()
+                else:
+                    temp_nearest_node_table = pd.concat(
+                        [
+                            temp_nearest_node_table,
+                            _infra_curr_bound.nearest_node_table.copy()
+                        ], ignore_index=True
+                    )
+            
+            # track remaining locs that are outside current boundary
+            remaining_loc = np.asarray(list(set(remaining_loc).difference(set(remaining_loc[_infra_curr_bound.loc_in_bound]))))
+            # break out of boundary loop if no more locations remaining
+            if len(remaining_loc) == 0:
+                break
+        
+        # set _infra.nearest_node_table to temp_nearest_node_table
+        _infra.nearest_node_table = temp_nearest_node_table.copy()
+        # once the nearest_node_table has been populated, then sites from nearest node
+        _infra.component_table = _infra.sample_csv(
+            table=_infra.component_table.copy(),
+            fpath=gmc_site_data_path,
+            # cols_to_get=cols_to_get,
+            use_hull=True
         )
+        
+        # export sampled basin params
+        _infra.export_component_table(
+            sdir=im_dir,
+            sname='site_data_basin_params'
+        )
+        
+        # pull site basin params to use as inputs to GMPEs
+        col_with_data = {
+            'lon': 'LON',
+            'lat': 'LAT',
+            'vs30': 'vs30',
+            'z1p0': 'z1p0',
+            'z2p5': 'z2p5',
+            'vs30_source': 'vs30source'
+        }
+        site_kwargs = {
+            key: _infra.component_table[col_with_data[key]].values for key in col_with_data
+        }
+        # set sites and initialize source
+        seismic_hazard.set_site_data(**site_kwargs) # set site and site params
+        if im_source == 'UserDefinedRupture':
+            seismic_hazard.init_ssc(im_source, user_def_rup_fpath=rup_fpath)  # initialize source
+        elif im_source == 'UCERF':
+            seismic_hazard.init_ssc(im_source)  # initialize source
+
     else:
         raise NotImplementedError("to be added to preprocessing...")
+
+    # rest of hazard calc
+    seismic_hazard.init_gmpe() # initialize GMPE, even though not used for ShakeMaps
+    seismic_hazard.process_rupture() # process ruptures
+    seismic_hazard.get_gm_pred_from_gmc() # get GM predictions
+    seismic_hazard.export_gm_pred(sdir=im_dir) # export GM predictions
 
 
 def preprocess_infra_file(infra_type, infra_fpath, infra_loc_header, processed_input_dir, l_max=0.1):
@@ -384,6 +546,13 @@ def make_workflow(setup_config, processed_input_dir, to_export=True):
         'vessel_rupture': "VesselRupture",
         
         # wells and caprocks
+        'surface_fault_rupture': "SurfaceFaultRupture",
+        'well_strain': "WellStrain",
+        'well_moment': "WellMoment",
+        'well_rupture_shear': "ShearInducedWellRupture",
+        'well_rupture_shaking': "ShakingInducedWellRupture",
+        'caprock_leakage': "CaprockLeakage",
+        
     }
     for cat in cat_map:
         workflow[cat] = {}
@@ -433,17 +602,35 @@ def get_rvs_and_fix_by_level(workflow, infra_fixed={}):
                     _inst = copy.deepcopy(getattr(_file, method)())
                     # get all RVs for method
                     all_rvs += _inst._missing_inputs_rvs
+                    # print(cat, haz_type, method)
+                    # print(_inst._missing_inputs_rvs)
                     rvs_by_level, fix_by_level = _inst.get_req_rv_and_fix_params(infra_fixed)
+                    # print(cat)
+                    # print(haz_type)
+                    # print(method)
+                    # print(rvs_by_level)
+                    # print(fix_by_level)
                     # gather required model parameters for each level
+                    # print(rvs_by_level)
+                    # print(fix_by_level)
                     for i in range(3):
                         # initialize list
                         if not f'level{i+1}' in req_rvs_by_level:
-                            req_rvs_by_level[f'level{i+1}'] = []
-                            req_fixed_by_level[f'level{i+1}'] = []
-                        # if method varies with level
-                        if _inst.input_dist_vary_with_level:
+                            req_rvs_by_level[f'level{i+1}'] = rvs_by_level[f'level{i+1}']
+                            req_fixed_by_level[f'level{i+1}'] = fix_by_level[f'level{i+1}']
+                        else:
                             req_rvs_by_level[f'level{i+1}'] += rvs_by_level[f'level{i+1}']
                             req_fixed_by_level[f'level{i+1}'] += fix_by_level[f'level{i+1}']
+                            
+                            # req_rvs_by_level[f'level{i+1}'] = []
+                            # req_fixed_by_level[f'level{i+1}'] = []
+                        # if method varies with level
+                        # if _inst.input_dist_vary_with_level:
+                            # req_rvs_by_level[f'level{i+1}'] += rvs_by_level[f'level{i+1}']
+                            # req_fixed_by_level[f'level{i+1}'] += fix_by_level[f'level{i+1}']
+                        # else:
+                        #     req_rvs_by_level[f'level{i+1}'] += rvs_by_level
+                        #     req_fixed_by_level[f'level{i+1}'] += fix_by_level
 
     # get unique required params for each level
     for i in range(3):
@@ -754,7 +941,7 @@ def get_param_dist_from_user_prov_table(
             curr_param_dist['value'] = float(user_prov_table_fixed.loc[i,'Value'])
         except ValueError:
             # if is column name, then pull values from column, else use as value
-            if user_prov_table_fixed.loc[i,'Value'].upper() in site_data:
+            if user_prov_table_fixed.loc[i,'Value'].upper() in site_data.columns:
                 curr_param_dist['value'] = site_data[user_prov_table_fixed.loc[i,'Value'].upper()].values
             else:
                 curr_param_dist['value'] = [user_prov_table_fixed.loc[i,'Value'].lower()] * site_data.shape[0]
@@ -921,7 +1108,7 @@ def get_level_to_run(
     param_dist_meta,
     infra_type='below_ground'
 ):
-    """get preferred distribution metrics from internal tables"""
+    """determin level of analysis to run"""
     
     # number of sites
     n_site = param_dist_table.shape[0]
@@ -990,8 +1177,10 @@ def get_pref_dist_for_params(
 ):
     """get rest of the missing distribution metrics"""
     
+    # initialize
     met_list = ['dist_type','mean','sigma','low','high']
     crossing_params = ['l_anchor','beta_crossing','psi_dip','theta_slip']
+    soil_prop_map = {}
     
     # first load geologic units from various geologic maps
     if infra_type == 'below_ground':
@@ -1010,7 +1199,6 @@ def get_pref_dist_for_params(
             raise ValueError("Cannot locate lon/lat")
         
         # CGS geologic unit, may take this out
-        soil_prop_map = {}
         if 'EDP' in workflow and 'landslide' in workflow['EDP']:
             if ('phi_soil' in param_dist_meta and param_dist_meta['phi_soil']['source'] == 'Preferred') or \
                ('coh_soil' in param_dist_meta and param_dist_meta['coh_soil']['source'] == 'Preferred'):
@@ -1171,7 +1359,6 @@ def get_pref_dist_for_params(
                         else:
                             # check for lognormal and apply correction
                             if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                                print(param, pref_val)
                                 pref_val = np.log(pref_val)
                             if met == 'low' or met == 'high':
                                 if np.isnan(pref_val):
@@ -1238,8 +1425,16 @@ def get_pref_dist_for_params(
                         # specifically for mean
                         if met == 'mean':
                             # get crossing from site datatable
-                            if pref_val == 'depends' and param in crossing_params:
-                                param_dist_table.loc[rows_nan,f'{param}_mean'] = site_data[param][rows_nan].values
+                            if pref_val == 'depends':
+                                # for pipe crossing parameters
+                                if param in crossing_params:
+                                    param_dist_table.loc[rows_nan,f'{param}_mean'] = site_data[param][rows_nan].values
+                                # for other cases that are assigned as "depends"
+                                # leave value as NaN (likely imposed to be determined later)
+                                else:
+                                    # param_dist_table.loc[rows_nan,f'{param}_mean'] = np.nan
+                                    param_dist_table.loc[rows_nan,f'{param}_mean'] = "event_dependent"
+
                             # using internal GIS maps
                             elif pref_val == 'internal gis dataset':
                                 # path for GIS file

@@ -47,6 +47,7 @@ from numba import njit, jit
 from src.util import from_dict_to_array, wgs84_to_utm, utm_to_wgs84
 # from src.im import gmc
 
+
 # -----------------------------------------------------------
 class SeismicSource(object):
     """
@@ -105,7 +106,7 @@ class SeismicSource(object):
             
     
 # -----------------------------------------------------------
-class UCERF(SeismicSource):
+class UCERF_CompleteInventory(SeismicSource):
     """
     UCERF class
     
@@ -312,17 +313,17 @@ class UCERF(SeismicSource):
         logging.info(f"\t\t- max distance: {self._max_dist} km")
         # filter by magnitudes
         if self._mag_min is not None:
-            self.df_rupture = self.df_rupture.loc[self.df_rupture.Mag>=self._mag_min].reset_index(drop=True)
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.Magnitude>=self._mag_min].reset_index(drop=True)
             logging.info(f"\t\t- min magnitude: {self._mag_min}")
         if self._mag_max is not None:
-            self.df_rupture = self.df_rupture.loc[self.df_rupture.Mag<=self._mag_max].reset_index(drop=True)
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.Magnitude<=self._mag_max].reset_index(drop=True)
             logging.info(f"\t\t- min magnitude: {self._mag_max}")
         # filter for mean annual rate
         if self._rate_min is not None:
-            self.df_rupture = self.df_rupture.loc[self.df_rupture.MeanAnnualRate>=self._rate_min].reset_index(drop=True)
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.AnnualRate>=self._rate_min].reset_index(drop=True)
             logging.info(f"\t\t- min mean annual rate: {self._rate_min}")
         if self._rate_max is not None:
-            self.df_rupture = self.df_rupture.loc[self.df_rupture.MeanAnnualRate<=self._rate_max].reset_index(drop=True)  
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.AnnualRate<=self._rate_max].reset_index(drop=True)  
             logging.info(f"\t\t- min mean annual rate: {self._rate_min}")
         self._n_event = self.df_rupture.shape[0]
         logging.info(f"\t- Number of events remaining after filter: {self._n_event}")
@@ -374,8 +375,8 @@ class UCERF(SeismicSource):
         # get rupture characteristics
         inputs_for_gmpe.site_id = site_data['site_id'][sites_for_rupture_within_maxdist]
         inputs_for_gmpe.source_id = self.df_rupture.SourceId[i]
-        inputs_for_gmpe.mag = self.df_rupture.Mag[i]
-        inputs_for_gmpe.rate = self.df_rupture.MeanAnnualRate[i]
+        inputs_for_gmpe.mag = self.df_rupture.Magnitude[i]
+        inputs_for_gmpe.rate = self.df_rupture.AnnualRate[i]
         inputs_for_gmpe.rake = self.df_rupture.Rake[i]
         # get controlling section id
         section_control = self.get_controlling_section_for_site(
@@ -698,7 +699,7 @@ class ShakeMap(SeismicSource):
                     ]))
                 else:
                     trace_j = plane[:n_top_edge,:]
-                traces.append(np.flipud(trace_j))
+                traces.append(np.flipud(trace_j).tolist())
 
             # store ShakeMap file information
             for j, im in enumerate(self.im_list):
@@ -709,8 +710,8 @@ class ShakeMap(SeismicSource):
         self.df_rupture = pd.DataFrame.from_dict({
             'EventID': list(range(len(traces))),
             'EventName': ref,
-            'Mag': mag,
-            'MeanAnnualRate': np.ones(len(traces)),
+            'Magnitude': mag,
+            'AnnualRate': np.ones(len(traces)),
             'Dip': dip,
             'Rake': rake,
             'DipDir': dip_dir,
@@ -735,10 +736,10 @@ class ShakeMap(SeismicSource):
         logging.info(f"\t- Filtered rupture scenarios by:")
         # filter by magnitudes
         if self._mag_min is not None:
-            self.df_rupture = self.df_rupture.loc[self.df_rupture.Mag>=self._mag_min].reset_index(drop=True)
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.Magnitude>=self._mag_min].reset_index(drop=True)
             logging.info(f"\t\t- min magnitude: {self._mag_min}")
         if self._mag_max is not None:
-            self.df_rupture = self.df_rupture.loc[self.df_rupture.Mag<=self._mag_max].reset_index(drop=True)
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.Magnitude<=self._mag_max].reset_index(drop=True)
             logging.info(f"\t\t- min magnitude: {self._mag_max}")
         self._n_event = self.df_rupture.shape[0]
         logging.info(f"\t- Number of events remaining after filter: {self._n_event}")
@@ -830,6 +831,9 @@ class UserDefinedRupture(SeismicSource):
     """
     
     
+    # class definitions
+    
+    
     # instantiation
     def __init__(self, fpath=None):
         """Create an instance of the class"""
@@ -874,8 +878,8 @@ class UserDefinedRupture(SeismicSource):
         req_cols = [
             'EventID',
             'EventName',
-            'Mag',
-            'MeanAnnualRate',
+            'Magnitude',
+            'AnnualRate',
             'Dip',
             'Rake',
             'DipDir',
@@ -942,13 +946,52 @@ class UserDefinedRupture(SeismicSource):
         # create surfaces for all ruptures
         if self._oq_obj['surfaces'] is not None:
             self._oq_obj['surfaces']  = None
+        
+        # count = 0
+        # for ind in range(self.df_rupture.shape[0]):
+        #     try:
+        #         SimpleFaultSurface.from_fault_data(
+        #             fault_trace=Line(
+        #                 [Point(
+        #                     self.df_rupture.FaultTrace[ind][i][0],
+        #                     self.df_rupture.FaultTrace[ind][i][1],
+        #                     # self.df_rupture.FaultTrace[ind][i][2]
+        #                     self.df_rupture.UpperDepth[ind]
+        #                 ) for i in range(len(self.df_rupture.FaultTrace[ind]))]),
+        #             upper_seismogenic_depth=self.df_rupture.UpperDepth[ind],
+        #             lower_seismogenic_depth=self.df_rupture.LowerDepth[ind],
+        #             dip=self.df_rupture.Dip[ind],
+        #             mesh_spacing=self._mesh_spacing # km
+        #         )
+        #     except ValueError:
+        #         print(ind+1)
+        #         count += 1
+            
+        #     if ind == 0:
+        #         print(SimpleFaultSurface.from_fault_data(
+        #             fault_trace=Line(
+        #                 [Point(
+        #                     self.df_rupture.FaultTrace[ind][i][0],
+        #                     self.df_rupture.FaultTrace[ind][i][1],
+        #                     # self.df_rupture.FaultTrace[ind][i][2]
+        #                     self.df_rupture.UpperDepth[ind]
+        #                 ) for i in range(len(self.df_rupture.FaultTrace[ind]))]),
+        #             upper_seismogenic_depth=self.df_rupture.UpperDepth[ind],
+        #             lower_seismogenic_depth=self.df_rupture.LowerDepth[ind],
+        #             dip=self.df_rupture.Dip[ind],
+        #             mesh_spacing=self._mesh_spacing # km
+        #         ))
+        # print(count)
+                # print(self.df_rupture.loc[ind])
+                # sys.exit()
         self._oq_obj['surfaces'] = [
             SimpleFaultSurface.from_fault_data(
                 fault_trace=Line(
                     [Point(
                         self.df_rupture.FaultTrace[ind][i][0],
                         self.df_rupture.FaultTrace[ind][i][1],
-                        self.df_rupture.FaultTrace[ind][i][2]
+                        # self.df_rupture.FaultTrace[ind][i][2]
+                        self.df_rupture.UpperDepth[ind]
                     ) for i in range(len(self.df_rupture.FaultTrace[ind]))]),
                 upper_seismogenic_depth=self.df_rupture.UpperDepth[ind],
                 lower_seismogenic_depth=self.df_rupture.LowerDepth[ind],
@@ -1023,17 +1066,17 @@ class UserDefinedRupture(SeismicSource):
         logging.info(f"\t\t- max distance: {self._max_dist} km")
         # filter by magnitudes
         if self._mag_min is not None:
-            self.df_rupture = self.df_rupture.loc[self.df_rupture.Mag>=self._mag_min].reset_index(drop=True)
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.Magnitude>=self._mag_min].reset_index(drop=True)
             logging.info(f"\t\t- min magnitude: {self._mag_min}")
         if self._mag_max is not None:
-            self.df_rupture = self.df_rupture.loc[self.df_rupture.Mag<=self._mag_max].reset_index(drop=True)
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.Magnitude<=self._mag_max].reset_index(drop=True)
             logging.info(f"\t\t- min magnitude: {self._mag_max}")
         # filter for mean annual rate
         if self._rate_min is not None:
-            self.df_rupture = self.df_rupture.loc[self.df_rupture.MeanAnnualRate>=self._rate_min].reset_index(drop=True)
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.AnnualRate>=self._rate_min].reset_index(drop=True)
             logging.info(f"\t\t- min mean annual rate: {self._rate_min}")
         if self._rate_max is not None:
-            self.df_rupture = self.df_rupture.loc[self.df_rupture.MeanAnnualRate<=self._rate_max].reset_index(drop=True)  
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.AnnualRate<=self._rate_max].reset_index(drop=True)  
             logging.info(f"\t\t- min mean annual rate: {self._rate_min}")
         self._n_event = self.df_rupture.shape[0]
         logging.info(f"\t- Number of events remaining after filter: {self._n_event}")
@@ -1047,7 +1090,8 @@ class UserDefinedRupture(SeismicSource):
         # sites_for_rupture_within_maxdist = np.unique(np.hstack([
         #     self.sites_for_section_in_maxdist[section] for section in self.sites_for_section_in_maxdist.keys()
         #     if section in sections_for_scenario]))
-        sites_for_rupture_within_maxdist = self.sites_for_rupture_in_maxdist[i]
+        rup_ind = self.rupture_in_maxdist[i]
+        sites_for_rupture_within_maxdist = self.sites_for_rupture_in_maxdist[rup_ind]
         # set up table of inputs
         inputs_for_gmpe = DataFrame(
             None,
@@ -1072,8 +1116,8 @@ class UserDefinedRupture(SeismicSource):
         # get rupture characteristics
         inputs_for_gmpe.site_id = site_data['site_id'][sites_for_rupture_within_maxdist]
         inputs_for_gmpe.event_id = self.df_rupture.EventID[i]
-        inputs_for_gmpe.mag = self.df_rupture.Mag[i]
-        inputs_for_gmpe.rate = self.df_rupture.MeanAnnualRate[i]
+        inputs_for_gmpe.mag = self.df_rupture.Magnitude[i]
+        inputs_for_gmpe.rate = self.df_rupture.AnnualRate[i]
         inputs_for_gmpe.rake = self.df_rupture.Rake[i]
         # get controlling section id
         # section_control = self.get_controlling_section_for_site(
@@ -1084,10 +1128,10 @@ class UserDefinedRupture(SeismicSource):
         section_control = None
         # get rest of gmpe inputs based on controlling section id    
         # inputs_for_gmpe.section_id_control = section_control
-        inputs_for_gmpe.r_rup = self.r_rup_table[i,sites_for_rupture_within_maxdist]
-        inputs_for_gmpe.r_jb = self.r_jb_table[i,sites_for_rupture_within_maxdist]
-        inputs_for_gmpe.r_x = self.r_x_table[i,sites_for_rupture_within_maxdist]
-        inputs_for_gmpe.r_y0 = self.r_y0_table[i,sites_for_rupture_within_maxdist]
+        inputs_for_gmpe.r_rup = self.r_rup_table[rup_ind,sites_for_rupture_within_maxdist]
+        inputs_for_gmpe.r_jb = self.r_jb_table[rup_ind,sites_for_rupture_within_maxdist]
+        inputs_for_gmpe.r_x = self.r_x_table[rup_ind,sites_for_rupture_within_maxdist]
+        inputs_for_gmpe.r_y0 = self.r_y0_table[rup_ind,sites_for_rupture_within_maxdist]
         inputs_for_gmpe.dip = self.df_rupture.Dip[i]
         inputs_for_gmpe.z_tor = self.df_rupture.UpperDepth[i]
         inputs_for_gmpe.z_bor = self.df_rupture.LowerDepth[i]
@@ -1105,3 +1149,91 @@ class UserDefinedRupture(SeismicSource):
             kwargs[col] = inputs_for_gmpe[col].values
         kwargs['period_out'] = im_list
         return kwargs
+    
+    
+
+# -----------------------------------------------------------
+class UCERF(UserDefinedRupture):
+    """
+    UCERF class using reduced list of scenarios by Norm Abrahamson (2022)
+    
+    Parameters
+    ----------
+    
+    Returns
+    -------
+    
+    """
+    
+    
+    # class definitions
+    SUPPORTE_UCERF_MODEL = ['Mean UCERF3 FM3.1'] # supported sourcess
+    
+    
+    # instantiation
+    def __init__(self, ucerf_model='Mean UCERF3 FM3.1'):
+        """Create an instance of the class"""
+        
+        # invoke parent function
+        # super().__init__()
+        
+        # get inputs
+        self.ucerf_model = ucerf_model
+        # check against supported ucerf models
+        self._check_ucerf_support()
+        
+        # load file
+        self._load_rupture_file() # loads ruptures from user specified file
+        
+        # initialize empty params
+        self.oq_surfaces = None # OpenQuake surfaces
+        self._max_dist = None
+        self._mag_min = None
+        self._mag_max = None
+        self._rate_min = None
+        self._rate_max = None
+        self._mesh_spacing = None
+        
+        
+    @property
+    def supported_ucerf_model(self):
+        """supported models"""
+        return self.SUPPORTE_UCERF_MODEL
+    
+    
+    def _check_ucerf_support(self):
+        """check for support"""
+        self._ucerf_model_support = False
+        if self.ucerf_model in self.supported_ucerf_model:
+            self._ucerf_model_support = True
+        else:
+            raise NotImplementedError(
+                f'"{self.ucerf_model}" is not a supported type for seismic source characterization;' + 
+                f'supported source types include: {*self.supported_ucerf_model,}'
+            )
+    
+    
+    def _load_rupture_file(self):
+        """load rupture file provided by the user. Only allowed CSV format at this stage"""
+        # search and get for path to OpenSRA directory
+        _opensra_dir = os.path.realpath(__file__)
+        count = 0
+        while not _opensra_dir.endswith('OpenSRA'):
+            _opensra_dir = os.path.abspath(os.path.dirname(_opensra_dir))
+            # in case can't locate OpenSRA dir and goes into infinite loop
+            if count>5:
+                raise FileNotFoundError(
+                    'URGENT: Cannot locate OpenSRA directory for sourcing UCERF scenarios - contact dev.'
+                )
+                break
+        # get file path to reduced list of ucerf scenarios
+        self._ucerf_base_dir = os.path.join(_opensra_dir,"lib","UCERF3","ReducedEvents_Abrahamson2022")
+        self.ucerf_model_dir = os.path.join(self._ucerf_base_dir,self.ucerf_model)
+        self.ucerf_model_fpath = os.path.join(self.ucerf_model_dir,"UCERF3_reduced_senario_dM0.5.csv")
+        # load ucerf rupture file
+        self.df_rupture = pd.read_csv(self.ucerf_model_fpath)
+        # convert fault trace from string to list of coordinates
+        self.df_rupture.FaultTrace = self.df_rupture.FaultTrace.apply(lambda x: json.loads(x))
+        # get number of events
+        self._n_event = self.df_rupture.shape[0]
+        logging.info(f"Loaded {self.ucerf_model} ruptures")

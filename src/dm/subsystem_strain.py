@@ -63,9 +63,9 @@ class PantoliEtal2022(SubsystemStrain):
     Returns
     -------
     eps_elbow : float
-        [deg] strain for elbows
+        [deg] tensile strain for elbows
     eps_tee : float
-        [deg] strain for tee-joints
+        [deg] tensile strain for tee-joints
     
     References
     ----------
@@ -86,19 +86,19 @@ class PantoliEtal2022(SubsystemStrain):
         "desc": 'returned PBEE upstream random variables:',
         'params': {
             'eps_elbow': {
-                'desc': 'strain for elbows (%)',
+                'desc': 'tensile strain for elbows (%)',
                 'unit': '%',
             },
             'eps_tee': {
-                'desc': 'strain for elbows (%)',
+                'desc': 'tensile strain for elbows (%)',
                 'unit': '%',
             },
             'rot_elbow_control_case': {
-                'desc': 'subsystem rotation case that controls strains for elbows',
+                'desc': 'subsystem rotation case that controls tensile strains for elbows',
                 'unit': '',
             },
             'rot_tee_control_case': {
-                'desc': 'subsystem rotation case that controls strains for tees',
+                'desc': 'subsystem rotation case that controls tensile strains for tees',
                 'unit': '',
             },
         }

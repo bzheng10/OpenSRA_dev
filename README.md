@@ -20,7 +20,7 @@ Maxime Lacour, PhD @ UC Berkeley: [LinkedIn](https://www.linkedin.com/in/maxime-
 
 ### Python
 OpenSRA has been tested on **Python version 3.9.9**
-
+s
 The Python modules required for the current version of OpenSRA are listed below, along with the versions used for testing. Modules were installed via the "conda-forge" channel and "pip". If you are experiencing difficulty installing the modules, consider working in a clean environment.
 
 From "conda-forge"

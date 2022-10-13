@@ -12,7 +12,7 @@
 
 
 # -----------------------------------------------------------
-# Python modules
+# Python base modules
 import importlib
 import copy
 import sys
@@ -21,7 +21,7 @@ import json
 import argparse
 import warnings
 
-# data manipulation modules
+# scientific processing modules
 import numpy as np
 import pandas as pd
 # suppress warning that may come up

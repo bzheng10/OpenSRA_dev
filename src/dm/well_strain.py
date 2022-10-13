@@ -178,7 +178,7 @@ class SasakiEtal2022(WellStrain):
     _MODEL_INPUT_FIXED = {
         'desc': 'Fixed input variables:',
         'params': {
-            'z_top_of_cement': 'depth to top of cement (m)',
+            'z_top_of_cement': 'depth to top of cement in well (m)',
             'd_production_boring': 'diameter of production boring (m)',
             'd_production_casing': 'outer diameter of production casing (m)',
             'd_tubing': 'outer diameter of tubing (m)',

@@ -164,7 +164,8 @@ class LuuEtal2022(WellMoment):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'height_wh', 'mass_wh', 'phi_soil'
+        # 'height_wh', 'mass_wh', 'phi_soil'
+        'height_wh', 'mpl_wh', 'phi_soil'
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
         # 'mode'
@@ -594,7 +595,7 @@ class LuuEtal2022(WellMoment):
         # get intermediate values if requested
         if return_inter_params:
             output['mode'] = mode
-            output['mpl_wh'] = mpl_wh
+            # output['mpl_wh'] = mpl_wh
         
         # return
         return output

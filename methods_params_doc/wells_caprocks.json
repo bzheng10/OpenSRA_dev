@@ -5,8 +5,8 @@
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
-                "LatBegin": {
-                    "NameToDisplay": "Startpoint - Latitude",
+                "Lat": {
+                    "NameToDisplay": "Latitude",
                     "WidgetType": "QComboBox",
                     "ToDisplay": true,
                     "DefaultValue": null,
@@ -18,76 +18,11 @@
                         }
                     }
                 },
-                "LatMid": {
-                    "NameToDisplay": "Midpoint - Latitude",
+                "Lon": {
+                    "NameToDisplay": "Longitude",
                     "WidgetType": "QComboBox",
                     "ToDisplay": true,
                     "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "LatEnd": {
-                    "NameToDisplay": "Endpoint - Latitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "LonBegin": {
-                    "NameToDisplay": "Startpoint - Longitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "LonMid": {
-                    "NameToDisplay": "Midpoint - Longitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "LonEnd": {
-                    "NameToDisplay": "Endpoint - Longitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "Length": {
-                    "NameToDisplay": "Component Length (km)",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": false,
                     "Options": {
                         "ColumnHeaders": {
                             "NameToDisplay": "Column Headers",
@@ -518,884 +453,6 @@
         }
     },
     "EngineeringDemandParameter": {
-        "Liquefaction": {
-			"NameToDisplay": "Liquefaction",
-			"WidgetType": null,
-			"ToDisplay": true,
-			"Params": {
-				"Method": {
-					"NameToDisplay": "Available Method(s)",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "ZhuEtal2017",
-					"Options" : {
-						"ZhuEtal2017": {
-							"NameToDisplay": "Zhu et al. (2017)",
-							"ToDisplay": true,
-							"Return": {
-								"Description": "Return: This method returns \"probability of liquefaction [prob_liq]\".",
-								"ReturnParam": ["prob_liq"]
-							},
-							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"PGA [pga]\", \"PGV [pgv]\", and \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
-								"UpstreamParam": ["pga", "pgv", "mag"]
-							},
-                            "DisplayOrder": [
-                                "vs30",
-                                "gw_depth",
-                                "precip",
-                                "dist_river",
-                                "dist_coast",
-                                "dist_water"
-                            ],
-							"Params": {
-								"model_transition": {
-									"NameToDisplay": "model transition",
-									"WidgetType": "QLineEdit",
-									"DescToDisplay": "[km] distance for transition between global and coastal model, default: 20",
-									"ToDisplay": false,
-									"DefaultValue": 20
-								},
-								"vs30": {
-									"NameToDisplay": "vs30",
-									"VarType": "random",
-									"WidgetType": "QLabel",
-									"DescToDisplay": "[m/s] time-averaged shear wave velocity in the upper 30-meters",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"gw_depth": {
-									"NameToDisplay": "gw_depth",
-									"VarType": "random",
-									"DescToDisplay": "[m] depth to groundwater table",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"dist_river": {
-									"NameToDisplay": "dist_river",
-									"VarType": "random",
-									"DescToDisplay": "[km] distance to nearest river",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"dist_coast": {
-									"NameToDisplay": "dist_coast",
-									"VarType": "random",
-									"DescToDisplay": "[km] distance to nearest coast",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"dist_water": {
-									"NameToDisplay": "dist_water",
-									"VarType": "random",
-									"DescToDisplay": "[km] distance to nearest water body",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"precip": {
-									"NameToDisplay": "precip",
-									"VarType": "random",
-									"DescToDisplay": "[mm] mean annual precipitation",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								}
-							}
-						},
-						"ZhuEtal2015": {
-							"NameToDisplay": "Zhu et al. (2015)",
-							"ToDisplay": true,
-							"Return": {
-								"Description": "Return: This method returns \"probability of liquefaction [prob_liq]\".",
-								"ReturnParam": ["prob_liq"]
-							},
-							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"PGA [pga]\", \"PGV [pgv]\", and \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
-								"UpstreamParam": ["pga", "pgv", "mag"]
-							},
-                            "DisplayOrder": [
-                                "vs30",
-                                "cti"
-                            ],
-							"Params": {
-								"vs30": {
-									"NameToDisplay": "vs30",
-									"VarType": "random",
-									"DescToDisplay": "[m/s] time-averaged shear wave velocity in the upper 30-meters",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"cti": {
-									"NameToDisplay": "cti",
-									"VarType": "random",
-									"DescToDisplay": "compound topographic index",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								}
-							}
-						},
-						"Hazus2014": {
-							"NameToDisplay": "Hazus (2014)",
-							"ToDisplay": true,
-							"Return": {
-								"Description": "Return: This method returns \"probability of liquefaction [prob_liq]\".",
-								"ReturnParam": ["prob_liq"]
-							},
-							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"PGA [pga]\" and \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
-								"UpstreamParam": ["pga", "mag"]
-							},
-                            "DisplayOrder": [
-                                "gw_depth",
-                                "liq_susc"
-                            ],
-							"Params": {
-								"gw_depth": {
-									"NameToDisplay": "gw_depth",
-									"VarType": "random",
-									"DescToDisplay": "[m] depth to groundwater table",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"liq_susc": {
-									"NameToDisplay": "liq_susc",
-									"VarType": "fixed",
-									"DescToDisplay": "liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								}
-							}
-						},
-						"Hazus2014_with_ZhuEtal2017": {
-							"NameToDisplay": "Hazus (2014) with Zhu et al. (2017) for liquefaction susceptibility",
-							"ToDisplay": true,
-							"Return": {
-								"Description": "Return: This method returns \"probability of liquefaction [prob_liq]\".",
-								"ReturnParam": ["prob_liq"]
-							},
-							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"PGA [pga]\", \"PGV [pgv]\", and \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
-								"UpstreamParam": ["pga", "pgv", "mag"]
-							},
-                            "DisplayOrder": [
-                                "vs30",
-                                "gw_depth",
-                                "precip",
-                                "dist_river",
-                                "dist_coast",
-                                "dist_water"
-                            ],
-							"Params": {
-								"model_transition": {
-									"NameToDisplay": "model transition",
-									"WidgetType": "QLineEdit",
-									"DescToDisplay": "[km] distance for transition between global and coastal model, default: 20",
-									"ToDisplay": false,
-									"DefaultValue": 20
-								},
-								"vs30": {
-									"NameToDisplay": "vs30",
-									"VarType": "random",
-									"DescToDisplay": "[m/s] time-averaged shear wave velocity in the upper 30-meters",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"gw_depth": {
-									"NameToDisplay": "gw_depth",
-									"VarType": "random",
-									"DescToDisplay": "[m] depth to groundwater table",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"dist_river": {
-									"NameToDisplay": "dist_river",
-									"VarType": "random",
-									"DescToDisplay": "[km] distance to nearest river",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"dist_coast": {
-									"NameToDisplay": "dist_coast",
-									"VarType": "random",
-									"DescToDisplay": "[km] distance to nearest coast",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"dist_water": {
-									"NameToDisplay": "dist_water",
-									"VarType": "random",
-									"DescToDisplay": "[km] distance to nearest water body",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"precip": {
-									"NameToDisplay": "precip",
-									"VarType": "random",
-									"DescToDisplay": "[mm] mean annual precipitation",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								}
-							}
-						}
-					}
-				}
-			}
-        },
-        "LateralSpread": {
-			"NameToDisplay": "Lateral Spread",
-			"WidgetType": null,
-			"ToDisplay": true,
-			"Params": {
-				"Method": {
-					"NameToDisplay": "Available Method(s)",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "Hazus2014",
-					"Options" : {
-						"Hazus2014": {
-							"NameToDisplay": "Hazus (2014)",
-							"ToDisplay": true,
-							"DisplayOrder": [
-								"dist_water",
-                                "liq_susc"
-							],
-							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
-								"ReturnParam": ["pgdef"]
-							},
-							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"PGA [pga]\" and \"magnitude [mag]\" from the \"Intensity Measure\" tab, and \"probability of liquefaction [prob_liq]\" from the \"Engineering Demand Parameter - Liquefaction\" tab.",
-								"UpstreamParam": ["pga", "mag", "prob_liq"]
-							},
-							"Params": {
-								"dist_water": {
-									"NameToDisplay": "dist_water [km]: distance to nearest water body",
-									"VarType": "random",
-									"WidgetType": "QLabel",
-                                    "DescToDisplay": "[km] distance to nearest water body",
-									"ToDisplay": true
-								},
-								"liq_susc": {
-									"NameToDisplay": "liq_susc: liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
-									"VarType": "fixed",
-									"WidgetType": "QLabel",
-                                    "DescToDisplay": "liq_susc: liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
-									"ToDisplay": true
-								}
-							}
-						},
-						"YoudEtal2002": {
-							"NameToDisplay": "Youd et al. (2002)",
-							"ToDisplay": true,
-							"DisplayOrder": [
-								"slope_type",
-								"t_15",
-								"f_15",
-								"d50_15",
-								"w_ff",
-								"slope"
-							],
-							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
-								"ReturnParam": ["pgdef"]
-							},
-							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"magnitude [mag]\" from the \"Intensity Measure\" tab, and \"probability of liquefaction [prob_liq]\" from the \"Engineering Demand Parameter - Liquefaction\" tab.",
-								"UpstreamParam": ["mag", "prob_liq"]
-							},
-							"Params": {
-								"t_15": {
-									"NameToDisplay": "t_15",
-									"VarType": "random",
-									"DescToDisplay": "[m] cumulative thickness (in upper 20 m) of all saturated soil layers susceptible to liquefaction (initiation with N1_60<15)",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"f_15": {
-									"NameToDisplay": "f_15",
-									"VarType": "random",
-									"DescToDisplay": "[%] average fines content of the soil within \"t_15\" above",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"d50_15": {
-									"NameToDisplay": "d50_15",
-									"VarType": "random",
-									"DescToDisplay": "[mm] average mean grain size of the soil within \"t_15\" above",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"w_ff": {
-									"NameToDisplay": "w_ff",
-									"VarType": "random",
-									"DescToDisplay": "[%] free face ratio (height of free face/distance from base of free face to site); for free-face model",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"slope": {
-									"NameToDisplay": "slope",
-									"VarType": "random",
-									"DescToDisplay": "[deg] ground slope; for ground (infinite) slope model",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"slope_type": {
-									"NameToDisplay": "slope_type",
-									"VarType": "fixed",
-									"DescToDisplay": "type of slope (\"free face\" or \"ground\"; default = \"ground\"",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								}
-							}
-						}
-					}
-				}
-			}
-        },
-        "GroundSettlement": {
-			"NameToDisplay": "Ground Settlement",
-			"WidgetType": null,
-			"ToDisplay": true,
-			"Params": {
-				"Method": {
-					"NameToDisplay": "Available Method(s)",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "Hazus2014",
-					"Options" : {
-						"Hazus2014": {
-							"NameToDisplay": "Hazus (2014)",
-							"ToDisplay": true,
-							"DisplayOrder": [
-								"dist_water",
-								"liq_susc"
-							],
-							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
-								"ReturnParam": ["pgdef"]
-							},
-							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"probability of liquefaction [prob_liq]\" from the \"Engineering Demand Parameter - Liquefaction\" tab.",
-								"UpstreamParam": ["prob_liq"]
-							},
-							"Params": {
-								"dist_water": {
-									"NameToDisplay": "dist_water",
-									"VarType": "random",
-									"DescToDisplay": "[km] distance to nearest water body",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"liq_susc": {
-									"NameToDisplay": "liq_susc",
-									"VarType": "fixed",
-									"DescToDisplay": "liquefaction susceptibility category (none, very low, low, moderate, high, very high)",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								}
-							}
-						}
-					}
-				}
-			}
-        },
-        "Landslide": {
-			"NameToDisplay": "Landslide",
-			"WidgetType": null,
-			"ToDisplay": true,
-			"Params": {
-				"Method": {
-					"NameToDisplay": "Available Method(s)",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "BrayMacedo2019",
-					"Options" : {
-						"BrayMacedo2019": {
-							"NameToDisplay": "Bray and Macedo (2019) - Ordinary Model",
-							"ToDisplay": true,
-							"DisplayOrder": [
-								"slope",
-								"t_slope",
-								"gamma_soil",
-								"phi_soil",
-								"coh_soil"
-							],
-							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
-								"ReturnParam": ["pgdef"]
-							},
-							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"PGA [pga]\", and \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
-								"UpstreamParam": ["pga", "mag"]
-							},
-							"Params": {
-								"slope": {
-									"NameToDisplay": "slope",
-									"VarType": "random",
-									"DescToDisplay": "[deg] slope angle",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"t_slope": {
-									"NameToDisplay": "t_slope",
-									"VarType": "random",
-									"DescToDisplay": "[m] slope thickness",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"gamma_soil": {
-									"NameToDisplay": "gamma_soil",
-									"VarType": "random",
-									"DescToDisplay": "[kN/m^3] unit weight of soil",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"phi_soil": {
-									"NameToDisplay": "phi_soil",
-									"VarType": "random",
-									"DescToDisplay": "[deg] friction angle of soil",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"coh_soil": {
-									"NameToDisplay": "coh_soil",
-									"VarType": "random",
-									"DescToDisplay": "[kPa] cohesion of soil",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								}
-							}
-						},
-						"Jibson2007": {
-							"NameToDisplay": "Jibson (2007)",
-							"ToDisplay": true,
-							"DisplayOrder": [
-								"slope",
-								"t_slope",
-								"gamma_soil",
-								"phi_soil",
-								"coh_soil"
-							],
-							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
-								"ReturnParam": ["pgdef"]
-							},
-							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"PGA [pga]\", and \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
-								"UpstreamParam": ["pga", "mag"]
-							},
-							"Params": {
-								"slope": {
-									"NameToDisplay": "slope",
-									"VarType": "random",
-									"DescToDisplay": "[deg] slope angle",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"t_slope": {
-									"NameToDisplay": "t_slope",
-									"VarType": "random",
-									"DescToDisplay": "[m] slope thickness",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"gamma_soil": {
-									"NameToDisplay": "gamma_soil",
-									"VarType": "random",
-									"DescToDisplay": "[kN/m^3] unit weight of soil",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"phi_soil": {
-									"NameToDisplay": "phi_soil",
-									"VarType": "random",
-									"DescToDisplay": "[deg] friction angle of soil",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"coh_soil": {
-									"NameToDisplay": "coh_soil",
-									"VarType": "random",
-									"DescToDisplay": "[kPa] cohesion of soil",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								}
-							}
-						}
-					}
-                },
-				"YieldAcceleration": {
-					"NameToDisplay": "Yield Acceleration Parameters",
-					"WidgetType": "QWidget",
-					"ToDisplay": false,
-                    "DisplayOrder": [
-                        "UnitWeight",
-                        "FrictionAngle",
-                        "Cohesion",
-                        "SlopeType",
-                        "SlopeAngle",
-                        "SlopeThickness"
-                    ],
-					"Params": {
-						"FrictionAngle": {
-							"NameToDisplay": "phi_soil",
-							"WidgetType": "QComboBox",
-							"DescToDisplay": "[deg] friction angle of soil",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"Cohesion": {
-							"NameToDisplay": "coh_soil",
-							"WidgetType": "QComboBox",
-							"DescToDisplay": "[kPa] cohesion of soil",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"SlopeAngle": {
-							"NameToDisplay": "slope",
-							"WidgetType": "QComboBox",
-							"DescToDisplay": "[deg] slope angle",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"UnitWeight": {
-							"NameToDisplay": "gamma_soil",
-							"WidgetType": "QComboBox",
-							"DescToDisplay": "[kN/m^3] unit weight of soil",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"SlopeThickness": {
-							"NameToDisplay": "t_slope",
-							"WidgetType": "QComboBox",
-							"DescToDisplay": "[m] slope thickness",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"SlopeType": {
-							"NameToDisplay": "slope_type",
-							"WidgetType": "QComboBox",
-							"DescToDisplay": "slope type (infinite, rotational)",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-											"Options": {
-												"ColumnHeaders": {
-													"NameToDisplay": "Column Headers",
-													"ToDisplay": true,
-													"Params": {}
-												}
-											}
-										}
-									}
-								}
-							}
-						},
-						"MethodForKy": {
-							"NameToDisplay": "Method for Yield Acceleration",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "Bray2007",
-							"Options" : {
-								"GrantEtal2016": {
-									"NameToDisplay": "Grant et al. (2016)",
-									"ToDisplay": true,
-									"Params": {
-										"RootCohesion": {
-											"NameToDisplay": "coh_root",
-											"WidgetType": "QComboBox",
-											"DescToDisplay": "[kPa] root cohesion",
-											"ToDisplay": true,
-											"DefaultValue": "Preferred",
-											"Options": {
-												"Preferred": {
-													"NameToDisplay": "Preferred",
-													"ToDisplay": true,
-													"Params": {}
-												},
-												"UserDefined": {
-													"NameToDisplay": "User Defined",
-													"ToDisplay": true,
-													"Params": {
-														"ColumnIDWithData": {
-															"NameToDisplay": "Column ID With Data",
-															"WidgetType": "QComboBox",
-															"ToDisplay": true,
-															"DefaultValue": null,
-															"Options": {
-																"ColumnHeaders": {
-																	"NameToDisplay": "Column Headers",
-																	"ToDisplay": true,
-																	"Params": {}
-																}
-															}
-														}
-													}
-												}
-											}
-										}
-									}
-								},
-								"Bray2007": {
-									"NameToDisplay": "Bray (2007)",
-									"ToDisplay": true,
-									"Params": {
-									}
-								},
-								"RathjeSaygili2009": {
-									"NameToDisplay": "Rathje and Saygili (2009)",
-									"ToDisplay": true,
-									"Params": {
-										"RootCohesion": {
-											"NameToDisplay": "coh_root",
-											"WidgetType": "QComboBox",
-											"DescToDisplay": "[kPa] root cohesion",
-											"ToDisplay": true,
-											"DefaultValue": "Preferred",
-											"Options": {
-												"Preferred": {
-													"NameToDisplay": "Preferred",
-													"ToDisplay": true,
-													"Params": {}
-												},
-												"UserDefined": {
-													"NameToDisplay": "User Defined",
-													"ToDisplay": true,
-													"Params": {
-														"ColumnIDWithData": {
-															"NameToDisplay": "Column ID With Data",
-															"WidgetType": "QComboBox",
-															"ToDisplay": true,
-															"DefaultValue": null,
-															"Options": {
-																"ColumnHeaders": {
-																	"NameToDisplay": "Column Headers",
-																	"ToDisplay": true,
-																	"Params": {}
-																}
-															}
-														}
-													}
-												}
-											}
-										},
-										"SlopeSaturation": {
-											"NameToDisplay": "sat_slope",
-											"WidgetType": "QComboBox",
-											"DescToDisplay": "[%] saturation of sliding mass",
-											"ToDisplay": true,
-											"DefaultValue": "Preferred",
-											"Options": {
-												"Preferred": {
-													"NameToDisplay": "Preferred",
-													"ToDisplay": true,
-													"Params": {}
-												},
-												"UserDefined": {
-													"NameToDisplay": "User Defined",
-													"ToDisplay": true,
-													"Params": {
-														"ColumnIDWithData": {
-															"NameToDisplay": "Column ID With Data",
-															"WidgetType": "QComboBox",
-															"ToDisplay": true,
-															"DefaultValue": null,
-															"Options": {
-																"ColumnHeaders": {
-																	"NameToDisplay": "Column Headers",
-																	"ToDisplay": true,
-																	"Params": {}
-																}
-															}
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-        },
         "SurfaceFaultRupture": {
 			"NameToDisplay": "Surface Fault Rupture",
 			"WidgetType": null,
@@ -1425,23 +482,11 @@
 					}
 				}
 			}
-        },
-        "SubsurfaceFaultRupture": {
-			"NameToDisplay": "Subsurface Fault Rupture",
-			"WidgetType": null,
-			"ToDisplay": false,
-			"Params": {}
-        },
-        "TransientGroundStrain": {
-			"NameToDisplay": "Transient Ground Strain",
-			"WidgetType": null,
-			"ToDisplay": false,
-			"Params": {}
         }
     },
     "DamageMeasure": {
-        "PipeStrain": {
-			"NameToDisplay": "Pipe Strain",
+        "WellStrain": {
+			"NameToDisplay": "Fault Shear Induced Strain on Wells",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -1449,153 +494,211 @@
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "BainEtal2022",
+					"DefaultValue": "SasakiEtal2022",
 					"Options" : {
-						"BainEtal2022": {
-							"NameToDisplay": "Bain et al. (2022)",
+						"SasakiEtal2022": {
+							"NameToDisplay": "Sasaki et al. (2022)",
 							"ToDisplay": true,
 							"DisplayOrder": [
-								"d_pipe",
-								"t_pipe",
-								"sigma_y",
-								"n_param",
-								"r_param",
-								"def_length",
-								"s_u_backfill",
-								"alpha_backfill",
-								"gamma_backfill",
-								"h_cover",
-								"phi_backfill",
-								"delta_backfill",
-								"soil_type",
-								"welding",
-								"steel_grade"
+								"phi_cmt",
+								"ucs_cmt",
+								"theta",
+								"w_fc",
+								"w_dz",
+								"z_crossing",
+								"e_rock",
+								"z_top_of_cement",
+								"d_production_boring",
+								"d_production_casing",
+								"d_tubing",
+								"casing_flow"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"longitudinal pipe strain [pipe_strain]\".",
+								"Description": "Return: This method returns \"fault shear induced strain\" for production casings and tubings.",
 								"ReturnParam": ["pipe_strain"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from \"lateral spread\", \"ground settlement\", \"landslide\", and/or \"surface fault rupture\" under the \"Engineering Demand Parameter\" tab.",
+								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from the \"Engineering Demand Parameter - Surface Fault Rupture\" tab.",
 								"UpstreamParam": ["pgdef"]
 							},
 							"Params": {
-								"d_pipe": {
-									"NameToDisplay": "d_pipe",
+								"phi_cmt": {
+									"NameToDisplay": "phi_cmt",
 									"VarType": "random",
-									"DescToDisplay": "[mm] pipe outside diameter - required for \"level 2 and 3\" analysis",
+									"DescToDisplay": "[deg] friction angle of cement",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"t_pipe": {
-									"NameToDisplay": "t_pipe",
+								"ucs_cmt": {
+									"NameToDisplay": "ucs_cmt",
 									"VarType": "random",
-									"DescToDisplay": "[mm] pipe wall thickness - required for \"level 2 and 3\" analysis",
+									"DescToDisplay": "[MPa] uniaxial compressive strength of cement",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"sigma_y": {
-									"NameToDisplay": "sigma_y",
+								"theta": {
+									"NameToDisplay": "theta",
 									"VarType": "random",
-									"DescToDisplay": "[kPa] pipe yield stress - required for \"level 2 and 3\" analysis",
+									"DescToDisplay": "[deg] well-fault crossing angle",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"n_param": {
-									"NameToDisplay": "n_param",
+								"w_fc": {
+									"NameToDisplay": "w_fc",
 									"VarType": "random",
-									"DescToDisplay": "Ramberg-Osgood parameter",
+									"DescToDisplay": "[m] fault core width",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"r_param": {
-									"NameToDisplay": "r_param",
+								"w_dz": {
+									"NameToDisplay": "w_dz",
 									"VarType": "random",
-									"DescToDisplay": "Ramberg-Osgood parameter",
+									"DescToDisplay": "[m] damage zone width",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"def_length": {
-									"NameToDisplay": "def_length",
+								"z_crossing": {
+									"NameToDisplay": "z_crossing",
 									"VarType": "random",
-									"DescToDisplay": "[m] length of ground deformation zone (both clay and sand models) - required for \"level 3\" analysis",
+									"DescToDisplay": "[m] depth to well-fault crossing",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"s_u_backfill": {
-									"NameToDisplay": "s_u_backfill",
+								"e_rock": {
+									"NameToDisplay": "e_rock",
 									"VarType": "random",
-									"DescToDisplay": "[kPa] undrained shear strength (clay model only) - required for \"level 3\" analysis",
+									"DescToDisplay": "[GPa] Young's modulus of rock",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"alpha_backfill": {
-									"NameToDisplay": "alpha_backfill",
-									"VarType": "random",
-									"DescToDisplay": "adhesion factor (clay model only) - required for \"level 3\" analysis",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"gamma_backfill": {
-									"NameToDisplay": "gamma_backfill",
-									"VarType": "random",
-									"DescToDisplay": "[kN/m^3] total unit weight of backfill soil (sand model only) - required for \"level 3\" analysis",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"h_cover": {
-									"NameToDisplay": "h_cover",
-									"VarType": "random",
-									"DescToDisplay": "[m] burial depth to pipe centerline (sand model only) - required for \"level 3\" analysis",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"phi_backfill": {
-									"NameToDisplay": "phi_backfill",
-									"VarType": "random",
-									"DescToDisplay": "[deg] friction angle of backfill soil (sand model only) - required for \"level 3\" analysis",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"delta_backfill": {
-									"NameToDisplay": "delta_backfill",
-									"VarType": "random",
-									"DescToDisplay": "sand-pipe interface friction angle ratio (sand model only) - required for \"level 3\" analysis",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"soil_type": {
-									"NameToDisplay": "soil_type",
+								"z_top_of_cement": {
+									"NameToDisplay": "z_top_of_cement",
 									"VarType": "fixed",
-									"DescToDisplay": "soil type for backfill (\"sand\" or \"clay\" for model to use) - required for \"level 1, 2, 3\" analysis",
+									"DescToDisplay": "[m] depth to top of cement in well",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"welding": {
-									"NameToDisplay": "welding",
+								"d_production_boring": {
+									"NameToDisplay": "d_production_boring",
 									"VarType": "fixed",
-									"DescToDisplay": "\"welded\" or \"seamless\" for SMLS - required for \"level 2 and 3\" analysis",
+									"DescToDisplay": "[m] diameter of production boring",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"steel_grade": {
+								"d_production_casing": {
+									"NameToDisplay": "d_production_casing",
+									"VarType": "fixed",
+									"DescToDisplay": "[m] outer diameter of production casing",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"d_tubing": {
+									"NameToDisplay": "d_tubing",
+									"VarType": "fixed",
+									"DescToDisplay": "[m] outer diameter of tubing",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"casing_flow": {
 									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
-									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\" - required for \"level 2 and 3\" analysis",
+									"DescToDisplay": "flag for whether well is configured for casing flow: \"True\" or \"False\"",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								}
+							}
+						}
+					}
+				}
+			}
+        },
+        "WellMoment": {
+			"NameToDisplay": "Ground Shaking Induced Moment on Wells",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "LuuEtal2022",
+					"Options" : {
+						"LuuEtal2022": {
+							"NameToDisplay": "Luu et al. (2022)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+								"height_wh",
+								"mpl_wh",
+								"phi_soil",
+								"d_production_casing",
+								"d_tubing",
+								"casing_flow"
+							],
+							"Return": {
+								"Description": "Return: This method returns \"fault shear induced strain\" for conductor casings, surface casings, production casings, and tubings.",
+								"ReturnParam": ["pipe_strain"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"peak ground acceleration [pga]\" determined by the seismic source under the \"Intensity Measure\" tab.",
+								"UpstreamParam": ["pga"]
+							},
+							"Params": {
+								"height_wh": {
+									"NameToDisplay": "height_wh",
+									"VarType": "random",
+									"DescToDisplay": "[deg] wellhead height - used in all well modes",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"mpl_wh": {
+									"NameToDisplay": "mpl_wh",
+									"VarType": "random",
+									"DescToDisplay": "[kg/m] wellhead mass per height (length) - used in all well modes",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"phi_soil": {
+									"NameToDisplay": "phi_soil",
+									"VarType": "random",
+									"DescToDisplay": "[deg] soil friction angle - used only in modes 1 and 2",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"d_production_casing": {
+									"NameToDisplay": "d_production_casing",
+									"VarType": "fixed",
+									"DescToDisplay": "[m] outer diameter of production casing",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"d_tubing": {
+									"NameToDisplay": "d_tubing",
+									"VarType": "fixed",
+									"DescToDisplay": "[m] outer diameter of tubing",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"casing_flow": {
+									"NameToDisplay": "steel_grade",
+									"VarType": "fixed",
+									"DescToDisplay": "flag for whether well is configured for casing flow: \"True\" or \"False\"",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1608,8 +711,8 @@
         }
     },
     "DecisionVariable": {
-        "PipeRupture": {
-			"NameToDisplay": "Pipe Rupture",
+        "ShearInducedWellRupture": {
+			"NameToDisplay": "Fault Shear Induced Rupture on Wells",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -1617,72 +720,76 @@
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "BainEtal2022",
+					"DefaultValue": "SasakiEtal2022",
 					"Options" : {
-						"BainEtal2022": {
-							"NameToDisplay": "Bain et al. (2022)",
+						"SasakiEtal2022": {
+							"NameToDisplay": "Sasaki et al. (2022)",
 							"ToDisplay": true,
 							"DisplayOrder": [
-								"d_pipe",
-								"t_pipe",
-								"sigma_y",
-								"op_press",
-								"welding",
-								"steel_grade"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of pipe rupture [prob_rupture]\".",
+								"Description": "Return: This method returns \"probability of rupture [prob_rupture]\" for production casings and tubings.",
 								"ReturnParam": ["prob_rupture"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"pipe strain [pipe_strain]\" from the \"Damage Measure - Pipe Strain\" tab.",
-								"UpstreamParam": ["pipe strain"]
+								"Description": "Upstream Dependency: This method requires a model from the \"Damage Measure - Well Strain\" tab, preferably the \"Sasaki et al. (2022)\" method.",
+								"UpstreamParam": []
 							},
 							"Params": {
-								"d_pipe": {
-									"NameToDisplay": "d_pipe",
-									"VarType": "random",
-									"DescToDisplay": "[mm] pipe outside diameter",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"t_pipe": {
-									"NameToDisplay": "t_pipe",
-									"VarType": "random",
-									"DescToDisplay": "[mm] pipe wall thickness",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"sigma_y": {
-									"NameToDisplay": "sigma_y",
-									"VarType": "random",
-									"DescToDisplay": " [kPa] pipe yield stress",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"op_press": {
-									"NameToDisplay": "op_press",
-									"VarType": "random",
-									"DescToDisplay": "[kPa] pipe internal operating pressure",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"welding": {
-									"NameToDisplay": "welding",
+							}
+						}
+					}
+				}
+			}
+        },
+        "ShakingInducedWellRupture": {
+			"NameToDisplay": "Ground Shaking Induced Rupture on Wells",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "LuuEtal2022",
+					"Options" : {
+						"LuuEtal2022": {
+							"NameToDisplay": "Luu et al. (2022)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+								"d_production_casing",
+								"d_tubing",
+								"casing_flow"
+							],
+							"Return": {
+								"Description": "Return: This method returns \"probability of rupture [prob_rupture]\" for conductor casings, surface casings, production casings, and tubings.",
+								"ReturnParam": ["prob_rupture"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires a model from the \"Damage Measure - Well Moment\" tab, preferably the \"Luu et al. (2022)\" method.",
+								"UpstreamParam": []
+							},
+							"Params": {
+								"d_production_casing": {
+									"NameToDisplay": "d_production_casing",
 									"VarType": "fixed",
-									"DescToDisplay": "flag for welding - \"True\" for welded, \"False\" for seamless or SMLS",
+									"DescToDisplay": "[m] outer diameter of production casing",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"steel_grade": {
+								"d_tubing": {
+									"NameToDisplay": "d_tubing",
+									"VarType": "fixed",
+									"DescToDisplay": "[m] outer diameter of tubing",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"casing_flow": {
 									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
-									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\"",
+									"DescToDisplay": "flag for whether well is configured for casing flow: \"True\" or \"False\"",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1693,186 +800,31 @@
 				}
 			}
         },
-        "RepairRate": {
-			"NameToDisplay": "Repair Rate",
+        "CaprockLeakage": {
+			"NameToDisplay": "Fault Shear Indunced Leakage on Caprocks",
 			"WidgetType": null,
-			"ToDisplay": false,
+			"ToDisplay": true,
 			"Params": {
-				"Demand": {
-					"NameToDisplay": "Demands",
-					"WidgetType": "QWidget",
-					"ToDisplay": true,
-					"Params": {
-						"RepairRatePGV": {
-							"NameToDisplay": "Shaking Induced",
-							"WidgetType": "QCheckBox",
-							"ToDisplay": true,
-							"DefaultValue": false,
-							"Params": {}
-						},
-						"RepairRatePGD": {
-							"NameToDisplay": "Deformation Induced",
-							"WidgetType": "QCheckBox",
-							"ToDisplay": true,
-							"DefaultValue": false,
-							"Params": {}
-						}
-					}
-				},
 				"Method": {
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "ORourke2020",
+					"DefaultValue": "ZhangEtal2022",
 					"Options" : {
-						"ORourke2020": {
-							"NameToDisplay": "O'Rourke (2020)",
+						"ZhangEtal2022": {
+							"NameToDisplay": "Zhang et al. (2022)",
 							"ToDisplay": true,
-							"Params": {}
-						},
-						"ALA2001": {
-							"NameToDisplay": "ALA (2001)",
-							"ToDisplay": true,
-							"Params": {}
-						},
-						"Hazus2014": {
-							"NameToDisplay": "Hazus (FEMA, 2014)",
-							"ToDisplay": true,
-							"Params": {}
-						}
-					}
-				},
-				"ComponentProperties": {
-					"NameToDisplay": "Component Properties",
-					"WidgetType": "QWidget",
-					"ToDisplay": true,
-					"Params": {
-						"ComponentMaterial": {
-							"NameToDisplay": "Component Material",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"ComponentJointType": {
-							"NameToDisplay": "Component Joint Type",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"ComponentDiameter": {
-							"NameToDisplay": "Component Diameter (in), used in O'Rourke (2020) and ALA (2001)",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"YearOfInstallation": {
-							"NameToDisplay": "Year of Installation, used in Hazus (FEMA, 2014)",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "Return: This method returns \"probability of leakage [prob_leakage]\" for caprocks.",
+								"ReturnParam": ["prob_rupture"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires the seismic source from \"Intensity Measure\" tab and the path to the caprock shapefile in the \"Infrastructure\" tab.",
+								"UpstreamParam": []
+							},
+							"Params": {
 							}
 						}
 					}

@@ -589,6 +589,7 @@
 							"Params": {
 								"high_pressure_weight": {
 									"NameToDisplay": "high_pressure_weight",
+                                    "VarType": "UserInput",
 									"WidgetType": "QLineEdit",
 									"DescToDisplay": "weight to apply to high pressure model; for low pressure model, weight = 1 - high_pressure_weight, default: 0.7",
 									"ToDisplay": true,
@@ -727,6 +728,14 @@
 								"UpstreamParam": ["eps"]
 							},
 							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
 							}
 						}
 					}
@@ -758,13 +767,21 @@
 								"UpstreamParam": ["eps"]
 							},
 							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
 							}
 						}
 					}
 				}
 			}
         },
-        "VesselLeakage": {
+        "VesselRupture": {
 			"NameToDisplay": "Vessel Rupture",
 			"WidgetType": null,
 			"ToDisplay": true,
@@ -773,10 +790,10 @@
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "BainEtal2022",
+					"DefaultValue": "PantoliEtal2022",
 					"Options" : {
-						"BainEtal2022": {
-							"NameToDisplay": "Bain et al. (2022)",
+						"PantoliEtal2022": {
+							"NameToDisplay": "Pantoli et al. (2022)",
 							"ToDisplay": true,
 							"DisplayOrder": [
 							],
@@ -789,6 +806,14 @@
 								"UpstreamParam": ["moment_ratio"]
 							},
 							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
 							}
 						}
 					}

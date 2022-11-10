@@ -44,9 +44,11 @@ def main(work_dir):
         
     # make directories
     # check current directory, if not at OpenSRA level, go up a level (happens during testing)
+    
     if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
         os.chdir('..')
-    opensra_dir = os.getcwd()
+        
+    opensra_dir = os.path.dirname(os.path.abspath(__file__))
     input_dir = os.path.join(work_dir,'Input')
     processed_input_dir = os.path.join(work_dir,'Processed_Input')
     if not os.path.isdir(processed_input_dir):
@@ -180,7 +182,7 @@ def main(work_dir):
     
     # get preferred input distributions
     pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed = \
-        import_param_dist_table(infra_type=infra_type)
+        import_param_dist_table(infra_type=infra_type, opensra_dir = opensra_dir)
     print(f'{counter}. Read preferred distributions for variables')
     print(f"\t{os.path.join('param_dist',f'{infra_type}.xlsx')}")
     counter += 1
@@ -641,10 +643,14 @@ def get_rvs_and_fix_by_level(workflow, infra_fixed={}):
     return all_rvs, req_rvs_by_level, req_fixed_by_level
 
 
-def import_param_dist_table(infra_type='below_ground'):
+def import_param_dist_table(infra_type='below_ground', opensra_dir=''):
     """loads table with param distributions, choose from 'below_ground', 'above_ground', and 'wells_caprocks'"""
     n_levels = 3
     pref_param_dist_path = os.path.join('param_dist',f'{infra_type}.xlsx')
+    
+    # Append the opensra dir to make it a relative path
+    pref_param_dist_path = os.path.join(opensra_dir,pref_param_dist_path)
+        
     pref_param_dist = {}
     # by levels
     for i in range(n_levels):

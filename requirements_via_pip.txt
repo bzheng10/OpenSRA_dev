@@ -1,3 +1,4 @@
 numba_stats==1.1.0
 openquake.engine==3.14.0
 tables==3.7.0
+xlrd

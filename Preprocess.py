@@ -63,9 +63,11 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
     # -----------------------------------------------------------
     # make directories
     # check current directory, if not at OpenSRA level, go up a level (happens during testing)
+    
     if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
         os.chdir('..')
-    opensra_dir = os.getcwd()
+        
+    opensra_dir = os.path.dirname(os.path.abspath(__file__))
     input_dir = os.path.join(work_dir,'Input')
     processed_input_dir = os.path.join(work_dir,'Processed_Input')
     if not os.path.isdir(processed_input_dir):
@@ -232,6 +234,101 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
             )
             logging.info(f'{counter}. Obtained pipeline crossing for landslide')
             counter += 1
+<<<<<<< HEAD
+=======
+    ##--------------------------
+    
+    
+    # rvs and fixed params split by preferred andf user provided
+    pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, \
+    pref_fixed, user_prov_table_fixed, user_prov_gis_fixed = \
+        separate_params_by_source(rvs_input, fixed_input)
+    print(f'{counter}. Separate random and fixed parameters by source')
+    counter += 1
+    
+    # get preferred input distributions
+    pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed = \
+        import_param_dist_table(infra_type=infra_type, opensra_dir = opensra_dir)
+    print(f'{counter}. Read preferred distributions for variables')
+    print(f"\t{os.path.join('param_dist',f'{infra_type}.xlsx')}")
+    counter += 1
+    
+    # get param_dist_meta from user-provided information
+    if 'UserGISFile' in setup_config['General']['Directory']:
+        user_prov_gis_fdir = setup_config['General']['Directory']['UserGISFile']
+    else:
+        user_prov_gis_fdir = ''
+    param_dist_meta, param_dist_table = get_param_dist_from_user_prov_table(
+        user_prov_table_rvs, user_prov_table_fixed,
+        user_prov_gis_rvs, user_prov_gis_fixed,
+        pref_rvs, pref_fixed, site_data, user_prov_gis_fdir
+    )
+    print(f'{counter}. Get user provided distributions from infrastructure table')
+    counter += 1
+    
+    # get params with missing distribution metrics
+    params_with_missing_dist_metric = get_params_with_missing_dist_metric(param_dist_meta)
+    print(f'{counter}. Track parameters still with missing distribution metrics')
+    counter += 1
+
+    # get level to run
+    if "EDP" in workflow and "Liquefaction" in workflow["EDP"] and "CPTBased" in workflow["EDP"]["Liquefaction"]:
+        param_dist_table['level_to_run'] = np.ones(param_dist_table.shape[0])*3
+    else:
+        param_dist_table = get_level_to_run(
+            param_dist_table,
+            workflow,
+            pref_param_dist,
+            pref_param_dist_const_with_level,
+            params_with_missing_dist_metric,
+            param_dist_meta,
+            infra_type=infra_type
+        )
+    print(f'{counter}. Determine level of analysis to run for each site')
+    counter += 1
+    
+    # get rest of distribution metrics from preferred datasets
+    param_dist_table, param_dist_meta, params_with_missing_dist_metric = get_pref_dist_for_params(
+        params_with_missing_dist_metric,
+        site_data,
+        param_dist_table,
+        param_dist_meta,
+        pref_param_dist,
+        pref_param_dist_const_with_level,
+        pref_param_fixed,
+        workflow,
+        avail_data_summary,
+        export_path_dist_table=os.path.join(processed_input_dir,'param_dist.csv'),
+        export_path_dist_json=os.path.join(processed_input_dir,'param_dist_meta.json'),
+        infra_type=infra_type
+    )
+    print(f'{counter}. Get missing distribution metrics from preferred distributions')
+    counter += 1
+    
+    # get IM predictions
+    if im_source == "ShakeMap":
+        get_im_pred(
+            im_source, im_dir, site_data, infra_loc_header,
+            # for ShakeMaps
+            sm_dir=sm_dir,
+            sm_events=sm_events,
+        )
+    elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
+        get_im_pred(
+            im_source, im_dir, site_data, infra_loc_header,
+            # for user-defind ruptures
+            opensra_dir=opensra_dir,
+            processed_input_dir=processed_input_dir,
+            rup_fpath=rup_fpath,
+        )
+    print(f'{counter}. Obtained IM predictions from {im_source} and stored to:')
+    print(f"\t{im_dir}")
+    counter += 1
+    
+    ##--------------------------
+    # get well and caprock crossings - may move to another location in Preprocess
+    # well_crossing_ordered_by_faults = None
+>>>>>>> a52fe50011da50b1317b681d93a31598377edb03
             
     # -----------------------------------------------------------
     # get well and caprock crossings - may move to another location in Preprocess
@@ -744,11 +841,19 @@ def get_rvs_and_fix_by_level(workflow, infra_fixed={}):
     return all_rvs, req_rvs_by_level, req_fixed_by_level
 
 
+<<<<<<< HEAD
 # -----------------------------------------------------------
 def import_param_dist_table(infra_type='below_ground'):
+=======
+def import_param_dist_table(infra_type='below_ground', opensra_dir=''):
+>>>>>>> a52fe50011da50b1317b681d93a31598377edb03
     """loads table with param distributions, choose from 'below_ground', 'above_ground', and 'wells_caprocks'"""
     n_levels = 3
     pref_param_dist_path = os.path.join('param_dist',f'{infra_type}.xlsx')
+    
+    # Append the opensra dir to make it a relative path
+    pref_param_dist_path = os.path.join(opensra_dir,pref_param_dist_path)
+        
     pref_param_dist = {}
     # by levels
     for i in range(n_levels):
@@ -1763,6 +1868,11 @@ if __name__ == "__main__":
     main(
         work_dir = args.work_dir,
         # infra_type = args.infra_type,
+<<<<<<< HEAD
         # infra_fpath = args.file_type,
         logging_message_detail=args.logging_detail
     )
+=======
+        # infra_fpath = args.file_type
+    )
+>>>>>>> a52fe50011da50b1317b681d93a31598377edb03

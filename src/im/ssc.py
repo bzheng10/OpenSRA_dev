@@ -1248,7 +1248,7 @@ class UCERF(UserDefinedRupture):
     
     
     # instantiation
-    def __init__(self, ucerf_model='Mean UCERF3 FM3.1'):
+    def __init__(self, opensra_dir, ucerf_model='Mean UCERF3 FM3.1'):
         """Create an instance of the class"""
         
         # invoke parent function
@@ -1260,7 +1260,11 @@ class UCERF(UserDefinedRupture):
         self._check_ucerf_support()
         
         # load file
-        self._load_rupture_file() # loads ruptures from user specified file
+        if not os.path.exists(opensra_dir):
+            raise FileNotFoundError(
+                'URGENT: Cannot locate OpenSRA directory for sourcing UCERF scenarios - contact dev.'
+            )
+        self._load_rupture_file(opensra_dir) # loads ruptures from user specified file
         
         # initialize empty params
         self.oq_surfaces = None # OpenQuake surfaces
@@ -1290,21 +1294,10 @@ class UCERF(UserDefinedRupture):
             )
     
     
-    def _load_rupture_file(self):
+    def _load_rupture_file(self, opensra_dir):
         """load rupture file provided by the user. Only allowed CSV format at this stage"""
-        # search and get for path to OpenSRA directory
-        _opensra_dir = os.path.realpath(__file__)
-        count = 0
-        while not _opensra_dir.endswith('OpenSRA'):
-            _opensra_dir = os.path.abspath(os.path.dirname(_opensra_dir))
-            # in case can't locate OpenSRA dir and goes into infinite loop
-            if count>5:
-                raise FileNotFoundError(
-                    'URGENT: Cannot locate OpenSRA directory for sourcing UCERF scenarios - contact dev.'
-                )
-                break
         # get file path to reduced list of ucerf scenarios
-        self._ucerf_base_dir = os.path.join(_opensra_dir,"lib","UCERF3","ReducedEvents_Abrahamson2022")
+        self._ucerf_base_dir = os.path.join(opensra_dir,"lib","UCERF3","ReducedEvents_Abrahamson2022")
         self.ucerf_model_dir = os.path.join(self._ucerf_base_dir,self.ucerf_model)
         # self.ucerf_model_fpath = os.path.join(self.ucerf_model_dir,"UCERF3_reduced_senario_dM0.5.csv")
         self.ucerf_model_rupture_fpath = os.path.join(self.ucerf_model_dir,"UCERF3_reduced_senario_dM0.5_v2_ruptures.csv")

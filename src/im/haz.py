@@ -125,7 +125,9 @@ class SeismicHazard(object):
         logging.info(f"Finished setting sites for seismic hazard")
     
     
-    def init_ssc(self, ssc_name=None, ucerf_model_name=None, sm_dir=None, event_names=None, im_list=['pga','pgv'], user_def_rup_fpath=None):
+    def init_ssc(self, ssc_name=None, ucerf_model_name=None, 
+                 sm_dir=None, opensra_dir=None, event_names=None, 
+                 im_list=['pga','pgv'], user_def_rup_fpath=None):
         """
         Initializes seismic source
         If ssc_name is not specified, default to 'Mean UCERF3 FM3.1'
@@ -143,7 +145,7 @@ class SeismicHazard(object):
                 if ucerf_model_name is None:
                     ucerf_model_name = 'Mean UCERF3 FM3.1'
                 logging.info(f'Initialized "UCERF3": "{ucerf_model_name}"')
-                self.source = getattr(ssc, "UCERF")(ucerf_model_name)
+                self.source = getattr(ssc, "UCERF")(opensra_dir, ucerf_model_name)
                 # self.event_id = self.source.df_rupture.SourceId.values # for full inventory
             ##########################################
             elif ssc_name == 'ShakeMap' or 'UserDefined' in ssc_name:

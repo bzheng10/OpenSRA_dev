@@ -14,8 +14,15 @@ def main():
 
     # get OpenSRA dir
     opensra_dir = os.getcwd()
+    count = 0
     while not opensra_dir.endswith('OpenSRA'):
         opensra_dir = os.path.dirname(opensra_dir)
+        # in case can't locate OpenSRA dir and goes into infinite loop
+        if count>5:
+            raise FileNotFoundError(
+                'URGENT: Cannot locate OpenSRA directory - contact dev.'
+            )
+        count += 1
         
     # preprocess script fpath
     preprocess_py_fpath = os.path.abspath(os.path.join(opensra_dir,"Preprocess.py"))

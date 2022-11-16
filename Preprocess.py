@@ -183,7 +183,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
     if 'Filter' in setup_config['IntensityMeasure']['SourceForIM'][im_source]:
         im_filters = setup_config['IntensityMeasure']['SourceForIM'][im_source]['Filter']
     else:
-        im_filters = None
+        im_filters = {}
     logging.info(f'{counter}. Identified source for intensity measure: {im_source}')
     counter += 1
     
@@ -560,24 +560,25 @@ def get_im_pred(
         if im_source == 'UserDefinedRupture':
             seismic_hazard.init_ssc(im_source, user_def_rup_fpath=rup_fpath)  # initialize source
         elif im_source == 'UCERF':
-            seismic_hazard.init_ssc(im_source)  # initialize source
+            seismic_hazard.init_ssc(im_source, opensra_dir=opensra_dir)  # initialize source
 
     else:
         raise NotImplementedError("to be added to preprocessing...")
-
-    # check for available filters
+    
+    # default filters
     max_dist = 200
+    rate_min = None
+    mag_min = None
+    mag_max = None
+    # check for available filters
     if 'Distance' in im_filters:
         if im_filters['Distance']['ToInclude']:
             if 'Maximum' in im_filters['Distance']:
                 max_dist = im_filters['Distance']['Maximum']
-    rate_min = None
     if 'MeanAnnualRate' in im_filters:
         if im_filters['MeanAnnualRate']['ToInclude']:
             if 'Minimum' in im_filters['MeanAnnualRate']:
                 rate_min = im_filters['MeanAnnualRate']['Minimum']
-    mag_min = None
-    mag_max = None
     if 'Magnitude' in im_filters:
         if im_filters['Magnitude']['ToInclude']:
             if 'Minimum' in im_filters['Magnitude']:

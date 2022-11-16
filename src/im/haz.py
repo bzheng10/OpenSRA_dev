@@ -122,7 +122,7 @@ class SeismicHazard(object):
                 self.site_data['vs30_source'] = _vs30_source
         else:
             self.site_data['vs30_source'] = np.zeros(self._n_site)
-        logging.info(f"Finish setting sites for seismic hazard")
+        logging.info(f"Finished setting sites for seismic hazard")
     
     
     def init_ssc(self, ssc_name=None, ucerf_model_name=None, sm_dir=None, event_names=None, im_list=['pga','pgv'], user_def_rup_fpath=None):
@@ -367,7 +367,8 @@ class SeismicHazard(object):
         
         
     # def export_gm_pred(self, sdir=None, stype=['sparse','csv'], addl_rup_meta=None):
-    def export_gm_pred(self, sdir=None, stype=['sparse','csv']):
+    # def export_gm_pred(self, sdir=None, stype=['sparse','csv']):
+    def export_gm_pred(self, sdir=None, stype=['sparse']):
         """exports calculated ground motion predictions"""
         name_map = {
             'mean': 'MEAN',
@@ -451,6 +452,14 @@ class SeismicHazard(object):
                     'fault_trace': 'FaultTrace'
                 }
                 for each in name_map:
+                    # if self.ssc_name == 'UCERF':
+                    #     # first look for it in df_rupture
+                    #     if name_map[each] in self.source.df_rupture:
+                    #         rup_meta_out[each] = self.source.df_rupture[name_map[each]].values
+                    #     # if not in df_rupture, then it will be under df_section
+                    #     else:
+                    #         rup_meta_out[each] = self.source.df_section[name_map[each]].values
+                    # else:
                     rup_meta_out[each] = self.source.df_rupture[name_map[each]].values
             # export
             save_name = os.path.join(sdir,'RUPTURE_METADATA.csv')

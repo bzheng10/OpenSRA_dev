@@ -432,19 +432,44 @@ def get_samples_for_params(dist, n_sample, n_site):
     for i, each in enumerate(dist):
         if dist[each]['dist_type'] != 'fixed':
             # skip param entirely if 'event_dependent' is flagged with any of the sites
-            if isinstance(dist[each]['mean'][0],str) and dist[each]['mean'][0] == 'event_dependent':
+            if isinstance(dist[each]['mean'][0],str) and (
+                dist[each]['mean'][0] == 'event_dependent' or dist[each]['mean'][0] == 'sampling_dependent'
+            ):
                 pass
             else:
-                samples[each] = np.zeros((n_site,n_sample))
-                for j in range(n_site):
-                    samples[each][j,:] = res_to_samples(
-                        samples=res[j,:,count],
-                        mean=dist[each]['mean'][j],
-                        sigma=dist[each]['sigma'][j],
-                        low=dist[each]['low'][j],
-                        high=dist[each]['high'][j],
-                        dist_type=dist[each]['dist_type']
-                    )
+                # get mapping for dist type
+                if dist[each]['dist_type'] == 'normal':
+                    dist_type_int = 1
+                elif dist[each]['dist_type'] == 'lognormal':
+                    dist_type_int = 2
+                elif dist[each]['dist_type'] == 'uniform':
+                    dist_type_int = 3
+                
+                # if each == 't_pipe':
+                    
+                #     print(dist_type_int)
+                    
+                # get samples
+                samples[each] = res_to_samples(
+                    residuals=res[:,:,count],
+                    mean=dist[each]['mean'],
+                    sigma=dist[each]['sigma'],
+                    low=dist[each]['low'],
+                    high=dist[each]['high'],
+                    dist_type=dist_type_int
+                )
+                # samples[each] = np.zeros((n_site,n_sample))
+                # for j in range(n_site):
+                #     samples[each][j,:] = res_to_samples(
+                #         samples=res[j,:,count],
+                #         mean=dist[each]['mean'][j],
+                #         sigma=dist[each]['sigma'][j],
+                #         low=dist[each]['low'][j],
+                #         high=dist[each]['high'][j],
+                #         dist_type=dist[each]['dist_type']
+                #     )
+                
+                    # sys.exit()
                 count += 1
         else:
             samples[each] = np.tile(dist[each]['value'],(n_sample,1)).T
@@ -456,6 +481,8 @@ def process_methods_for_mean_and_sigma_of_mu(
     haz_dict, upstream_params, internal_params, input_samples=None, 
     n_sample=1, n_site=1, use_input_mean=False, input_dist=None):
     """preprocess methods to get mean of mu, sigma of mu, and sigma for inputs"""
+    
+    # time_start = time.time()
     
     # dictionary for storing results from each method
     haz_results_by_method={}
@@ -469,8 +496,8 @@ def process_methods_for_mean_and_sigma_of_mu(
     if use_input_mean:
         input_samples = get_mean_kwargs(input_dist)
     
-    # print('\n')
-    # time_start1 = time.time()
+    # print(f'\t2a---1. time: {time.time()-time_start} seconds')
+    # time_start = time.time()
     
     # loop through method
     for count,method in enumerate(methods):
@@ -478,6 +505,9 @@ def process_methods_for_mean_and_sigma_of_mu(
         upstream_params_for_method = {}
         for param in haz_dict['upstream_params_by_method'][method]:
             upstream_params_for_method[param] = upstream_params[param].copy()
+        
+        # print(f'\t2a---2a. time: {time.time()-time_start} seconds')
+        # time_start = time.time()
         
         # initialize
         haz_results_by_method[method] = {}
@@ -494,6 +524,9 @@ def process_methods_for_mean_and_sigma_of_mu(
             **internal_params,
             **input_samples
         )
+        
+        # print(f'\t2a---2b. time: {time.time()-time_start} seconds')
+        # time_start = time.time()
         
         # print(f'\taa. time: {time.time()-time_start1} seconds')
         # time_start1 = time.time()
@@ -559,9 +592,16 @@ def process_methods_for_mean_and_sigma_of_mu(
                 'sigma': store_sigma[param],
                 'dist_type': store_dist_type[param]
             }
+
+            
+        # print(f'\t2a---2c. time: {time.time()-time_start} seconds')
+        # time_start = time.time()
             
         # print(f'\tbb. time: {time.time()-time_start1} seconds')
         # time_start1 = time.time()
+    
+    # print(f'\t2a---2. time: {time.time()-time_start} seconds')
+    # time_start = time.time()
     
     # combine results from methods
     haz_results = {}
@@ -597,6 +637,9 @@ def process_methods_for_mean_and_sigma_of_mu(
             'sigma': sigma_down,
             'dist_type': store_dist_type[param]
         }
+    
+    # print(f'\t2a---3. time: {time.time()-time_start} seconds')
+    # time_start = time.time()
     
     # print(f'\tcc. time: {time.time()-time_start1} seconds')
     # time_start1 = time.time()
@@ -791,7 +834,8 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
     return haz_results, liq_susc
 
 
-def get_fractiles(pc_samples, site_id, infra_type, fractiles=[5,16,50,84,95]):
+# def get_fractiles(pc_samples, site_id, infra_type, fractiles=[5,16,50,84,95]):
+def get_fractiles(pc_samples, fractiles=[5,16,50,84,95], n_sig_fig=None):
     """get fractiles and mean"""
     frac_return = np.vstack([
         np.percentile(pc_samples*100,fractiles,axis=0),
@@ -799,20 +843,35 @@ def get_fractiles(pc_samples, site_id, infra_type, fractiles=[5,16,50,84,95]):
     ]).T
     # convert back to decimals
     frac_return = frac_return/100
+    # print(frac_return)
+    # round to N sig figs
+    if n_sig_fig is not None:
+        nonzero_frac_loc = frac_return>0
+        nonzero_frac = frac_return[nonzero_frac_loc]
+        decimals = n_sig_fig-np.floor(np.log10(np.abs(nonzero_frac))).astype(int)-1
+        # print(nonzero_frac)
+        # print(n_sig_fig-np.floor(np.log10(np.abs(nonzero_frac))).astype(int))
+        frac_return[nonzero_frac_loc] = np.asarray([
+            np.round(nonzero_frac[i],decimals[i])
+            for i in range(len(nonzero_frac))
+        ])
+        # print(frac_return)
+    
     # index = list(fractiles)+['mean']
     # headers = columns=['site_'+str(i+1) for i in range(pc_samples.shape[1])]
     headers = [f'{val}th' for val in list(fractiles)]+['mean']
     # index = ['site_'+str(i+1) for i in range(pc_samples.shape[1])]
-    if infra_type == 'below_ground':
-        tag = 'segment'
-    elif infra_type == 'wells_caprocks':
-        tag = 'well'
-    elif infra_type == 'above_ground':
-        tag = 'component'
-    else:
-        tag = 'site'
-    index = [f'{tag}_{each}' for each in site_id]
+    # if infra_type == 'below_ground':
+    #     tag = 'segment'
+    # elif infra_type == 'wells_caprocks':
+    #     tag = 'well'
+    # elif infra_type == 'above_ground':
+    #     tag = 'component'
+    # else:
+    #     tag = 'site'
+    # index = [f'{tag}_{each}' for each in site_id]
     # df_frac = DataFrame(frac_return,index=index,columns=headers).round(decimals=3)
-    df_frac = DataFrame(frac_return,index=index,columns=headers)
+    # df_frac = DataFrame(frac_return,index=index,columns=headers)
+    df_frac = DataFrame(frac_return,columns=headers)
     return df_frac
     # return frac_return

@@ -166,7 +166,7 @@
                             }
                         },
                         "Distance": {
-                            "NameToDisplay": "Distance (km)",
+                            "NameToDisplay": "Distance (km, <= 200 km)",
                             "WidgetType": "QCheckBox",
                             "ToDisplay": true,
                             "DefaultValue": false,

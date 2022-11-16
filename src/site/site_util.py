@@ -22,7 +22,8 @@ import geopandas as gpd
 from shapely.geometry import LineString, MultiLineString, Point, MultiPoint, Polygon, MultiPolygon
 from shapely.ops import linemerge, polygonize
 from shapely.prepared import prep
-from numba import jit, njit
+from numba import njit, float64, boolean, int64, typeof
+from numba.types import Tuple, List
 
 # OpenSRA modules and functions
 from src.edp import edp_util
@@ -565,7 +566,13 @@ def get_regional_liq_susc(witter_geo_unit, bedrossian_geo_unit, gw_depth, get_me
 
 
 # -----------------------------------------------------------
-@njit
+@njit(
+    Tuple((float64[:,:],boolean))(
+        float64[:,:],float64
+    ),
+    fastmath=True,
+    cache=True
+)
 def split_line_by_max_length(coord, l_max=0.1):
     """
     split a segment of a line if it exceeds maximum length
@@ -585,7 +592,7 @@ def split_line_by_max_length(coord, l_max=0.1):
         [] True if performed split on line
     
     """
-
+    
     # calculate inter-segment lengths
     lengths = get_haversine_dist(
         lon1=coord[:-1,0], lat1=coord[:-1,1],

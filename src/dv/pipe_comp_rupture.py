@@ -177,6 +177,12 @@ class BainEtal2022(PipeCompressiveRupture):
         # c1 = -1.000     # ln(eps_pipe)
         # c2 = -1.617     # ln(d_pipe/t_pipe)
         
+        # print(d_pipe)
+        # print(t_pipe)
+        # print(sigma_y)
+        # print(op_press)
+        # print(steel_grade)
+        
 
         # get other params based on steel_grade
         # sigma_y = np.empty_like(d_pipe)
@@ -213,6 +219,18 @@ class BainEtal2022(PipeCompressiveRupture):
         # eps_pipe_eq = eps_pipe / (1 + sigma_h/sigma_y) # %, zero internal pressure equivalent compressive pipe strain
         # prob = norm.sf((c0 + c1*np.log(eps_pipe_eq/100) + c2*np.log(d_pipe/t_pipe)) / cls.DIST['ALEATORY']) # survival function
         eps_comp_crit_rup = np.exp(-(np.log(1 + sigma_h/sigma_y) + 1.617*np.log(d_pipe/t_pipe) - 2.130))
+        
+        # print(sigma_h)
+        # print(sigma_y)
+        # print(d_pipe)
+        # print(np.max(d_pipe))
+        # print(np.min(d_pipe))
+        # print(t_pipe)
+        # print(np.max(t_pipe))
+        # print(np.min(t_pipe))
+        # print(np.max(d_pipe/t_pipe))
+        # print(np.min(d_pipe/t_pipe))
+        # print(np.where(np.isnan(d_pipe/t_pipe)))
         
         # prepare outputs
         output = {

@@ -19,11 +19,16 @@ import logging
 import numpy as np
 from scipy import sparse
 # from scipy.stats import norm
-from numba_stats import norm
+
+# precompile
+# from numba_stats import norm
+from numba import njit, float64, int64, typeof
+from numba.types import Tuple
 
 # OpenSRA modules
-# import src.EDP.Fcn_EDP
+from src.util import nb_round
 from src.base_class import BaseModel
+from src.nb_stats.stats_util import *
 
 
 # -----------------------------------------------------------
@@ -175,89 +180,45 @@ class BrayMacedo2019(Landslide):
     _MODEL_INPUT_RV = {}
 
 
-    @staticmethod
-    # @njit
+    @classmethod
     def _model(
+        cls,
         pga, mag, # upstream PBEE RV
         slope, t_slope, gamma_soil, phi_soil, coh_soil, # geotechnical/geologic
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
         
-        # initialize arrays
-        prob_d_eq_0 = np.empty(pga.shape)
-        pgdef = np.empty(pga.shape)
+        # convert inputs to floats in case they are read as int
+        pga = pga.astype(float)
+        mag = mag.astype(float)
+        slope = slope.astype(float)
+        t_slope = t_slope.astype(float)
+        gamma_soil = gamma_soil.astype(float)
+        phi_soil = phi_soil.astype(float)
+        coh_soil = coh_soil.astype(float)
         
-        # convert from deg to rad
-        slope_rad = slope*np.pi/180
-        phi_soil_rad = phi_soil*np.pi/180
+        # check dim
+        ndim = pga.ndim
         
-        # yield acceleration
-        ky = np.tan(phi_soil_rad-slope_rad) + \
-            coh_soil/(
-                gamma_soil * t_slope * np.cos(slope_rad)**2 * \
-                (1+np.tan(phi_soil_rad)*np.tan(slope_rad)))
-        ky = np.maximum(ky,0.01) # to avoid ky = 0
-        
-        # probability of zero displacement, eq. 2 with Ts=0
-        # prob_d_eq_0 = 1 - norm.cdf(
-        # prob_d_eq_0 = np.round(1 - norm.cdf(
-        #     -2.480 + \
-        #     -2.970*np.log(ky) + \
-        #     -0.120*(np.log(ky))**2 + \
-        #     2.780*np.log(pga)
-        # ),decimals=15)
-        prob_d_eq_0 = np.round(1 - norm.cdf(
-            -2.480 + \
-            -2.970*np.log(ky) + \
-            -0.120*(np.log(ky))**2 + \
-            2.780*np.log(pga),
-        loc=0, scale=1),decimals=15)
-       
-        # deformation, eq 3b
-        ln_pgdef_trunc = \
-            -4.684 + \
-            -2.482*np.log(ky) + \
-            -0.244*(np.log(ky))**2 + \
-            0.344*np.log(ky)*np.log(pga) + \
-            2.649*np.log(pga) + \
-            -0.090*(np.log(pga))**2 + \
-            0.603*mag # cm
-        # sigma = 0.72
-        
-        # apply non-zero displacement correction/condition, eq 11
-        # prob_d_gt_0 = np.maximum(1 - prob_d_eq_0,1e-20) # limit to 1e-5 and above to avoid dividing by zero
-        # prob_d_gt_0 = np.round(1 - prob_d_eq_0,decimals=5)
-        # nonzero_median_cdf = np.ones(pga.shape)*-100 # initialize
-        # nonzero_median_cdf[prob_d_eq_0<1] = 1 - .5/(1-prob_d_eq_0[prob_d_eq_0<1])
-        
-        nonzero_median_cdf = 1 - .5/(1-prob_d_eq_0)
-        sigma_val = 0.72
-        nonzero_ln_pgdef = ln_pgdef_trunc.copy()
-        # nonzero_ln_pgdef[nonzero_median_cdf>0] = ln_pgdef_trunc[nonzero_median_cdf>0] + \
-        #     sigma_val*norm.ppf(nonzero_median_cdf[nonzero_median_cdf>0])
-        nonzero_ln_pgdef[nonzero_median_cdf>0] = ln_pgdef_trunc[nonzero_median_cdf>0] + \
-            sigma_val*norm.ppf(nonzero_median_cdf[nonzero_median_cdf>0], loc=0, scale=1)
-        pgdef = np.exp(nonzero_ln_pgdef)/100 # also convert from cm to m
-        sigma_pgdef = np.ones(pga.shape)*sigma_val
-        
-        # pgdef = np.exp(ln_pgdef_trunc)/100
-        
-        # print(prob_d_eq_0[3])
-        # print(ky[3])
-        # print(pga[3])
-        # print(mag[3])
-        # print(ln_pgdef_trunc[3])
-        
-        # print(prob_d_gt_0[3])
-        # print(nonzero_median_cdf[3])
-        # print(nonzero_ln_pgdef[3])
-        
-        # print(pgdef[3])
-        
-        
-        # sigma_mu
-        # sigma_mu_pgdef = np.ones(pga.shape)*0.25
+        # run model
+        if ndim > 1:
+            pgdef, sigma_pgdef, \
+            ky, prob_d_eq_0, ln_pgdef_trunc, nonzero_median_cdf, = \
+                cls._model_njit(
+                    pga, mag,
+                    slope, t_slope, gamma_soil,
+                    phi_soil, coh_soil,
+                )
+        else:
+            # for testing
+            pgdef, sigma_pgdef, \
+            ky, prob_d_eq_0, ln_pgdef_trunc, nonzero_median_cdf, = \
+                cls._model_njit.py_func(
+                    pga, mag,
+                    slope, t_slope, gamma_soil,
+                    phi_soil, coh_soil,
+                )
         
         # prepare outputs
         output = {
@@ -281,6 +242,154 @@ class BrayMacedo2019(Landslide):
         
         # return
         return output
+    
+    
+    @staticmethod
+    @njit(
+        Tuple((float64[:,:],float64[:,:],float64[:,:],float64[:,:],float64[:,:],float64[:,:]))(
+            float64[:,:],float64[:,:],float64[:,:],float64[:,:],float64[:,:],float64[:,:],float64[:,:]
+        ),
+        # fastmath=True,
+        cache=True
+    )
+    def _model_njit(
+        pga, mag, # upstream PBEE RV
+        slope, t_slope, gamma_soil, phi_soil, coh_soil, # geotechnical/geologic
+    ):
+        """Model"""
+        
+        # get dimensions
+        ndim = pga.ndim
+        if ndim == 1:
+            n_site = len(pga)
+            n_sample = 1
+            shape = (n_site)
+        else:
+            shape = pga.shape
+            n_site = shape[0]
+            n_sample = shape[1]
+            
+        # initialize
+        pgdef = np.zeros(shape)
+        ky = np.zeros(shape)
+        prob_d_eq_0 = np.zeros(shape)
+        ln_pgdef_trunc = np.zeros(shape)
+        nonzero_median_cdf = np.zeros(shape)
+        
+        # convert from deg to rad
+        slope_rad = slope*np.pi/180
+        phi_soil_rad = phi_soil*np.pi/180
+        
+        # yield acceleration
+        ky = np.tan(phi_soil_rad-slope_rad) + \
+            coh_soil/(
+                gamma_soil * t_slope * np.cos(slope_rad)**2 * \
+                (1+np.tan(phi_soil_rad)*np.tan(slope_rad)))
+        ky = np.maximum(ky,0.01) # to avoid ky = 0
+
+        # aleatory
+        sigma_val = 0.72
+
+        # deformation, eq 3b
+        ln_pgdef_trunc = \
+            -4.684 + \
+            -2.482*np.log(ky) + \
+            -0.244*(np.log(ky))**2 + \
+            0.344*np.log(ky)*np.log(pga) + \
+            2.649*np.log(pga) + \
+            -0.090*(np.log(pga))**2 + \
+            0.603*mag # cm
+        nonzero_ln_pgdef = ln_pgdef_trunc.copy()
+                
+        # probability of zero displacement, eq. 2 with Ts=0
+        if ndim == 1:
+            prob_d_eq_0 = 1 - norm2_cdf(
+                -2.480 + \
+                -2.970*np.log(ky) + \
+                -0.120*(np.log(ky))**2 + \
+                2.780*np.log(pga),
+            0, 1)
+        else:
+            prob_d_eq_0 = 1 - norm2_cdf_2d(
+                -2.480 + \
+                -2.970*np.log(ky) + \
+                -0.120*(np.log(ky))**2 + \
+                2.780*np.log(pga),
+            0, 1)
+        prob_d_eq_0 = nb_round(prob_d_eq_0, decimals=15)
+        
+        # apply non-zero displacement correction/condition, eq 11
+        nonzero_median_cdf = 1 - .5/(1-prob_d_eq_0)
+        
+        # loop through numper of samples
+        if ndim == 1:
+            nonzero_ln_pgdef[nonzero_median_cdf>0] = ln_pgdef_trunc[nonzero_median_cdf>0] + \
+                sigma_val*norm2_ppf(nonzero_median_cdf[nonzero_median_cdf>0], 0.0, 1.0)
+        else:
+            for i in range(n_sample):
+                cond = nonzero_median_cdf[:,i]>0
+                nonzero_ln_pgdef[cond,i] = ln_pgdef_trunc[cond,i] + \
+                    sigma_val*norm2_ppf(nonzero_median_cdf[cond,i], 0.0, 1.0)
+        
+        # rest of actions
+        pgdef = np.exp(nonzero_ln_pgdef)/100 # also convert from cm to m
+        sigma_pgdef = np.ones(shape)*sigma_val
+
+        # return
+        return pgdef, sigma_pgdef, ky, prob_d_eq_0, ln_pgdef_trunc, nonzero_median_cdf
+
+        
+        # # initialize arrays
+        # prob_d_eq_0 = np.zeros(pga.shape)
+        # # prob_d_eq_0 = np.empty(pga.shape)
+        # # prob_d_eq_0 = np.empty(pga.shape)
+        # # prob_d_eq_0 = np.empty(pga.shape)
+        # pgdef = np.zeros(pga.shape)
+        # # pgdef = np.empty(pga.shape)
+        
+        # # convert from deg to rad
+        # slope_rad = slope*np.pi/180
+        # phi_soil_rad = phi_soil*np.pi/180
+        
+        # # yield acceleration
+        # ky = np.tan(phi_soil_rad-slope_rad) + \
+        #     coh_soil/(
+        #         gamma_soil * t_slope * np.cos(slope_rad)**2 * \
+        #         (1+np.tan(phi_soil_rad)*np.tan(slope_rad)))
+        # ky = np.maximum(ky,0.01) # to avoid ky = 0
+        
+        # # probability of zero displacement, eq. 2 with Ts=0
+        # prob_d_eq_0 = 1 - norm2_cdf(
+        #     -2.480 + \
+        #     -2.970*np.log(ky) + \
+        #     -0.120*(np.log(ky))**2 + \
+        #     2.780*np.log(pga),
+        # 0, 1)
+        # prob_d_eq_0 = nb_round(prob_d_eq_0, decimals=15)
+       
+        # # deformation, eq 3b
+        # ln_pgdef_trunc = \
+        #     -4.684 + \
+        #     -2.482*np.log(ky) + \
+        #     -0.244*(np.log(ky))**2 + \
+        #     0.344*np.log(ky)*np.log(pga) + \
+        #     2.649*np.log(pga) + \
+        #     -0.090*(np.log(pga))**2 + \
+        #     0.603*mag # cm
+        
+        # # apply non-zero displacement correction/condition, eq 11
+        # nonzero_median_cdf = 1 - .5/(1-prob_d_eq_0)
+        # sigma_val = 0.72
+        # nonzero_ln_pgdef = ln_pgdef_trunc.copy()
+        
+        # # ppf_val = norm.ppf(sub_arr,loc,scale)
+        # nonzero_ln_pgdef[nonzero_median_cdf>0] = ln_pgdef_trunc[nonzero_median_cdf>0] + \
+        #     sigma_val*norm2_ppf(nonzero_median_cdf[nonzero_median_cdf>0], 0.0, 1.0)
+        # pgdef = np.exp(nonzero_ln_pgdef)/100 # also convert from cm to m
+        # sigma_pgdef = np.ones(pga.shape)*sigma_val
+
+        # # return
+        # return pgdef, sigma_pgdef, ky, prob_d_eq_0, ln_pgdef_trunc, nonzero_median_cdf
 
 
 # -----------------------------------------------------------

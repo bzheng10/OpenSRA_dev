@@ -128,7 +128,7 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             }
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = False
+    _INPUT_DIST_VARY_WITH_LEVEL = True
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -153,6 +153,8 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             'gamma_backfill': 'total unit weight of backfill soil (kN/m^3) - for sand',
             'phi_backfill': 'backfill friction angle (deg) - for sand',
             'delta_backfill': 'sand/pipe interface friction angle ratio - for sand - Bain et al. (2022) only',
+            'primary_mech': 'mechanisms for slip (normal, reverse, and/or SS compression, tension)',
+            'transition_weight_factor': 'for oblique slips, linear weight from 0 to 1 with beta_crossing',
         }
     }
     _MODEL_INPUT_FIXED = {
@@ -164,12 +166,32 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'clay': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
-        'sand': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+        'clay': {
+            'level1': [],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
+        },
+        'sand': {
+            'level1': [],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+        }
+        # 'clay': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
+        # 'sand': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'clay': ['soil_type', 'soil_density'],
-        'sand': ['soil_type', 'soil_density'],
+        'clay': {
+            'level1': ['soil_type', 'soil_density'],
+            'level2': ['soil_type', 'soil_density'],
+            'level3': ['soil_type', 'soil_density'],
+        },
+        'sand': {
+            'level1': ['soil_type', 'soil_density'],
+            'level2': ['soil_type', 'soil_density'],
+            'level3': ['soil_type', 'soil_density'],
+        }
+        # 'clay': ['soil_type', 'soil_density'],
+        # 'sand': ['soil_type', 'soil_density'],
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
     _MODEL_FORM_DETAIL = {}
@@ -195,13 +217,22 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         if 'clay' in soil_type:
             soils.append('clay')
         for i in range(3):
+            # for each in soils:
+            #     if f'level{i+1}' in req_rvs_by_level:
+            #         req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
+            #         req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+            #     else:
+            #         req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
+            #         req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+            # req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
+            # req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
             for each in soils:
                 if f'level{i+1}' in req_rvs_by_level:
-                    req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
-                    req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+                    req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
+                    req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each][f'level{i+1}']
                 else:
-                    req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
-                    req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+                    req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
+                    req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each][f'level{i+1}']
             req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
             req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
         return req_rvs_by_level, req_fixed_by_level
@@ -215,20 +246,24 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         beta_crossing, psi_dip, h_pipe, # geotech - general
         alpha_backfill, s_u_backfill, # clay
         gamma_backfill, phi_backfill, delta_backfill, # sand
-        soil_type, soil_density, steel_grade, # fixed/toggles
+        soil_type, soil_density, steel_grade, # fixed/toggles,
+        primary_mech, transition_weight_factor, # additional fixed params determined internally
         return_inter_params=False # to get intermediate params
     ):
         #####
-        # one of the four options:
-        # 1) at head scarp (normal):
-        #       beta <= 10 deg
-        # 2) strike-slip tension:
-        #       10 deg < beta < 90 deg
-        # 3) strike-slip compression:
-        #       90 deg <= beta < 170 deg
-        # 4) at toe (reverse):
-        #       beta >= 170 deg
+        # one of the 8 options:
+        # 1) normal only:
+        # 2) reverse only:
+        # 3) strike-slip tension only:
+        # 4) strike-slip compression only:
+        # 5) normal and strike-slip tension:
+        # 6) normal and strike-slip compression:
+        # 7) reverse and strike-slip tension:
+        # 8) reverse and strike-slip compression:
         #####
+        
+        # for PGD less than 5 cm or 0.05 m, set to 0
+        pgdef[pgdef<0.05] == 0
         
         # initialize output variables
         eps_pipe_comp = np.ones(pgdef.shape)*1e-5
@@ -237,14 +272,10 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         sigma_eps_pipe_tens = np.ones(pgdef.shape)*0.01
         sigma_mu_eps_pipe_comp = np.ones(pgdef.shape)*0.3
         sigma_mu_eps_pipe_tens = np.ones(pgdef.shape)*0.3
-        
-        # initialize intermediate variable for checking cases
-        case_to_run = np.empty(pgdef.shape, dtype="<U20")
          
-        # 1) check for cases at head scarp (normal)
-        cond = np.logical_and(beta_crossing >= 0, beta_crossing <= 5)
+        # 1) normal only:
+        cond = primary_mech == 'Normal'
         if True in cond:
-            case_to_run[cond] = 'Normal'
             output = HutabaratEtal2022_Normal._model(
                 pgdef[cond], # upstream PBEE RV
                 d_pipe[cond], t_pipe[cond], sigma_y[cond], n_param[cond], r_param[cond], l_anchor[cond], # infrastructure
@@ -257,10 +288,24 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             sigma_eps_pipe_tens[cond] = output['eps_pipe']['sigma']
             sigma_mu_eps_pipe_tens[cond] = output['eps_pipe']['sigma_mu']
             
-        # 2) check for cases for strike-slip tension
-        cond = np.logical_and(beta_crossing > 5, beta_crossing < 90)
+        # 2) reverse only:
+        cond = primary_mech == 'Reverse'
         if True in cond:
-            case_to_run[cond] = 'SSTens'
+            output = HutabaratEtal2022_Reverse._model(
+                pgdef[cond], # upstream PBEE RV
+                d_pipe[cond], t_pipe[cond], l_anchor[cond], # infrastructure
+                psi_dip[cond], h_pipe[cond], # geotech - general
+                alpha_backfill[cond], s_u_backfill[cond], # clay
+                gamma_backfill[cond], phi_backfill[cond], delta_backfill[cond], # sand
+                soil_type[cond], # fixed/toggles
+            )
+            eps_pipe_comp[cond] = output['eps_pipe']['mean']
+            sigma_eps_pipe_comp[cond] = output['eps_pipe']['sigma']
+            sigma_mu_eps_pipe_comp[cond] = output['eps_pipe']['sigma_mu']
+            
+        # 3) strike-slip tension only:
+        cond = primary_mech == 'SSTens'
+        if True in cond:
             output = HutabaratEtal2022_SSTens._model(
                 pgdef[cond], # upstream PBEE RV
                 d_pipe[cond], t_pipe[cond], sigma_y[cond], n_param[cond], r_param[cond], l_anchor[cond], # infrastructure
@@ -273,10 +318,9 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             sigma_eps_pipe_tens[cond] = output['eps_pipe']['sigma']
             sigma_mu_eps_pipe_tens[cond] = output['eps_pipe']['sigma_mu']
             
-        # 3) check for cases for strike-slip compression
-        cond = np.logical_and(beta_crossing >= 90, beta_crossing < 175)
+        # 4) strike-slip compression only:
+        cond = primary_mech == 'SSComp'
         if True in cond:
-            case_to_run[cond] = 'SSComp'
             output = HutabaratEtal2022_SSComp._model(
                 pgdef[cond], # upstream PBEE RV
                 d_pipe[cond], l_anchor[cond], # infrastructure
@@ -286,11 +330,100 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             sigma_eps_pipe_comp[cond] = output['eps_pipe']['sigma']
             sigma_mu_eps_pipe_comp[cond] = output['eps_pipe']['sigma_mu']
                         
-        # 4) check for cases at toe (reverse)
-        cond = np.logical_and(beta_crossing >= 175, beta_crossing <= 180)
+        # 5) normal and strike-slip tension:
+        cond = primary_mech == 'Normal_SSTens'
         if True in cond:
-            case_to_run[cond] = 'Reverse'
-            output = HutabaratEtal2022_Reverse._model(
+            ##################
+            # Normal
+            output1 = HutabaratEtal2022_Normal._model(
+                pgdef[cond], # upstream PBEE RV
+                d_pipe[cond], t_pipe[cond], sigma_y[cond], n_param[cond], r_param[cond], l_anchor[cond], # infrastructure
+                psi_dip[cond], h_pipe[cond], # geotech - general
+                alpha_backfill[cond], s_u_backfill[cond], # clay
+                gamma_backfill[cond], phi_backfill[cond], delta_backfill[cond], # sand
+                soil_type[cond], soil_density[cond], steel_grade[cond], # fixed/toggles
+            )
+            # SSTens
+            output2 = HutabaratEtal2022_SSTens._model(
+                pgdef[cond], # upstream PBEE RV
+                d_pipe[cond], t_pipe[cond], sigma_y[cond], n_param[cond], r_param[cond], l_anchor[cond], # infrastructure
+                beta_crossing[cond], h_pipe[cond], # geotech - general
+                alpha_backfill[cond], s_u_backfill[cond], # clay
+                gamma_backfill[cond], phi_backfill[cond], delta_backfill[cond], # sand
+                soil_type[cond], steel_grade[cond], # fixed/toggles
+            )
+            # post - linearly weight normal and ss_tens strains and variance
+            weight_cond = transition_weight_factor[cond]
+            inv_weight_cond = 1 - weight_cond
+            transition_weight = transition_weight_factor[cond]
+            eps_pipe_tens_curr = \
+                output1['eps_pipe']['mean']*weight_cond + \
+                output2['eps_pipe']['mean']*inv_weight_cond
+            sigma_eps_pipe_tens_curr = ((
+                output1['eps_pipe']['sigma']**2*weight_cond + \
+                output2['eps_pipe']['sigma']**2*inv_weight_cond
+            ))**0.5
+            sigma_mu_eps_pipe_tens_curr = ((
+                output1['eps_pipe']['sigma_mu']**2*weight_cond +\
+                output2['eps_pipe']['sigma_mu']**2*inv_weight_cond
+            ))**0.5
+            ##################
+            eps_pipe_tens[cond] = eps_pipe_tens_curr
+            sigma_eps_pipe_tens[cond] = sigma_eps_pipe_tens_curr
+            sigma_mu_eps_pipe_tens[cond] = sigma_mu_eps_pipe_tens_curr
+        
+        # 6) normal and strike-slip compression:
+        cond = primary_mech == 'Normal_SSComp'
+        if True in cond:
+            subset_shape = pgdef[cond].shape
+            ##################
+            # Normal
+            output1 = HutabaratEtal2022_Normal._model(
+                pgdef[cond], # upstream PBEE RV
+                d_pipe[cond], t_pipe[cond], sigma_y[cond], n_param[cond], r_param[cond], l_anchor[cond], # infrastructure
+                psi_dip[cond], h_pipe[cond], # geotech - general
+                alpha_backfill[cond], s_u_backfill[cond], # clay
+                gamma_backfill[cond], phi_backfill[cond], delta_backfill[cond], # sand
+                soil_type[cond], soil_density[cond], steel_grade[cond], # fixed/toggles
+            )
+            # SSComp
+            output2 = HutabaratEtal2022_SSComp._model(
+                pgdef[cond], # upstream PBEE RV
+                d_pipe[cond], l_anchor[cond], # infrastructure
+                beta_crossing[cond], # geotech - general
+            )
+            # post - pick worst case, likely comp
+            eps_pipe_comp_curr = np.ones(subset_shape)*1e-5
+            eps_pipe_tens_curr = np.ones(subset_shape)*1e-5
+            sigma_eps_pipe_comp_curr = np.ones(subset_shape)*0.01
+            sigma_eps_pipe_tens_curr = np.ones(subset_shape)*0.01
+            sigma_mu_eps_pipe_comp_curr = np.ones(subset_shape)*0.3
+            sigma_mu_eps_pipe_tens_curr = np.ones(subset_shape)*0.3
+            # where Normal > SSComp
+            ind_Normal_gt_SSComp = output1['eps_pipe']['mean'] > output2['eps_pipe']['mean']
+            eps_pipe_tens_curr[ind_Normal_gt_SSComp] = output1['eps_pipe']['mean'][ind_Normal_gt_SSComp]
+            sigma_eps_pipe_tens_curr[ind_Normal_gt_SSComp] = output1['eps_pipe']['sigma'][ind_Normal_gt_SSComp]
+            sigma_mu_eps_pipe_tens_curr[ind_Normal_gt_SSComp] = output1['eps_pipe']['sigma_mu'][ind_Normal_gt_SSComp]
+            # where SSComp > Normal
+            ind_SSComp_gt_Normal = output2['eps_pipe']['mean'] > output1['eps_pipe']['mean']
+            eps_pipe_comp_curr[ind_SSComp_gt_Normal] = output2['eps_pipe']['mean'][ind_SSComp_gt_Normal]
+            sigma_eps_pipe_comp_curr[ind_SSComp_gt_Normal] = output2['eps_pipe']['sigma'][ind_SSComp_gt_Normal]
+            sigma_mu_eps_pipe_comp_curr[ind_SSComp_gt_Normal] = output2['eps_pipe']['sigma_mu'][ind_SSComp_gt_Normal]
+            ##################
+            eps_pipe_comp[cond] = eps_pipe_comp_curr
+            sigma_eps_pipe_comp[cond] = sigma_eps_pipe_comp_curr
+            sigma_mu_eps_pipe_comp[cond] = sigma_mu_eps_pipe_comp_curr
+            eps_pipe_tens[cond] = eps_pipe_tens_curr
+            sigma_eps_pipe_tens[cond] = sigma_eps_pipe_tens_curr
+            sigma_mu_eps_pipe_tens[cond] = sigma_mu_eps_pipe_tens_curr
+        
+        # 7) reverse and strike-slip tension:
+        cond = primary_mech == 'Reverse_SSTens'
+        if True in cond:
+            subset_shape = pgdef[cond].shape
+            ##################
+            # Reverse
+            output1 = HutabaratEtal2022_Reverse._model(
                 pgdef[cond], # upstream PBEE RV
                 d_pipe[cond], t_pipe[cond], l_anchor[cond], # infrastructure
                 psi_dip[cond], h_pipe[cond], # geotech - general
@@ -298,9 +431,78 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
                 gamma_backfill[cond], phi_backfill[cond], delta_backfill[cond], # sand
                 soil_type[cond], # fixed/toggles
             )
-            eps_pipe_comp[cond] = output['eps_pipe']['mean']
-            sigma_eps_pipe_comp[cond] = output['eps_pipe']['sigma']
-            sigma_mu_eps_pipe_comp[cond] = output['eps_pipe']['sigma_mu']
+            # SSTens
+            output2 = HutabaratEtal2022_SSTens._model(
+                pgdef[cond], # upstream PBEE RV
+                d_pipe[cond], t_pipe[cond], sigma_y[cond], n_param[cond], r_param[cond], l_anchor[cond], # infrastructure
+                beta_crossing[cond], h_pipe[cond], # geotech - general
+                alpha_backfill[cond], s_u_backfill[cond], # clay
+                gamma_backfill[cond], phi_backfill[cond], delta_backfill[cond], # sand
+                soil_type[cond], steel_grade[cond], # fixed/toggles
+            )
+            # post - pick worst case, likely reverse
+            eps_pipe_comp_curr = np.ones(subset_shape)*1e-5
+            eps_pipe_tens_curr = np.ones(subset_shape)*1e-5
+            sigma_eps_pipe_comp_curr = np.ones(subset_shape)*0.01
+            sigma_eps_pipe_tens_curr = np.ones(subset_shape)*0.01
+            sigma_mu_eps_pipe_comp_curr = np.ones(subset_shape)*0.3
+            sigma_mu_eps_pipe_tens_curr = np.ones(subset_shape)*0.3
+            # where Reverse > SSTens
+            ind_Reverse_gt_SSTens = output1['eps_pipe']['mean'] > output2['eps_pipe']['mean']
+            eps_pipe_comp_curr[ind_Reverse_gt_SSTens] = output1['eps_pipe']['mean'][ind_Reverse_gt_SSTens]
+            sigma_eps_pipe_comp_curr[ind_Reverse_gt_SSTens] = output1['eps_pipe']['sigma'][ind_Reverse_gt_SSTens]
+            sigma_mu_eps_pipe_comp_curr[ind_Reverse_gt_SSTens] = output1['eps_pipe']['sigma_mu'][ind_Reverse_gt_SSTens]
+            # where SSTens > Reverse
+            ind_SSTens_gt_Reverse = output2['eps_pipe']['mean'] > output1['eps_pipe']['mean']
+            eps_pipe_tens_curr[ind_SSTens_gt_Reverse] = output2['eps_pipe']['mean'][ind_SSTens_gt_Reverse]
+            sigma_eps_pipe_tens_curr[ind_SSTens_gt_Reverse] = output2['eps_pipe']['sigma'][ind_SSTens_gt_Reverse]
+            sigma_mu_eps_pipe_tens_curr[ind_SSTens_gt_Reverse] = output2['eps_pipe']['sigma_mu'][ind_SSTens_gt_Reverse]
+            ##################
+            eps_pipe_comp[cond] = eps_pipe_comp_curr
+            sigma_eps_pipe_comp[cond] = sigma_eps_pipe_comp_curr
+            sigma_mu_eps_pipe_comp[cond] = sigma_mu_eps_pipe_comp_curr
+            eps_pipe_tens[cond] = eps_pipe_tens_curr
+            sigma_eps_pipe_tens[cond] = sigma_eps_pipe_tens_curr
+            sigma_mu_eps_pipe_tens[cond] = sigma_mu_eps_pipe_tens_curr
+        
+        # 8) reverse and strike-slip compression:
+        cond = primary_mech == 'Reverse_SSComp'
+        if True in cond:
+            ##################
+            # Reverse
+            output1 = HutabaratEtal2022_Reverse._model(
+                pgdef[cond], # upstream PBEE RV
+                d_pipe[cond], t_pipe[cond], l_anchor[cond], # infrastructure
+                psi_dip[cond], h_pipe[cond], # geotech - general
+                alpha_backfill[cond], s_u_backfill[cond], # clay
+                gamma_backfill[cond], phi_backfill[cond], delta_backfill[cond], # sand
+                soil_type[cond], # fixed/toggles
+            )
+            # SSComp
+            output2 = HutabaratEtal2022_SSComp._model(
+                pgdef[cond], # upstream PBEE RV
+                d_pipe[cond], l_anchor[cond], # infrastructure
+                beta_crossing[cond], # geotech - general
+            )
+            # post - linearly weight reverse and ss_comp strains and variance
+            weight_cond = transition_weight_factor[cond]
+            inv_weight_cond = 1 - weight_cond
+            transition_weight = transition_weight_factor[cond]
+            eps_pipe_comp_curr = \
+                output1['eps_pipe']['mean']*weight_cond + \
+                output2['eps_pipe']['mean']*inv_weight_cond
+            sigma_eps_pipe_comp_curr = ((
+                output1['eps_pipe']['sigma']**2*weight_cond + \
+                output2['eps_pipe']['sigma']**2*inv_weight_cond
+            ))**0.5
+            sigma_mu_eps_pipe_comp_curr = ((
+                output1['eps_pipe']['sigma_mu']**2*weight_cond +\
+                output2['eps_pipe']['sigma_mu']**2*inv_weight_cond
+            ))**0.5
+            ##################
+            eps_pipe_comp[cond] = eps_pipe_comp_curr
+            sigma_eps_pipe_comp[cond] = sigma_eps_pipe_comp_curr
+            sigma_mu_eps_pipe_comp[cond] = sigma_mu_eps_pipe_comp_curr
         
         # prepare outputs
         output = {
@@ -323,7 +525,8 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         }
         # get intermediate values if requested
         if return_inter_params:
-            output['case_to_run'] = case_to_run
+            pass
+            # output['case_to_run'] = case_to_run
         
         # return
         return output

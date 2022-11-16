@@ -1,5 +1,15 @@
-"""
-"""
+# -----------------------------------------------------------
+# Open-Source Seismic Risk Assessment, OpenSRA(TM)
+#
+# Copyright(c) 2020-2022 The Regents of the University of California and
+# Slate Geotechnical Consultants. All Rights Reserved.
+#
+# Obtains 3D crossings between well traces and simple fault planes
+#
+# Created: September 1, 2022
+# @author: Barry Zheng (Slate Geotechnical Consultants)
+# 
+# -----------------------------------------------------------
 
 # Python base modules
 import os

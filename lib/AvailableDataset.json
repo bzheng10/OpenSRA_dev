@@ -28,7 +28,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Source to be entered",
-					"Path": "lib/Datasets/Slope_Interpretted_From_CA_DEM/CA_Slope_Degrees_UTM_clip.tif",
+					"Path": "lib/Datasets/CA_Slope_1km_WGS84_degree/CA_Slope_1km_WGS84_degree.tif",
 					"UnitForData": "deg",
 					"TargetUnit": "deg",
 					"ConversionToOutputUnit": 1
@@ -41,7 +41,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Wills et al. (2015)",
-					"Path": "lib/Datasets/Vs30_Wills_et_al_2015/California_vs30_Wills15_hybrid_7p5c/California_vs30_Wills15_hybrid_7p5c.tif",
+					"Path": "lib/Datasets/CA_Vs30_WillsEtal2015_original_WGS84_mps/CA_Vs30_WillsEtal2015_original_WGS84_mps.tif",
 					"UnitForData": "m/s",
 					"TargetUnit": "m/s",
 					"ConversionToOutputUnit": 1
@@ -54,7 +54,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Source to be entered",
-					"Path": "lib/Datasets/CA_ModeledWTD_1km_WGS84_merge_clip_m/CA_ModeledWTD_1km_WGS84_merge_clip_m.tif",
+					"Path": "lib/Datasets/CA_WaterTableDepth_1km_WGS84_meter/CA_WaterTableDepth_1km_WGS84_meter.tif",
 					"UnitForData": "m",
 					"TargetUnit": "m",
 					"ConversionToOutputUnit": 1
@@ -67,7 +67,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Source to be entered",
-					"Path": "lib/Datasets/CA_DistRivers_WGS84_clip_km/CA_DistRivers_WGS84_clip_km.tif",
+					"Path": "lib/Datasets/CA_DistRiver_1km_WGS84_km/CA_DistRiver_1km_WGS84_km.tif",
 					"UnitForData": "km",
 					"TargetUnit": "km",
 					"ConversionToOutputUnit": 1
@@ -80,7 +80,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Source to be entered",
-					"Path": "lib/Datasets/CA_DistCoast_WGS84_clip_km/CA_DistCoast_WGS84_clip_km.tif",
+					"Path": "lib/Datasets/CA_DistCoast_1km_WGS84_km/CA_DistCoast_1km_WGS84_km.tif",
 					"UnitForData": "km",
 					"TargetUnit": "km",
 					"ConversionToOutputUnit": 1
@@ -93,7 +93,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Source to be entered",
-					"Path": "lib/Datasets/CA_DistAnyWater_NoWB_WGS84_clip_km/CA_DistAnyWater_NoWB_WGS84_clip_km.tif",
+					"Path": "lib/Datasets/CA_DistAnyWaterNoWB_1km_WGS84_km/CA_DistAnyWaterNoWB_1km_WGS84_km.tif",
 					"UnitForData": "km",
 					"TargetUnit": "km",
 					"ConversionToOutputUnit": 1
@@ -106,7 +106,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Source to be entered",
-					"Path": "lib/Datasets/CA_Precip_1981-2010_WGS84_clip_mm/CA_Precip_1981-2010_WGS84_clip_mm.tif",
+					"Path": "lib/Datasets/CA_Precip_1981-2010_1km_WGS84_mm/CA_Precip_1981-2010_1km_WGS84_mm.tif",
 					"UnitForData": "mm",
 					"TargetUnit": "mm",
 					"ConversionToOutputUnit": 1
@@ -114,12 +114,12 @@
 			}
 		},
 		"level1_geo_unit_wills15": {
-			"ColumnNameToStoreAs": "GeologicUnit",
+			"ColumnNameToStoreAs": "GeologicUnit_WillsEtal2015",
 			"Datasets": {
 				"Set1": {
 					"FileType": "Shapefile",
 					"Source": "Wills et al. (2015)",
-					"Path": "lib/Datasets/Wills_etal_2015_Geology/CGS_Map_Sheet_48%3A_Shear-wave_Velocity_in_Upper_30m_of_Surficial_Geology_(Vs30).shp",
+					"Path": "lib/Datasets/CA_GeologicMap_WillsEtal2015_WGS84/CA_GeologicMap_WillsEtal2015_WGS84_MERGED.shp",
 					"UnitForData": null,
 					"TargetUnit": null,
 					"ConversionToOutputUnit": null
@@ -127,12 +127,12 @@
 			}
 		},
 		"level1_geo_unit_cgs10": {
-			"ColumnNameToStoreAs": "GeologicUnit",
+			"ColumnNameToStoreAs": "GeologicUnit_CGS2010",
 			"Datasets": {
 				"Set1": {
 					"FileType": "Shapefile",
 					"Source": "CGS (2010)",
-					"Path": "lib/Datasets/CGS_CA_Geologic_Map_2010/shapefiles/GMC_geo_poly.shp",
+					"Path": "lib/Datasets/CA_GeologicMap_CGS2010_WGS84/CA_GeologicMap_CGS2010_WGS84.shp",
 					"UnitForData": null,
 					"TargetUnit": null,
 					"ConversionToOutputUnit": null
@@ -224,7 +224,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Source to be entered",
-					"Path": "lib/Datasets/CA_CTI_90m_WGS84_clip/CA_CTI_90m_WGS84_clip.tif",
+					"Path": "lib/Datasets/CA_CTI_90m_WGS84/CA_CTI_90m_WGS84.tif",
 					"UnitForData": null,
 					"TargetUnit": null,
 					"ConversionToOutputUnit": 1
@@ -237,7 +237,7 @@
 				"Set1": {
 					"FileType": "Shapefile",
 					"Source": "Witter et al. (2006)",
-					"Path": "lib/Datasets/Witter_etal_2006/Witter_etal_2006.shp",
+					"Path": "lib/Datasets/BayArea_GeologicMap_WitterEtal2006_WGS84/BayArea_GeologicMap_WitterEtal2006_WGS84.shp",
 					"UnitForData": null,
 					"TargetUnit": null,
 					"ConversionToOutputUnit": null
@@ -250,7 +250,7 @@
 				"Set1": {
 					"FileType": "Shapefile",
 					"Source": "Bedrossian et al. (2012)",
-					"Path": "lib/Datasets/Bedrossian_etal_2012/Bedrossian_etal_2012.shp",
+					"Path": "lib/Datasets/LosAngeles_GeologicMap_BedrossianEtal2012_WGS84/LosAngeles_GeologicMap_BedrossianEtal2012_WGS84.shp",
 					"UnitForData": null,
 					"TargetUnit": null,
 					"ConversionToOutputUnit": null
@@ -262,8 +262,8 @@
 			"Datasets": {
 				"Set1": {
 					"FileType": "Shapefile",
-					"Source": "TBD",
-					"Path": "lib/Datasets/CA_LandslideInventory_SlipDirection/CA_LandslideInventory_Intersect_SlipDirection.shp",
+					"Source": "Source to be entered",
+					"Path": "lib/Datasets/CA_LandslideInventory_WGS84/CA_LandslideInventory_WGS84.shp",
 					"UnitForData": null,
 					"TargetUnit": null,
 					"ConversionToOutputUnit": null

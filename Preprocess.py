@@ -13,12 +13,14 @@
 
 # -----------------------------------------------------------
 # Python base modules
-import importlib
-import copy
-import sys
-import os
-import json
 import argparse
+import copy
+import importlib
+import json
+import logging
+import os
+import shutil
+import sys
 import warnings
 
 # scientific processing modules
@@ -27,21 +29,38 @@ import pandas as pd
 # suppress warning that may come up
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
+# for geospatial processing
+import geopandas as gpd
+from shapely.geometry import Point, LineString
+
 # OpenSRA modules
 from src.im import haz
 from src.site import geodata
 from src.site.get_pipe_crossing import get_pipe_crossing
 from src.site.get_well_crossing import get_well_crossing
 from src.site.get_caprock_crossing import get_caprock_crossing
+from src.util import set_logging
 
 
-def main(work_dir):
+# -----------------------------------------------------------
+# Main function
+def main(work_dir, logging_level='info', logging_message_detail='simple'):
     """main function that runs the preprocess procedures"""
     
+    # -----------------------------------------------------------
+    # Setting logging level (e.g. DEBUG or INFO)
+    set_logging(
+        level=logging_level,
+        msg_format=logging_message_detail
+    )
+    logging.info('\n---------------')
+    
+    # -----------------------------------------------------------
     # start of preprocess
-    print('Start of preprocessing for OpenSRA')
+    logging.info('Start of preprocessing for OpenSRA')
     counter = 1 # counter for stages of processing   
         
+    # -----------------------------------------------------------
     # make directories
     # check current directory, if not at OpenSRA level, go up a level (happens during testing)
     if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
@@ -54,20 +73,21 @@ def main(work_dir):
     im_dir = os.path.join(work_dir,'IM')
     if not os.path.isdir(im_dir):
         os.mkdir(im_dir)
-    print(f'{counter}. Check and create file directories')
-    print('\tPerforming preprocessing of methods and input variables for OpenSRA')
-    print('\t\tOpenSRA backend directory')
-    print(f'\t\t\t- {opensra_dir}')
-    print('\t\tWorking directory given:')
-    print(f'\t\t\t- {work_dir}')
-    print('\t\tInput directory implied:')
-    print(f'\t\t\t- {input_dir}')
-    print('\t\tProcessed input directory for export of processed information:')
-    print(f'\t\t\t- {processed_input_dir}')
-    print('\t\tInensity measure directory:')
-    print(f'\t\t\t- {im_dir}')
+    logging.info(f'{counter}. Check and create file directories')
+    logging.info('\tPerforming preprocessing of methods and input variables for OpenSRA')
+    logging.info('\t\tOpenSRA backend directory')
+    logging.info(f'\t\t\t- {opensra_dir}')
+    logging.info('\t\tWorking directory given:')
+    logging.info(f'\t\t\t- {work_dir}')
+    logging.info('\t\tInput directory implied:')
+    logging.info(f'\t\t\t- {input_dir}')
+    logging.info('\t\tProcessed input directory for export of processed information:')
+    logging.info(f'\t\t\t- {processed_input_dir}')
+    logging.info('\t\tInensity measure directory:')
+    logging.info(f'\t\t\t- {im_dir}')
     counter += 1
     
+    # -----------------------------------------------------------
     # read important info from setup_config file
     setup_config_fpath = os.path.join(input_dir,'SetupConfig.json')
     with open(setup_config_fpath,'r') as f:
@@ -83,15 +103,30 @@ def main(work_dir):
     # }
     # infra_type = infra_type_in[]
     infra_ftype = setup_config['Infrastructure']['DataType']
-    if infra_ftype == 'Shapefile':
-        infra_fpath = os.path.join(work_dir,setup_config['Infrastructure']['SiteDataFile'])
-        files = os.listdir(infra_fpath)
-        for each in files:
-            if each.endswith('shp'):
-                infra_fpath = os.path.join(infra_fpath,each)
-                break
+    infra_fname = setup_config['Infrastructure']['SiteDataFile']
+    infra_geom_fpath = None
+    if infra_fname == 'CA_Natural_Gas_Pipeline':
+        # use internal preprocessed CSV file for state pipeline network
+        infra_fpath = os.path.join(
+            opensra_dir,
+            r'lib\OtherData\Preprocessed\CA_Natural_Gas_Pipeline_Segments_WGS84',
+            'CA_Natural_Gas_Pipeline_Segments_WGS84_Under100m_SUBSET.csv'
+            # 'CA_Natural_Gas_Pipeline_Segments_WGS84_Under100m.csv'
+        )
+        infra_geom_fpath = infra_fpath.replace('.csv','_GeomOnly.shp')
+        flag_using_state_network = True
     else:
-        infra_fpath = os.path.join(work_dir,setup_config['Infrastructure']['SiteDataFile'])
+        # create file path
+        if infra_ftype == 'Shapefile':
+            infra_fpath = os.path.join(work_dir,setup_config['Infrastructure']['SiteDataFile'])
+            files = os.listdir(infra_fpath)
+            for each in files:
+                if each.endswith('shp'):
+                    infra_fpath = os.path.join(infra_fpath,each)
+                    break
+        else:
+            infra_fpath = os.path.join(work_dir,setup_config['Infrastructure']['SiteDataFile'])
+        flag_using_state_network = False
     infra_loc_headers_in = setup_config['Infrastructure']['SiteLocationParams']
     if infra_type == 'below_ground':
         infra_loc_header_map = {
@@ -111,6 +146,10 @@ def main(work_dir):
     for each in infra_loc_header_map:
         if each in infra_loc_headers_in:
             infra_loc_header[infra_loc_header_map[each]] = infra_loc_headers_in[each]
+    logging.info(f'{counter}. Processed setup configuration file')
+    counter += 1
+    
+    # -----------------------------------------------------------
     # Intensity Measure
     im_source = list(setup_config['IntensityMeasure']['SourceForIM'])[0]
     if im_source == 'ShakeMap':
@@ -122,145 +161,81 @@ def main(work_dir):
         rup_fpath = None
     else:
         raise NotImplementedError("To be added into preprocess...")
-    print(f'{counter}. Processed setup configuration file')
+    logging.info(f'{counter}. Identified source for intensity measure: {im_source}')
     counter += 1
     
-    # preprocess infrastructure file
-    preprocess_infra_file(infra_type, infra_fpath, infra_loc_header, processed_input_dir, l_max=0.1)
-    print(f'{counter}. Processed infrastructure file and exported site data table to directoy:')
-    print(f'\t{processed_input_dir}')
-    counter += 1
-    
-    # get workflow for PC
-    workflow, workflow_fpath = make_workflow(setup_config, processed_input_dir, to_export=True)
-    print(f'{counter}. Created workflow and exported to:')
-    print(f'\t{workflow_fpath}')
-    print(f'{json.dumps(workflow, indent=4)}')
-    counter += 1
-    
-    # read input tables for random, fixed variables, and site data
-    rvs_input, fixed_input, site_data = read_input_tables(input_dir, processed_input_dir)
-    print(f'{counter}. Read input tables for random, fixed variables, and infrastructure data in input directory')
-    counter += 1
-    
-    
-    ##--------------------------
-    # get crossings - may move to another location in Preprocess
+    # -----------------------------------------------------------
+    # load json with available datasets, below-ground only for now
     avail_data_summary = None # initialize
-    
     if infra_type == 'below_ground':
-        # load json with available datasets
         avail_data_summary_fpath = os.path.join('lib','AvailableDataset.json')
         with open(avail_data_summary_fpath,'r') as f:
             avail_data_summary = json.load(f)
-        # landslide
+        logging.info(f'{counter}. Loaded JSON file with pre-packaged information of pre-packaged datasets (below-ground only)')
+        counter += 1
+    
+    # -----------------------------------------------------------
+    # preprocess infrastructure file
+    preprocess_infra_file(
+        infra_type, infra_fpath, infra_loc_header,
+        processed_input_dir, flag_using_state_network, l_max=0.1,
+    )
+    logging.info(f'{counter}. Processed infrastructure file and exported site data table to directoy:')
+    logging.info(f'\t{processed_input_dir}')
+    counter += 1
+    
+    # -----------------------------------------------------------
+    # get workflow for PC
+    workflow, workflow_fpath = make_workflow(setup_config, processed_input_dir, to_export=True)
+    logging.info(f'{counter}. Created workflow and exported to:')
+    logging.info(f'\t{workflow_fpath}')
+    logging.info(f'\n{json.dumps(workflow, indent=4)}\n')
+    counter += 1
+    
+    # read input tables for random, fixed variables, and site data
+    rvs_input, fixed_input, site_data, site_data_geom = \
+        read_input_tables(input_dir, processed_input_dir, flag_using_state_network, infra_type, infra_geom_fpath)
+    logging.info(f'{counter}. Read input tables for random, fixed variables, and infrastructure data in input directory')
+    counter += 1   
+    
+    ##--------------------------
+    # get crossings for below-ground infrastructure - may move to another location in Preprocess    
+    if infra_type == 'below_ground':
+        # landslide crossings
         cat = 'EDP'
         haz = 'landslide'
         if cat in workflow and haz in workflow[cat]:
-            file_key = 'ca_landslide_inventory'
-            fpath = avail_data_summary['Parameters'][file_key]['Datasets']['Set1']['Path']
+            # get deformation polygon to use; if "statewide", then assign probability of 0.25 to all components instead
+            landslide_meta = setup_config['EngineeringDemandParameter']['Type']['Landslide']['OtherParameters']
+            use_def_poly = landslide_meta['UseDeformationGeometry']
+            if use_def_poly:
+                def_poly_source = landslide_meta['SourceForDeformationGeometry']
+                if def_poly_source == 'CA_LandslideInventory_WGS84':
+                    fpath = avail_data_summary['Parameters']['ca_landslide_inventory']['Datasets']['Set1']['Path']
+                else:
+                    fdir = os.path.join(user_prov_gis_fdir,def_poly_source)
+                    for f in os.listdir(fdir):
+                        if f.endswith('.shp'):
+                            fpath = os.path.join(fdir,f)
+                            break
+            else:
+                fpath = None
             # site_data_crossing = get_pipe_crossing(
+            # site_data_with_crossing_only = get_pipe_crossing(
             site_data = get_pipe_crossing(
                 path_to_def_shp=fpath,
                 infra_site_data=site_data.copy(),
+                infra_site_data_geom=site_data_geom,
+                opensra_dir=opensra_dir,
                 export_dir=processed_input_dir,
                 def_type=haz
             )
-            print(f'{counter}. Obtained pipeline crossing for landslide')
+            logging.info(f'{counter}. Obtained pipeline crossing for landslide')
             counter += 1
-    ##--------------------------
-    
-    
-    # rvs and fixed params split by preferred andf user provided
-    pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, \
-    pref_fixed, user_prov_table_fixed, user_prov_gis_fixed = \
-        separate_params_by_source(rvs_input, fixed_input)
-    print(f'{counter}. Separate random and fixed parameters by source')
-    counter += 1
-    
-    # get preferred input distributions
-    pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed = \
-        import_param_dist_table(infra_type=infra_type)
-    print(f'{counter}. Read preferred distributions for variables')
-    print(f"\t{os.path.join('param_dist',f'{infra_type}.xlsx')}")
-    counter += 1
-    
-    # get param_dist_meta from user-provided information
-    if 'UserGISFile' in setup_config['General']['Directory']:
-        user_prov_gis_fdir = setup_config['General']['Directory']['UserGISFile']
-    else:
-        user_prov_gis_fdir = ''
-    param_dist_meta, param_dist_table = get_param_dist_from_user_prov_table(
-        user_prov_table_rvs, user_prov_table_fixed,
-        user_prov_gis_rvs, user_prov_gis_fixed,
-        pref_rvs, pref_fixed, site_data, user_prov_gis_fdir
-    )
-    print(f'{counter}. Get user provided distributions from infrastructure table')
-    counter += 1
-    
-    # get params with missing distribution metrics
-    params_with_missing_dist_metric = get_params_with_missing_dist_metric(param_dist_meta)
-    print(f'{counter}. Track parameters still with missing distribution metrics')
-    counter += 1
-
-    # get level to run
-    if "EDP" in workflow and "Liquefaction" in workflow["EDP"] and "CPTBased" in workflow["EDP"]["Liquefaction"]:
-        param_dist_table['level_to_run'] = np.ones(param_dist_table.shape[0])*3
-    else:
-        param_dist_table = get_level_to_run(
-            param_dist_table,
-            workflow,
-            pref_param_dist,
-            pref_param_dist_const_with_level,
-            params_with_missing_dist_metric,
-            param_dist_meta,
-            infra_type=infra_type
-        )
-    print(f'{counter}. Determine level of analysis to run for each site')
-    counter += 1
-    
-    # get rest of distribution metrics from preferred datasets
-    param_dist_table, param_dist_meta, params_with_missing_dist_metric = get_pref_dist_for_params(
-        params_with_missing_dist_metric,
-        site_data,
-        param_dist_table,
-        param_dist_meta,
-        pref_param_dist,
-        pref_param_dist_const_with_level,
-        pref_param_fixed,
-        workflow,
-        avail_data_summary,
-        export_path_dist_table=os.path.join(processed_input_dir,'param_dist.csv'),
-        export_path_dist_json=os.path.join(processed_input_dir,'param_dist_meta.json'),
-        infra_type=infra_type
-    )
-    print(f'{counter}. Get missing distribution metrics from preferred distributions')
-    counter += 1
-    
-    # get IM predictions
-    if im_source == "ShakeMap":
-        get_im_pred(
-            im_source, im_dir, site_data, infra_loc_header,
-            # for ShakeMaps
-            sm_dir=sm_dir,
-            sm_events=sm_events,
-        )
-    elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
-        get_im_pred(
-            im_source, im_dir, site_data, infra_loc_header,
-            # for user-defind ruptures
-            opensra_dir=opensra_dir,
-            processed_input_dir=processed_input_dir,
-            rup_fpath=rup_fpath,
-        )
-    print(f'{counter}. Obtained IM predictions from {im_source} and stored to:')
-    print(f"\t{im_dir}")
-    counter += 1
-    
-    ##--------------------------
-    # get well and caprock crossings - may move to another location in Preprocess
-    # well_crossing_ordered_by_faults = None
             
+    # -----------------------------------------------------------
+    # get well and caprock crossings - may move to another location in Preprocess
+    # well_crossing_ordered_by_faults = None           
     if infra_type == 'wells_caprocks':
         # get well crossings
         well_trace_dir = os.path.join(
@@ -273,7 +248,7 @@ def main(work_dir):
             col_with_well_trace_file_names='file_name',
             well_trace_dir=well_trace_dir,
         )
-        print(f'{counter}. Obtained well crossings for fault rupture')
+        logging.info(f'{counter}. Obtained well crossings for fault rupture')
         counter += 1
         
         # get caprock crossings
@@ -299,16 +274,129 @@ def main(work_dir):
                 im_dir=im_dir,
                 processed_input_dir=processed_input_dir
             )
-        print(f'{counter}. Obtained caprock crossings for fault rupture')
+        logging.info(f'{counter}. Obtained caprock crossings for fault rupture')
         counter += 1
-        
-    ##--------------------------
     
+    # -----------------------------------------------------------
+    # rvs and fixed params split by preferred andf user provided
+    pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, \
+    pref_fixed, user_prov_table_fixed, user_prov_gis_fixed = \
+        separate_params_by_source(rvs_input, fixed_input)
+    logging.info(f'{counter}. Separated random and fixed parameters by source')
+    counter += 1
     
+    # -----------------------------------------------------------
+    # get preferred input distributions
+    pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed = \
+        import_param_dist_table(infra_type=infra_type)
+    logging.info(f'{counter}. Read preferred distributions for variables')
+    logging.info(f"\t{os.path.join('param_dist',f'{infra_type}.xlsx')}")
+    counter += 1
+    
+    # -----------------------------------------------------------
+    # get param_dist_meta from user-provided information
+    if 'UserProvidedGISFolder' in setup_config['General']['Directory']:
+        user_prov_gis_fdir = setup_config['General']['Directory']['UserProvidedGISFolder']
+    else:
+        user_prov_gis_fdir = ''
+    param_dist_meta, param_dist_table = get_param_dist_from_user_prov_table(
+        user_prov_table_rvs, user_prov_table_fixed,
+        user_prov_gis_rvs, user_prov_gis_fixed,
+        pref_rvs, pref_fixed, site_data, user_prov_gis_fdir
+    )
+    logging.info(f'{counter}. Retrieved user provided distributions from infrastructure table')
+    counter += 1
+    
+    # -----------------------------------------------------------
+    # get params with missing distribution metrics
+    params_with_missing_dist_metric = get_params_with_missing_dist_metric(param_dist_meta)
+    logging.info(f'{counter}. Determined parameters still with missing distribution metrics')
+    counter += 1
+    
+    # -----------------------------------------------------------
+    # get level to run
+    if "EDP" in workflow and "Liquefaction" in workflow["EDP"] and "CPTBased" in workflow["EDP"]["Liquefaction"]:
+        param_dist_table['level_to_run'] = np.ones(param_dist_table.shape[0])*3
+    else:
+        param_dist_table = get_level_to_run(
+            param_dist_table,
+            workflow,
+            params_with_missing_dist_metric,
+            param_dist_meta,
+            setup_config,
+            infra_type=infra_type
+        )
+    level_to_run = param_dist_table['level_to_run'][0]
+    logging.info(f'{counter}. Determined level of analysis to run for each site')
+    counter += 1
+
+    # -----------------------------------------------------------
+    # update to landslide params if level to run == 1
+    if infra_type == 'below_ground':
+        # landslide crossings
+        cat = 'EDP'
+        haz = 'landslide'
+        if cat in workflow and haz in workflow[cat]:                
+                # set to a generic value - will not be used at level 1.
+                site_data.psi_dip = 15
+                # export crossing summary table
+                site_data.drop(columns='geometry').to_csv(
+                    # os.path.join(export_dir,f'site_data_{def_type.upper()}_CROSSINGS_ONLY.csv'),
+                    os.path.join(processed_input_dir,f'site_data_PROCESSED_CROSSING_ONLY.csv'),
+                    index=False
+                )
+        logging.info(f'{counter}. Performed additional actions for landslide crossing')
+        counter += 1
+    
+    # -----------------------------------------------------------
+    # get rest of distribution metrics from preferred datasets
+    param_dist_table, param_dist_meta, params_with_missing_dist_metric = get_pref_dist_for_params(
+        params_with_missing_dist_metric,
+        site_data,
+        param_dist_table,
+        param_dist_meta,
+        pref_param_dist,
+        pref_param_dist_const_with_level,
+        pref_param_fixed,
+        workflow,
+        avail_data_summary,
+        # site_data_with_crossing_only,
+        export_path_dist_table=os.path.join(processed_input_dir,'param_dist.csv'),
+        export_path_dist_json=os.path.join(processed_input_dir,'param_dist_meta.json'),
+        infra_type=infra_type
+    )
+    logging.info(f'{counter}. Retrieved missing distribution metrics from preferred distributions')
+    counter += 1
+    
+    # -----------------------------------------------------------
+    # get IM predictions
+    logging.info(f'\n')
+    if im_source == "ShakeMap":
+        get_im_pred(
+            im_source, im_dir, site_data, infra_loc_header,
+            # for ShakeMaps
+            sm_dir=sm_dir,
+            sm_events=sm_events,
+        )
+    elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
+        get_im_pred(
+            im_source, im_dir, site_data, infra_loc_header,
+            # for user-defind ruptures
+            opensra_dir=opensra_dir,
+            processed_input_dir=processed_input_dir,
+            rup_fpath=rup_fpath,
+        )
+    logging.info(f'\n')
+    logging.info(f'{counter}. Obtained IM predictions from {im_source} and stored to:')
+    logging.info(f"\t{im_dir}")
+    counter += 1    
+    
+    # -----------------------------------------------------------
     # end of preprocess
-    print('... End of preprocessing for OpenSRA')
+    logging.info('... End of preprocessing for OpenSRA')
 
 
+# -----------------------------------------------------------
 def get_im_pred(
     im_source, im_dir, site_data, infra_loc_header,
     # for ShakeMaps
@@ -343,7 +431,7 @@ def get_im_pred(
         
     elif im_source == 'UserDefinedRupture' or im_source == 'UCERF':
         # prepackaged site data
-        gmc_site_data_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed','Grid')
+        gmc_site_data_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed','Statewide_and_Regional_Grids')
         cols_to_get = ['vs30','vs30source','z1p0','z2p5']
         
         # create LocationData class to make use of nearest neighbor sampling schemes
@@ -366,13 +454,13 @@ def get_im_pred(
         remaining_loc = np.arange(_infra.data.shape[0])
 
         # go through each region and get site data from prepackaged files
-        for region in ['Bay_Area_Basin','LA_Basin','California_State']:
+        for region in ['BayArea','LosAngeles','Statewide']:
             # get spacing
-            if 'California' in region:
+            if 'Statewide' in region:
                 spacing = 0.05
-            elif 'LA_Basin' in region:
+            elif 'LosAngeles' in region:
                 spacing = 0.01
-            elif 'Bay_Area_Basin' in region:
+            elif 'BayArea' in region:
                 spacing = 0.01
             # generate path to boundary file
             spacing_string = str(spacing).replace('.','p')
@@ -425,7 +513,8 @@ def get_im_pred(
         # export sampled basin params
         _infra.export_component_table(
             sdir=im_dir,
-            sname='site_data_basin_params'
+            sname='site_data_basin_params',
+            to_replace=True
         )
         
         # pull site basin params to use as inputs to GMPEs
@@ -457,36 +546,48 @@ def get_im_pred(
     seismic_hazard.export_gm_pred(sdir=im_dir) # export GM predictions
 
 
-def preprocess_infra_file(infra_type, infra_fpath, infra_loc_header, processed_input_dir, l_max=0.1):
+# -----------------------------------------------------------
+def preprocess_infra_file(
+    infra_type, infra_fpath, infra_loc_header,
+    processed_input_dir, flag_using_state_network, l_max=0.1,
+):
     """process infrastructure files"""
     # load infrastructure file
     if infra_type == 'below_ground':
-        if infra_fpath.endswith('shp'):
-            infra = geodata.NetworkData(fpath=infra_fpath)
-        elif infra_fpath.endswith('csv'):
-            infra = geodata.NetworkData(
-                fpath=infra_fpath,
-                lon_header=infra_loc_header["lon_header"],
-                lat_header=infra_loc_header["lat_header"],
-                lon_begin_header=infra_loc_header["lon_begin_header"],
-                lat_begin_header=infra_loc_header["lat_begin_header"],
-                lon_end_header=infra_loc_header["lon_end_header"],
-                lat_end_header=infra_loc_header["lat_end_header"],
+        # if using state network, copy the preprocessed network into the "Processed_Input" folder to reduce processing effort
+        if flag_using_state_network:
+            # copy preprocessed infrastrcuture file
+            shutil.copy(
+                src=infra_fpath,
+                dst=os.path.join(processed_input_dir,'site_data_PROCESSED.csv')
             )
         else:
-            raise ValueError('Only suports "shp" or "csv" as input file type')
-        # network
-        # l_max = 0.1 # km
-        infra.split_network_by_max_length(l_max) # l_max in km
-        infra.make_segment_table()
-        infra.export_segment_table(
-            # sdir=input_dir,
-            # sname='site_data',
-            # to_replace=False
-            sdir=processed_input_dir,
-            sname='site_data_PROCESSED',
-            to_replace=True
-        )
+            if infra_fpath.endswith('shp'):
+                infra = geodata.NetworkData(fpath=infra_fpath)
+            elif infra_fpath.endswith('csv'):
+                infra = geodata.NetworkData(
+                    fpath=infra_fpath,
+                    lon_header=infra_loc_header["lon_header"],
+                    lat_header=infra_loc_header["lat_header"],
+                    lon_begin_header=infra_loc_header["lon_begin_header"],
+                    lat_begin_header=infra_loc_header["lat_begin_header"],
+                    lon_end_header=infra_loc_header["lon_end_header"],
+                    lat_end_header=infra_loc_header["lat_end_header"],
+                )
+            else:
+                raise ValueError('Only suports "shp" or "csv" as input file type')
+            # network
+            # l_max = 0.1 # km
+            infra.split_network_by_max_length(l_max) # l_max in km
+            infra.make_segment_table()
+            infra.export_segment_table(
+                # sdir=input_dir,
+                # sname='site_data',
+                # to_replace=False
+                sdir=processed_input_dir,
+                sname='site_data_PROCESSED',
+                to_replace=True
+            )
     else:
         if infra_fpath.endswith('shp'):
             infra = geodata.LocationData(fpath=infra_fpath)
@@ -510,6 +611,7 @@ def preprocess_infra_file(infra_type, infra_fpath, infra_loc_header, processed_i
         )
 
 
+# -----------------------------------------------------------
 def make_workflow(setup_config, processed_input_dir, to_export=True):
     """makes workflow to be used for PC"""
     # now make workflow
@@ -572,6 +674,7 @@ def make_workflow(setup_config, processed_input_dir, to_export=True):
     return workflow, workflow_fpath
 
 
+# -----------------------------------------------------------
 # def get_rvs_and_fix_by_level(rv_input, fix_input, workflow, infra_fixed={}):
 def get_rvs_and_fix_by_level(workflow, infra_fixed={}):
     """gets all the required RVs and fixed variables sorted by level"""
@@ -641,6 +744,7 @@ def get_rvs_and_fix_by_level(workflow, infra_fixed={}):
     return all_rvs, req_rvs_by_level, req_fixed_by_level
 
 
+# -----------------------------------------------------------
 def import_param_dist_table(infra_type='below_ground'):
     """loads table with param distributions, choose from 'below_ground', 'above_ground', and 'wells_caprocks'"""
     n_levels = 3
@@ -664,7 +768,11 @@ def import_param_dist_table(infra_type='below_ground'):
     return pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed
 
 
-def read_input_tables(input_dir,processed_input_dir):
+# -----------------------------------------------------------
+def read_input_tables(
+    input_dir, processed_input_dir, flag_using_state_network,
+    infra_type, infra_geom_fpath=None
+):
     """read input tables"""
     rvs_input = pd.read_csv(os.path.join(input_dir,'rvs_input.csv'))
     fixed_input = pd.read_csv(os.path.join(input_dir,'fixed_input.csv'))
@@ -677,9 +785,43 @@ def read_input_tables(input_dir,processed_input_dir):
         "No": False,
         "no": False
     }, inplace=True)
-    return rvs_input, fixed_input, site_data
+    # if using preprocessed state pipeline network, update column to pull for diameter
+    if flag_using_state_network:
+        row_for_d_pipe = np.where(rvs_input.Name=='d_pipe')[0][0]
+        if rvs_input.loc[row_for_d_pipe,'Source'] == 'Preferred':
+            rvs_input.loc[row_for_d_pipe,'Source'] = 'From infrastructure table or enter value'
+            rvs_input.loc[row_for_d_pipe,'Mean or Median'] = 'DIAMETER'
+            rvs_input.loc[row_for_d_pipe,'Distribution Type'] = 'Normal'
+    # preload infrastructure geometry if it exists, otherwise create it
+    if infra_geom_fpath is not None:
+        site_data_geom = gpd.read_file(infra_geom_fpath).geometry
+    else:
+        if infra_type == 'below_ground':
+            site_data_geom = gpd.GeoDataFrame(
+                None,
+                crs=4326,
+                geometry=[
+                    LineString([
+                        (site_data['LON_BEGIN'][i], site_data['LAT_BEGIN'][i]),
+                        (site_data['LON_END'][i], site_data['LAT_END'][i])
+                    ]) for i in range(site_data.shape[0])
+                ]
+            ).geometry
+        else:
+            site_data_geom = gpd.GeoDataFrame(
+                None,
+                crs=4326,
+                geometry=[
+                    Point((site_data['LON'][i], site_data['LAT'][i]))
+                    for i in range(site_data.shape[0])
+                ]
+            ).geometry
+            
+        site_data_geom = None
+    return rvs_input, fixed_input, site_data, site_data_geom
 
 
+# -----------------------------------------------------------
 def separate_params_by_source(rvs_input, fixed_input):
     """separate preferred vs user provided callouts in input tables"""
     pref_rvs = rvs_input[rvs_input.Source=='Preferred'].reset_index(drop=True).copy()
@@ -691,6 +833,7 @@ def separate_params_by_source(rvs_input, fixed_input):
     return pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, pref_fixed, user_prov_table_fixed, user_prov_gis_fixed
 
 
+# -----------------------------------------------------------
 def get_param_dist_from_user_prov_gis(
     # user_prov_gis_map_dir,
     # user_prov_gis_rvs,
@@ -699,10 +842,11 @@ def get_param_dist_from_user_prov_gis(
     # site_data
 ):
     """gets inputs for parameters flagged as 'From user-provided GIS maps'"""
-    print(NotImplementedError("to be implemented"))
+    logging.info(NotImplementedError("to be implemented"))
     return param_dist_meta, site_data
 
 
+# -----------------------------------------------------------
 def get_param_dist_from_user_prov_table(
     user_prov_table_rvs,
     user_prov_table_fixed,
@@ -850,7 +994,7 @@ def get_param_dist_from_user_prov_table(
                 curr_user_prov_gis_fpath = os.path.join(curr_user_prov_gis_fdir,f)
                 break
         if curr_user_prov_gis_fpath is None:
-            print('Cannot locate user provided GIS file: file must end with ".tif" or ".shp"')
+            logging.info('Cannot locate user provided GIS file: file must end with ".tif" or ".shp"')
         else:
             # with file path, now sample
             if gis_type == 'raster':
@@ -998,7 +1142,7 @@ def get_param_dist_from_user_prov_table(
                 curr_user_prov_gis_fpath = os.path.join(curr_user_prov_gis_fdir,f)
                 break
         if curr_user_prov_gis_fpath is None:
-            print('Cannot locate user provided GIS file: file must end with ".tif" or ".shp"')
+            logging.info('Cannot locate user provided GIS file: file must end with ".tif" or ".shp"')
         else:
             # with file path, now sample
             if gis_type == 'raster':
@@ -1083,6 +1227,7 @@ def get_param_dist_from_user_prov_table(
     return param_dist_meta, param_dist_table
 
 
+# -----------------------------------------------------------
 def get_params_with_missing_dist_metric(param_dist_meta):
     # see which parameters are still missing dist metrics
     params_with_missing_dist_metric = {}
@@ -1096,13 +1241,13 @@ def get_params_with_missing_dist_metric(param_dist_meta):
     return params_with_missing_dist_metric
 
 
+# -----------------------------------------------------------
 def get_level_to_run(
     param_dist_table,
     workflow,
-    pref_param_dist,
-    pref_param_dist_const_with_level,
     params_with_missing_dist_metric,
     param_dist_meta,
+    setup_config,
     infra_type='below_ground'
 ):
     """determin level of analysis to run"""
@@ -1126,6 +1271,18 @@ def get_level_to_run(
     # determine RVs needed by level
     all_rvs, req_rvs_by_level, req_fixed_by_level = get_rvs_and_fix_by_level(workflow, infra_fixed)
     
+    # print('\n')
+    # print(all_rvs)
+    # print('\n')
+    # print(req_rvs_by_level)
+    # print('\n')
+    # print(req_fixed_by_level)
+    # print('\n')
+    
+    # print(list(params_with_missing_dist_metric))
+    
+    # sys.exit()
+    
     # for each site, determine level to run
     level_to_run = np.ones(n_site).astype(int)*3
     # loop through levels
@@ -1143,6 +1300,19 @@ def get_level_to_run(
                     ])
         ind_for_cur_level = np.unique(ind_for_cur_level).astype(int)
         level_to_run[ind_for_cur_level] -= 1
+        
+    # for landslide and liquefaction, limit max level to run based on availability of deformation polygon
+    # landslide
+    cat = 'EDP'
+    haz = 'landslide'
+    min_level_with_no_def_poly = 1
+    if cat in workflow and haz in workflow[cat]:        
+        # get deformation polygon to use; if "statewide", then assign probability of 0.25 to all components instead
+        landslide_meta = setup_config['EngineeringDemandParameter']['Type']['Landslide']['OtherParameters']
+        use_def_poly = landslide_meta['UseDeformationGeometry']
+        if use_def_poly is False:
+            level_to_run = min(min(level_to_run),min_level_with_no_def_poly) # level if no deformation polygon is to be used
+    
     # store levels to run
     param_dist_table['level_to_run'] = level_to_run
     
@@ -1157,6 +1327,7 @@ def get_level_to_run(
     return param_dist_table
 
 
+# -----------------------------------------------------------
 def get_pref_dist_for_params(
     params_with_missing_dist_metric,
     site_data,
@@ -1167,6 +1338,7 @@ def get_pref_dist_for_params(
     pref_param_fixed,
     workflow,
     avail_data_summary,
+    # site_data_with_crossing_only=None,
     export_path_dist_table=None,
     export_path_dist_json=None,
     infra_type='below_ground',
@@ -1176,11 +1348,13 @@ def get_pref_dist_for_params(
     
     # initialize
     met_list = ['dist_type','mean','sigma','low','high']
-    crossing_params = ['l_anchor','beta_crossing','psi_dip','theta_slip']
+    crossing_params = ['l_anchor','beta_crossing','psi_dip']
+    # crossing_params = ['l_anchor','beta_crossing','psi_dip','theta_rake']
     soil_prop_map = {}
     
     # first load geologic units from various geologic maps
     if infra_type == 'below_ground':
+        
         # get coordinates
         if 'LON_MID' in site_data:
             locs = geodata.LocationData(
@@ -1202,15 +1376,21 @@ def get_pref_dist_for_params(
                 if default_statewide_geo_map == 'wills':
                     file_key = 'level1_geo_unit_wills15'
                     store_name = avail_data_summary['Parameters'][file_key]['ColumnNameToStoreAs']
+                    # print(1)
                     geo_unit_fpath = avail_data_summary['Parameters'][file_key]['Datasets']['Set1']['Path']
                     locs.data = locs.sample_shapefile(
                         table=locs.data,
                         fpath=geo_unit_fpath,
                         attr='Geologic_U',
-                        store_name=store_name
+                        store_name=store_name,
+                        missing_val='water'
                     )
+                    # print(2)
                     param_dist_table[store_name] = locs.data[store_name].values
-                
+                    # print(locs.data[store_name].values)
+                    # print(locs.data[store_name].values.dtype)
+                    param_dist_table[store_name] = param_dist_table[store_name].astype('<U20')
+                    # print(locs.data[store_name].values.dtype)
                     # load strength params from Bain et al. (2022)
                     default_geo_prop_fpath = avail_data_summary['Parameters']['phi_soil']['Datasets']['Set1']['Path']
                     default_geo_prop = pd.read_csv(default_geo_prop_fpath)
@@ -1280,7 +1460,7 @@ def get_pref_dist_for_params(
             )
             param_dist_table[store_name] = locs.data[store_name].values
             witter_store_name = store_name
-            print(f'\tRead Witter et al. (2006) geologic units')
+            logging.info(f'\tRead Witter et al. (2006) geologic units')
             
             # Witter et al. (2006)
             file_key = 'level2_geo_unit_bedrossian12'
@@ -1294,7 +1474,7 @@ def get_pref_dist_for_params(
             )
             param_dist_table[store_name] = locs.data[store_name].values
             bedrossian_store_name = store_name
-            print(f'\tRead Bedrossian et al. (2012) geologic units')
+            logging.info(f'\tRead Bedrossian et al. (2012) geologic units')
             # drop liq susc from param dist table, to sample during run
             param_dist_table.drop(columns=['liq_susc'],inplace=True)
         
@@ -1368,7 +1548,7 @@ def get_pref_dist_for_params(
                         
             # remove param from missing param list
             params_with_missing_dist_metric.pop(param,None)
-        
+
         # param does not vary with level
         elif param in list(pref_param_dist_const_with_level.rv_label):
             # row for param in preferred distribution table
@@ -1425,13 +1605,19 @@ def get_pref_dist_for_params(
                             if pref_val == 'depends':
                                 # for pipe crossing parameters
                                 if param in crossing_params:
-                                    param_dist_table.loc[rows_nan,f'{param}_mean'] = site_data[param][rows_nan].values
+                                    # pass
+                                    # if param == 'l_anchor':
+                                    #     print(site_data.columns)
+                                    if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+                                        param_dist_table.loc[rows_nan,f'{param}_mean'] = np.log(site_data[param][rows_nan].values)
+                                    else:
+                                        param_dist_table.loc[rows_nan,f'{param}_mean'] = site_data[param][rows_nan].values
+                                    
                                 # for other cases that are assigned as "depends"
                                 # leave value as NaN (likely imposed to be determined later)
                                 else:
                                     # param_dist_table.loc[rows_nan,f'{param}_mean'] = np.nan
                                     param_dist_table.loc[rows_nan,f'{param}_mean'] = "event_dependent"
-
                             # using internal GIS maps
                             elif pref_val == 'internal gis dataset':
                                 # path for GIS file
@@ -1490,6 +1676,10 @@ def get_pref_dist_for_params(
                                             param_dist_table.loc[rows_nan,f'{param}_mean'] + 50 # 50 km over mean
                                         param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val[rows_nan]
                             else:
+                                # for beta_crossing specifically at level 1
+                                if param == 'beta_crossing' and param_dist_table['level_to_run'][0] == 1:
+                                    if met == 'low':
+                                        pref_val = 90 # limit low to 90
                                 # check for lognormal and apply correction
                                 if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
                                     pref_val = np.log(pref_val)
@@ -1502,7 +1692,7 @@ def get_pref_dist_for_params(
                                 param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val
             # remove param from missing param list
             params_with_missing_dist_metric.pop(param,None)          
-
+    
     # additional backend limitations
     param_list = list(param_dist_meta) # all params
     for param in param_list:
@@ -1519,14 +1709,14 @@ def get_pref_dist_for_params(
                     param_dist_table[f'{param}_mean'] + \
                     2*param_dist_table[f'{param}_sigma']
                 param_dist_meta[param]['still_need_pref']['high'] = True
-
+    
     # export table
     if export_path_dist_table is not None:
         param_dist_table.to_csv(export_path_dist_table,index=False)
         # also export to hdf5 for access
-        param_dist_table.to_hdf(export_path_dist_table.replace('.csv','.h5'),key='table')
-        # also export to hdf5 for reading
-        param_dist_table.to_csv(export_path_dist_table.replace('.csv','.txt'),index=False,sep='\t')
+        param_dist_table.to_hdf(export_path_dist_table.replace('.csv','.h5'),key='table',mode='w')
+        # also export to txt
+        # param_dist_table.to_csv(export_path_dist_table.replace('.csv','.txt'),index=False,sep='\t')
     # export dictionary
     if export_path_dist_json is not None:
         with open(export_path_dist_json, 'w') as f:
@@ -1546,6 +1736,7 @@ if __name__ == "__main__":
     )
     
     # Define arguments
+    
     # analysis directory
     parser.add_argument('-w', '--work_dir', help='Path to working/analysis directory')
     
@@ -1560,6 +1751,11 @@ if __name__ == "__main__":
     # parser.add_argument('-f', '--file_path', help='Infrastructure file path',
     #                     default='shp', type=str)
     
+    # infrastructure file type
+    parser.add_argument('-l', '--logging_detail',
+                        help='Logging message detail: "simple" (default) or "full"',
+                        default='simple', type=str)
+    
     # Parse command line input
     args = parser.parse_args()
     
@@ -1567,5 +1763,6 @@ if __name__ == "__main__":
     main(
         work_dir = args.work_dir,
         # infra_type = args.infra_type,
-        # infra_fpath = args.file_type
+        # infra_fpath = args.file_type,
+        logging_message_detail=args.logging_detail
     )

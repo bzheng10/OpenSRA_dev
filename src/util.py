@@ -16,11 +16,27 @@
 import logging
 import os
 import sys
+import time
 import numpy as np
 import rasterio as rio
-from numba import jit, njit
-from scipy import sparse, stats
+from numba import jit, njit, float64, int64
+from numba.types import unicode_type
+# from scipy import sparse, stats
+from scipy import sparse
+from numba_stats import truncnorm, norm
 from scipy.interpolate import interp2d
+
+
+
+# -----------------------------------------------------------
+@njit(
+    # float64[:](float64[:],int64),
+    fastmath=True,
+    cache=True
+)
+def nb_round(x, decimals):
+    out = np.empty_like(x)
+    return np.round_(x, decimals, out)
 
 
 # -----------------------------------------------------------
@@ -318,13 +334,20 @@ def lhs(n_site, n_var, n_samp, dist='normal', low=None, high=None, return_prob=F
     
     # permutation of bins
     # boxes = np.transpose([np.random.permutation(n_samp) for i in range(n_var)])
-    boxes = np.asarray([np.transpose([np.random.permutation(n_samp) for i in range(n_var)]) for j in range(n_site)])
+    # boxes = np.asarray([np.transpose([np.random.permutation(n_samp) for i in range(n_var)]) for j in range(n_site)])
+    # faster permuation
+    rng = np.random.default_rng()
+    x = np.arange(n_samp)
+    y = np.tile(x,(1,n_var)).reshape(n_var,x.size).T
+    z = np.tile(y,(n_site,1,1)).reshape(n_site,x.size,n_var)
+    boxes = rng.permuted(z, axis=1)
     # draw uniform samples from 0 to 1, add to bin permutations, and normalize by sample size to get cdfs
     norm_uniform_samples = np.random.uniform(size=(n_site,n_samp,n_var))
     cdfs = (boxes+norm_uniform_samples)/n_samp
     # residuals
     if 'norm' in dist.lower() and not 'trunc' in dist.lower():
-        res = stats.norm.ppf(cdfs)
+        # res = stats.norm.ppf(cdfs)
+        res = norm.ppf(p=cdfs,loc=0,scale=1)
         # if return_prob:
             # probs = stats.norm.pdf(res)
     elif 'trunc' in dist.lower():
@@ -332,7 +355,8 @@ def lhs(n_site, n_var, n_samp, dist='normal', low=None, high=None, return_prob=F
             low = -np.inf
         if high is None:
             high = np.inf
-        res = stats.truncnorm.ppf(cdfs,low,high)
+        # res = stats.truncnorm.ppf(cdfs,low,high)
+        res = truncnorm.ppf(p=cdfs,xmin=low,xmax=high,loc=0,scale=1)
         # if return_prob:
             # probs = stats.truncnorm.pdf(res,low,high)
     elif 'uniform' in dist.lower():
@@ -346,6 +370,7 @@ def lhs(n_site, n_var, n_samp, dist='normal', low=None, high=None, return_prob=F
     #
     # if return_prob:
         # return res, probs
+        
     # else:
     return res
 
@@ -500,7 +525,11 @@ def get_closest_pt(loc, line):
 
 
 # -----------------------------------------------------------
-@jit
+@njit(
+    float64[:](float64[:],float64[:],float64[:],float64[:],unicode_type),
+    fastmath=True,
+    cache=True
+)
 def get_haversine_dist(lon1, lat1, lon2, lat2, unit='km'):
     """
     calculates the Haversine distance between two sets of coordinates

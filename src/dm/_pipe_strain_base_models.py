@@ -150,25 +150,25 @@ class BainEtal2022(_PipeStrainBase):
     _REQ_MODEL_RV_FOR_LEVEL = {
         'clay': {
             'level1': [],
-            'level2': ['d_pipe', 't_pipe', 'sigma_y'],
-            'level3': ['d_pipe', 't_pipe', 'sigma_y', 'def_length', 'alpha_backfill', 's_u_backfill'],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'def_length', 'alpha_backfill', 's_u_backfill'],
         },
         'sand': {
             'level1': [],
-            'level2': ['d_pipe', 't_pipe', 'sigma_y'],
-            'level3': ['d_pipe', 't_pipe', 'sigma_y', 'def_length', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'def_length', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
         }
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
         'clay': {
             'level1': ['soil_type'],
             'level2': ['soil_type'],
-            'level3': ['soil_type'],
+            'level3': ['soil_type', 'steel_grade'],
         },
         'sand': {
             'level1': ['soil_type'],
             'level2': ['soil_type'],
-            'level3': ['soil_type'],
+            'level3': ['soil_type', 'steel_grade'],
         }
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
@@ -423,7 +423,7 @@ class HutabaratEtal2022_Normal(_PipeStrainBase):
             }
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = False
+    _INPUT_DIST_VARY_WITH_LEVEL = True
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -457,12 +457,28 @@ class HutabaratEtal2022_Normal(_PipeStrainBase):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'clay': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
-        'sand': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+        'clay': {
+            'level1': [],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
+        },
+        'sand': {
+            'level1': [],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+        }
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'clay': ['soil_type', 'soil_density'],
-        'sand': ['soil_type', 'soil_density'],
+        'clay': {
+            'level1': ['soil_type', 'soil_density'],
+            'level2': ['soil_type', 'soil_density'],
+            'level3': ['soil_type', 'soil_density'],
+        },
+        'sand': {
+            'level1': ['soil_type', 'soil_density'],
+            'level2': ['soil_type', 'soil_density'],
+            'level3': ['soil_type', 'soil_density'],
+        }
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
     _MODEL_FORM_DETAIL = {}
@@ -488,13 +504,22 @@ class HutabaratEtal2022_Normal(_PipeStrainBase):
         if 'clay' in soil_type:
             soils.append('clay')
         for i in range(3):
+            # for each in soils:
+            #     if f'level{i+1}' in req_rvs_by_level:
+            #         req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
+            #         req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+            #     else:
+            #         req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
+            #         req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+            # req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
+            # req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
             for each in soils:
                 if f'level{i+1}' in req_rvs_by_level:
-                    req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
-                    req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+                    req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
+                    req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each][f'level{i+1}']
                 else:
-                    req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
-                    req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+                    req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
+                    req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each][f'level{i+1}']
             req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
             req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
         return req_rvs_by_level, req_fixed_by_level
@@ -1187,7 +1212,7 @@ class HutabaratEtal2022_Reverse(_PipeStrainBase):
             }
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = False
+    _INPUT_DIST_VARY_WITH_LEVEL = True
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -1217,14 +1242,28 @@ class HutabaratEtal2022_Reverse(_PipeStrainBase):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'clay': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
-        'sand': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+        'clay': {
+            'level1': [],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
+        },
+        'sand': {
+            'level1': [],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+        }
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        # 'clay': ['soil_type', 'soil_density'],
-        # 'sand': ['soil_type', 'soil_density'],
-        'clay': ['soil_type'],
-        'sand': ['soil_type'],
+        'clay': {
+            'level1': ['soil_type'],
+            'level2': ['soil_type'],
+            'level3': ['soil_type'],
+        },
+        'sand': {
+            'level1': ['soil_type'],
+            'level2': ['soil_type'],
+            'level3': ['soil_type'],
+        }
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
     _MODEL_FORM_DETAIL = {}
@@ -1250,13 +1289,22 @@ class HutabaratEtal2022_Reverse(_PipeStrainBase):
         if 'clay' in soil_type:
             soils.append('clay')
         for i in range(3):
+            # for each in soils:
+            #     if f'level{i+1}' in req_rvs_by_level:
+            #         req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
+            #         req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+            #     else:
+            #         req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
+            #         req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+            # req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
+            # req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
             for each in soils:
                 if f'level{i+1}' in req_rvs_by_level:
-                    req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
-                    req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+                    req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
+                    req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each][f'level{i+1}']
                 else:
-                    req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
-                    req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+                    req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
+                    req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each][f'level{i+1}']
             req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
             req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
         return req_rvs_by_level, req_fixed_by_level
@@ -1441,7 +1489,7 @@ class HutabaratEtal2022_SSComp(_PipeStrainBase):
             }
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = False
+    _INPUT_DIST_VARY_WITH_LEVEL = True
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -1462,8 +1510,14 @@ class HutabaratEtal2022_SSComp(_PipeStrainBase):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
+        'level1': [],
+        'level2': ['d_pipe'],
+        'level3': ['d_pipe'],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
+        'level1': [],
+        'level2': [],
+        'level3': [],
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
@@ -1489,7 +1543,7 @@ class HutabaratEtal2022_SSComp(_PipeStrainBase):
 
         # factors
         f_beta_crossing = np.zeros(pgdef.shape)
-        cond = np.logical_and(beta_crossing > 90,beta_crossing <= 120)
+        cond = np.logical_and(beta_crossing > 90, beta_crossing <= 120)
         if True in cond:
             f_beta_crossing[cond] = beta_crossing[cond] - 120
         
@@ -1509,6 +1563,17 @@ class HutabaratEtal2022_SSComp(_PipeStrainBase):
         eps_pipe = np.exp(atanh_metric/b2 - 4)
         eps_pipe = np.maximum(np.minimum(eps_pipe, 100), 1e-5) # limit to 1e-5 % (avoid 0%) and 100 %
         
+        # check = eps_pipe < 1e-5
+        # check = np.isnan(eps_pipe)
+        # if True in check:
+        #     print('check', np.where(check))
+        #     print('beta_crossing', beta_crossing[check])
+        #     print('d_pipe', d_pipe[check])
+        #     print('l_anchor', l_anchor[check])
+        #     print('f_beta_crossing', f_beta_crossing[check])
+        #     print('metric_inside_atanh', metric_inside_atanh[check])
+        #     print('atanh_metric', atanh_metric[check])
+        #     print('f_beta_crossing', f_beta_crossing[check])
         # sigma
         sigma = np.ones(pgdef.shape)*0.571
         
@@ -1615,7 +1680,7 @@ class HutabaratEtal2022_SSTens_85to90(_PipeStrainBase):
             }
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = False
+    _INPUT_DIST_VARY_WITH_LEVEL = True
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -1649,14 +1714,28 @@ class HutabaratEtal2022_SSTens_85to90(_PipeStrainBase):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'clay': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
-        'sand': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+        'clay': {
+            'level1': [],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
+        },
+        'sand': {
+            'level1': [],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+        }
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        # 'clay': ['soil_type', 'soil_density'],
-        # 'sand': ['soil_type', 'soil_density'],
-        'clay': ['soil_type'],
-        'sand': ['soil_type'],
+        'clay': {
+            'level1': ['soil_type'],
+            'level2': ['soil_type'],
+            'level3': ['soil_type'],
+        },
+        'sand': {
+            'level1': ['soil_type'],
+            'level2': ['soil_type'],
+            'level3': ['soil_type'],
+        }
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
     _MODEL_FORM_DETAIL = {}
@@ -1682,13 +1761,22 @@ class HutabaratEtal2022_SSTens_85to90(_PipeStrainBase):
         if 'clay' in soil_type:
             soils.append('clay')
         for i in range(3):
+            # for each in soils:
+            #     if f'level{i+1}' in req_rvs_by_level:
+            #         req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
+            #         req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+            #     else:
+            #         req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
+            #         req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+            # req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
+            # req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
             for each in soils:
                 if f'level{i+1}' in req_rvs_by_level:
-                    req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
-                    req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+                    req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
+                    req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each][f'level{i+1}']
                 else:
-                    req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
-                    req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+                    req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
+                    req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each][f'level{i+1}']
             req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
             req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
         return req_rvs_by_level, req_fixed_by_level

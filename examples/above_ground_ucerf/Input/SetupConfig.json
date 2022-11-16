@@ -3,13 +3,13 @@
         "AnalysisID" : "TEST",
 		"Directory": {
 			"Working": "",
-			"UserGISFile": ""
+			"UserProvidedGISFolder": ""
 		}
     },
     "Infrastructure": {
 		"InfrastructureType": "above_ground",
 		"DataType": "CSV",
-        "SiteDataFile": "Input/site_data.csv",
+        "SiteDataFile": "site_data.csv",
 		"SiteLocationParams": {
             "Lat": "Latitude",
             "Lon": "Longitude"

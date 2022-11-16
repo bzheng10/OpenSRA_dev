@@ -32,6 +32,9 @@ warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 # for geospatial processing
 import geopandas as gpd
 from shapely.geometry import Point, LineString
+from shapely.errors import ShapelyDeprecationWarning
+# suppress warning that may come up
+warnings.simplefilter(action='ignore', category=ShapelyDeprecationWarning)
 
 # OpenSRA modules
 from src.im import haz
@@ -120,14 +123,19 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
     else:
         # create file path
         if infra_ftype == 'Shapefile':
-            infra_fpath = os.path.join(work_dir,setup_config['Infrastructure']['SiteDataFile'])
+            infra_fpath = os.path.join(
+                # work_dir,
+                input_dir,
+                setup_config['Infrastructure']['SiteDataFile']
+            )
             files = os.listdir(infra_fpath)
             for each in files:
                 if each.endswith('shp'):
                     infra_fpath = os.path.join(infra_fpath,each)
                     break
         else:
-            infra_fpath = os.path.join(work_dir,setup_config['Infrastructure']['SiteDataFile'])
+            # infra_fpath = os.path.join(work_dir,setup_config['Infrastructure']['SiteDataFile'])
+            infra_fpath = os.path.join(input_dir,setup_config['Infrastructure']['SiteDataFile'])
         flag_using_state_network = False
     infra_loc_headers_in = setup_config['Infrastructure']['SiteLocationParams']
     if infra_type == 'below_ground':
@@ -155,14 +163,27 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
     # Intensity Measure
     im_source = list(setup_config['IntensityMeasure']['SourceForIM'])[0]
     if im_source == 'ShakeMap':
-        sm_dir = os.path.join(work_dir,setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Directory'])
+        sm_dir = os.path.join(
+            # work_dir,
+            input_dir,
+            setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Directory']
+        )
         sm_events = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events']
     elif im_source == 'UserDefinedRupture':
-        rup_fpath = os.path.join(work_dir,setup_config['IntensityMeasure']['SourceForIM']['UserDefinedRupture']['FaultFile'])
+        rup_fpath = os.path.join(
+            # work_dir,
+            input_dir,
+            setup_config['IntensityMeasure']['SourceForIM']['UserDefinedRupture']['FaultFile']
+        )
     elif im_source == 'UCERF':
         rup_fpath = None
     else:
         raise NotImplementedError("To be added into preprocess...")
+    # get filters if present
+    if 'Filter' in setup_config['IntensityMeasure']['SourceForIM'][im_source]:
+        im_filters = setup_config['IntensityMeasure']['SourceForIM'][im_source]['Filter']
+    else:
+        im_filters = None
     logging.info(f'{counter}. Identified source for intensity measure: {im_source}')
     counter += 1
     
@@ -234,145 +255,6 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
             )
             logging.info(f'{counter}. Obtained pipeline crossing for landslide')
             counter += 1
-<<<<<<< HEAD
-=======
-    ##--------------------------
-    
-    
-    # rvs and fixed params split by preferred andf user provided
-    pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, \
-    pref_fixed, user_prov_table_fixed, user_prov_gis_fixed = \
-        separate_params_by_source(rvs_input, fixed_input)
-    print(f'{counter}. Separate random and fixed parameters by source')
-    counter += 1
-    
-    # get preferred input distributions
-    pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed = \
-        import_param_dist_table(infra_type=infra_type, opensra_dir = opensra_dir)
-    print(f'{counter}. Read preferred distributions for variables')
-    print(f"\t{os.path.join('param_dist',f'{infra_type}.xlsx')}")
-    counter += 1
-    
-    # get param_dist_meta from user-provided information
-    if 'UserGISFile' in setup_config['General']['Directory']:
-        user_prov_gis_fdir = setup_config['General']['Directory']['UserGISFile']
-    else:
-        user_prov_gis_fdir = ''
-    param_dist_meta, param_dist_table = get_param_dist_from_user_prov_table(
-        user_prov_table_rvs, user_prov_table_fixed,
-        user_prov_gis_rvs, user_prov_gis_fixed,
-        pref_rvs, pref_fixed, site_data, user_prov_gis_fdir
-    )
-    print(f'{counter}. Get user provided distributions from infrastructure table')
-    counter += 1
-    
-    # get params with missing distribution metrics
-    params_with_missing_dist_metric = get_params_with_missing_dist_metric(param_dist_meta)
-    print(f'{counter}. Track parameters still with missing distribution metrics')
-    counter += 1
-
-    # get level to run
-    if "EDP" in workflow and "Liquefaction" in workflow["EDP"] and "CPTBased" in workflow["EDP"]["Liquefaction"]:
-        param_dist_table['level_to_run'] = np.ones(param_dist_table.shape[0])*3
-    else:
-        param_dist_table = get_level_to_run(
-            param_dist_table,
-            workflow,
-            pref_param_dist,
-            pref_param_dist_const_with_level,
-            params_with_missing_dist_metric,
-            param_dist_meta,
-            infra_type=infra_type
-        )
-    print(f'{counter}. Determine level of analysis to run for each site')
-    counter += 1
-    
-    # get rest of distribution metrics from preferred datasets
-    param_dist_table, param_dist_meta, params_with_missing_dist_metric = get_pref_dist_for_params(
-        params_with_missing_dist_metric,
-        site_data,
-        param_dist_table,
-        param_dist_meta,
-        pref_param_dist,
-        pref_param_dist_const_with_level,
-        pref_param_fixed,
-        workflow,
-        avail_data_summary,
-        export_path_dist_table=os.path.join(processed_input_dir,'param_dist.csv'),
-        export_path_dist_json=os.path.join(processed_input_dir,'param_dist_meta.json'),
-        infra_type=infra_type
-    )
-    print(f'{counter}. Get missing distribution metrics from preferred distributions')
-    counter += 1
-    
-    # get IM predictions
-    if im_source == "ShakeMap":
-        get_im_pred(
-            im_source, im_dir, site_data, infra_loc_header,
-            # for ShakeMaps
-            sm_dir=sm_dir,
-            sm_events=sm_events,
-        )
-    elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
-        get_im_pred(
-            im_source, im_dir, site_data, infra_loc_header,
-            # for user-defind ruptures
-            opensra_dir=opensra_dir,
-            processed_input_dir=processed_input_dir,
-            rup_fpath=rup_fpath,
-        )
-    print(f'{counter}. Obtained IM predictions from {im_source} and stored to:')
-    print(f"\t{im_dir}")
-    counter += 1
-    
-    ##--------------------------
-    # get well and caprock crossings - may move to another location in Preprocess
-    # well_crossing_ordered_by_faults = None
->>>>>>> a52fe50011da50b1317b681d93a31598377edb03
-            
-    # -----------------------------------------------------------
-    # get well and caprock crossings - may move to another location in Preprocess
-    # well_crossing_ordered_by_faults = None           
-    if infra_type == 'wells_caprocks':
-        # get well crossings
-        well_trace_dir = os.path.join(
-            work_dir,setup_config['Infrastructure']['WellTraceDir']
-        )
-        # well_crossing_ordered_by_faults, _ = get_well_crossing(
-        get_well_crossing(
-            im_dir=im_dir,
-            infra_site_data=site_data.copy(),
-            col_with_well_trace_file_names='file_name',
-            well_trace_dir=well_trace_dir,
-        )
-        logging.info(f'{counter}. Obtained well crossings for fault rupture')
-        counter += 1
-        
-        # get caprock crossings
-        if 'CaprockLeakage' in setup_config['DecisionVariable']['Type']:
-            # get shapefile for caprock
-            caprock_fdir = os.path.join(
-                work_dir,
-                setup_config['Infrastructure']['PathToCaprockShapefile']
-            )
-            for f in os.listdir(caprock_fdir):
-                if f.endswith('.shp'):
-                    caprock_shp_file = os.path.join(caprock_fdir,f)
-                    break
-            # project directory
-            # rup_fpath = os.path.join(
-            #     work_dir,
-            #     rup_fpath
-            # )
-            # run caprock crossing algorith
-            get_caprock_crossing(
-                caprock_shp_file=caprock_shp_file,
-                # rup_fpath=rup_fpath,
-                im_dir=im_dir,
-                processed_input_dir=processed_input_dir
-            )
-        logging.info(f'{counter}. Obtained caprock crossings for fault rupture')
-        counter += 1
     
     # -----------------------------------------------------------
     # rvs and fixed params split by preferred andf user provided
@@ -385,7 +267,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
     # -----------------------------------------------------------
     # get preferred input distributions
     pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed = \
-        import_param_dist_table(infra_type=infra_type)
+        import_param_dist_table(opensra_dir, infra_type=infra_type)
     logging.info(f'{counter}. Read preferred distributions for variables')
     logging.info(f"\t{os.path.join('param_dist',f'{infra_type}.xlsx')}")
     counter += 1
@@ -477,7 +359,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
         )
     elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
         get_im_pred(
-            im_source, im_dir, site_data, infra_loc_header,
+            im_source, im_dir, site_data, infra_loc_header, im_filters,
             # for user-defind ruptures
             opensra_dir=opensra_dir,
             processed_input_dir=processed_input_dir,
@@ -486,7 +368,54 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
     logging.info(f'\n')
     logging.info(f'{counter}. Obtained IM predictions from {im_source} and stored to:')
     logging.info(f"\t{im_dir}")
-    counter += 1    
+    counter += 1
+    
+    # -----------------------------------------------------------
+    # get well and caprock crossings - may move to another location in Preprocess, but must be after getIM
+    # well_crossing_ordered_by_faults = None           
+    if infra_type == 'wells_caprocks':
+        # get well crossings
+        well_trace_dir = os.path.join(
+            # work_dir,
+            input_dir,
+            setup_config['Infrastructure']['WellTraceDir']
+        )
+        # well_crossing_ordered_by_faults, _ = get_well_crossing(
+        get_well_crossing(
+            im_dir=im_dir,
+            infra_site_data=site_data.copy(),
+            col_with_well_trace_file_names='file_name',
+            well_trace_dir=well_trace_dir,
+        )
+        logging.info(f'{counter}. Obtained well crossings for fault rupture')
+        counter += 1
+        
+        # get caprock crossings
+        if 'CaprockLeakage' in setup_config['DecisionVariable']['Type']:
+            # get shapefile for caprock
+            caprock_fdir = os.path.join(
+                # work_dir,
+                input_dir,
+                setup_config['Infrastructure']['PathToCaprockShapefile']
+            )
+            for f in os.listdir(caprock_fdir):
+                if f.endswith('.shp'):
+                    caprock_shp_file = os.path.join(caprock_fdir,f)
+                    break
+            # project directory
+            # rup_fpath = os.path.join(
+            #     work_dir,
+            #     rup_fpath
+            # )
+            # run caprock crossing algorith
+            get_caprock_crossing(
+                caprock_shp_file=caprock_shp_file,
+                # rup_fpath=rup_fpath,
+                im_dir=im_dir,
+                processed_input_dir=processed_input_dir
+            )
+        logging.info(f'{counter}. Obtained caprock crossings for fault rupture')
+        counter += 1
     
     # -----------------------------------------------------------
     # end of preprocess
@@ -495,7 +424,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
 
 # -----------------------------------------------------------
 def get_im_pred(
-    im_source, im_dir, site_data, infra_loc_header,
+    im_source, im_dir, site_data, infra_loc_header, im_filters,
     # for ShakeMaps
     sm_dir=None, sm_events=None,
     # for user-defined ruptures
@@ -636,9 +565,34 @@ def get_im_pred(
     else:
         raise NotImplementedError("to be added to preprocessing...")
 
+    # check for available filters
+    max_dist = 200
+    if 'Distance' in im_filters:
+        if im_filters['Distance']['ToInclude']:
+            if 'Maximum' in im_filters['Distance']:
+                max_dist = im_filters['Distance']['Maximum']
+    rate_min = None
+    if 'MeanAnnualRate' in im_filters:
+        if im_filters['MeanAnnualRate']['ToInclude']:
+            if 'Minimum' in im_filters['MeanAnnualRate']:
+                rate_min = im_filters['MeanAnnualRate']['Minimum']
+    mag_min = None
+    mag_max = None
+    if 'Magnitude' in im_filters:
+        if im_filters['Magnitude']['ToInclude']:
+            if 'Minimum' in im_filters['Magnitude']:
+                mag_min = im_filters['Magnitude']['Minimum']
+            if 'Maximum' in im_filters['Magnitude']:
+                mag_max = im_filters['Magnitude']['Maximum']
+    
     # rest of hazard calc
     seismic_hazard.init_gmpe() # initialize GMPE, even though not used for ShakeMaps
-    seismic_hazard.process_rupture() # process ruptures
+    seismic_hazard.process_rupture(
+        max_dist=max_dist,
+        mag_min=mag_min,
+        mag_max=mag_max,
+        rate_min=rate_min
+    ) # process ruptures
     seismic_hazard.get_gm_pred_from_gmc() # get GM predictions
     seismic_hazard.export_gm_pred(sdir=im_dir) # export GM predictions
 
@@ -649,6 +603,7 @@ def preprocess_infra_file(
     processed_input_dir, flag_using_state_network, l_max=0.1,
 ):
     """process infrastructure files"""
+    
     # load infrastructure file
     if infra_type == 'below_ground':
         # if using state network, copy the preprocessed network into the "Processed_Input" folder to reduce processing effort
@@ -841,19 +796,11 @@ def get_rvs_and_fix_by_level(workflow, infra_fixed={}):
     return all_rvs, req_rvs_by_level, req_fixed_by_level
 
 
-<<<<<<< HEAD
-# -----------------------------------------------------------
-def import_param_dist_table(infra_type='below_ground'):
-=======
-def import_param_dist_table(infra_type='below_ground', opensra_dir=''):
->>>>>>> a52fe50011da50b1317b681d93a31598377edb03
+def import_param_dist_table(opensra_dir, infra_type='below_ground'):
     """loads table with param distributions, choose from 'below_ground', 'above_ground', and 'wells_caprocks'"""
     n_levels = 3
-    pref_param_dist_path = os.path.join('param_dist',f'{infra_type}.xlsx')
-    
     # Append the opensra dir to make it a relative path
-    pref_param_dist_path = os.path.join(opensra_dir,pref_param_dist_path)
-        
+    pref_param_dist_path = os.path.join(opensra_dir, 'param_dist',f'{infra_type}.xlsx')
     pref_param_dist = {}
     # by levels
     for i in range(n_levels):
@@ -1867,12 +1814,6 @@ if __name__ == "__main__":
     # Run "Main"
     main(
         work_dir = args.work_dir,
-        # infra_type = args.infra_type,
-<<<<<<< HEAD
         # infra_fpath = args.file_type,
         logging_message_detail=args.logging_detail
     )
-=======
-        # infra_fpath = args.file_type
-    )
->>>>>>> a52fe50011da50b1317b681d93a31598377edb03

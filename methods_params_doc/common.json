@@ -240,7 +240,7 @@
                                     "NameToDisplay": "Maximum",
                                     "WidgetType": "QLineEdit",
                                     "ToDisplay": true,
-                                    "DefaultValue": 100
+                                    "DefaultValue": 200
                                 }
                             }
                         },
@@ -260,7 +260,7 @@
                                     "NameToDisplay": "Maximum",
                                     "WidgetType": "QLineEdit",
                                     "ToDisplay": true,
-                                    "DefaultValue": 8
+                                    "DefaultValue": 9
                                 }
                             }
                         },

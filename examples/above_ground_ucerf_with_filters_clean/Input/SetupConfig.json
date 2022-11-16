@@ -1,0 +1,112 @@
+{
+    "General": {
+        "AnalysisID" : "TEST",
+		"Directory": {
+			"Working": "",
+			"UserProvidedGISFolder": ""
+		}
+    },
+    "Infrastructure": {
+		"InfrastructureType": "above_ground",
+		"DataType": "CSV",
+        "SiteDataFile": "site_data.csv",
+		"SiteLocationParams": {
+            "Lat": "Latitude",
+            "Lon": "Longitude"
+		}
+    },
+    "IntensityMeasure": {
+        "SourceForIM": {
+            "UCERF": {
+                "Filter": {
+                    "MeanAnnualRate": {
+                        "ToInclude": true,
+                        "Minimum": 1e-5
+                    },
+                    "Distance": {
+                        "ToInclude": true,
+                        "Maximum": 100
+                    },
+                    "Magnitude": {
+                        "ToInclude": true,
+                        "Minimum": 5,
+                        "Maximum": null
+                    }
+                }
+			}
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "WellheadRotation": {
+                "ToInclude": true,
+                "Method": {
+                    "PantoliEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "WellheadStrain": {
+                "ToInclude": true,
+                "Method": {
+                    "PantoliEtal2022": {
+						"ModelWeight": 1,
+						"high_pressure_weight": 0.7
+					}
+				},
+                "OtherParameters": {}
+            },
+            "VesselMomentRatio": {
+                "ToInclude": true,
+                "Method": {
+					"PantoliEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "WellheadRupture": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "WellheadLeakage": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "VesselRupture": {
+                "ToInclude": true,
+                "Method": {
+					"PantoliEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    }
+}

@@ -11,7 +11,7 @@ njit(
     # float64[:](float64[:],float64,float64,float64,float64),
     float64[:,:](float64[:,:],float64[:],float64[:],float64[:],float64[:],int64),
     fastmath=True,
-    cache=True,
+    # cache=True,
     parallel=True
 )
 def res_to_samples(residuals, mean, sigma, low, high, dist_type):
@@ -32,18 +32,23 @@ def res_to_samples(residuals, mean, sigma, low, high, dist_type):
         low_is_neg_inf = set(np.where(low==-np.inf)[0])
         high_is_inf = set(np.where(high==np.inf)[0])
         # union_cond = np.unique(np.hstack([low_is_neg_inf,high_is_inf]))
-        union_cond = list(low_is_neg_inf.union(high_is_inf))
-        ind_with_noninf_bounds = list(set(np.arange(dim1)).difference(set(union_cond)))
+        # union_cond = list(low_is_neg_inf.union(high_is_inf))
+        ind_with_both_bounds_inf_cond = list(low_is_neg_inf.intersection(high_is_inf))
+        # ind_with_at_least_one_noninf_bounds = list(set(np.arange(dim1)).difference(set(union_cond)))
+        ind_with_at_least_one_noninf_bounds = list(set(np.arange(dim1)).difference(set(ind_with_both_bounds_inf_cond)))
         # print(dim1)
-        # print(len(union_cond))
-        # print(len(ind_with_noninf_bounds))
-        if len(ind_with_noninf_bounds) > 0:
-            samples[ind_with_noninf_bounds,:] = truncnorm2_ppf_2d(
-                p=norm2_cdf_2d(residuals[ind_with_noninf_bounds,:],0.0,1.0),
-                xmin=low[ind_with_noninf_bounds].astype(float),
-                xmax=high[ind_with_noninf_bounds].astype(float),
-                loc=mean[ind_with_noninf_bounds].astype(float),
-                scale=sigma[ind_with_noninf_bounds].astype(float)
+        # print(list(low_is_neg_inf))
+        # print(list(high_is_inf))
+        # print(list(ind_with_both_bounds_inf_cond))
+        # print(list(ind_with_at_least_one_noninf_bounds))
+        # if len(ind_with_noninf_bounds) > 0:
+        if len(ind_with_at_least_one_noninf_bounds) > 0:
+            samples[ind_with_at_least_one_noninf_bounds,:] = truncnorm2_ppf_2d(
+                p=norm2_cdf_2d(residuals[ind_with_at_least_one_noninf_bounds,:],0.0,1.0),
+                xmin=low[ind_with_at_least_one_noninf_bounds].astype(float),
+                xmax=high[ind_with_at_least_one_noninf_bounds].astype(float),
+                loc=mean[ind_with_at_least_one_noninf_bounds].astype(float),
+                scale=sigma[ind_with_at_least_one_noninf_bounds].astype(float)
             )
             # for ind in ind_with_noninf_bounds:
             #     samples[ind,:] = truncnorm.ppf(
@@ -55,10 +60,11 @@ def res_to_samples(residuals, mean, sigma, low, high, dist_type):
             #         scale=sigma[ind]
             #     )
         # if neither low nor high are inf
-        if len(union_cond) > 0:
-            sigma_repeat = sigma[union_cond].repeat(dim2).reshape((-1, dim2))
-            mean_repeat = mean[union_cond].repeat(dim2).reshape((-1, dim2))
-            samples[union_cond,:] = residuals[union_cond,:] * sigma_repeat + mean_repeat
+        # if len(union_cond) > 0:
+        if len(ind_with_both_bounds_inf_cond) > 0:
+            sigma_repeat = sigma[ind_with_both_bounds_inf_cond].repeat(dim2).reshape((-1, dim2))
+            mean_repeat = mean[ind_with_both_bounds_inf_cond].repeat(dim2).reshape((-1, dim2))
+            samples[ind_with_both_bounds_inf_cond,:] = residuals[ind_with_both_bounds_inf_cond,:] * sigma_repeat + mean_repeat
         # if neither low nor high are inf
         # else:
         #     mean_repeat = np.repeat(np.expand_dims(mean,axis=1), dim2, axis=1)

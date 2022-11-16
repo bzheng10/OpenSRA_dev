@@ -3,7 +3,7 @@
         "AnalysisID" : "TEST",
 		"Directory": {
 			"Working": "",
-			"UserGISFile": ""
+			"UserProvidedGISFolder": ""
 		}
     },
     "Infrastructure": {

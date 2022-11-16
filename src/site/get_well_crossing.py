@@ -14,6 +14,7 @@
 # Python base modules
 import os
 import json
+import warnings
 
 # scientific processing modules
 import pandas as pd
@@ -27,6 +28,8 @@ from pyproj import Transformer
 # precompile
 from numba import njit, float64, boolean, int32, int64, typeof
 from numba.types import Tuple, List
+from numba.core.errors import NumbaPerformanceWarning
+warnings.simplefilter(action='ignore', category=NumbaPerformanceWarning)
 
 
 @njit(
@@ -34,7 +37,8 @@ from numba.types import Tuple, List
         float64[:,:],float64,float64,float64,float64
     ),
     fastmath=True,
-    cache=True
+    cache=True,
+    parallel=True
 )
 def get_fault_vertices(
     fault_trace, # (x,y) m
@@ -205,7 +209,8 @@ def get_well_fault_intersection_and_angle(
         int32[:]
     ),
     fastmath=True,
-    cache=True
+    cache=True,
+    parallel=True
 )
 def get_fault_crossing_for_well(
     well_trace,

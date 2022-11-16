@@ -25,9 +25,10 @@ def main():
     # example wdir
     ex_list = [
         'above_ground_shakemap',
-        # 'above_ground_ucserf',
-        # 'wells_caprocks_ucerf',
-        # 'wells_caprocks_userdef_rupture',
+        'above_ground_ucerf',
+        'above_ground_ucerf_with_filters',
+        'wells_caprocks_ucerf',
+        'wells_caprocks_userdef_rupture',
     ]
     ex_wdir = [
         os.path.abspath(os.path.join(opensra_dir,'examples',each))

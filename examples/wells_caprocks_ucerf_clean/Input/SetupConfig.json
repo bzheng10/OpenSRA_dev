@@ -3,20 +3,20 @@
         "AnalysisID" : "TEST",
 		"Directory": {
 			"Working": "",
-			"UserGISFile": ""
+			"UserProvidedGISFolder": ""
 		},
         "OutputFileType": "csv"
     },
     "Infrastructure": {
 		"InfrastructureType": "wells_caprocks",
 		"DataType": "CSV",
-        "SiteDataFile": "Input/site_data.csv",
+        "SiteDataFile": "site_data.csv",
 		"SiteLocationParams": {
             "Lat": "LAT_TOP",
             "Lon": "LON_TOP"
 		},
-		"WellTraceDir": "Input/well_traces",
-		"PathToCaprockShapefile": "Input/caprock_shapefile"
+		"WellTraceDir": "well_traces",
+		"PathToCaprockShapefile": "caprock_shapefile"
     },
     "IntensityMeasure": {
         "SourceForIM": {

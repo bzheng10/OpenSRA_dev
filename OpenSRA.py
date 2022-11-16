@@ -197,7 +197,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
     im_source = im_source = list(setup_config['IntensityMeasure']['SourceForIM'])[0]
     logging.info(f'{counter}. Loaded setup configuration file')
     counter += 1
-
+    
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Load and process workflow
     workflow_file = os.path.join(processed_input_dir,'workflow.json')
@@ -302,14 +302,10 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
     param_names = list(input_dist)
     
     time_start = time.time()
-    
     input_samples = \
         pc_workflow.get_samples_for_params(input_dist, num_epi_input_samples, n_site)
-    # input_samples = {}
-    
     if get_timer:
         print(f'\ttime to get samples for input: {time.time()-time_start} seconds')
-    # sys.exit()
     
     # for liq susc cat
     if 'liquefaction' in workflow['EDP'] and \
@@ -335,11 +331,10 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
             }
 
     # if crossing algorithm is performed
+    # initialize params for storing additional sampling
+    addl_input_dist = {}
+    crossing_params_intermediate = []
     if flag_crossing_file:
-        # initialize params for storing additional sampling
-        addl_input_dist = {}
-        crossing_params_intermediate = []
-
         # if below ground, then perform additional sampling using crossing angles
         if infra_type == 'below_ground':
             if 'landslide' in workflow['EDP']:
@@ -557,10 +552,13 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
     # initialize for tracking
     df_frac = {}
     sites_with_no_crossing = None
-    track_im_dependency_for_output = []
+    track_im_dependency_for_output = {}
     prev_case_params = {}
     pc_coeffs = {}
     last_haz_param_full = {}
+    pbee_dim = {}
+    null_arr_pc_terms = {}
+    hermite_prob_table_indep = {}
     
     # minimum mean values for various hazards to be considered "zero"
     # e.g., for ground deformation, 5 cm
@@ -590,9 +588,10 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
     #----------------------
     
     # event to run
-    event_count = 0
     time_loop_init = time.time()
     time_loop = time.time()
+    logging.info('\t---------------------------')
+    logging.info('\t>>>>> Starting PC workflow...')
     for event_ind in range(rupture_table.shape[0]):
     # for event_ind in range(1):
         
@@ -692,8 +691,8 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
             time_start = time.time()
         #----------------------
         
-        # if crossing algorithm is performed in preprocessing
-        if flag_crossing_file:
+        # if crossing algorithm is performed in preprocessing OR if wells
+        if flag_crossing_file or infra_type == 'wells_caprocks':
             # initialize params for storing additional sampling
             addl_input_dist = {}
             null_arr_nsite_nonzero = np.zeros(n_site_curr_event)
@@ -817,7 +816,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
         #----------------------
 
         # loop through cases to run
-        for case_to_run in range(1,n_cases+1):    
+        for case_to_run in range(1,n_cases+1):
             
             # string for current case
             curr_case_str = f"case_{case_to_run}"
@@ -836,88 +835,93 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
             amu[curr_case_str] = {}
             bmu[curr_case_str] = {}
             
+            if event_ind == 0:
+                track_im_dependency_for_output[case_to_run-1] = []
+            
             # for caprock specifically
             if 'caprock_leakage' in workflow_i['haz_list']:
                 
-                # only do this once, since caprock leakage is not dependent on IMs
-                if event_count == 0:
-                    
-                    # load caprock crossing file
-                    caprock_crossing = pd.read_csv(os.path.join(
-                        processed_input_dir,'caprock_crossing.csv'
-                    ))
-                    # get constant prob of leakage distribution
-                    output = methods_dict['dv']['caprock_leakage']['method']['ZhangEtal2022']._model()
-                    prob_leak_dist = np.asarray([
-                        -1.65, -1, 0, 1, 1.65, 0
-                    ]) * output['prob_leak']['sigma_mu'] + output['prob_leak']['mean']
-                    prob_leak_dist = np.round(prob_leak_dist/100,decimals=3) # convert to decimals and leave at 3 decimals
-                    # get list of annual rates
-                    ann_rates = rupture_table.annual_rate.values
-                    # initialize df_frac
-                    df_frac[curr_case_str] = pd.DataFrame(
-                        np.zeros((caprock_crossing.shape[0],len(prob_leak_dist))),
-                        columns=[
-                            '5th_leakage',
-                            '16th_leakage',
-                            '50th_leakage',
-                            '84th_leakage',
-                            '95th_leakage',
-                            'mean_leakage',
-                        ]
-                    )
-                    # go through list of caprock crossings to see which crossed a fault
-                    for i in range(caprock_crossing.shape[0]):
-                        if caprock_crossing.crossing_exist[i]:
-                            # get list of faults crossed
-                            fault_crossed = json.loads(caprock_crossing.faults_crossed[i])
-                            sum_rates = sum(ann_rates[fault_crossed])
-                            df_frac[curr_case_str].loc[i] = prob_leak_dist * sum_rates
-                    # create caprock ID list
-                    df_index = [
-                        f'caprock_{i+1}'
-                        for i in range(caprock_crossing.shape[0])
-                    ]
-                    df_frac[curr_case_str].index = df_index
-                    df_geom = pd.DataFrame(
-                        caprock_crossing.geometry.values,
-                        columns=['geometry'],
-                        index=df_index
-                    )
-                    # concat
-                    df_frac[curr_case_str] = pd.concat([df_geom,df_frac[curr_case_str]],axis=1)
+                # pass and run this later since caprock leakage is not dependent on IMs
+                pass
             
-            # all other cases
+                # only do this once, since caprock leakage is not dependent on IMs
+                # if event_ind == 0:
+                #     # load caprock crossing file
+                #     caprock_crossing = pd.read_csv(os.path.join(
+                #         processed_input_dir,'caprock_crossing.csv'
+                #     ))
+                #     # get constant prob of leakage distribution
+                #     output = methods_dict['dv']['caprock_leakage']['method']['ZhangEtal2022']._model()
+                #     prob_leak_dist = np.asarray([
+                #         -1.65, -1, 0, 1, 1.65, 0
+                #     ]) * output['prob_leak']['sigma_mu'] + output['prob_leak']['mean']
+                #     prob_leak_dist = np.round(prob_leak_dist/100,decimals=3) # convert to decimals and leave at 3 decimals
+                #     # get list of annual rates
+                #     ann_rates = rupture_table.annual_rate.values
+                #     # initialize df_frac
+                #     df_frac[curr_case_str] = pd.DataFrame(
+                #         np.zeros((caprock_crossing.shape[0],len(prob_leak_dist))),
+                #         columns=[
+                #             '5th_leakage',
+                #             '16th_leakage',
+                #             '50th_leakage',
+                #             '84th_leakage',
+                #             '95th_leakage',
+                #             'mean_leakage',
+                #         ]
+                #     )
+                #     # go through list of caprock crossings to see which crossed a fault
+                #     for i in range(caprock_crossing.shape[0]):
+                #         if caprock_crossing.crossing_exist[i]:
+                #             # get list of faults crossed
+                #             fault_crossed = json.loads(caprock_crossing.faults_crossed[i])
+                #             sum_rates = sum(ann_rates[fault_crossed])
+                #             df_frac[curr_case_str].loc[i] = prob_leak_dist * sum_rates
+                #     # create caprock ID list
+                #     df_index = [
+                #         f'caprock_{i+1}'
+                #         for i in range(caprock_crossing.shape[0])
+                #     ]
+                #     df_frac[curr_case_str].index = df_index
+                #     df_geom = pd.DataFrame(
+                #         caprock_crossing.geometry.values,
+                #         columns=['geometry'],
+                #         index=df_index
+                #     )
+                #     # concat
+                #     df_frac[curr_case_str] = pd.concat([df_geom,df_frac[curr_case_str]],axis=1)
+
             else:
-                
                 # only do this once to initialize PC background params
-                if event_count == 0:
-                
+                if event_ind == 0:
+                    
                     # inputs scenario
-                    pbee_dim = workflow_i['n_pbee_dim']
+                    pbee_dim[curr_case_str] = workflow_i['n_pbee_dim']
                     pc_order = 4
-                    num_pc_terms_indep = pc_util.num_pc_terms(pbee_dim,pc_order)
-                    index_pc_table_indep = pc_util.index_table_function(pbee_dim,pc_order)
-                    xi_order_linear = np.arange(pbee_dim) + 1
+                    num_pc_terms_indep = pc_util.num_pc_terms(pbee_dim[curr_case_str],pc_order)
+                    index_pc_table_indep = pc_util.index_table_function(pbee_dim[curr_case_str],pc_order)
                     
                     # make null array for number of sites x number of PC terms
-                    null_arr_pc_terms = np.zeros((n_site,num_pc_terms_indep))
+                    null_arr_pc_terms[curr_case_str] = np.zeros((n_site,num_pc_terms_indep))
                     
                     # pre-calculate hermite probs for epistemic samples
-                    epi_samples_for_pc = np.random.normal(size=(num_epi_fractile_samples,pbee_dim))
-                    hermite_prob_table_indep = np.zeros((num_pc_terms_indep,num_epi_fractile_samples))
+                    epi_samples_for_pc = np.random.normal(size=(num_epi_fractile_samples,pbee_dim[curr_case_str]))
+                    hermite_prob_table_indep[curr_case_str] = np.zeros((num_pc_terms_indep,num_epi_fractile_samples))
 
                     # loop through number of independent pc terms to get Hermite probability
                     for i in range(num_pc_terms_indep):
                         hermite_prob_table_indep_i = ones_arr_nfractile_sample.copy()
-                        for j in range(pbee_dim):
+                        for j in range(pbee_dim[curr_case_str]):
                             hermite_prob_table_indep_i *= \
-                                pc_util.hermite_prob(epi_samples_for_pc[:,pbee_dim-1-j], index_pc_table_indep[i,j])
-                        hermite_prob_table_indep[i,:] = hermite_prob_table_indep_i
+                                pc_util.hermite_prob(
+                                    epi_samples_for_pc[:,pbee_dim[curr_case_str]-1-j],
+                                    index_pc_table_indep[i,j]
+                                )
+                        hermite_prob_table_indep[curr_case_str][i,:] = hermite_prob_table_indep_i
                     
-                    # tracking params
+                    # additional tracking params
                     pc_coeffs[curr_case_str] = {}
-
+                
                 # continue with rest of PC setup
                 
                 # default to PGA if CPT-based
@@ -950,7 +954,8 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                         mean_of_mu[curr_case_str][step0_str] = mean_of_mu[prev_case_str][step0_str].copy()
                         sigma_of_mu[curr_case_str][step0_str] = sigma_of_mu[prev_case_str][step0_str].copy()
                         sigma[curr_case_str][step0_str] = sigma[prev_case_str][step0_str].copy()
-                    
+                        track_im_dependency_for_output[case_to_run-1] = track_im_dependency_for_output[case_to_run-2].copy()
+                        
                     else:
                         # setup and run analysis
                     
@@ -986,11 +991,14 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                                     sigma_of_mu[curr_case_str][step0_str]['pga'] = im_dist_info['pga']['sigma_mu']
                                     sigma[curr_case_str][step0_str]['pga'] = im_dist_info['pga']['sigma']
                                     prev_haz_param.append('pga')
-                            if 'pga' in prev_haz_param:
-                                track_im_dependency_for_output.append('pga'.upper())
-                            elif 'pgv' in prev_haz_param:
-                                track_im_dependency_for_output.append('pgv'.upper())
 
+                            # if event == 0
+                            if event_ind == 0:
+                                if 'pga' in prev_haz_param:
+                                    track_im_dependency_for_output[case_to_run-1].append('pga'.upper())
+                                elif 'pgv' in prev_haz_param:
+                                    track_im_dependency_for_output[case_to_run-1].append('pgv'.upper())
+                            
                         # if doesn't start with IM
                         else:    
                             # get param for domain vector
@@ -1025,7 +1033,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                                 internal_params=step0_internal_params,
                                 input_samples=step0_input_samples, 
                                 n_sample=num_epi_input_samples,
-                                n_site=n_site
+                                n_site=n_site_curr_event
                             )
 
                             # get other metrics
@@ -1047,7 +1055,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                 rows_to_keep_index[step0_str] = rows_to_keep_rel_to_nonzero_step0[step0_str].copy()
                 
                 # loop through steps
-                for step in range(1,pbee_dim-1):
+                for step in range(1,pbee_dim[curr_case_str]-1):
                     
                     # previous category in PBEE
                     prev_step_str = f'step_{step-1}'
@@ -1064,15 +1072,13 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                     # number of methods for hazard
                     curr_haz_dict = methods_dict[curr_cat][curr_haz].copy()
                     curr_methods = curr_haz_dict['method']
-
+                    
                     # if current step setup params are the same as the previous case, then skip analysis
                     if prev_case_str is not None and\
                         curr_step_str in prev_case_params and \
                         prev_case_params[curr_step_str]['cat'] == curr_cat and \
                         prev_case_params[curr_step_str]['haz'] == curr_haz and \
                         prev_case_params[curr_step_str]['methods'] == list(step0_methods):
-                        
-                        # print(f'skipping {curr_step_str} for {curr_case_str}')
                         
                         # use results from analysis of previous case
                         mean_of_mu[curr_case_str][curr_step_str] = mean_of_mu[prev_case_str][curr_step_str].copy()
@@ -1196,7 +1202,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                             
                             # rows to use for inputs
                             rows_inputs = rows_to_keep_rel_to_nonzero_step0[prev_step_str].copy()
-                            
+                            # go through params
                             for param in curr_param_names_all:
                                 if param in input_samples_nsite_nonzero:
                                     curr_input_samples[param] = input_samples_nsite_nonzero[param][rows_inputs].copy()
@@ -1265,10 +1271,11 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                                 time_start = time.time()
                             
                             # track nonzero sites for step0
-                            nonzero_ind_from_out = []
+                            nonzero_ind_from_out = np.arange(n_site_to_use).astype(int)
                             
                             # reduce problem scale by keeping only values greater than threshold
                             for param in curr_results:
+                                # print(param, curr_results[param]['mean_of_mu'])
                                 if param in min_mean_for_zero_val[curr_cat]:
                                     threshold_val = min_mean_for_zero_val[curr_cat][param]
                                     if curr_results[param]['dist_type'] == 'lognormal':
@@ -1280,21 +1287,21 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                                     nonzero_ind_from_out = np.hstack([
                                         nonzero_ind_from_out,
                                         rows_nonzero_mean_for_curr_param,
-                                    ])
-                            
+                                    ])                            
                             nonzero_ind_from_out = np.unique(nonzero_ind_from_out).astype(int)
-                            # print(nonzero_ind_from_out)
                             
                             # store indices
                             rows_to_keep_index[curr_step_str] = nonzero_ind_from_out.copy()
                             rows_to_keep_rel_to_nonzero_step0[curr_step_str] = \
                                 rows_to_keep_rel_to_nonzero_step0[prev_step_str][nonzero_ind_from_out].copy()
                             sites_to_keep[curr_step_str] = sites_to_keep[prev_step_str][nonzero_ind_from_out].copy()
-
+                            
                             # see if any of the output params have non-"zero" means
                             # if not, then skip complete because prob = 0
                             if len(nonzero_ind_from_out) == 0:
                                 # break out of loop for getting mean, sigma mu, sigma if there are no sites with nonzero mean values
+                                
+                                # print(f'skipping {curr_step_str} for {curr_case_str}')
                                 break
                                 
                             # if at least one site with non-"zero" means, reduce inputs for subsequent analysis 
@@ -1388,8 +1395,8 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                         
                             # if wells and caprocks, then set a = 0 and b = 1e-10 for no crossings
                             if infra_type == 'wells_caprocks' and 'well_strain' in workflow_i['haz_list']:
-                                curr_amu[param][sites_with_no_crossing] = 0.0
-                                curr_bmu[param][sites_with_no_crossing] = 1.e-10
+                                curr_amu[param][rows_to_keep_index[curr_step_str]] = 0.0
+                                curr_bmu[param][rows_to_keep_index[curr_step_str]] = 1.e-10
                                 
                         # store mean of mu, sigma of mu, sigma
                         mean_of_mu[curr_case_str][curr_step_str] = curr_mean_of_mu.copy()
@@ -1407,7 +1414,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                 
                 ###########################################
                 # set up for final step
-                last_step = pbee_dim-1
+                last_step = pbee_dim[curr_case_str]-1
                 # last step string
                 last_step_str = f'step_{last_step}'
 
@@ -1488,10 +1495,10 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                     mean_of_mu[curr_case_str][last_step_str] = last_mean_of_mu.copy()
                     sigma_of_mu[curr_case_str][last_step_str] = last_sigma_of_mu.copy()
                     sigma[curr_case_str][last_step_str] = last_sigma.copy()
-                    
-                    if get_timer:
-                        print(f'\t3. time: {time.time()-time_start} seconds')
-                        time_start = time.time()
+                
+                if get_timer:
+                    print(f'\t3. time: {time.time()-time_start} seconds')
+                    time_start = time.time()
 
                 ########################
                 # set up for and run PC
@@ -1502,7 +1509,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                     for i, param_i in enumerate(last_haz_param):
                         # aggregate pc coefficients
                         if not param_i in pc_coeffs[curr_case_str]:
-                            pc_coeffs[curr_case_str][param_i] = null_arr_pc_terms.copy()
+                            pc_coeffs[curr_case_str][param_i] = null_arr_pc_terms[curr_case_str].copy()
                         else:
                             # no action needed since just adding zeros
                             pass
@@ -1519,13 +1526,13 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                     # rows to use for PC
                     rows_to_use_pc = {}
                     # loop through steps
-                    for step in range(pbee_dim-1, -1, -1):
+                    for step in range(pbee_dim[curr_case_str]-1, -1, -1):
                         step_str = f'step_{step}'
-                        if step == pbee_dim-1:
+                        if step == pbee_dim[curr_case_str]-1:
                             step_up_str = f'step_{step-1}'
                             final_size = len(rows_to_keep_index[step_up_str])
                             rows_to_use_pc[step_str] = np.arange(final_size).astype(int)
-                        elif step == pbee_dim-2:
+                        elif step == pbee_dim[curr_case_str]-2:
                             rows_to_use_pc[step_str] = np.arange(final_size).astype(int)
                             rows_rel_to_nonzero_ref = rows_to_keep_rel_to_nonzero_step0[step_str]
                         else:
@@ -1542,7 +1549,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                         # build kwargs for pc
                         pc_kwargs = {}
                         # loop through steps
-                        for step in range(1, pbee_dim):
+                        for step in range(1, pbee_dim[curr_case_str]):
                             if step == 1:
                                 params_for_step = list(mean_of_mu[curr_case_str][init_step_str])
                                 if len(params_for_step) == len(curr_haz_param) and len(curr_haz_param) > 1:
@@ -1555,7 +1562,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                                     sigma_of_mu[curr_case_str][init_step_str][param_to_use][rows_to_use_pc[init_step_str]]
                                 pc_kwargs[f'sigma{pc_letter_for_step[0]}'] = \
                                     sigma[curr_case_str][init_step_str][param_to_use][rows_to_use_pc[init_step_str]]
-                            if step == pbee_dim-1:
+                            if step == pbee_dim[curr_case_str]-1:
                                 pc_kwargs[f'mu{pc_letter_for_step[step]}'] = \
                                     mean_of_mu[curr_case_str][last_step_str][param_i][rows_to_use_pc[last_step_str]]
                                 pc_kwargs[f'sigmaMu{pc_letter_for_step[step]}'] = \
@@ -1565,7 +1572,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                             else:
                                 step_str = f'step_{step}'
                                 params_for_step = list(mean_of_mu[curr_case_str][step_str])
-                                if infra_type == 'below_ground' and step == pbee_dim-2:
+                                if infra_type == 'below_ground' and step == pbee_dim[curr_case_str]-2:
                                     if 'comp' in param_i:
                                         str_to_check = 'comp'
                                     elif 'tens' in param_i:
@@ -1590,30 +1597,38 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
 
                         # get pc coefficients
                         # 1 integral
-                        if pbee_dim == 2:
-                            pc_coeffs_param_i = pc_coeffs_single_int(**pc_kwargs)
+                        if pbee_dim[curr_case_str] == 2:
+                            try:
+                                pc_coeffs_param_i = pc_coeffs_single_int(**pc_kwargs)
+                            except ZeroDivisionError:
+                                raise ValueError("Somewhere in mean_of_mu there are invalid values; double check distribution")
                         # 2 integral
-                        elif pbee_dim == 3:
-                            pc_coeffs_param_i = pc_coeffs_double_int(**pc_kwargs)
+                        elif pbee_dim[curr_case_str] == 3:
+                            try:
+                                pc_coeffs_param_i = pc_coeffs_double_int(**pc_kwargs)
+                            except ZeroDivisionError:
+                                for each in input_samples:
+                                    print(each, input_samples[each])
+                                print(mean_of_mu)
+                                raise ValueError("Somewhere in mean_of_mu there are invalid values; double check distribution")
                         # 3 integrals
-                        elif pbee_dim == 4:
-                            pc_coeffs_param_i = pc_coeffs_triple_int(**pc_kwargs)
+                        elif pbee_dim[curr_case_str] == 4:
+                            try:
+                                pc_coeffs_param_i = pc_coeffs_triple_int(**pc_kwargs)
+                            except ZeroDivisionError:
+                                raise ValueError("Somewhere in mean_of_mu there are invalid values; double check distribution")
 
                         # multiply by annual rate
                         pc_coeffs_param_i = pc_coeffs_param_i * rup_info['rate']
                         # map from n_site_curr_event to n_site
-                        pc_coeffs_param_i_full = null_arr_pc_terms.copy()
-                        # pc_coeffs_param_i_full[sites_with_nonzero_step0,:] = pc_coeffs_param_i
+                        pc_coeffs_param_i_full = null_arr_pc_terms[curr_case_str].copy()
                         pc_coeffs_param_i_full[sites_with_nonzero_step0[rows_to_use_pc[init_step_str]],:] = pc_coeffs_param_i
                         
                         # aggregate pc coefficients
                         if not param_i in pc_coeffs[curr_case_str]:
-                            # pc_coeffs[param_i] = pc_coeffs_param_i * rup_info['rate'] # weighted by annual rate
                             pc_coeffs[curr_case_str][param_i] = pc_coeffs_param_i_full
                         else:
-                            # pc_coeffs[param_i] = pc_coeffs[param_i] + pc_coeffs_param_i * rup_info['rate'] # weighted by annual rate
                             pc_coeffs[curr_case_str][param_i] = pc_coeffs[curr_case_str][param_i] + pc_coeffs_param_i_full
-
 
                 if get_timer:
                     print(f'\t4. time: {time.time()-time_start} seconds')
@@ -1635,7 +1650,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                     'methods': list(step0_methods)
                 }
                 # intermediate steps
-                for step in range(1,pbee_dim-1):
+                for step in range(1,pbee_dim[curr_case_str]-1):
                     # current category in PBEE
                     curr_step_str = f'step_{step}'
                     curr_cat = workflow_i['cat_list'][step].lower()
@@ -1656,9 +1671,9 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                     'methods': list(last_methods)
                 }
                                 
-        event_count += 1
-        if event_count % display_after_n_event == 0:
-            logging.info(f'\t\t- finished {event_count} events: {np.round(time.time()-time_loop,decimals=1)} seconds...')
+        event_ind += 1
+        if event_ind % display_after_n_event == 0:
+            logging.info(f'\t\t- finished {event_ind} events: {np.round(time.time()-time_loop,decimals=1)} seconds...')
             time_loop = time.time()
             
     total_time = time.time()-time_loop_init
@@ -1671,7 +1686,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
             
     # once pc coeffs are computed for all events, now go through cases again to generate samples and compute fractles
     for case_to_run in range(1,n_cases+1):
-        
+                
         # initialize
         pc_samples = {}
     
@@ -1680,119 +1695,168 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
         
         # get workflow current case
         workflow_i = workflow_order_list[curr_case_str]
-            
-        # second to last step
-        second_to_last_last_step = pbee_dim-2
-        second_to_last_last_cat = workflow_i['cat_list'][second_to_last_last_step].lower()
-        second_to_last_last_haz = workflow_i['haz_list'][second_to_last_last_step]
-        second_to_last_haz_param = methods_dict[second_to_last_last_cat][second_to_last_last_haz]['return_params']
         
-        # final step
-        last_step = pbee_dim-1
-        last_cat = workflow_i['cat_list'][last_step].lower()
-        last_haz = workflow_i['haz_list'][last_step]
-        last_haz_param = methods_dict[last_cat][last_haz]['return_params']
-        
-        # loop through params
-        for param_i in last_haz_param:
-            # sum up pc terms
-            pc_samples[param_i] = np.inner(
-                hermite_prob_table_indep.T,
-                pc_coeffs[curr_case_str][param_i]
+        # skip if caprock
+        if 'caprock_leakage' in workflow_i['haz_list']:
+            # load caprock crossing file
+            caprock_crossing = pd.read_csv(os.path.join(
+                processed_input_dir,'caprock_crossing.csv'
+            ))
+            # get constant prob of leakage distribution
+            output = methods_dict['dv']['caprock_leakage']['method']['ZhangEtal2022']._model()
+            prob_leak_dist = np.asarray([
+                -1.65, -1, 0, 1, 1.65, 0
+            ]) * output['prob_leak']['sigma_mu'] + output['prob_leak']['mean']
+            prob_leak_dist = np.round(prob_leak_dist/100,decimals=3) # convert to decimals and leave at 3 decimals
+            # get list of annual rates
+            ann_rates = rupture_table.annual_rate.values
+            # initialize df_frac
+            df_frac[curr_case_str] = pd.DataFrame(
+                np.zeros((caprock_crossing.shape[0],len(prob_leak_dist))),
+                columns=[
+                    '5th_leakage',
+                    '16th_leakage',
+                    '50th_leakage',
+                    '84th_leakage',
+                    '95th_leakage',
+                    'mean_leakage',
+                ]
             )
-            # keep sum within 0 and 1
-            pc_samples[param_i] = np.maximum(np.minimum(pc_samples[param_i],1),0)
-                    
-        if get_timer:   
-            print(f'\t5. time: {time.time()-time_start} seconds')
-            time_start = time.time()
-            
-        # get fractiles
-        df_frac[curr_case_str] = pd.DataFrame(None)
-        for i,param_i in enumerate(last_haz_param):
-            if infra_type == 'below_ground':
-                for each in ['comp','tens']:
-                    if each in param_i:
-                        comp_dir = each
-                        break
-                for each in second_to_last_haz_param:
-                    if comp_dir in each:
-                        param_to_use = each
-                        break
-            else:
-                if len(curr_haz_param) > 1:
-                    param_to_use = second_to_last_haz_param[i]
-                else:
-                    param_to_use = second_to_last_haz_param[0]
-            return_frac = pc_workflow.get_fractiles(
-                pc_samples[param_i],
-                # infra_type=infra_type,
-                # site_id=site_data.ID.values
-                n_sig_fig=4,
+            # go through list of caprock crossings to see which crossed a fault
+            for i in range(caprock_crossing.shape[0]):
+                if caprock_crossing.crossing_exist[i]:
+                    # get list of faults crossed
+                    fault_crossed = json.loads(caprock_crossing.faults_crossed[i])
+                    sum_rates = sum(ann_rates[fault_crossed])
+                    df_frac[curr_case_str].loc[i] = prob_leak_dist * sum_rates
+            # create caprock ID list
+            df_index = [
+                f'caprock_{i+1}'
+                for i in range(caprock_crossing.shape[0])
+            ]
+            df_frac[curr_case_str].index = df_index
+            df_geom = pd.DataFrame(
+                caprock_crossing.geometry.values,
+                columns=['geometry'],
+                index=df_index
             )
-            # add param to column name
-            return_frac.columns = [f'{col}_{param_to_use}' for col in return_frac.columns]
-            df_frac[curr_case_str] = pd.concat([df_frac[curr_case_str],return_frac],axis=1)
-
-        if get_timer:
-            print(f'\t6. time: {time.time()-time_start} seconds')
-            time_start = time.time()
+            # concat
+            df_frac[curr_case_str] = pd.concat([df_geom,df_frac[curr_case_str]],axis=1)
             
-        # if using crossings, check for multiple crossings per segment and pick worst case for segment
-        # also multiply by prob of crossing
-        if flag_crossing_file:
-            if infra_type == 'below_ground':
-                if 'landslide' in workflow['EDP']:
-                    # multiply results by probablity of crossing
-                    df_frac[curr_case_str] = df_frac[curr_case_str] * np.tile(prob_crossing,(6,1)).T
+        else:
+            # second to last step
+            second_to_last_last_step = pbee_dim[curr_case_str]-2
+            second_to_last_last_cat = workflow_i['cat_list'][second_to_last_last_step].lower()
+            second_to_last_last_haz = workflow_i['haz_list'][second_to_last_last_step]
+            second_to_last_haz_param = methods_dict[second_to_last_last_cat][second_to_last_last_haz]['return_params']
+            
+            # final step
+            last_step = pbee_dim[curr_case_str]-1
+            last_cat = workflow_i['cat_list'][last_step].lower()
+            last_haz = workflow_i['haz_list'][last_step]
+            last_haz_param = methods_dict[last_cat][last_haz]['return_params']
                     
-                    # initialize fractile table with all locations
-                    frac_full = pd.DataFrame(
-                        0,
-                        index=segment_index_full,
-                        columns=df_frac[curr_case_str].columns
-                    )
-                    
-                    # get index to track segments with single crossings
-                    df_frac_index = df_frac[curr_case_str].index.values
-                    
-                    # for segment_id in segment_ids_crossed_unique:
-                    for ind, segment_id in enumerate(segment_ids_crossed_repeat):
-                        ind_in_full_for_segment_id = segment_index_repeat_in_full[ind]
-                        rows = np.where(segment_ids_crossed==segment_id)[0]
-                        df_frac_index = np.delete(df_frac_index,rows)
-                        frac_repeat_curr_segment = df_frac[curr_case_str].loc[rows].reset_index(drop=True)
-                        # pick case with higher mean value
-                        worst_row = np.argmax(frac_repeat_curr_segment.iloc[:,-1])
-                        frac_full.loc[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
+            # loop through params
+            for param_i in last_haz_param:
+                # sum up pc terms
+                pc_samples[param_i] = np.inner(
+                    hermite_prob_table_indep[curr_case_str].T,
+                    pc_coeffs[curr_case_str][param_i]
+                )
+                # keep sum within 0 and 1
+                pc_samples[param_i] = np.maximum(np.minimum(pc_samples[param_i],1),0)
                         
-                    # for all the segments with only 1 crossing
-                    frac_full.loc[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index].values
-
-                    # update df_frac
-                    df_frac[curr_case_str] = frac_full.copy()
-                    # set anything below 1e-10 to 0
-                    df_frac[curr_case_str][df_frac[curr_case_str]<1e-10] = 0
+            if get_timer:   
+                print(f'\t5. time: {time.time()-time_start} seconds')
+                time_start = time.time()
+            
+            # get fractiles
+            df_frac[curr_case_str] = pd.DataFrame(None)
+            for i,param_i in enumerate(last_haz_param):
+                if infra_type == 'below_ground':
+                    for each in ['comp','tens']:
+                        if each in param_i:
+                            comp_dir = each
+                            break
+                    for each in second_to_last_haz_param:
+                        if comp_dir in each:
+                            param_to_use = each
+                            break
+                else:
+                    if len(second_to_last_haz_param) > 1:
+                        param_to_use = second_to_last_haz_param[i]
+                    else:
+                        param_to_use = second_to_last_haz_param[0]
+                return_frac = pc_workflow.get_fractiles(
+                    pc_samples[param_i],
+                    # infra_type=infra_type,
+                    # site_id=site_data.ID.values
+                    n_sig_fig=4,
+                )
+                # add param to column name
+                return_frac.columns = [f'{col}_{param_to_use}' for col in return_frac.columns]
+                df_frac[curr_case_str] = pd.concat([df_frac[curr_case_str],return_frac],axis=1)
         
-        if get_timer:
-            print(f'\t7. time: {time.time()-time_start} seconds')
-            time_start = time.time()
-        
-        # update index for fractile dataframe
-        if infra_type == 'below_ground':
-            tag = 'segment'
-        elif infra_type == 'wells_caprocks':
-            tag = 'well'
-        elif infra_type == 'above_ground':
-            tag = 'component'
-        else:
-            tag = 'site'
-        if flag_crossing_file:
-            index = [f'{tag}_{each}' for each in site_data_full.ID.values]
-        else:
-            index = [f'{tag}_{each}' for each in site_data.ID.values]
-        df_frac[curr_case_str].index = index
+            if get_timer:
+                print(f'\t6. time: {time.time()-time_start} seconds')
+                time_start = time.time()
+                
+            # if using crossings, check for multiple crossings per segment and pick worst case for segment
+            # also multiply by prob of crossing
+            if flag_crossing_file:
+                if infra_type == 'below_ground':
+                    if 'landslide' in workflow['EDP']:
+                        # multiply results by probablity of crossing
+                        df_frac[curr_case_str] = df_frac[curr_case_str] * np.tile(prob_crossing,(6,1)).T
+                        
+                        # initialize fractile table with all locations
+                        frac_full = pd.DataFrame(
+                            0,
+                            index=segment_index_full,
+                            columns=df_frac[curr_case_str].columns
+                        )
+                        
+                        # get index to track segments with single crossings
+                        df_frac_index = df_frac[curr_case_str].index.values
+                        
+                        # for segment_id in segment_ids_crossed_unique:
+                        for ind, segment_id in enumerate(segment_ids_crossed_repeat):
+                            ind_in_full_for_segment_id = segment_index_repeat_in_full[ind]
+                            rows = np.where(segment_ids_crossed==segment_id)[0]
+                            df_frac_index = np.delete(df_frac_index,rows)
+                            frac_repeat_curr_segment = df_frac[curr_case_str].loc[rows].reset_index(drop=True)
+                            # pick case with higher mean value
+                            worst_row = np.argmax(frac_repeat_curr_segment.iloc[:,-1])
+                            frac_full.loc[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
+                            
+                        # for all the segments with only 1 crossing
+                        frac_full.loc[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index].values
 
+                        # update df_frac
+                        df_frac[curr_case_str] = frac_full.copy()
+            
+            if get_timer:
+                print(f'\t7. time: {time.time()-time_start} seconds')
+                time_start = time.time()
+            
+            # update index for fractile dataframe
+            if infra_type == 'below_ground':
+                tag = 'segment'
+            elif infra_type == 'wells_caprocks':
+                tag = 'well'
+            elif infra_type == 'above_ground':
+                tag = 'component'
+            else:
+                tag = 'site'
+            if flag_crossing_file:
+                index = [f'{tag}_{each}' for each in site_data_full.ID.values]
+            else:
+                index = [f'{tag}_{each}' for each in site_data.ID.values]
+            df_frac[curr_case_str].index = index
+
+            # set anything below 1e-10 to 0
+            df_frac[curr_case_str][df_frac[curr_case_str]<1e-10] = 0
+    
     logging.info(f'{counter}. Performed risk analysis using PC')
     counter += 1
     
@@ -1831,8 +1895,9 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                             break
                     if check == False:
                         non_frac_headers.append(case)
+
                 # intiialize
-                df_curr_pc_case = df_frac[pc_case][non_frac_headers].copy()
+                # df_curr_pc_case = df_frac[pc_case][non_frac_headers].copy()
                 
                 # convert headers to np.array
                 cases = np.asarray(cases)
@@ -1843,9 +1908,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                 # loop through subsystem cases
                 for comp in ['elbow','tee']:
                     # create output string
-                    out_str_comp = [
-                        f'{frac}_{comp}' for frac in frac_strs
-                    ]
+                    out_str_comp = [f'{frac}_{comp}' for frac in frac_strs]
                     
                     # get columns for current component
                     check_cols_with_mean_sys_comp = []
@@ -1921,7 +1984,10 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
     # update 'im' description in df_workflow with actual IM
     for i in range(df_workflow.shape[0]):
         if df_workflow['IM'].iloc[i] == 'im':
-            df_workflow['IM'].iloc[i] = track_im_dependency_for_output[i]
+            if len(track_im_dependency_for_output[i]) == 1:
+                df_workflow['IM'].iloc[i] = track_im_dependency_for_output[i][0]
+            elif len(track_im_dependency_for_output[i]) > 1:
+                df_workflow['IM'].iloc[i] = ", ".join(*track_im_dependency_for_output[i])
     # replace underscore with space in strings
     for i in range(df_workflow.shape[0]):
         for j in range(df_workflow.shape[1]):
@@ -1969,7 +2035,10 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
             ]].copy()
         else:
             df_locs = site_data[['LON','LAT']].copy()
-    df_locs.index = df_frac[curr_case_str].index
+    # get annotated index
+    # for case_to_run in range(1,n_cases+1):
+    #     if df_frac[curr_case_str].shape[0] == df_locs.shape[0]:
+    df_locs.index = index
     # round lat lons
     df_locs = df_locs.round(decimals=6)
     
@@ -2002,7 +2071,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
     #         row_end = row_start + locals()[key].shape[0] + val['header']
     #         row_start = row_end + rows_pad_btw_table
     
-    spath = os.path.join(sdir,f'case_summary.csv')
+    spath = os.path.join(sdir,f'notes_for_cases.csv')
     if os.path.exists(spath):
         os.remove(spath)
     with open(spath,'a') as writer:
@@ -2017,25 +2086,25 @@ def main(work_dir, logging_level='info', logging_message_detail='simple',
                 writer.write("\n")
     ###################################
     
-    
-    
     # site location tab
     # df_locs.to_excel(writer, sheet_name='locations')
-    df_locs.to_csv(os.path.join(sdir,f'locs.csv'))
+    df_locs.to_csv(os.path.join(sdir,f'locations.csv'))
     # case tab
-    for case in workflow_order_list:
+    for i,case in enumerate(workflow_order_list):
         # df_frac[case].to_excel(writer, sheet_name=case, float_format=float_format)
         # df_frac[case].to_excel(writer, sheet_name=case)
-        df_frac[case].to_csv(os.path.join(sdir,f'{case}.csv'))
-    for case in workflow_order_list:
+        dv_str = df_workflow['DV'].iloc[i]
+        dv_str = dv_str.replace(' ','_')
+        df_frac[case].to_csv(os.path.join(sdir,f'{case}_{dv_str}.csv'))
+    # for case in workflow_order_list:
         if case+'_combined' in df_frac:
             # df_frac[case+'_combined'].to_excel(writer, sheet_name=case+'_combined', float_format=float_format)
             # df_frac[case+'_combined'].to_excel(writer, sheet_name=case+'_combined')
-            df_frac[case+'_combined'].to_csv(os.path.join(sdir,f'{case}_combined.csv'))
+            df_frac[case+'_combined'].to_csv(os.path.join(sdir,f'{case}_{dv_str}_combined.csv'))
         if case+'_worst_case' in df_frac:
             # df_frac[case+'_worst_case'].to_excel(writer, sheet_name=case+'_worst_case', float_format=float_format)
             # df_frac[case+'_worst_case'].to_excel(writer, sheet_name=case+'_worst_case')
-            df_frac[case+'_worst_case'].to_csv(os.path.join(sdir,f'{case}_worst_case.csv'))
+            df_frac[case+'_worst_case'].to_csv(os.path.join(sdir,f'{case}_{dv_str}_worst_case.csv'))
     
                 
     logging.info(f'{counter}. Exported results table to:')

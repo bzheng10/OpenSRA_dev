@@ -437,7 +437,7 @@ def get_samples_for_params(dist, n_sample, n_site):
             ):
                 pass
             else:
-                # get mapping for dist type
+                # print(each, dist[each]['dist_type'])
                 if dist[each]['dist_type'] == 'normal':
                     dist_type_int = 1
                 elif dist[each]['dist_type'] == 'lognormal':
@@ -447,8 +447,10 @@ def get_samples_for_params(dist, n_sample, n_site):
                 
                 # if each == 't_pipe':
                     
-                #     print(dist_type_int)
-                    
+                # print(each, dist_type_int)
+                
+                # if each == 'l_p6_sys23':
+                
                 # get samples
                 samples[each] = res_to_samples(
                     residuals=res[:,:,count],
@@ -458,6 +460,11 @@ def get_samples_for_params(dist, n_sample, n_site):
                     high=dist[each]['high'],
                     dist_type=dist_type_int
                 )
+                # sys.exit()
+                    
+                # else:
+                #     pass
+                
                 # samples[each] = np.zeros((n_site,n_sample))
                 # for j in range(n_site):
                 #     samples[each][j,:] = res_to_samples(
@@ -473,6 +480,8 @@ def get_samples_for_params(dist, n_sample, n_site):
                 count += 1
         else:
             samples[each] = np.tile(dist[each]['value'],(n_sample,1)).T
+            
+    # sys.exit()
     # return
     return samples
 

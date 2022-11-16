@@ -19,9 +19,7 @@ def main():
         opensra_dir = os.path.dirname(opensra_dir)
         # in case can't locate OpenSRA dir and goes into infinite loop
         if count>5:
-            raise FileNotFoundError(
-                'URGENT: Cannot locate OpenSRA directory - contact dev.'
-            )
+            print('Cannot locate OpenSRA directory - contact dev.')
         count += 1
         
     # preprocess script fpath

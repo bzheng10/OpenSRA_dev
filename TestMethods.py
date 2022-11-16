@@ -10,9 +10,20 @@ import argparse
 # -----------------------------------------------------------
 # Main function
 def main(detailed_verbose):
-
+    
+    # list of GMPES to test
+    
+    
     # list of methods in hierarchy
     methods_to_check = {
+        'IM': {
+            # 'gmc': {
+            #     'ASK14',
+            #     'BSSA14',
+            #     'CB14',
+            #     'CY14',
+            # }
+        },
         'EDP': {
             'liquefaction': {
                 'ZhuEtal2015',
@@ -111,16 +122,28 @@ def main(detailed_verbose):
     counter = 1
     for cat in methods_to_check:
         mods_dict[cat.lower()] = {}
-        for haz in methods_to_check[cat]:
-            mods_dict[cat.lower()][haz] = {
-                'module': importlib.import_module(f'src.{cat.lower()}.{haz}'),
-                'method': {}
-            }
-            for model in methods_to_check[cat][haz]:
-                mods_dict[cat.lower()][haz]['method'][model] = copy.deepcopy(getattr(mods_dict[cat.lower()][haz]['module'], model))
-                print(f'\nMethod {counter}: {cat.lower()} - {haz} - {model}')
-                mods_dict[cat.lower()][haz]['method'][model].run_check(verbose=True, detailed_verbose=detailed_verbose)
-                counter += 1
+        if cat == 'IM':
+            if 'gmc' in methods_to_check[cat]:
+                mods_dict[cat.lower()]['gmc'] = {
+                    'module': importlib.import_module(f'src.{cat.lower()}.gmc'),
+                    'method': {}
+                }
+                for gmpe in methods_to_check[cat]['gmc']:
+                    mods_dict[cat.lower()]['gmc']['method'][gmpe] = copy.deepcopy(getattr(mods_dict[cat.lower()]['gmc']['module'], gmpe))
+                    print(f'\nMethod {counter}: {cat.lower()} - gmc - {gmpe}')
+                    mods_dict[cat.lower()]['gmc']['method'][gmpe].run_check()
+                    counter += 1
+        else:
+            for haz in methods_to_check[cat]:
+                mods_dict[cat.lower()][haz] = {
+                    'module': importlib.import_module(f'src.{cat.lower()}.{haz}'),
+                    'method': {}
+                }
+                for model in methods_to_check[cat][haz]:
+                    mods_dict[cat.lower()][haz]['method'][model] = copy.deepcopy(getattr(mods_dict[cat.lower()][haz]['module'], model))
+                    print(f'\nMethod {counter}: {cat.lower()} - {haz} - {model}')
+                    mods_dict[cat.lower()][haz]['method'][model].run_check(verbose=True, detailed_verbose=detailed_verbose)
+                    counter += 1
                 
 
 # -----------------------------------------------------------

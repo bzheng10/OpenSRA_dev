@@ -42,6 +42,7 @@ from numba.types import Tuple
     # import contextily as ctx
 
 # OpenSRA modules
+from src.util import get_basename_without_extension
 # sys.append('..')
 
 
@@ -110,9 +111,17 @@ class GMPE(object):
     _OUTPUT = []
     
     # Other backend parameters
-    if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
-        os.chdir('..')
-    _OPENSRA_DIR = os.getcwd()
+    _OPENSRA_DIR = os.path.realpath(__file__)
+    count = 0
+    while not _OPENSRA_DIR.endswith('OpenSRA'):
+        _OPENSRA_DIR = os.path.abspath(os.path.dirname(_OPENSRA_DIR))
+        # in case can't locate OpenSRA dir and goes into infinite loop
+        if count>5:
+            print('Cannot locate OpenSRA directory - contact dev.')
+        count += 1
+    # if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
+    #     os.chdir('..')
+    # _OPENSRA_DIR = os.getcwd()
     # _GMPE_COEFF_DIR = os.path.join('..','..','OpenSRA','lib','NGAW2_Supplement_Data')
     _GMPE_COEFF_DIR = os.path.join(_OPENSRA_DIR,'lib','NGAW2_Supplement_Data')
     _PGA_PERIOD = 0
@@ -120,7 +129,7 @@ class GMPE(object):
     
     
     # instantiation
-    def __init__(self):
+    def __init__(self, opensra_dir=None):
         """Create an instance of the class"""
         
         # initialize instance variables
@@ -130,7 +139,7 @@ class GMPE(object):
         self._gather_all_req_inputs()
         
         # read coefficients
-        self.coeffs = self._read_coeffs().copy()
+        self.coeffs = self._read_coeffs(opensra_dir).copy()
         
         # initialize params
         self._inputs = {}
@@ -155,9 +164,13 @@ class GMPE(object):
     
     
     @classmethod
-    def _read_coeffs(cls):
+    def _read_coeffs(cls, opensra_dir=None):
         """Read table of coefficients"""
-        coeffs_path = os.path.join(cls._GMPE_COEFF_DIR, f"{cls.__name__.lower()}.csv") # file
+        # check if OpenSRA path is given explicitly, use if so
+        if opensra_dir is None:
+            coeffs_path = os.path.join(cls._GMPE_COEFF_DIR, f"{cls.__name__.lower()}.csv") # file
+        else:
+            coeffs_path = os.path.join(opensra_dir,'lib','NGAW2_Supplement_Data',f"{cls.__name__.lower()}.csv")
         coeffs = pd.read_csv(coeffs_path) # read from table
         return coeffs
 

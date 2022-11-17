@@ -135,6 +135,7 @@ def main(work_dir, logging_level='info', logging_message_detail='simple'):
                     break
         else:
             # infra_fpath = os.path.join(work_dir,setup_config['Infrastructure']['SiteDataFile'])
+            print(input_dir,setup_config['Infrastructure']['SiteDataFile'])
             infra_fpath = os.path.join(input_dir,setup_config['Infrastructure']['SiteDataFile'])
         flag_using_state_network = False
     infra_loc_headers_in = setup_config['Infrastructure']['SiteLocationParams']

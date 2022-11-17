@@ -456,28 +456,55 @@
         "SurfaceFaultRupture": {
 			"NameToDisplay": "Surface Fault Rupture",
 			"WidgetType": null,
-			"ToDisplay": false,
+			"ToDisplay": true,
 			"Params": {
 				"Method": {
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "Thompson2020",
+					"DefaultValue": "Thompson2021",
 					"Options" : {
-						"Thompson2020": {
-							"NameToDisplay": "Thompson (2020)",
+						"Thompson2021": {
+							"NameToDisplay": "Thompson (2021)",
 							"ToDisplay": true,
-							"Params": {}
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+                            }
 						},
 						"WellsCoppersmith1994": {
 							"NameToDisplay": "Wells and Coppersmith (1994)",
 							"ToDisplay": true,
-							"Params": {}
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+                            }
 						},
 						"Hazus2014": {
 							"NameToDisplay": "Hazus (FEMA, 2014)",
 							"ToDisplay": true,
-							"Params": {}
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+                            }
 						}
 					}
 				}
@@ -736,6 +763,14 @@
 								"UpstreamParam": []
 							},
 							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
 							}
 						}
 					}
@@ -825,6 +860,14 @@
 								"UpstreamParam": []
 							},
 							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
 							}
 						}
 					}

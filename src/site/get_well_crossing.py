@@ -21,7 +21,8 @@ import pandas as pd
 import numpy as np
 
 # geoprocessing modules
-import geopandas as gpd
+# import geopandas as gpd
+from geopandas import GeoDataFrame
 from shapely.geometry import Point, LineString, MultiLineString
 from pyproj import Transformer
 
@@ -496,7 +497,7 @@ def get_well_crossing(
     cols_reorder = ['crossing_exist'] + list(well_crossing_ordered_by_wells.columns.drop('crossing_exist'))
     well_crossing_ordered_by_wells = well_crossing_ordered_by_wells[cols_reorder]
     # convert to geodataframe
-    well_crossing_ordered_by_wells = gpd.GeoDataFrame(
+    well_crossing_ordered_by_wells = GeoDataFrame(
         well_crossing_ordered_by_wells,
         crs=epsg_wgs84,
         geometry=well_locs_geom
@@ -588,7 +589,7 @@ def get_well_crossing(
     cols_reorder = ['crossing_exist'] + list(well_crossing_ordered_by_faults.columns.drop('crossing_exist'))
     well_crossing_ordered_by_faults = well_crossing_ordered_by_faults[cols_reorder]
     # convert to geodataframe
-    well_crossing_ordered_by_faults = gpd.GeoDataFrame(
+    well_crossing_ordered_by_faults = GeoDataFrame(
         well_crossing_ordered_by_faults,
         crs=epsg_wgs84,
         geometry=fault_trace_geom

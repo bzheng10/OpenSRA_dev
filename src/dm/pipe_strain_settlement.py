@@ -119,7 +119,7 @@ class HutabaratEtal2022(SettlementInducedPipeStrain):
             }
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = False
+    _INPUT_DIST_VARY_WITH_LEVEL = True
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -148,17 +148,37 @@ class HutabaratEtal2022(SettlementInducedPipeStrain):
         'desc': 'Fixed input variables:',
         'params': {
             'soil_type': 'soil type (sand/clay) for model',
-            'soil_density': 'soil density: soft, medium stiff, or stiff for clay; medium dense, dense, or very dense for sand',
+            'soil_density': 'soil density: medium dense, dense, or very dense for sand',
             'steel_grade': 'steel grade: Grade-B, X-42, X-52, X-60, X-70, X-80',
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'clay': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
-        'sand': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+        'clay': {
+            'level1': [],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
+        },
+        'sand': {
+            'level1': [],
+            'level2': ['d_pipe', 't_pipe'],
+            'level3': ['d_pipe', 't_pipe', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
+        }
+        # 'clay': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
+        # 'sand': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'clay': ['soil_type', 'soil_density'],
-        'sand': ['soil_type', 'soil_density'],
+        'clay': {
+            'level1': ['soil_type', 'soil_density'],
+            'level2': ['soil_type', 'soil_density'],
+            'level3': ['soil_type', 'soil_density'],
+        },
+        'sand': {
+            'level1': ['soil_type', 'soil_density'],
+            'level2': ['soil_type', 'soil_density'],
+            'level3': ['soil_type', 'soil_density'],
+        }
+        # 'clay': ['soil_type', 'soil_density'],
+        # 'sand': ['soil_type', 'soil_density'],
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
     _MODEL_FORM_DETAIL = {}
@@ -179,18 +199,21 @@ class HutabaratEtal2022(SettlementInducedPipeStrain):
         req_rvs_by_level = {}
         req_fixed_by_level = {}
         soils = []
-        if 'sand' in soil_type:
-            soils.append('sand')
-        if 'clay' in soil_type:
-            soils.append('clay')
+        if len(soil_type) == 0:
+            soils = ['clay'] # if soil_type is empty, just use clay as default
+        else:
+            if 'sand' in soil_type:
+                soils.append('sand')
+            if 'clay' in soil_type:
+                soils.append('clay')
         for i in range(3):
             for each in soils:
                 if f'level{i+1}' in req_rvs_by_level:
-                    req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
-                    req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+                    req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
+                    req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each][f'level{i+1}']
                 else:
-                    req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
-                    req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
+                    req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
+                    req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each][f'level{i+1}']
             req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
             req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
         return req_rvs_by_level, req_fixed_by_level
@@ -207,7 +230,7 @@ class HutabaratEtal2022(SettlementInducedPipeStrain):
         soil_type, soil_density, steel_grade, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
-        """Model"""
+        """Model"""        
         # run Hutabarat et al. (2022) - normal case
         output = HutabaratEtal2022_Normal._model(
             pgdef, # upstream PBEE RV

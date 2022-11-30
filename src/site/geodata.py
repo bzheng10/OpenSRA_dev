@@ -35,8 +35,8 @@ from scipy.spatial.distance import cdist
 # from scipy import sparse
 
 # geospatial processing modules
-import geopandas as gpd
-from geopandas import GeoDataFrame, GeoSeries
+# import geopandas as gpd
+from geopandas import GeoDataFrame, GeoSeries, points_from_xy, read_file
 from shapely.geometry import LineString, MultiLineString, Point, MultiPoint, Polygon, MultiPolygon
 from shapely.ops import linemerge, polygonize
 from shapely.prepared import prep
@@ -61,7 +61,8 @@ if importlib.util.find_spec('contextily') is not None:
 # OpenSRA modules
 # from src.im import opensha as sha
 from src.util import *
-from src.site.site_util import polygonize_cells, split_line_by_max_length, get_segment_within_bound
+from src.site.site_util import polygonize_cells, split_line_by_max_length
+from src.site.site_util import get_segment_within_bound, make_list_of_linestrings
 
 
 # -----------------------------------------------------------
@@ -83,7 +84,7 @@ class GeoData(object):
     
     
     # instantiation
-    def __init__(self, fpath, crs='EPSG:4326'):
+    def __init__(self, fpath, crs=4326):
         """Create an instance of the class"""
         
         # get inputs
@@ -184,19 +185,26 @@ class GeoData(object):
     
     
     @staticmethod
-    def sample_raster(table, fpath,
-                      band=1, store_name=None, interp_scheme='nearest',
-                      out_of_bound_value=np.nan, invalid_value=np.nan
+    def sample_raster(
+        table, fpath, crs=4326,
+        band=1, store_name=None, interp_scheme='nearest',
+        out_of_bound_value=np.nan, invalid_value=np.nan,
+        dtype=None
     ):
         """sample values from raster file and update (Geo)DataFrame datatable"""
         # create raster object
-        raster = RasterData(fpath)
+        raster = RasterData(fpath, crs=crs)
         x = table.geometry.x.values
         y = table.geometry.y.values
         # perform sampling
         raster.get_sample(
-            x=x, y=y, band=band,
-            interp_scheme=interp_scheme, out_of_bound_value=out_of_bound_value, invalid_value=invalid_value
+            x=x,
+            y=y,
+            band=band,
+            interp_scheme=interp_scheme,
+            out_of_bound_value=out_of_bound_value,
+            invalid_value=invalid_value,
+            dtype=dtype
         )
         # update data table with samples
         if store_name is None:
@@ -206,11 +214,11 @@ class GeoData(object):
     
     
     @staticmethod
-    def sample_shapefile(table, fpath, attr, store_name=None, missing_val=np.nan):
+    def sample_shapefile(table, fpath, attr, crs=4326, store_name=None, missing_val=np.nan):
         """sample values from shapefile and update GeoDataFrame table, must be GeoDataFrame"""
         # create shapefile object
         # shapefile = ShapefileData(fpath)
-        shapefile = ShapefileData(fpath, to_cleanup=False)
+        shapefile = ShapefileData(fpath, crs=crs, to_cleanup=False)
         # perform sampling
         shapefile.get_sample(attr=attr, site_geometry=table.geometry)
         index = shapefile.site_index_with_sample
@@ -320,7 +328,7 @@ class CSVData(GeoData):
 
     # instantiation
     def __init__(self, fpath, lon_header, lat_header,
-                 shape_type='point', crs="EPSG:4326",
+                 shape_type='point', crs=4326,
                  lon_begin_header=None, lat_begin_header=None,
                  lon_end_header=None, lat_end_header=None,
         ):
@@ -378,13 +386,15 @@ class CSVData(GeoData):
             # make columns of lat lon using default header names
             self.data['LON'] = self.data[self._lon_header].values
             self.data['LAT'] = self.data[self._lat_header].values
-            #make geometry
-            geom = [Point(xy) for xy in zip(self.data.LON, self.data.LAT)]
             # make GeoDataFrame
             self.data = GeoDataFrame(
                 self.data,
                 crs=self.crs,
-                geometry=geom
+                geometry=points_from_xy(
+                    x=self.data.LON.values,
+                    y=self.data.LAT.values,
+                    crs=self.crs
+                )
             )
         elif self._shape_type == 'line':
             # make columns of lat lon using default header names
@@ -393,18 +403,22 @@ class CSVData(GeoData):
             self.data['LON_BEGIN'] = self.data[self._lon_begin_header].values
             self.data['LAT_BEGIN'] = self.data[self._lat_begin_header].values
             self.data['LON_END'] = self.data[self._lon_end_header].values
-            self.data['LAT_END'] = self.data[self._lat_end_header].values 
-            # make geometry
-            begin_pair = list(zip(self.data.LON_BEGIN, self.data.LAT_BEGIN))
-            end_pair = list(zip(self.data.LON_END, self.data.LAT_END))
-            n_pair = len(begin_pair)
-            geom = [LineString([begin_pair[i],end_pair[i]]) for i in range(n_pair)]
+            self.data['LAT_END'] = self.data[self._lat_end_header].values
             # make GeoDataFrame
             self.data = GeoDataFrame(
                 self.data,
                 crs=self.crs,
-                geometry=geom
+                geometry=make_list_of_linestrings(
+                    pt1_x=self.data.LON_BEGIN.values,
+                    pt1_y=self.data.LAT_BEGIN.values,
+                    pt2_x=self.data.LON_END.values,
+                    pt2_y=self.data.LAT_END.values,
+                )
             )
+        # convert to epsg:4326 if not already in wgs84
+        if self.data.crs != 4326:
+            self.data.to_crs(4326, inplace=True)
+            self.crs = 4326
        
         
     def export_data_to_shp(self, spath=None):
@@ -470,7 +484,7 @@ class DataFromArgs(CSVData):
     # instantiation
     def __init__(self,
                  lon, lat, lon_header="LON", lat_header="LAT",
-                 shape_type='point', crs='EPSG:4326',
+                 shape_type='point', crs=4326,
                  lon_begin=None, lat_begin=None, lon_begin_header="LON_BEGIN", lat_begin_header="LAT_BEGIN",
                  lon_end=None, lat_end=None, lon_end_header="LON_END", lat_endheader="LAT_END"):
         # invoke parent function
@@ -559,7 +573,6 @@ class DataFromArgs(CSVData):
                     'LENGTH_KM'
                     ]
             )
-    
 
     def _convert_to_gdf(self):
         """converts to geopandas.GeoDataFrame"""
@@ -568,17 +581,27 @@ class DataFromArgs(CSVData):
             self.data = GeoDataFrame(
                 self.data,
                 crs=self.crs,
-                geometry=[Point(xy) for xy in zip(self.data[self._lon_header], self.data[self._lat_header])]
+                geometry=points_from_xy(
+                    x=self.data[self._lon_header].values,
+                    y=self.data[self._lat_header].values,
+                    crs=self.crs
+                )
             )
         elif self._shape_type == 'line':
-            begin_pair = list(zip(self.data[self._lon_begin_header], self.data[self._lat_begin_header]))
-            end_pair = list(zip(self.data[self._lon_end_header], self.data[self._lat_end_header]))
-            n_pair = len(begin_pair)
             self.data = GeoDataFrame(
                 self.data,
                 crs=self.crs,
-                geometry=[LineString([begin_pair[i],end_pair[i]]) for i in range(n_pair)]
+                geometry=make_list_of_linestrings(
+                    pt1_x=self.data[self._lon_begin_header].values,
+                    pt1_y=self.data[self._lat_begin_header].values,
+                    pt2_x=self.data[self._lon_end_header].values,
+                    pt2_y=self.data[self._lat_end_header].values,
+                )
             )
+        # convert to epsg:4326 if not already in wgs84
+        if self.data.crs != 4326:
+            self.data.to_crs(4326, inplace=True)
+            self.crs = 4326
     
     
     def _read_data(self):
@@ -596,9 +619,9 @@ class ShapefileData(GeoData):
     
 
     # instantiation
-    def __init__(self, fpath=None, gdf=None, crs='EPSG:4326', rows_to_keep=None, minimal_init=False, to_cleanup=True):
+    def __init__(self, fpath=None, gdf=None, crs=4326, rows_to_keep=None, minimal_init=False, to_cleanup=True):
         # invoke parent function
-        super().__init__(fpath, crs)
+        super().__init__(fpath, crs=crs)
         
         if minimal_init == False:
             # if geodataframe is not given, read from file path to shapefile
@@ -636,20 +659,14 @@ class ShapefileData(GeoData):
     def _read_data(self):
         """reads data"""
         if os.path.exists(self.fpath):
-            self.data = gpd.read_file(self.fpath)
+            self.data = read_file(self.fpath, crs=self.crs)
         else:
             raise ValueError(f'Shapefile "{os.path.basename(fpath)}" does not exist')
-        self.change_crs() # convert to default CRS epsg:4326
+        # convert to epsg:4326 if not already in wgs84
+        if self.data.crs != 4326:
+            self.data.to_crs(4326, inplace=True)
+            self.crs = 4326
         self.data[self.data.columns] = self.data[self.data.columns].apply(pd.to_numeric, errors='ignore') # convert to numerics if possible
-
-    
-    def change_crs(self):
-        """updates crs of locations"""
-        if self.ftype == '.shp' or self.ftype == '.gdb':
-            try:
-                self.data.to_crs(self.crs, inplace=True)
-            except ValueError:
-                self.data.set_crs(self.crs, inplace=True)
     
     
     def _cleanup_data(self, rows_to_keep=None, minimal_init=False):
@@ -675,11 +692,14 @@ class ShapefileData(GeoData):
                 if isinstance(geom,LineString):
                     if len(geom.xy[0]) > 2:
                         x,y = geom.xy
-                        geom_new = MultiLineString(
-                            [LineString([[x[j],y[j]],[x[j+1],y[j+1]]])
-                            for j in range(len(x)-1)]
+                        self.data.geometry[i] = MultiLineString(
+                            make_list_of_linestrings(
+                                pt1_x=x[:-1],
+                                pt1_y=y[:-1],
+                                pt2_x=x[1:],
+                                pt2_y=y[1:],
+                            )
                         )
-                        self.data.geometry[i] = geom_new
         # self.data = self.data.explode(ignore_index=True) # expand again
         self.data = self.data.explode(ignore_index=False, index_parts=True) # expand again
         if not 'obj_id' in self.data:
@@ -701,11 +721,9 @@ class ShapefileData(GeoData):
     def get_coord(gdf, geom_type):
         """extract coordinates from shapes"""
         # for Polygon
-        # if isinstance(self._geom_type,Polygon):
         if geom_type == 'Polygon':
            return [list(geom.boundary.coords) for geom in gdf.geometry]
         # for LineString
-        # elif isinstance(self._geom_type,LineString):
         elif geom_type == 'LineString':
             return [list(geom.coords) for geom in gdf.geometry]
         else:
@@ -722,7 +740,7 @@ class ShapefileData(GeoData):
         """Reloads data by reinstantiating class"""
         if fpath is not None:
             self.fpath = fpath
-        self.__init__(self.fpath, self.crs)
+        self.__init__(self.fpath, crs=self.crs)
     
 
     @staticmethod
@@ -826,8 +844,11 @@ class ShapefileData(GeoData):
         # self.grid_node_table.reset_index(drop=True,inplace=True)
         # make GeoSeries for visualization
         self.grid_node = GeoSeries(
-            Point(self.grid_node_table['LON'][i],self.grid_node_table['LAT'][i]) 
-            for i in range(self.grid_node_table.shape[0])
+            points_from_xy(
+                x=self.grid_node_table.LON.values,
+                y=self.grid_node_table.LAT.values,
+                crs=self.crs
+            )
         )
         
     
@@ -849,7 +870,7 @@ class ShapefileData(GeoData):
         # sindex = self.data.sindex
         # only process x and y if site_geometry is not given:
         if site_geometry is None:
-            site_geometry = GeoSeries([Point(x[i],y[i]) for i in range(len(x))], crs=self.crs)
+            site_geometry = GeoSeries(points_from_xy(x=x, y=y, crs=self.crs))
         # print('aa')
         self.site_geometry = site_geometry
         # print('bb')
@@ -988,7 +1009,7 @@ class LocationData(ShapefileData):
     """
     
     def __init__(self, fpath=None, gdf=None, lon=None, lat=None, lon_header='LON', lat_header='LAT',
-                 crs='EPSG:4326', rows_to_keep=None):
+                 crs=4326, rows_to_keep=None):
         """initialize"""
         # if providing geodataframe directly, treat as shapefile data
         if gdf is not None:
@@ -1146,9 +1167,9 @@ class LocationData(ShapefileData):
         #         dict_meta[key]['val'] += [self.data[dict_meta[key]['attr_id']][i]]
         # form DataFrame
         df_temp = pd.DataFrame.from_dict(dict_loc)
-        self.component_table = gpd.GeoDataFrame.from_dict(
+        self.component_table = GeoDataFrame.from_dict(
             df_temp,
-            geometry=gpd.points_from_xy(df_temp.LON, df_temp.LAT)
+            geometry=points_from_xy(df_temp.LON.values, df_temp.LAT.values, crs=self.crs)
         )
         for key in dict_meta:
             self.component_table[key] = dict_meta[key]['val']
@@ -1287,7 +1308,7 @@ class NetworkData(ShapefileData):
     #     super().__init__(fpath, crs, rows_to_keep)
     
     def __init__(self, fpath=None, gdf=None,
-                 shape_type='line', crs="EPSG:4326", rows_to_keep=None,
+                 shape_type='line', crs=4326, rows_to_keep=None,
                  lon=None, lat=None, lon_header=None, lat_header=None,
                  lon_begin=None, lat_begin=None, lon_begin_header='LON_BEGIN', lat_begin_header='LAT_BEGIN',
                  lon_end=None, lat_end=None, lon_end_header='LON_END', lat_end_header='LAT_END',
@@ -1381,10 +1402,14 @@ class NetworkData(ShapefileData):
             #     self.data.geometry[i] = LineString(coord_split)
             # make MultiLineString if num_seg_i > 1, else LineString
             if num_seg_i > 1:
-                self.data.geometry[i] = MultiLineString([
-                    LineString([coord_split[j],coord_split[j+1]])
-                    for j in range(num_seg_i)
-                ])
+                self.data.geometry[i] = MultiLineString(
+                    make_list_of_linestrings(
+                        pt1_x=coord_split[:-1,0],
+                        pt1_y=coord_split[:-1,1],
+                        pt2_x=coord_split[1:,0],
+                        pt2_y=coord_split[1:,1],
+                    )
+                )
             else:
                 self.data.geometry[i] = geom
         # explode into individual segments
@@ -1558,9 +1583,9 @@ class NetworkData(ShapefileData):
         # form DataFrame
         # self.segment_table = pd.DataFrame.from_dict(dict_loc)
         df_temp = pd.DataFrame.from_dict(dict_loc)
-        self.segment_table = gpd.GeoDataFrame.from_dict(
+        self.segment_table = GeoDataFrame.from_dict(
             df_temp,
-            geometry=gpd.points_from_xy(df_temp.LON_MID, df_temp.LAT_MID)
+            geometry=points_from_xy(df_temp.LON_MID.values, df_temp.LAT_MID.values, crs=self.crs)
         )
         for key in dict_meta:
             self.segment_table[key] = dict_meta[key]['val']
@@ -1697,12 +1722,13 @@ class RasterData(GeoData):
     
 
     # instantiation
-    def __init__(self, fpath):
+    def __init__(self, fpath, crs=4326):
         # invoke parent function
-        super().__init__(fpath)
+        super().__init__(fpath, crs=crs)
         
         # read data
         self._read_data()
+        self._check_crs()
         
         # initialize other attributes
         # for sampling
@@ -1710,8 +1736,8 @@ class RasterData(GeoData):
         self.x_sample = None
         self.y_sample = None
         self.n_sample = None
-
-
+    
+    
     def _read_data(self):
         """reads data"""
         if os.path.exists(self.fpath):
@@ -1720,12 +1746,22 @@ class RasterData(GeoData):
             raise ValueError(f'Raster file "{os.path.basename(self.fpath)}" does not exist')
     
     
+    def _check_crs(self):
+        """
+        - check raster CRS, if not 4326, raise error
+        - reprojection of raster data is not currently implemented
+        """
+        if self.data.crs != 4326:
+            raise ValueError(f'CRS for Raster file "{os.path.basename(self.fpath)}" is not EPSG:4326')
+            raise ValueError(f'Reprojection for raster files has not been implemented - EPSG:4326 is required')
+    
+    
     def close(self):
         """closes file"""
         self.data.close()
         
     
-    def get_sample(self, x, y, band=1, interp_scheme='nearest', out_of_bound_value=np.nan, invalid_value=np.nan):
+    def get_sample(self, x, y, band=1, interp_scheme='nearest', out_of_bound_value=np.nan, invalid_value=np.nan, dtype=None):
         """performs 2D interpolation at (x,y) pairs. Accepted interp_scheme = 'nearest', 'linear', 'cubic', and 'quintic'"""
         self.x_sample = x
         self.y_sample = y
@@ -1741,7 +1777,12 @@ class RasterData(GeoData):
                 x_tick, y_tick, np.flipud(self.data.read(band)),
                 kind=interp_scheme, fill_value=out_of_bound_value)
             # get samples
-            self.sample = np.transpose([interp_function(self.x_sample[i],self.y_sample[i]) for i in range(n_sample)])[0]
+            self.sample = np.transpose(
+                [interp_function(self.x_sample[i],self.y_sample[i]) for i in range(n_sample)]
+            )[0]
+        # convert to target datatype
+        if dtype is not None:
+            self.sample = self.sample.astype(dtype)
         # clean up invalid values (returned as 1e38 by NumPy)
         self.sample[abs(self.sample)>1e10] = invalid_value
     
@@ -1780,48 +1821,48 @@ class RasterData(GeoData):
             
             
 # -----------------------------------------------------------
-class JSONData(GeoData):
-    """[summary]
+# class JSONData(GeoData):
+#     """[summary]
 
-    Args:
-        object ([type]): [description]
-    """
+#     Args:
+#         object ([type]): [description]
+#     """
     
 
-    # instantiation
-    def __init__(self, fpath, lon_header=None, lat_header=None):
-        # invoke parent function
-        super().__init__(fpath)
+#     # instantiation
+#     def __init__(self, fpath, lon_header=None, lat_header=None):
+#         # invoke parent function
+#         super().__init__(fpath)
 
 
     
-    def _read_data(self):
-        """reads data"""
-        if os.path.exists(self.fpath):
-            self.data = rio.open(self.fpath)
-        else:
-            raise valueError("XML file does not exist")
-        self.data = pd.read_csv(self.fpath)
+#     def _read_data(self):
+#         """reads data"""
+#         if os.path.exists(self.fpath):
+#             self.data = rio.open(self.fpath)
+#         else:
+#             raise valueError("XML file does not exist")
+#         self.data = pd.read_csv(self.fpath)
         
         
 # -----------------------------------------------------------
-class XMLData(GeoData):
-    """[summary]
+# class XMLData(GeoData):
+#     """[summary]
 
-    Args:
-        object ([type]): [description]
-    """
+#     Args:
+#         object ([type]): [description]
+#     """
     
     
-    # instantiation
-    def __init__(self, fdir):
-        # invoke parent function
-        super().__init__(fpath)
+#     # instantiation
+#     def __init__(self, fdir):
+#         # invoke parent function
+#         super().__init__(fpath)
         
     
-    def _read_data(self):
-        """reads data"""
-        pass
+#     def _read_data(self):
+#         """reads data"""
+#         pass
 
     
     
@@ -1829,14 +1870,14 @@ class XMLData(GeoData):
                 
                 
 # -----------------------------------------------------------
-class test(GeoData):
-    def __init__(self, fpath,lon_header='LON_MID',lat_header='LON_MID'):
-        if fpath.endswith('csv'):
-            self.__class__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__class__)
-            self.__dict__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__dict__)
-        elif fpath.endswith('shp'):
-            self.__class__ = copy.deepcopy(ShapefileData(fpath).__class__)
-            self.__dict__ = copy.deepcopy(ShapefileData(fpath).__dict__)
+# class test(GeoData):
+#     def __init__(self, fpath,lon_header='LON_MID',lat_header='LON_MID'):
+#         if fpath.endswith('csv'):
+#             self.__class__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__class__)
+#             self.__dict__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__dict__)
+#         elif fpath.endswith('shp'):
+#             self.__class__ = copy.deepcopy(ShapefileData(fpath).__class__)
+#             self.__dict__ = copy.deepcopy(ShapefileData(fpath).__dict__)
             
             
             

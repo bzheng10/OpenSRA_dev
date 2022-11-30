@@ -43,7 +43,9 @@ From "conda-forge"
 
 [pygeos (0.12.0)](https://pygeos.readthedocs.io/en/stable/)
 
-[numba (0.54.1)](https://numba.pydata.org/)
+[numba (0.54.1)](https://numba.pydata.org
+
+[icc_rt (2022.1.0)](https://numba.pydata.org/numba-doc/latest/user/performance-tips.html)
 
 From "pip"
 

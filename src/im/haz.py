@@ -438,6 +438,7 @@ class SeismicHazard(object):
                 event_id = np.arange(self._n_event)+1
             else:
                 event_id = self.event_id
+            event_id = np.asarray(event_id).astype(int)
             # make DataFrame
             rup_meta_out = DataFrame(
                 np.vstack([event_id,mag,rate]).T,

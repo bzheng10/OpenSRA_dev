@@ -190,10 +190,13 @@ class BainEtal2022(_PipeStrainBase):
         req_rvs_by_level = {}
         req_fixed_by_level = {}
         soils = []
-        if 'sand' in soil_type:
-            soils.append('sand')
-        if 'clay' in soil_type:
-            soils.append('clay')
+        if len(soil_type) == 0:
+            soils = ['clay'] # if soil_type is empty, just use clay as default
+        else:
+            if 'sand' in soil_type:
+                soils.append('sand')
+            if 'clay' in soil_type:
+                soils.append('clay')
         for i in range(3):
             for each in soils:
                 if f'level{i+1}' in req_rvs_by_level:
@@ -252,40 +255,54 @@ class BainEtal2022(_PipeStrainBase):
         circum = pi * d_pipe/1000 # m
         area = pi * ((d_pipe/1000)**2 - (d_in/1000)**2) / 4 # m^2
         
+        # find where sigma_y, n_param, and r_param are nan
+        sigma_y_isnan = np.isnan(sigma_y)
+        n_param_isnan = np.isnan(n_param)
+        r_param_isnan = np.isnan(r_param)
+        
+        # if steel-grade is provided, use properties informed by steel grade
+        # for steel_grade = "NA", set to "x-52"
+        steel_grade[steel_grade=='NA'] = 'X-52'
         # Grade-B
         grade = 'Grade-B'
-        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 241*1000 # kPa
-        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 3
-        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 8
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 241*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 3
+        r_param[np.logical_and(cond,r_param_isnan)] = 8
         # Grade X-42
         grade = 'X-42'
-        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 290*1000 # kPa
-        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 3
-        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 9
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 290*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 3
+        r_param[np.logical_and(cond,r_param_isnan)] = 9
         # Grade X-52
         grade = 'X-52'
-        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 359*1000 # kPa
-        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 8
-        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 10
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 359*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 8
+        r_param[np.logical_and(cond,r_param_isnan)] = 10
         # Grade X-60
         grade = 'X-60'
-        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 414*1000 # kPa
-        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 8
-        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 12
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 414*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 8
+        r_param[np.logical_and(cond,r_param_isnan)] = 12
         # Grade X-70
         grade = 'X-70'
-        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 483*1000 # kPa
-        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 14
-        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 15
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 483*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 14
+        r_param[np.logical_and(cond,r_param_isnan)] = 15
         # Grade X-80
         grade = 'X-80'
-        sigma_y[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 552*1000 # kPa
-        n_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 15
-        r_param[np.logical_and(steel_grade!='NA',steel_grade==grade)] = 20
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 552*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 15
+        r_param[np.logical_and(cond,r_param_isnan)] = 20
         # if any of the params are still missing, use default grade of X-52
-        sigma_y[np.isnan(sigma_y)] = 359*1000 # kPa
-        n_param[np.isnan(n_param)] = 8
-        r_param[np.isnan(r_param)] = 10
+        sigma_y[sigma_y_isnan] = 359*1000 # kPa
+        n_param[n_param_isnan] = 8
+        r_param[r_param_isnan] = 10
         
         # calculations
         # find indices with sand and clay
@@ -380,7 +397,7 @@ class HutabaratEtal2022_Normal(_PipeStrainBase):
     soil_type: str, np.ndarray or list
         soil type (sand/clay) for model
     soil_density: str, np.ndarray or list
-        soil density: soft, medium stiff, or stiff for clay; medium dense, dense, or very dense for sand
+        soil density: medium dense, dense, or very dense for sand
     steel_grade: str, np.ndarray or list
         steel grade: Grade-B, X-42, X-52, X-60, X-70, X-80
 
@@ -452,7 +469,7 @@ class HutabaratEtal2022_Normal(_PipeStrainBase):
         'desc': 'Fixed input variables:',
         'params': {
             'soil_type': 'soil type (sand/clay) for model',
-            'soil_density': 'soil density: soft, medium stiff, or stiff for clay; medium dense, dense, or very dense for sand',
+            'soil_density': 'soil density: medium dense, dense, or very dense for sand',
             'steel_grade': 'steel grade: Grade-B, X-42, X-52, X-60, X-70, X-80',
         }
     }
@@ -499,20 +516,14 @@ class HutabaratEtal2022_Normal(_PipeStrainBase):
         req_rvs_by_level = {}
         req_fixed_by_level = {}
         soils = []
-        if 'sand' in soil_type:
-            soils.append('sand')
-        if 'clay' in soil_type:
-            soils.append('clay')
+        if len(soil_type) == 0:
+            soils = ['clay'] # if soil_type is empty, just use clay as default
+        else:
+            if 'sand' in soil_type:
+                soils.append('sand')
+            if 'clay' in soil_type:
+                soils.append('clay')
         for i in range(3):
-            # for each in soils:
-            #     if f'level{i+1}' in req_rvs_by_level:
-            #         req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
-            #         req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
-            #     else:
-            #         req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
-            #         req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
-            # req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
-            # req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
             for each in soils:
                 if f'level{i+1}' in req_rvs_by_level:
                     req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
@@ -538,7 +549,6 @@ class HutabaratEtal2022_Normal(_PipeStrainBase):
     ):
         """Model"""
         # initialize arrays
-        sigma_ult = np.empty_like(pgdef)
         # eps_ult = np.empty_like(pgdef)
         t_u = np.empty_like(pgdef)
         n_q_vd = np.zeros(pgdef.shape)
@@ -880,59 +890,68 @@ class HutabaratEtal2022_Normal(_PipeStrainBase):
         h_d_ratio = np.minimum(np.maximum(h_d_ratio,1.8),11.5) # limit h_d_ratio to 1.8 and 11.5
         d_t_ratio = d_pipe/t_pipe
 
+        # find where sigma_y, n_param, and r_param are nan
+        sigma_y_isnan = np.isnan(sigma_y)
+        n_param_isnan = np.isnan(n_param)
+        r_param_isnan = np.isnan(r_param)
+        # initialize sigma_ult using X-52 properties
+        sigma_ult = np.ones(pgdef.shape) * 455*1000 # kPa
+        
         # if steel-grade is provided, use properties informed by steel grade
-        # for steel_grade = "NA", set to "x-52"
+        # for steel_grade = "NA", set to "X-52"
         steel_grade[steel_grade=='NA'] = 'X-52'
         # Grade-B
         grade = 'Grade-B'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 241*1000 # kPa
-        n_param[cond] = 3
-        r_param[cond] = 8
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 241*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 3
+        r_param[np.logical_and(cond,r_param_isnan)] = 8
         sigma_ult[cond] = 344*1000 # kPa
         # eps_ult[steel_grade==grade] = 1.099377366 # %
         # Grade X-42
         grade = 'X-42'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 290*1000 # kPa
-        n_param[cond] = 3
-        r_param[cond] = 9
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 290*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 3
+        r_param[np.logical_and(cond,r_param_isnan)] = 9
         sigma_ult[cond] = 414*1000 # kPa
         # eps_ult[steel_grade==grade] = 1.642491598 # %
         # Grade X-52
         grade = 'X-52'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 359*1000 # kPa
-        n_param[cond] = 8
-        r_param[cond] = 10
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 359*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 8
+        r_param[np.logical_and(cond,r_param_isnan)] = 10
         sigma_ult[cond] = 455*1000 # kPa
         # eps_ult[steel_grade==grade] = 1.904124241 # %
         # Grade X-60
         grade = 'X-60'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 414*1000 # kPa
-        n_param[cond] = 8
-        r_param[cond] = 12
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 414*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 8
+        r_param[np.logical_and(cond,r_param_isnan)] = 12
         sigma_ult[cond] = 517*1000 # kPa
         # eps_ult[steel_grade==grade] = 2.431334401 # %
         # Grade X-70
         grade = 'X-70'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 483*1000 # kPa
-        n_param[cond] = 14
-        r_param[cond] = 15
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 483*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 14
+        r_param[np.logical_and(cond,r_param_isnan)] = 15
         sigma_ult[cond] = 565*1000 # kPa
         # eps_ult[steel_grade==grade] = 2.769051799 # %
         # Grade X-80
         grade = 'X-80'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 552*1000 # kPa
-        n_param[cond] = 15
-        r_param[cond] = 20
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 552*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 15
+        r_param[np.logical_and(cond,r_param_isnan)] = 20
         sigma_ult[cond] = 625*1000 # kPa
         # eps_ult[steel_grade==grade] = 2.846493399 # %
-        # for cases where steel_grade == "NA"
-        sigma_ult[steel_grade=='NA'] = sigma_y[steel_grade=='NA'] * 1.2 # approx. factor between ultimate and yield stresses
+        # if any of the params are still missing, use default grade of X-52
+        sigma_y[sigma_y_isnan] = 359*1000 # kPa
+        n_param[n_param_isnan] = 8
+        r_param[r_param_isnan] = 10
         
         # compute eps_ult (%)
         eps_ult = sigma_ult/young_mod * (1 + n_param/(1+r_param)*(sigma_ult/sigma_y)**r_param) * 100
@@ -1284,20 +1303,14 @@ class HutabaratEtal2022_Reverse(_PipeStrainBase):
         req_rvs_by_level = {}
         req_fixed_by_level = {}
         soils = []
-        if 'sand' in soil_type:
-            soils.append('sand')
-        if 'clay' in soil_type:
-            soils.append('clay')
+        if len(soil_type) == 0:
+            soils = ['clay'] # if soil_type is empty, just use clay as default
+        else:
+            if 'sand' in soil_type:
+                soils.append('sand')
+            if 'clay' in soil_type:
+                soils.append('clay')
         for i in range(3):
-            # for each in soils:
-            #     if f'level{i+1}' in req_rvs_by_level:
-            #         req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
-            #         req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
-            #     else:
-            #         req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
-            #         req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
-            # req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
-            # req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
             for each in soils:
                 if f'level{i+1}' in req_rvs_by_level:
                     req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
@@ -1563,17 +1576,6 @@ class HutabaratEtal2022_SSComp(_PipeStrainBase):
         eps_pipe = np.exp(atanh_metric/b2 - 4)
         eps_pipe = np.maximum(np.minimum(eps_pipe, 100), 1e-5) # limit to 1e-5 % (avoid 0%) and 100 %
         
-        # check = eps_pipe < 1e-5
-        # check = np.isnan(eps_pipe)
-        # if True in check:
-        #     print('check', np.where(check))
-        #     print('beta_crossing', beta_crossing[check])
-        #     print('d_pipe', d_pipe[check])
-        #     print('l_anchor', l_anchor[check])
-        #     print('f_beta_crossing', f_beta_crossing[check])
-        #     print('metric_inside_atanh', metric_inside_atanh[check])
-        #     print('atanh_metric', atanh_metric[check])
-        #     print('f_beta_crossing', f_beta_crossing[check])
         # sigma
         sigma = np.ones(pgdef.shape)*0.571
         
@@ -1756,20 +1758,14 @@ class HutabaratEtal2022_SSTens_85to90(_PipeStrainBase):
         req_rvs_by_level = {}
         req_fixed_by_level = {}
         soils = []
-        if 'sand' in soil_type:
-            soils.append('sand')
-        if 'clay' in soil_type:
-            soils.append('clay')
+        if len(soil_type) == 0:
+            soils = ['clay'] # if soil_type is empty, just use clay as default
+        else:
+            if 'sand' in soil_type:
+                soils.append('sand')
+            if 'clay' in soil_type:
+                soils.append('clay')
         for i in range(3):
-            # for each in soils:
-            #     if f'level{i+1}' in req_rvs_by_level:
-            #         req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
-            #         req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
-            #     else:
-            #         req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
-            #         req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
-            # req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
-            # req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
             for each in soils:
                 if f'level{i+1}' in req_rvs_by_level:
                     req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
@@ -1796,7 +1792,7 @@ class HutabaratEtal2022_SSTens_85to90(_PipeStrainBase):
     ):
         """Model"""
         # initialize arrays
-        sigma_ult = np.empty_like(pgdef)
+        # sigma_ult = np.empty_like(pgdef)
         # eps_ult = np.empty_like(pgdef)
         t_u = np.empty_like(pgdef)
         
@@ -1816,59 +1812,68 @@ class HutabaratEtal2022_SSTens_85to90(_PipeStrainBase):
         d_t_ratio = d_pipe/t_pipe
         ln_d_t_ratio = np.log(d_t_ratio)
         
+        # find where sigma_y, n_param, and r_param are nan
+        sigma_y_isnan = np.isnan(sigma_y)
+        n_param_isnan = np.isnan(n_param)
+        r_param_isnan = np.isnan(r_param)
+        # initialize sigma_ult using X-52 properties
+        sigma_ult = np.ones(pgdef.shape) * 455*1000 # kPa
+        
         # if steel-grade is provided, use properties informed by steel grade
-        # for steel_grade = "NA", set to "x-52"
-        # steel_grade[steel_grade=='NA'] = 'X-52'
+        # for steel_grade = "NA", set to "X-52"
+        steel_grade[steel_grade=='NA'] = 'X-52'
         # Grade-B
         grade = 'Grade-B'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 241*1000 # kPa
-        n_param[cond] = 3
-        r_param[cond] = 8
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 241*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 3
+        r_param[np.logical_and(cond,r_param_isnan)] = 8
         sigma_ult[cond] = 344*1000 # kPa
         # eps_ult[steel_grade==grade] = 1.099377366 # %
         # Grade X-42
         grade = 'X-42'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 290*1000 # kPa
-        n_param[cond] = 3
-        r_param[cond] = 9
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 290*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 3
+        r_param[np.logical_and(cond,r_param_isnan)] = 9
         sigma_ult[cond] = 414*1000 # kPa
         # eps_ult[steel_grade==grade] = 1.642491598 # %
         # Grade X-52
         grade = 'X-52'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 359*1000 # kPa
-        n_param[cond] = 8
-        r_param[cond] = 10
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 359*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 8
+        r_param[np.logical_and(cond,r_param_isnan)] = 10
         sigma_ult[cond] = 455*1000 # kPa
         # eps_ult[steel_grade==grade] = 1.904124241 # %
         # Grade X-60
         grade = 'X-60'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 414*1000 # kPa
-        n_param[cond] = 8
-        r_param[cond] = 12
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 414*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 8
+        r_param[np.logical_and(cond,r_param_isnan)] = 12
         sigma_ult[cond] = 517*1000 # kPa
         # eps_ult[steel_grade==grade] = 2.431334401 # %
         # Grade X-70
         grade = 'X-70'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 483*1000 # kPa
-        n_param[cond] = 14
-        r_param[cond] = 15
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 483*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 14
+        r_param[np.logical_and(cond,r_param_isnan)] = 15
         sigma_ult[cond] = 565*1000 # kPa
         # eps_ult[steel_grade==grade] = 2.769051799 # %
         # Grade X-80
         grade = 'X-80'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 552*1000 # kPa
-        n_param[cond] = 15
-        r_param[cond] = 20
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 552*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 15
+        r_param[np.logical_and(cond,r_param_isnan)] = 20
         sigma_ult[cond] = 625*1000 # kPa
         # eps_ult[steel_grade==grade] = 2.846493399 # %
-        # for cases where steel_grade == "NA"
-        sigma_ult[steel_grade=='NA'] = sigma_y[steel_grade=='NA'] * 1.2 # approx. factor between ultimate and yield stresses
+        # if any of the params are still missing, use default grade of X-52
+        sigma_y[sigma_y_isnan] = 359*1000 # kPa
+        n_param[n_param_isnan] = 8
+        r_param[r_param_isnan] = 10
         
         # compute eps_ult (%)
         eps_ult = sigma_ult/young_mod * (1 + n_param/(1+r_param)*(sigma_ult/sigma_y)**r_param) * 100
@@ -2048,7 +2053,7 @@ class HutabaratEtal2022_SSTens_5to85(HutabaratEtal2022_SSTens_85to90):
     ):
         """Model"""
         # initialize arrays
-        sigma_ult = np.empty_like(pgdef)
+        # sigma_ult = np.empty_like(pgdef)
         # eps_ult = np.empty_like(pgdef)
         t_u = np.empty_like(pgdef)
         
@@ -2068,59 +2073,68 @@ class HutabaratEtal2022_SSTens_5to85(HutabaratEtal2022_SSTens_85to90):
         d_t_ratio = d_pipe/t_pipe
         ln_d_t_ratio = np.log(d_t_ratio)
         
+        # find where sigma_y, n_param, and r_param are nan
+        sigma_y_isnan = np.isnan(sigma_y)
+        n_param_isnan = np.isnan(n_param)
+        r_param_isnan = np.isnan(r_param)
+        # initialize sigma_ult using X-52 properties
+        sigma_ult = np.ones(pgdef.shape) * 455*1000 # kPa
+        
         # if steel-grade is provided, use properties informed by steel grade
-        # for steel_grade = "NA", set to "x-52"
-        # steel_grade[steel_grade=='NA'] = 'X-52'
+        # for steel_grade = "NA", set to "X-52"
+        steel_grade[steel_grade=='NA'] = 'X-52'
         # Grade-B
         grade = 'Grade-B'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 241*1000 # kPa
-        n_param[cond] = 3
-        r_param[cond] = 8
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 241*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 3
+        r_param[np.logical_and(cond,r_param_isnan)] = 8
         sigma_ult[cond] = 344*1000 # kPa
         # eps_ult[steel_grade==grade] = 1.099377366 # %
         # Grade X-42
         grade = 'X-42'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 290*1000 # kPa
-        n_param[cond] = 3
-        r_param[cond] = 9
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 290*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 3
+        r_param[np.logical_and(cond,r_param_isnan)] = 9
         sigma_ult[cond] = 414*1000 # kPa
         # eps_ult[steel_grade==grade] = 1.642491598 # %
         # Grade X-52
         grade = 'X-52'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 359*1000 # kPa
-        n_param[cond] = 8
-        r_param[cond] = 10
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 359*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 8
+        r_param[np.logical_and(cond,r_param_isnan)] = 10
         sigma_ult[cond] = 455*1000 # kPa
         # eps_ult[steel_grade==grade] = 1.904124241 # %
         # Grade X-60
         grade = 'X-60'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 414*1000 # kPa
-        n_param[cond] = 8
-        r_param[cond] = 12
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 414*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 8
+        r_param[np.logical_and(cond,r_param_isnan)] = 12
         sigma_ult[cond] = 517*1000 # kPa
         # eps_ult[steel_grade==grade] = 2.431334401 # %
         # Grade X-70
         grade = 'X-70'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 483*1000 # kPa
-        n_param[cond] = 14
-        r_param[cond] = 15
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 483*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 14
+        r_param[np.logical_and(cond,r_param_isnan)] = 15
         sigma_ult[cond] = 565*1000 # kPa
         # eps_ult[steel_grade==grade] = 2.769051799 # %
         # Grade X-80
         grade = 'X-80'
-        cond = np.logical_and(steel_grade!='NA',steel_grade==grade)
-        sigma_y[cond] = 552*1000 # kPa
-        n_param[cond] = 15
-        r_param[cond] = 20
+        cond = steel_grade==grade
+        sigma_y[np.logical_and(cond,sigma_y_isnan)] = 552*1000 # kPa
+        n_param[np.logical_and(cond,n_param_isnan)] = 15
+        r_param[np.logical_and(cond,r_param_isnan)] = 20
         sigma_ult[cond] = 625*1000 # kPa
         # eps_ult[steel_grade==grade] = 2.846493399 # %
-        # for cases where steel_grade == "NA"
-        sigma_ult[steel_grade=='NA'] = sigma_y[steel_grade=='NA'] * 1.2 # approx. factor between ultimate and yield stresses
+        # if any of the params are still missing, use default grade of X-52
+        sigma_y[sigma_y_isnan] = 359*1000 # kPa
+        n_param[n_param_isnan] = 8
+        r_param[r_param_isnan] = 10
         
         # compute eps_ult (%)
         eps_ult = sigma_ult/young_mod * (1 + n_param/(1+r_param)*(sigma_ult/sigma_y)**r_param) * 100
@@ -2255,7 +2269,7 @@ class HutabaratEtal2022_SSTens_5to85(HutabaratEtal2022_SSTens_85to90):
     
         # sigma
         # sigma = np.ones(pgdef.shape)*0.723
-        
+            
         # prepare outputs
         output = {
             'eps_pipe': {

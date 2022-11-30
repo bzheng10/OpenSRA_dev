@@ -29,9 +29,22 @@ def main():
 
     # example wdir
     ex_list = [
+        ##############################
+        # above ground
         'above_ground_shakemap',
         'above_ground_ucerf',
         'above_ground_ucerf_with_filters',
+        ##############################
+        # below ground
+        # -- landslide
+        'below_ground_landslide_statewide-subset_level1_shakemap',
+        'below_ground_landslide_statewide-subset_level1_ucerf',
+        'below_ground_landslide_statewide-subset_level2_shakemap',
+        # -- lateral spread
+        # -- settlement
+        # -- surface fault rupture
+        ##############################
+        # wells and caprocks
         'wells_caprocks_ucerf',
         'wells_caprocks_userdef_rupture',
     ]

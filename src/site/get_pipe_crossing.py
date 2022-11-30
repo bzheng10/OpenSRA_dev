@@ -24,7 +24,7 @@ import pandas as pd
 import numpy as np
 
 # geospatial processing modules
-import geopandas as gpd
+from geopandas import GeoDataFrame, GeoSeries, points_from_xy, read_file
 from shapely.affinity import rotate
 from shapely.geometry import Point, MultiPoint, LineString, MultiLineString
 from shapely.ops import split, unary_union
@@ -40,8 +40,9 @@ warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 
 # OpenSRA modules
 # from src.site.geodata import NetworkData
-from src.util import get_basename_without_extension
 from src.site.geodata import LocationData
+from src.site.site_util import make_list_of_linestrings
+from src.util import get_basename_without_extension
 
 
 # ---
@@ -71,6 +72,8 @@ def dot_product(
     # get internal angle
     if return_angle:
         cos_angle = dir_vect1_norm[:,0]*dir_vect2_norm[:,0] + dir_vect1_norm[:,1]*dir_vect2_norm[:,1]
+        # avoid roundoffs such that cos_angle is outside of -1 and 1 (e.g., 1.0000000000000002)
+        cos_angle = np.maximum(np.minimum(cos_angle,1),-1)
         angle = np.degrees(np.arccos(cos_angle))
     # get component of vector 1 on vector 2
     elif return_comp_vect1_on_vect2:
@@ -227,6 +230,60 @@ def split_geom_into_scarp_body_toe(
         return line_at_y_scarp_cutoff_unrotated, line_at_y_toe_cutoff_unrotated
 
 
+# ---
+def split_geom_into_halves_without_high_low_points(
+    geom, # shapely geometry, in UTM (meters)
+    slip_dir, # deg, relative to North (i.e., azimuth)
+):
+    """
+    splits a deformation polygon into scarp (head), body, and toe based on cutoff ratios,
+    also splits polygon into upper and lower halves if requested
+    """
+    # get geometry centroid for rotation
+    centroid = list(geom.centroid.coords)[0]
+    
+    # rotate such that slip direction is pointing up
+    geom_rotate = rotate(geom=geom, angle=slip_dir, origin=centroid)
+    
+    # get extent of rotated geometry
+    extent_rotate = geom_rotate.bounds
+    xleft = extent_rotate[0]
+    ybottom = extent_rotate[1]
+    xright = extent_rotate[2]
+    ytop = extent_rotate[3]
+    
+    # y0 top of extent, dy = top - bottom of extent
+    y0 = ytop
+    yend = ybottom
+    
+    # find y-coord along vertical extent at cutoffs
+    dy = yend - y0
+    
+    # split into upper and lower halves
+    y_mid_cutoff = 0.5*dy + y0
+    line_at_y_mid_cutoff = LineString((
+        (xleft,y_mid_cutoff),
+        (xright,y_mid_cutoff),
+    ))
+    # get upper and half polygon
+    split_poly = split(geom_rotate,line_at_y_mid_cutoff)
+    upper_rotate = []
+    lower_rotate = []
+    for each in split_poly.geoms:
+        if each.bounds[3] <= y_mid_cutoff:
+            upper_rotate.append(each)
+        else:
+            lower_rotate.append(each)
+    upper_rotate = unary_union(upper_rotate)
+    lower_rotate = unary_union(lower_rotate)
+    # revert rotation
+    upper = rotate(geom=upper_rotate, angle=-slip_dir, origin=centroid)
+    lower = rotate(geom=lower_rotate, angle=-slip_dir, origin=centroid)
+    
+    # return
+    return upper, lower
+
+
 @njit(
     fastmath=True,
     cache=True
@@ -296,19 +353,23 @@ def get_anchorage_length_full_system(
 
 # ---
 def get_pipe_crossing(
+    opensra_dir,
     path_to_def_shp,
     infra_site_data,
-    infra_site_data_geom,
-    opensra_dir,
+    avail_data_summary,
+    infra_site_data_geom=None,
     export_dir=None,
     def_type='landslide',
     dem_raster_fpath=None,
     flag_using_state_network=False,
+    flag_using_cpt_based_methods=False,
+    def_shp_crs=None,
     # export_path
 ):
     """
     function to determine crossing
-    note: a [pipe]line is composed  a series of segments
+    note: 1) a [pipe]line is composed  a series of segments
+          2) def_type = 'lateral spread', 'ground settlement', 'landslide', 'surface fault rupture'
     """
     
     # ---
@@ -327,23 +388,27 @@ def get_pipe_crossing(
         # check if file path to deformation polygons exist
         if not os.path.exists(path_to_def_shp):
             raise ValueError("Path to deformation polygons for pipe crossing does not exist.")
-        def_poly_gdf = gpd.read_file(path_to_def_shp,crs=epsg_wgs84)
+        if def_shp_crs is None:
+            def_shp_crs = 4326 # default to wgs84
+        def_poly_gdf = read_file(path_to_def_shp,crs=def_shp_crs)
+        if def_poly_gdf.crs != 4326:
+            def_poly_gdf.to_crs(4326, inplace=True)
 
+    # ---
     # convert site data DataFrame to GeoDataFrame
     if infra_site_data_geom is None:
-        geoms=[
-            LineString([
-                (infra_site_data['LON_BEGIN'][i], infra_site_data['LAT_BEGIN'][i]),
-                (infra_site_data['LON_END'][i], infra_site_data['LAT_END'][i])
-            ]) for i in range(infra_site_data.shape[0])
-        ]
-        segment_gdf = gpd.GeoDataFrame(
+        segment_gdf = GeoDataFrame(
             infra_site_data,
             crs=epsg_wgs84,
-            geometry=geoms,
+            geometry=make_list_of_linestrings(
+                pt1_x=infra_site_data['LON_BEGIN'].values,
+                pt1_y=infra_site_data['LAT_BEGIN'].values,
+                pt2_x=infra_site_data['LON_END'].values,
+                pt2_y=infra_site_data['LAT_END'].values,
+            ),
         )
     else:
-        segment_gdf = gpd.GeoDataFrame(
+        segment_gdf = GeoDataFrame(
             infra_site_data,
             crs=epsg_wgs84,
             geometry=infra_site_data_geom,
@@ -360,7 +425,8 @@ def get_pipe_crossing(
             geometry=def_poly_gdf.geometry.boundary,
             predicate='intersects'
         )
-        # print(crossed_poly_index)
+        # print(len(crossed_poly_index))
+        # print(len(np.unique(crossed_poly_index)))
         # print(crossed_segment_index)
         
         # sys.exit()
@@ -394,7 +460,7 @@ def get_pipe_crossing(
         segment_crossed_end_utm = segment_full_end_utm[crossed_segment_index]
     
     # ---
-    # if using state network, hard points have been located in preprocessing
+    # if using state network, hard points along pipelines have been precomputed
     if flag_using_state_network:
         # no action to perform
         pass
@@ -429,87 +495,100 @@ def get_pipe_crossing(
             hard_points[-1] = np.vstack([hard_points[-1], segment_end_for_curr_pipe_id[-1]])
     
     # ---
-    # get DEM for unique deformatoin polygon boundaries to determine direction of slip
+    # get DEM for unique deformation polygon boundaries to determine direction of slip
     if poly_exist:
         def_poly_crossed_unique_gdf_utm = def_poly_crossed_unique_gdf.to_crs(epsg_utm_zone10).copy()
-        # get boundary coordinates for deformatoin polygons with crossings for DEM sampling
-        n_bound_coord = []
-        # wgs84
-        bound_coord = []
-        for i,each in enumerate(def_poly_crossed_unique_gdf.geometry.boundary):
-            if isinstance(each,LineString):
-                bound_coord.append(list(each.coords))
-            elif isinstance(each,MultiLineString):
-                bound_coord.append(list(each.geoms[0].coords))
-            n_bound_coord.append(len(bound_coord[-1]))
-        bound_coord_flat = np.asarray(sum(bound_coord, [])) # flatten into 1 array
-        # utm
-        bound_coord_utm = []
-        for i,each in enumerate(def_poly_crossed_unique_gdf_utm.geometry.boundary):
-            if isinstance(each,LineString):
-                bound_coord_utm.append(list(each.coords))
-            elif isinstance(each,MultiLineString):
-                bound_coord_utm.append(list(each.geoms[0].coords))
-        bound_coord_utm_flat = np.asarray(sum(bound_coord_utm, [])) # flatten into 1 array
-        # sample elevations around deformation polygon boundaries from DEM raster
-        bound_coord_flat_df = LocationData(
-            lon=bound_coord_flat[:,0],
-            lat=bound_coord_flat[:,1],
-            # crs=epsg_utm_zone10,
-            crs=epsg_wgs84,
-        )
-        if dem_raster_fpath is None:
-            dem_raster_fpath = os.path.join(
-                # opensra_dir,'lib','Datasets','CA_DEM_90m_WGS84_meter','CA_DEM_90m_WGS84_meter.tif'
-                opensra_dir,'lib','Datasets','CA_DEM_30m_WGS84_meter','CA_DEM_30m_WGS84_meter.tif'
+        # for lateral spread and settlement, slip direction has been predetermined during CPT analysis
+        if def_type == 'lateral_spread' or def_type == 'settlement':
+            pass
+        elif def_type == 'landslide':
+            # get boundary coordinates for deformatoin polygons with crossings for DEM sampling
+            n_bound_coord = []
+            # wgs84
+            bound_coord = []
+            for i,each in enumerate(def_poly_crossed_unique_gdf.geometry.boundary):
+                if isinstance(each,LineString):
+                    bound_coord.append(list(each.coords))
+                elif isinstance(each,MultiLineString):
+                    bound_coord.append(list(each.geoms[0].coords))
+                n_bound_coord.append(len(bound_coord[-1]))
+            bound_coord_flat = np.asarray(sum(bound_coord, [])) # flatten into 1 array
+            # utm
+            bound_coord_utm = []
+            for i,each in enumerate(def_poly_crossed_unique_gdf_utm.geometry.boundary):
+                if isinstance(each,LineString):
+                    bound_coord_utm.append(list(each.coords))
+                elif isinstance(each,MultiLineString):
+                    bound_coord_utm.append(list(each.geoms[0].coords))
+            bound_coord_utm_flat = np.asarray(sum(bound_coord_utm, [])) # flatten into 1 array
+            # sample elevations around deformation polygon boundaries from DEM raster
+            bound_coord_flat_df = LocationData(
+                lon=bound_coord_flat[:,0],
+                lat=bound_coord_flat[:,1],
+                crs=epsg_wgs84,
             )
-        if not os.path.exists(dem_raster_fpath):
-            raise ValueError("Path to DEM raster does not exist. Check pipe crossing function")
-        bound_coord_flat_df.data = bound_coord_flat_df.sample_raster(
-            table=bound_coord_flat_df.data,
-            fpath=dem_raster_fpath
-        )
-        dem_basename = get_basename_without_extension(dem_raster_fpath)
-        bound_coord_flat_df.data['x'] = bound_coord_utm_flat[:,0] # add utm x
-        bound_coord_flat_df.data['y'] = bound_coord_utm_flat[:,1] # add utm y
+            dem_raster_crs = epsg_wgs84
+            if dem_raster_fpath is None:
+                # sample DEM at grid nodes
+                param = 'dem'
+                dem_file_metadata = avail_data_summary['Parameters'][param]
+                dem_raster_fpath = os.path.join(opensra_dir,dem_file_metadata['Datasets']['Set1']['Path'])
+                dem_raster_crs = dem_file_metadata['Datasets']['Set1']['CRS']
+            if not os.path.exists(dem_raster_fpath):
+                raise ValueError("Path to DEM raster does not exist. Check pipe crossing function")
+            bound_coord_flat_df.data = bound_coord_flat_df.sample_raster(
+                table=bound_coord_flat_df.data,
+                fpath=dem_raster_fpath,
+                dtype='float',
+                crs=dem_raster_crs
+            )
+            dem_basename = get_basename_without_extension(dem_raster_fpath)
+            bound_coord_flat_df.data['x'] = bound_coord_utm_flat[:,0] # add utm x
+            bound_coord_flat_df.data['y'] = bound_coord_utm_flat[:,1] # add utm y
 
     # ---
     # get slip direction (azimuth, relative to North) for deformation polygons
     if poly_exist:
-        utm_coord_for_max_dem = []
-        utm_coord_for_min_dem = []
-        for i,each in enumerate(def_poly_crossed_unique_gdf_utm.geometry.boundary):
-            n_coord_i = n_bound_coord[i]
-            start_ind = sum(n_bound_coord[:i])
-            end_ind = start_ind + n_coord_i
-            dem_for_geom_i = bound_coord_flat_df.data[dem_basename].iloc[start_ind:end_ind].values.copy()
-            utm_x_for_geom_i = bound_coord_flat_df.data.x[start_ind:end_ind].values.copy()
-            utm_y_for_geom_i = bound_coord_flat_df.data.y[start_ind:end_ind].values.copy()
-            # get location of max and min DEM
-            max_dem_i = max(dem_for_geom_i)
-            min_dem_i = min(dem_for_geom_i)
-            ind_max_dem_i = np.where(dem_for_geom_i==max_dem_i)[0][0]
-            ind_min_dem_i = np.where(dem_for_geom_i==min_dem_i)[0][0]
-            utm_coord_for_max_dem.append([
-                utm_x_for_geom_i[ind_max_dem_i],
-                utm_y_for_geom_i[ind_max_dem_i],
-            ])
-            utm_coord_for_min_dem.append([
-                utm_x_for_geom_i[ind_min_dem_i],
-                utm_y_for_geom_i[ind_min_dem_i],
-            ])
-        # convert to numpy array
-        utm_coord_for_max_dem = np.asarray(utm_coord_for_max_dem)
-        utm_coord_for_min_dem = np.asarray(utm_coord_for_min_dem)
-        # get slip direction relative to North
-        slip_dir = np.round(get_azimuth(utm_coord_for_max_dem,utm_coord_for_min_dem),1)
-        slip_dir[np.isnan(slip_dir)] = 0 # if max and min DEMs are on the same point
-        # append to dataframe
-        def_poly_crossed_unique_gdf_utm['slip_dir'] = slip_dir
+        # for lateral spread and settlement, slip direction has been predetermined during CPT analysis
+        if def_type == 'lateral_spread' or def_type == 'settlement':
+            pass
+        elif def_type == 'landslide':
+            utm_coord_for_max_dem = []
+            utm_coord_for_min_dem = []
+            # for i,each in enumerate(def_poly_crossed_unique_gdf_utm.geometry.boundary):
+            for i in range(def_poly_crossed_unique_gdf_utm.shape[0]):
+                n_coord_i = n_bound_coord[i]
+                start_ind = sum(n_bound_coord[:i])
+                end_ind = start_ind + n_coord_i
+                dem_for_geom_i = bound_coord_flat_df.data[dem_basename].iloc[start_ind:end_ind].values.copy()
+                utm_x_for_geom_i = bound_coord_flat_df.data.x[start_ind:end_ind].values.copy()
+                utm_y_for_geom_i = bound_coord_flat_df.data.y[start_ind:end_ind].values.copy()
+                # get location of max and min DEM
+                max_dem_i = max(dem_for_geom_i)
+                min_dem_i = min(dem_for_geom_i)
+                ind_max_dem_i = np.where(dem_for_geom_i==max_dem_i)[0][0]
+                ind_min_dem_i = np.where(dem_for_geom_i==min_dem_i)[0][0]
+                utm_coord_for_max_dem.append([
+                    utm_x_for_geom_i[ind_max_dem_i],
+                    utm_y_for_geom_i[ind_max_dem_i],
+                ])
+                utm_coord_for_min_dem.append([
+                    utm_x_for_geom_i[ind_min_dem_i],
+                    utm_y_for_geom_i[ind_min_dem_i],
+                ])
+            # convert to numpy array
+            utm_coord_for_max_dem = np.asarray(utm_coord_for_max_dem)
+            utm_coord_for_min_dem = np.asarray(utm_coord_for_min_dem)
+            # get slip direction relative to North
+            slip_dir = np.round(get_azimuth(utm_coord_for_max_dem,utm_coord_for_min_dem),1)
+            slip_dir[np.isnan(slip_dir)] = 0 # if max and min DEMs are on the same point
+            # append to dataframe
+            def_poly_crossed_unique_gdf_utm['slip_dir'] = slip_dir
         # get unit slip in dx and dy, to be used for crossing angles later
         slip_vect_dx = []
         slip_vect_dy = []
-        for i,each in enumerate(def_poly_crossed_unique_gdf_utm.geometry.boundary):
+        # for i,each in enumerate(def_poly_crossed_unique_gdf_utm.geometry.boundary):
+        for i in range(def_poly_crossed_unique_gdf_utm.shape[0]):
             dx, dy = get_dx_dy_for_vector_along_azimuth(def_poly_crossed_unique_gdf_utm.slip_dir[i])
             slip_vect_dx.append(dx)
             slip_vect_dy.append(dy)
@@ -524,29 +603,46 @@ def get_pipe_crossing(
         toe_list = []
         upper_list = []
         lower_list = []
-        for i,each in enumerate(def_poly_crossed_unique_gdf_utm.geometry.boundary):
-            scarp_i, body_i, toe_i, upper_i, lower_i = split_geom_into_scarp_body_toe(
-                geom=def_poly_crossed_unique_gdf_utm.geometry[i],
-                slip_dir=def_poly_crossed_unique_gdf_utm.slip_dir[i],
-                high_point=utm_coord_for_max_dem[i],
-                low_point=utm_coord_for_min_dem[i],
-                get_upper_and_lower_halves=True
-            )
-            scarp_list.append(scarp_i)
-            body_list.append(body_i)
-            toe_list.append(toe_i)
-            upper_list.append(upper_i)
-            lower_list.append(lower_i)
+        for i in range(def_poly_crossed_unique_gdf_utm.shape[0]):
+            # for liquefaction, only need upper and lower halves
+            if def_type == 'lateral_spread' or def_type == 'settlement':
+                upper_i, lower_i = split_geom_into_halves_without_high_low_points(
+                    geom=def_poly_crossed_unique_gdf_utm.geometry[i],
+                    slip_dir=def_poly_crossed_unique_gdf_utm.slip_dir[i],
+                )
+                upper_list.append(upper_i)
+                lower_list.append(lower_i)
+            # for landslide, also need scarp, body, toe in addition to upper and lower halves
+            elif def_type == 'landslide':
+                scarp_i, body_i, toe_i, upper_i, lower_i = split_geom_into_scarp_body_toe(
+                    geom=def_poly_crossed_unique_gdf_utm.geometry[i],
+                    slip_dir=def_poly_crossed_unique_gdf_utm.slip_dir[i],
+                    high_point=utm_coord_for_max_dem[i],
+                    low_point=utm_coord_for_min_dem[i],
+                    get_upper_and_lower_halves=True
+                )
+                scarp_list.append(scarp_i)
+                body_list.append(body_i)
+                toe_list.append(toe_i)
+                upper_list.append(upper_i)
+                lower_list.append(lower_i)
 
     # ---
     if poly_exist:
         # remap crossed polygons to dataframe
         crossed_def_poly_map = np.asarray([[
-                i,
-                def_poly_ind,
-                np.where(def_poly_crossed_unique_gdf_utm.FID==def_poly_ind)[0][0]
-            ] for i,def_poly_ind in enumerate(crossed_poly_index)])
-        def_poly_crossed_gdf_utm = def_poly_crossed_unique_gdf_utm.loc[crossed_def_poly_map[:,2]].reset_index(drop=True)
+            i,
+            def_poly_ind,
+            np.where(def_poly_crossed_unique_gdf_utm.FID==def_poly_ind)[0][0]
+        ] for i,def_poly_ind in enumerate(crossed_poly_index)])
+        # if no crossing, then make empty dataframe to proceed
+        if len(def_poly_crossed_unique_gdf_utm) == 0:
+            def_poly_crossed_gdf_utm = GeoDataFrame(
+                columns=def_poly_crossed_unique_gdf_utm.columns,
+                geometry=[]
+            )
+        else:
+            def_poly_crossed_gdf_utm = def_poly_crossed_unique_gdf_utm.loc[crossed_def_poly_map[:,2]].reset_index(drop=True)
         
     # ---
     # get all crossings 
@@ -569,14 +665,12 @@ def get_pipe_crossing(
                 n_crossings_list.append(1)
             crossings_list.append(crossing_i)
         # create geodataframe of crossings
-        crossing_summary_gdf_utm = gpd.GeoDataFrame(
+        crossing_summary_gdf_utm = GeoDataFrame(
             pd.DataFrame(segment_crossed_gdf_utm.drop(columns='geometry')),
             crs=epsg_utm_zone10,
             geometry=crossings_list
         )
         # append to dataframe
-        # print(n_crossings_list)
-        # print(segment_crossed_gdf_utm.shape)
         crossing_summary_gdf_utm['n_crossings_with_segment'] = n_crossings_list
         crossing_summary_gdf_utm['def_poly_index_crossed'] = crossed_poly_index
         crossing_summary_gdf_utm['crossing_algo_index'] = list(crossing_summary_gdf_utm.index)
@@ -589,12 +683,15 @@ def get_pipe_crossing(
                 segment_gdf.LON_MID.values,
             )
         )
-        crossings_list = [Point(segment_full_mid_utm[i]) for i in range(segment_full_mid_utm.shape[0])]
         # create geodataframe of crossings
-        crossing_summary_gdf_utm = gpd.GeoDataFrame(
+        crossing_summary_gdf_utm = GeoDataFrame(
             pd.DataFrame(segment_gdf.drop(columns='geometry')),
             crs=epsg_utm_zone10,
-            geometry=crossings_list
+            geometry=points_from_xy(
+                x=segment_full_mid_utm[:,0],
+                y=segment_full_mid_utm[:,0],
+                crs=epsg_utm_zone10
+            )
         )
         
     # ---
@@ -608,116 +705,120 @@ def get_pipe_crossing(
         buffer = 0.01
         # loop throuch each crossing
         for i in range(crossing_summary_gdf_utm.shape[0]):
-            # segment ID
-            # segment_id_i = crossing_summary_gdf_utm.ID[i]
             # deformation polygon index
             def_poly_index_i = crossing_summary_gdf_utm.def_poly_index_crossed[i]
             # crossing algo index for getting scarp, body, and toe geometries
             crossing_algo_index = crossing_summary_gdf_utm.crossing_algo_index[i]
-            # get section and half geometries
-            scarp_crossed_i = scarp_list[crossed_def_poly_map[crossing_algo_index,2]]
-            body_crossed_i = body_list[crossed_def_poly_map[crossing_algo_index,2]]
-            toe_crossed_i = toe_list[crossed_def_poly_map[crossing_algo_index,2]]
-            upper_crossed_i = upper_list[crossed_def_poly_map[crossing_algo_index,2]]
-            lower_crossed_i = lower_list[crossed_def_poly_map[crossing_algo_index,2]]
             # first find crossing between segment and deformation geometry.boundary
             crossing_i = crossing_summary_gdf_utm.geometry[i]
-            # see which section the crossing lies on
-            if scarp_crossed_i.boundary.buffer(buffer).contains(crossing_i):
-                section_crossed_list.append('scarp')
-                section_geom_list.append(scarp_crossed_i)
-            elif toe_crossed_i.boundary.buffer(buffer).contains(crossing_i):
-                section_crossed_list.append('toe')
-                section_geom_list.append(toe_crossed_i)
-            # elif body_crossed_i.boundary.buffer(buffer).contains(crossing_i):
-            #     section_crossed_list.append('body')
-            #     section_geom_list.append(body_crossed_i)
-            else:
-                # assign to body
-                section_crossed_list.append('body')
-                section_geom_list.append(body_crossed_i)
-            # else:
-            #     print(f"Cannot determine if crossing #{i} lies on scarp, body, or toe of deformation polygon #{def_poly_index_i}")
+            if def_type == 'landslide':
+                # see which section the crossing lies on
+                scarp_crossed_i = scarp_list[crossed_def_poly_map[crossing_algo_index,2]]
+                body_crossed_i = body_list[crossed_def_poly_map[crossing_algo_index,2]]
+                toe_crossed_i = toe_list[crossed_def_poly_map[crossing_algo_index,2]]
+                if scarp_crossed_i.boundary.buffer(buffer).contains(crossing_i):
+                    section_crossed_list.append('scarp')
+                    section_geom_list.append(scarp_crossed_i)
+                elif toe_crossed_i.boundary.buffer(buffer).contains(crossing_i):
+                    section_crossed_list.append('toe')
+                    section_geom_list.append(toe_crossed_i)
+                else:
+                    # assign to body
+                    section_crossed_list.append('body')
+                    section_geom_list.append(body_crossed_i)
             # see which half the crossing lies on
+            upper_crossed_i = upper_list[crossed_def_poly_map[crossing_algo_index,2]]
+            lower_crossed_i = lower_list[crossed_def_poly_map[crossing_algo_index,2]]
             if upper_crossed_i.boundary.buffer(buffer).contains(crossing_i):
                 half_crossed_list.append('upper')
                 half_geom_list.append(upper_crossed_i)
-            elif lower_crossed_i.boundary.buffer(buffer).contains(crossing_i):
+            else:
+                # assign to lower
                 half_crossed_list.append('lower')
                 half_geom_list.append(lower_crossed_i)
-            else:
-                print(f"Cannot determine if crossing #{i} lies on upper or lower half of deformation polygon #{def_poly_index_i}")
         # append to dataframe
-        crossing_summary_gdf_utm['section_crossed'] = section_crossed_list
+        if def_type == 'landslide':
+            crossing_summary_gdf_utm['section_crossed'] = section_crossed_list
         crossing_summary_gdf_utm['which_half'] = half_crossed_list
     else:
-        crossing_summary_gdf_utm['section_crossed'] = None
+        if def_type == 'landslide':
+            crossing_summary_gdf_utm['section_crossed'] = None
         crossing_summary_gdf_utm['which_half'] = None
         
     # ---
     if poly_exist:
-        # convert start and endpoints of segment in UTM zone 10 meters
-        crossing_summary_segment_begin_utm = np.transpose(
-            transformer_wgs84_to_utmzone10.transform(
-                crossing_summary_gdf_utm.LAT_BEGIN.values,
-                crossing_summary_gdf_utm.LON_BEGIN.values,
+        # if crossing exists, continue, else set beta_crossing to null array
+        if len(crossed_poly_index) > 0:
+            # convert start and endpoints of segment in UTM zone 10 meters
+            crossing_summary_segment_begin_utm = np.transpose(
+                transformer_wgs84_to_utmzone10.transform(
+                    crossing_summary_gdf_utm.LAT_BEGIN.values,
+                    crossing_summary_gdf_utm.LON_BEGIN.values,
+                )
             )
-        )
-        crossing_summary_segment_end_utm = np.transpose(
-            transformer_wgs84_to_utmzone10.transform(
-                crossing_summary_gdf_utm.LAT_END.values,
-                crossing_summary_gdf_utm.LON_END.values,
+            crossing_summary_segment_end_utm = np.transpose(
+                transformer_wgs84_to_utmzone10.transform(
+                    crossing_summary_gdf_utm.LAT_END.values,
+                    crossing_summary_gdf_utm.LON_END.values,
+                )
             )
-        )
-        # get crossing coords
-        crossing_coords = np.vstack([
-            crossing_summary_gdf_utm.geometry.x.values,
-            crossing_summary_gdf_utm.geometry.y.values,
-        ]).T
-        # get slip vector dx and dy
-        slip_vect_dx_dy_norm = np.asarray([
-            [
-                def_poly_crossed_gdf_utm.slip_vect_dx[crossing_summary_gdf_utm.crossing_algo_index[i]],
-                def_poly_crossed_gdf_utm.slip_vect_dy[crossing_summary_gdf_utm.crossing_algo_index[i]],
-            ]
-            for i in range(crossing_summary_gdf_utm.shape[0])
-        ])
-        # to direction for segment into the crossing:
-        # get point = crossing + vector to segment entpoint * dL, with dL ~ 1cm
-        direct = []
-        d_length = 0.01 # m, 1 cm
-        for i in range(len(crossing_coords)):
-            crossing_coords_i = crossing_coords[i]
-            # first try segment endpoint
-            # if point falls in deformation polygon, then direction towards polygon is in the direction towards the endpoint
-            node2 = crossing_summary_segment_end_utm[i]
-            vect = node2 - crossing_coords_i
-            vect_norm = vect/np.sqrt(np.dot(vect,vect))
-            pt = Point(crossing_coords_i + vect_norm*d_length)
-            if section_geom_list[i].contains(pt):
-                direct.append(1)
-            else:
-                # sanity check with startpoint
-                node2 = crossing_summary_segment_begin_utm[i]
+            # get crossing coords
+            crossing_coords = np.vstack([
+                crossing_summary_gdf_utm.geometry.x.values,
+                crossing_summary_gdf_utm.geometry.y.values,
+            ]).T
+            # get slip vector dx and dy
+            slip_vect_dx_dy_norm = np.asarray([
+                [
+                    def_poly_crossed_gdf_utm.slip_vect_dx[crossing_summary_gdf_utm.crossing_algo_index[i]],
+                    def_poly_crossed_gdf_utm.slip_vect_dy[crossing_summary_gdf_utm.crossing_algo_index[i]],
+                ]
+                for i in range(crossing_summary_gdf_utm.shape[0])
+            ])
+            # to direction for segment into the crossing:
+            # get point = crossing + vector to segment entpoint * dL, with dL ~ 1cm
+            direct = []
+            d_length = 0.01 # m, 1 cm
+            for i in range(len(crossing_coords)):
+                crossing_coords_i = crossing_coords[i]
+                # first try segment endpoint
+                # if point falls in deformation polygon, then direction towards polygon is in the direction towards the endpoint
+                node2 = crossing_summary_segment_end_utm[i]
                 vect = node2 - crossing_coords_i
                 vect_norm = vect/np.sqrt(np.dot(vect,vect))
                 pt = Point(crossing_coords_i + vect_norm*d_length)
-                if section_geom_list[i].contains(pt):
-                    direct.append(-1)
+                if def_type == 'landslide':
+                    geom_list_to_use = section_geom_list
+                elif def_type == 'lateral_spread' or def_type == 'settlement':
+                    geom_list_to_use = half_geom_list
                 else:
-                    raise ValueError("Directionality check for vector from crossing towards deformation polygon failed.")
-        reverse_dir = np.asarray(direct)<0
-        # get crossing angle as the angle between the slip vector and the vector from the crossing pointing into the deformation polygon
-        pt2_vector_for_crossing = crossing_summary_segment_end_utm.copy()
-        pt2_vector_for_crossing[reverse_dir,:] = crossing_summary_segment_begin_utm[reverse_dir,:]
-        beta_crossing = dot_product(
-            vect1_pt1_in_meters=crossing_coords,
-            vect1_pt2_in_meters=pt2_vector_for_crossing,
-            vect2_pt1_in_meters=crossing_coords,
-            vect2_pt2_in_meters=crossing_coords+slip_vect_dx_dy_norm,
-        )
-        # round and append to dataframe
-        beta_crossing = np.round(beta_crossing,decimals=1)
+                    raise ValueError('check def type')
+                if geom_list_to_use[i].contains(pt):
+                    direct.append(1)
+                else:
+                    # sanity check with startpoint
+                    node2 = crossing_summary_segment_begin_utm[i]
+                    vect = node2 - crossing_coords_i
+                    vect_norm = vect/np.sqrt(np.dot(vect,vect))
+                    pt = Point(crossing_coords_i + vect_norm*d_length)
+                    if geom_list_to_use[i].contains(pt):
+                        direct.append(-1)
+                    else:
+                        raise ValueError("Directionality check for vector from crossing towards deformation polygon failed.")
+            reverse_dir = np.asarray(direct)<0
+            # get crossing angle as the angle between the slip vector and the vector from the crossing pointing into the deformation polygon
+            pt2_vector_for_crossing = crossing_summary_segment_end_utm.copy()
+            pt2_vector_for_crossing[reverse_dir,:] = crossing_summary_segment_begin_utm[reverse_dir,:]
+            beta_crossing = dot_product(
+                vect1_pt1_in_meters=crossing_coords,
+                vect1_pt2_in_meters=pt2_vector_for_crossing,
+                vect2_pt1_in_meters=crossing_coords,
+                vect2_pt2_in_meters=crossing_coords+slip_vect_dx_dy_norm,
+            )
+            # round and append to dataframe
+            beta_crossing = np.round(beta_crossing,decimals=1)
+        else:
+            beta_crossing = np.asarray([])
         
     # ---
     # get anchorage lengths
@@ -725,92 +826,96 @@ def get_pipe_crossing(
     anchorage_length = []
     length_tol = 1e-1 # m
     if poly_exist:
-        # for every segment crossed with deformation polygon, get the nearest hard points and compare to minimum anchorage length
-        for i in range(crossing_summary_gdf_utm.shape[0]):
-            # current deformation geometry crossed
-            curr_def_poly_index = crossing_summary_gdf_utm.def_poly_index_crossed[i]
-            curr_def_poly_crossed = def_poly_crossed_gdf_utm.geometry[np.where(def_poly_crossed_gdf_utm.FID==curr_def_poly_index)[0][0]]
-            
-            # index of current pipeline from crossing algorithm
-            crossing_algo_index = crossing_summary_gdf_utm.crossing_algo_index[i]
-            # current crossing
-            curr_crossing = list(crossing_summary_gdf_utm.geometry[i].coords)[0]
-            # pts for current segment
-            curr_segment_start_utm = segment_crossed_begin_utm[crossing_algo_index]
-            curr_segment_end_utm = segment_crossed_end_utm[crossing_algo_index]
-            # current segment index
-            curr_segment_index = crossing_summary_gdf_utm.SUB_SEGMENT_ID[i]-1
-            
-            # pipeline ID
-            curr_pipe_id = crossing_summary_gdf_utm.OBJ_ID[i]
-            # get hard points along current pipeline
-            where_curr_pipe_id = np.where(pipe_id_crossed_unique==curr_pipe_id)[0][0]
-            curr_hard_points_ind = hard_points_ind[where_curr_pipe_id]
-            curr_hard_points = hard_points[where_curr_pipe_id]
-            # get all row indices of segments for current pipe_id
-            ind_for_curr_pipe_id = np.where(pipe_id_full==curr_pipe_id)[0]
-            # get start and end points of segments for current pipeline
-            segment_start_for_curr_pipe_id = segment_full_begin_utm[ind_for_curr_pipe_id]
-            segment_end_for_curr_pipe_id = segment_full_end_utm[ind_for_curr_pipe_id]
-            
-            # find nearest hard point from start and end side
-            nearest_hard_pt_ind_start = curr_hard_points_ind[np.where(curr_hard_points_ind<=curr_segment_index)[0][-1]]
-            nearest_hard_pt_ind_end = curr_hard_points_ind[np.where(curr_hard_points_ind>curr_segment_index)[0][0]]
-            nearest_hard_pt_start = curr_hard_points[np.where(curr_hard_points_ind<=curr_segment_index)[0][-1]]
-            nearest_hard_pt_end = curr_hard_points[np.where(curr_hard_points_ind>curr_segment_index)[0][0]]
-            
-            # get nodes for segments from crossing to the nearest hard point on start side
-            start_nodes_from_crossing_to_hard_pt_on_start_side = np.vstack([
-                segment_end_for_curr_pipe_id[nearest_hard_pt_ind_start:curr_segment_index,:],
-                curr_crossing,
-            ])
-            end_nodes_from_crossing_to_hard_pt_on_start_side = \
-                segment_start_for_curr_pipe_id[nearest_hard_pt_ind_start:curr_segment_index+1,:]
-            start_nodes_from_crossing_to_hard_pt_on_start_side = np.flipud(start_nodes_from_crossing_to_hard_pt_on_start_side)
-            end_nodes_from_crossing_to_hard_pt_on_start_side = np.flipud(end_nodes_from_crossing_to_hard_pt_on_start_side)
-            # get nodes for segments from crossing to the nearest hard point on end side
-            start_nodes_from_crossing_to_hard_pt_on_end_side = np.vstack([
-                curr_crossing,
-                segment_start_for_curr_pipe_id[curr_segment_index+1:nearest_hard_pt_ind_end,:]
-            ])
-            end_nodes_from_crossing_to_hard_pt_on_end_side = \
-                segment_end_for_curr_pipe_id[curr_segment_index:nearest_hard_pt_ind_end,:]
-            
-            # make lines from crossing to nearest hard points on start and end side
-            lines_for_start_side = MultiLineString([
-                LineString([
-                    start_nodes_from_crossing_to_hard_pt_on_start_side[i],
-                    end_nodes_from_crossing_to_hard_pt_on_start_side[i]
+        # if crossing exists, continue, else set anchorage_length to null array
+        if len(crossed_poly_index) > 0:
+            # for every segment crossed with deformation polygon, get the nearest hard points and compare to minimum anchorage length
+            for i in range(crossing_summary_gdf_utm.shape[0]):
+                # current deformation geometry crossed
+                curr_def_poly_index = crossing_summary_gdf_utm.def_poly_index_crossed[i]
+                curr_def_poly_crossed = def_poly_crossed_gdf_utm.geometry[np.where(def_poly_crossed_gdf_utm.FID==curr_def_poly_index)[0][0]]
+                
+                # index of current pipeline from crossing algorithm
+                crossing_algo_index = crossing_summary_gdf_utm.crossing_algo_index[i]
+                # current crossing
+                curr_crossing = list(crossing_summary_gdf_utm.geometry[i].coords)[0]
+                # pts for current segment
+                curr_segment_start_utm = segment_crossed_begin_utm[crossing_algo_index]
+                curr_segment_end_utm = segment_crossed_end_utm[crossing_algo_index]
+                # current segment index
+                curr_segment_index = crossing_summary_gdf_utm.SUB_SEGMENT_ID[i]-1
+                
+                # pipeline ID
+                curr_pipe_id = crossing_summary_gdf_utm.OBJ_ID[i]
+                # get hard points along current pipeline
+                where_curr_pipe_id = np.where(pipe_id_crossed_unique==curr_pipe_id)[0][0]
+                curr_hard_points_ind = hard_points_ind[where_curr_pipe_id]
+                curr_hard_points = hard_points[where_curr_pipe_id]
+                # get all row indices of segments for current pipe_id
+                ind_for_curr_pipe_id = np.where(pipe_id_full==curr_pipe_id)[0]
+                # get start and end points of segments for current pipeline
+                segment_start_for_curr_pipe_id = segment_full_begin_utm[ind_for_curr_pipe_id]
+                segment_end_for_curr_pipe_id = segment_full_end_utm[ind_for_curr_pipe_id]
+                
+                # find nearest hard point from start and end side
+                nearest_hard_pt_ind_start = curr_hard_points_ind[np.where(curr_hard_points_ind<=curr_segment_index)[0][-1]]
+                nearest_hard_pt_ind_end = curr_hard_points_ind[np.where(curr_hard_points_ind>curr_segment_index)[0][0]]
+                nearest_hard_pt_start = curr_hard_points[np.where(curr_hard_points_ind<=curr_segment_index)[0][-1]]
+                nearest_hard_pt_end = curr_hard_points[np.where(curr_hard_points_ind>curr_segment_index)[0][0]]
+                
+                # get nodes for segments from crossing to the nearest hard point on start side
+                start_nodes_from_crossing_to_hard_pt_on_start_side = np.vstack([
+                    segment_end_for_curr_pipe_id[nearest_hard_pt_ind_start:curr_segment_index,:],
+                    curr_crossing,
                 ])
-                for i in range(len(start_nodes_from_crossing_to_hard_pt_on_start_side))
-            ])
-            lines_for_end_side = MultiLineString([
-                LineString([
-                    start_nodes_from_crossing_to_hard_pt_on_end_side[i],
-                    end_nodes_from_crossing_to_hard_pt_on_end_side[i]
+                end_nodes_from_crossing_to_hard_pt_on_start_side = \
+                    segment_start_for_curr_pipe_id[nearest_hard_pt_ind_start:curr_segment_index+1,:]
+                start_nodes_from_crossing_to_hard_pt_on_start_side = np.flipud(start_nodes_from_crossing_to_hard_pt_on_start_side)
+                end_nodes_from_crossing_to_hard_pt_on_start_side = np.flipud(end_nodes_from_crossing_to_hard_pt_on_start_side)
+                # get nodes for segments from crossing to the nearest hard point on end side
+                start_nodes_from_crossing_to_hard_pt_on_end_side = np.vstack([
+                    curr_crossing,
+                    segment_start_for_curr_pipe_id[curr_segment_index+1:nearest_hard_pt_ind_end,:]
                 ])
-                for i in range(len(start_nodes_from_crossing_to_hard_pt_on_end_side))
-            ])
-            
-            # get length of pipe segments from crossing to the nearest hard points on start and end side
-            # if the lines of the segments cross the deformation geometry, then use half of pipeline length within the polygon as controlling length
-            # start side
-            length_to_hard_point_start_side = lines_for_start_side.length
-            length_def_poly_overlap_start_side = lines_for_start_side.intersection(curr_def_poly_crossed).length
-            if length_def_poly_overlap_start_side > length_tol: # allow some tolerance
-                length_start_side = min(length_to_hard_point_start_side,length_def_poly_overlap_start_side/2)
-            else:
-                length_start_side = length_to_hard_point_start_side
-            # end side
-            length_to_hard_point_end_side = lines_for_end_side.length
-            length_def_poly_overlap_end_side = lines_for_end_side.intersection(curr_def_poly_crossed).length
-            if length_def_poly_overlap_end_side > length_tol:
-                length_end_side = min(length_to_hard_point_end_side,length_def_poly_overlap_end_side/2)
-            else:
-                length_end_side = length_to_hard_point_end_side
-            # determine anchorlage length as the shorter of the lengths on start and end side
-            anchorage_length.append(min(length_start_side,length_end_side))
-        
+                end_nodes_from_crossing_to_hard_pt_on_end_side = \
+                    segment_end_for_curr_pipe_id[curr_segment_index:nearest_hard_pt_ind_end,:]
+                
+                # make lines from crossing to nearest hard points on start and end side
+                lines_for_start_side = MultiLineString(
+                    make_list_of_linestrings(
+                        pt1_x=start_nodes_from_crossing_to_hard_pt_on_start_side[:,0],
+                        pt1_y=start_nodes_from_crossing_to_hard_pt_on_start_side[:,1],
+                        pt2_x=end_nodes_from_crossing_to_hard_pt_on_start_side[:,0],
+                        pt2_y=end_nodes_from_crossing_to_hard_pt_on_start_side[:,1],
+                    )
+                )
+                lines_for_end_side = MultiLineString(
+                    make_list_of_linestrings(
+                        pt1_x=start_nodes_from_crossing_to_hard_pt_on_end_side[:,0],
+                        pt1_y=start_nodes_from_crossing_to_hard_pt_on_end_side[:,1],
+                        pt2_x=end_nodes_from_crossing_to_hard_pt_on_end_side[:,0],
+                        pt2_y=end_nodes_from_crossing_to_hard_pt_on_end_side[:,1],
+                    )
+                )            
+                # get length of pipe segments from crossing to the nearest hard points on start and end side
+                # if the lines of the segments cross the deformation geometry, then use half of pipeline length within the polygon as controlling length
+                # start side
+                length_to_hard_point_start_side = lines_for_start_side.length
+                length_def_poly_overlap_start_side = lines_for_start_side.intersection(curr_def_poly_crossed).length
+                if length_def_poly_overlap_start_side > length_tol: # allow some tolerance
+                    length_start_side = min(length_to_hard_point_start_side,length_def_poly_overlap_start_side/2)
+                else:
+                    length_start_side = length_to_hard_point_start_side
+                # end side
+                length_to_hard_point_end_side = lines_for_end_side.length
+                length_def_poly_overlap_end_side = lines_for_end_side.intersection(curr_def_poly_crossed).length
+                if length_def_poly_overlap_end_side > length_tol:
+                    length_end_side = min(length_to_hard_point_end_side,length_def_poly_overlap_end_side/2)
+                else:
+                    length_end_side = length_to_hard_point_end_side
+                # determine anchorlage length as the shorter of the lengths on start and end side
+                anchorage_length.append(min(length_start_side,length_end_side))
+        else:
+            anchorage_length = np.asarray([])
     else:
         # see if infra data contains the column 'L_ANCHOR_FULL_METER', if so, use this values
         if 'L_ANCHOR_FULL_METER' in crossing_summary_gdf_utm:
@@ -827,7 +932,6 @@ def get_pipe_crossing(
                 pipe_id_crossed_unique=pipe_id_crossed_unique,
                 hard_points_ind=hard_points_ind,
             )
-    
     # round and append to dataframe
     anchorage_length = np.round(anchorage_length,decimals=1)
     crossing_summary_gdf_utm['l_anchor'] = np.maximum(anchorage_length,1e-2) # limit to 1 cm
@@ -862,6 +966,19 @@ def get_pipe_crossing(
         crossing_summary_gdf['psi_dip'] = 45 # all cases, used or unused
         if poly_exist:
             crossing_summary_gdf['beta_crossing'] = beta_crossing
+            # get additional columns from deformation polygon file if used
+            columns_to_get = [
+                'event_id',
+                'slip_dir',
+                'pgdef_m',
+                'sigma',
+                'sigma_mu',
+                'dist_type',
+                'ls_cond',
+                'lh_ratio'
+            ]
+            for col in columns_to_get:
+                crossing_summary_gdf[col] = def_poly_gdf[col].loc[crossed_poly_index].values
         else:
             crossing_summary_gdf['beta_crossing'] = 90 # not used
     # for settlement, psi and theta can be assigned now, since only "normal-slip" is assumed for slip mechanism
@@ -894,6 +1011,16 @@ def get_pipe_crossing(
         os.path.join(export_dir,f'site_data_PROCESSED_CROSSING_ONLY.csv'),
         index=False
     )
+    # in case of empty geodataframe
+    if crossing_summary_gdf.shape[0] == 0:
+        GeoSeries(crossing_summary_gdf.geometry).to_file(
+            os.path.join(export_dir,f'site_data_PROCESSED_CROSSING_ONLY.shp'),
+            schema={"geometry": "LineString", "properties": {}}
+        )
+    else:
+        GeoSeries(crossing_summary_gdf.geometry).to_file(
+            os.path.join(export_dir,f'site_data_PROCESSED_CROSSING_ONLY.shp')
+        )
     
     # ---
     # return

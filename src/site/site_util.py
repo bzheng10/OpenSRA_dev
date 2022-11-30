@@ -29,7 +29,32 @@ from numba.types import Tuple, List
 from src.edp import edp_util
 from src.util import *
     
-    
+
+# -----------------------------------------------------------
+@njit(
+    float64[:,:](
+        float64,float64,float64,float64,float64,float64
+    ),
+    cache=True
+)
+def make_grid_nodes(x_min, y_min, x_max, y_max, dx, dy):
+    """makes grid of nodes given min and max in x and y directions, and dx and dy"""
+    return np.asarray([
+        [x0, y0] \
+        for x0 in np.arange(x_min, x_max+dx, dx) \
+        for y0 in np.arange(y_min, y_max+dy, dy)
+    ])
+
+# -----------------------------------------------------------
+def make_list_of_linestrings(
+    pt1_x, pt1_y, pt2_x, pt2_y
+):
+    '''fast way to make a list of LineStrings without looping and making one LineString at a time'''
+    pts1 = gpd.points_from_xy(pt1_x, pt1_y)
+    pts2 = gpd.points_from_xy(pt2_x, pt2_y)
+    lines = pts1.union(pts2).convex_hull
+    return lines
+
 # -----------------------------------------------------------
 # @njit
 def get_regional_liq_susc(witter_geo_unit, bedrossian_geo_unit, gw_depth, get_mean=False):

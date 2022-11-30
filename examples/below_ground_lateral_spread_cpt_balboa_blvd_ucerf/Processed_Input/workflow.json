@@ -1,0 +1,39 @@
+{
+    "EDP": {
+        "liquefaction": {
+            "CPTBased": {
+                "ModelWeight": 1
+            }
+        },
+        "lateral_spread": {
+            "CPTBased": {
+                "ModelWeight": 1
+            }
+        },
+        "settlement": {}
+    },
+    "DM": {
+        "pipe_strain_landslide": {
+            "HutabaratEtal2022": {
+                "ModelWeight": 1
+            }
+        }
+    },
+    "DV": {
+        "pipe_comp_rupture": {
+            "BainEtal2022": {
+                "ModelWeight": 1
+            }
+        },
+        "pipe_tensile_rupture": {
+            "BainEtal2022": {
+                "ModelWeight": 1
+            }
+        },
+        "pipe_tensile_leakage": {
+            "BainEtal2022": {
+                "ModelWeight": 1
+            }
+        }
+    }
+}

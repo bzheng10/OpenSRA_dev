@@ -422,7 +422,7 @@ def make_dir(target_dir):
         
         
 # -----------------------------------------------------------
-def set_logging(level, file=None, msg_format='simple'):
+def set_logging(level, file=None, msg_format='s'):
     """
     This method sets the logging level and formatting of the logs
     """
@@ -434,9 +434,9 @@ def set_logging(level, file=None, msg_format='simple'):
 
     # setting log format for print
     handlerStream = logging.StreamHandler(sys.stdout)
-    if msg_format == 'full':
+    if msg_format == 'd': # detailed
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    elif msg_format == 'simple':
+    elif msg_format == 's': # simple
         formatter = logging.Formatter('%(message)s')
     handlerStream.setFormatter(formatter)
     logger.addHandler(handlerStream)

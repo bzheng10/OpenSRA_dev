@@ -119,7 +119,6 @@ class GMPE(object):
         if count>5:
             print('Cannot locate OpenSRA directory - contact dev.')
             break 
-
         count += 1
     # if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
     #     os.chdir('..')

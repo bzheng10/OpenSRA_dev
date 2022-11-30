@@ -79,7 +79,7 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
     soil_type: str, np.ndarray or list
         soil type (sand/clay) for model
     soil_density: str, np.ndarray or list
-        soil density: soft, medium stiff, or stiff for clay; medium dense, dense, or very dense for sand
+        soil density: medium dense, dense, or very dense for sand
     steel_grade: str, np.ndarray or list
         steel grade: Grade-B, X-42, X-52, X-60, X-70, X-80
 
@@ -135,10 +135,10 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         'params': {
             'd_pipe': 'pipe diameter (mm)',
             't_pipe': 'pipe wall thickness (mm)',
-            'sigma_y': 'pipe yield stress (kPa) - Bain et al. (2022) only',
-            'n_param': 'Ramberg-Osgood parameter - Bain et al. (2022) only',
-            'r_param': 'Ramberg-Osgood parameter - Bain et al. (2022) only',
-            'l_anchor': 'pipe wall thickness (m) - Hutabarat et al. (2022) only',
+            'sigma_y': 'pipe yield stress (kPa)',
+            'n_param': 'Ramberg-Osgood parameter',
+            'r_param': 'Ramberg-Osgood parameter',
+            'l_anchor': 'pipeline anchored length (m)',
         }
     }
     _MODEL_INPUT_GEO = {
@@ -147,12 +147,12 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             'beta_crossing': 'pipe-fault crossing angle [deg]',
             'psi_dip': 'pipe-fault dip angle [deg]',
             'h_pipe': 'burial depth to pipe centerline (m)',
-            'def_length': 'length of ground deformation zone (m) - Bain et al. (2022) only',
+            'def_length': 'length of ground deformation zone (m)',
             'alpha_backfill': 'adhesion factor for clay - for clay',
             's_u_backfill': 'undrained shear strength (kPa) - for clay',
             'gamma_backfill': 'total unit weight of backfill soil (kN/m^3) - for sand',
             'phi_backfill': 'backfill friction angle (deg) - for sand',
-            'delta_backfill': 'sand/pipe interface friction angle ratio - for sand - Bain et al. (2022) only',
+            'delta_backfill': 'sand/pipe interface friction angle ratio - for sand',
             'primary_mech': 'mechanisms for slip (normal, reverse, and/or SS compression, tension)',
             'transition_weight_factor': 'for oblique slips, linear weight from 0 to 1 with beta_crossing',
         }
@@ -161,7 +161,7 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         'desc': 'Fixed input variables:',
         'params': {
             'soil_type': 'soil type (sand/clay) for model',
-            'soil_density': 'soil density: soft, medium stiff, or stiff for clay; medium dense, dense, or very dense for sand',
+            'soil_density': 'soil density: medium dense, dense, or very dense for sand',
             'steel_grade': 'steel grade: Grade-B, X-42, X-52, X-60, X-70, X-80',
         }
     }
@@ -212,20 +212,14 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         req_rvs_by_level = {}
         req_fixed_by_level = {}
         soils = []
-        if 'sand' in soil_type:
-            soils.append('sand')
-        if 'clay' in soil_type:
-            soils.append('clay')
+        if len(soil_type) == 0:
+            soils = ['clay'] # if soil_type is empty, just use clay as default
+        else:
+            if 'sand' in soil_type:
+                soils.append('sand')
+            if 'clay' in soil_type:
+                soils.append('clay')
         for i in range(3):
-            # for each in soils:
-            #     if f'level{i+1}' in req_rvs_by_level:
-            #         req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each]
-            #         req_fixed_by_level[f'level{i+1}'] += cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
-            #     else:
-            #         req_rvs_by_level[f'level{i+1}'] = cls._REQ_MODEL_RV_FOR_LEVEL[each]
-            #         req_fixed_by_level[f'level{i+1}'] = cls._REQ_MODEL_FIXED_FOR_LEVEL[each]
-            # req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
-            # req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
             for each in soils:
                 if f'level{i+1}' in req_rvs_by_level:
                     req_rvs_by_level[f'level{i+1}'] += cls._REQ_MODEL_RV_FOR_LEVEL[each][f'level{i+1}']
@@ -355,7 +349,6 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             # post - linearly weight normal and ss_tens strains and variance
             weight_cond = transition_weight_factor[cond]
             inv_weight_cond = 1 - weight_cond
-            transition_weight = transition_weight_factor[cond]
             eps_pipe_tens_curr = \
                 output1['eps_pipe']['mean']*weight_cond + \
                 output2['eps_pipe']['mean']*inv_weight_cond
@@ -400,15 +393,15 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             sigma_mu_eps_pipe_comp_curr = np.ones(subset_shape)*0.3
             sigma_mu_eps_pipe_tens_curr = np.ones(subset_shape)*0.3
             # where Normal > SSComp
-            ind_Normal_gt_SSComp = output1['eps_pipe']['mean'] > output2['eps_pipe']['mean']
-            eps_pipe_tens_curr[ind_Normal_gt_SSComp] = output1['eps_pipe']['mean'][ind_Normal_gt_SSComp]
-            sigma_eps_pipe_tens_curr[ind_Normal_gt_SSComp] = output1['eps_pipe']['sigma'][ind_Normal_gt_SSComp]
-            sigma_mu_eps_pipe_tens_curr[ind_Normal_gt_SSComp] = output1['eps_pipe']['sigma_mu'][ind_Normal_gt_SSComp]
+            ind_1_gt_2 = output1['eps_pipe']['mean'] >= output2['eps_pipe']['mean']
+            eps_pipe_tens_curr[ind_1_gt_2] = output1['eps_pipe']['mean'][ind_1_gt_2]
+            sigma_eps_pipe_tens_curr[ind_1_gt_2] = output1['eps_pipe']['sigma'][ind_1_gt_2]
+            sigma_mu_eps_pipe_tens_curr[ind_1_gt_2] = output1['eps_pipe']['sigma_mu'][ind_1_gt_2]
             # where SSComp > Normal
-            ind_SSComp_gt_Normal = output2['eps_pipe']['mean'] > output1['eps_pipe']['mean']
-            eps_pipe_comp_curr[ind_SSComp_gt_Normal] = output2['eps_pipe']['mean'][ind_SSComp_gt_Normal]
-            sigma_eps_pipe_comp_curr[ind_SSComp_gt_Normal] = output2['eps_pipe']['sigma'][ind_SSComp_gt_Normal]
-            sigma_mu_eps_pipe_comp_curr[ind_SSComp_gt_Normal] = output2['eps_pipe']['sigma_mu'][ind_SSComp_gt_Normal]
+            ind_2_gt_1 = output2['eps_pipe']['mean'] > output1['eps_pipe']['mean']
+            eps_pipe_comp_curr[ind_2_gt_1] = output2['eps_pipe']['mean'][ind_2_gt_1]
+            sigma_eps_pipe_comp_curr[ind_2_gt_1] = output2['eps_pipe']['sigma'][ind_2_gt_1]
+            sigma_mu_eps_pipe_comp_curr[ind_2_gt_1] = output2['eps_pipe']['sigma_mu'][ind_2_gt_1]
             ##################
             eps_pipe_comp[cond] = eps_pipe_comp_curr
             sigma_eps_pipe_comp[cond] = sigma_eps_pipe_comp_curr
@@ -448,15 +441,15 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             sigma_mu_eps_pipe_comp_curr = np.ones(subset_shape)*0.3
             sigma_mu_eps_pipe_tens_curr = np.ones(subset_shape)*0.3
             # where Reverse > SSTens
-            ind_Reverse_gt_SSTens = output1['eps_pipe']['mean'] > output2['eps_pipe']['mean']
-            eps_pipe_comp_curr[ind_Reverse_gt_SSTens] = output1['eps_pipe']['mean'][ind_Reverse_gt_SSTens]
-            sigma_eps_pipe_comp_curr[ind_Reverse_gt_SSTens] = output1['eps_pipe']['sigma'][ind_Reverse_gt_SSTens]
-            sigma_mu_eps_pipe_comp_curr[ind_Reverse_gt_SSTens] = output1['eps_pipe']['sigma_mu'][ind_Reverse_gt_SSTens]
+            ind_1_gt_2 = output1['eps_pipe']['mean'] >= output2['eps_pipe']['mean']
+            eps_pipe_comp_curr[ind_1_gt_2] = output1['eps_pipe']['mean'][ind_1_gt_2]
+            sigma_eps_pipe_comp_curr[ind_1_gt_2] = output1['eps_pipe']['sigma'][ind_1_gt_2]
+            sigma_mu_eps_pipe_comp_curr[ind_1_gt_2] = output1['eps_pipe']['sigma_mu'][ind_1_gt_2]
             # where SSTens > Reverse
-            ind_SSTens_gt_Reverse = output2['eps_pipe']['mean'] > output1['eps_pipe']['mean']
-            eps_pipe_tens_curr[ind_SSTens_gt_Reverse] = output2['eps_pipe']['mean'][ind_SSTens_gt_Reverse]
-            sigma_eps_pipe_tens_curr[ind_SSTens_gt_Reverse] = output2['eps_pipe']['sigma'][ind_SSTens_gt_Reverse]
-            sigma_mu_eps_pipe_tens_curr[ind_SSTens_gt_Reverse] = output2['eps_pipe']['sigma_mu'][ind_SSTens_gt_Reverse]
+            ind_2_gt_1 = output2['eps_pipe']['mean'] > output1['eps_pipe']['mean']
+            eps_pipe_tens_curr[ind_2_gt_1] = output2['eps_pipe']['mean'][ind_2_gt_1]
+            sigma_eps_pipe_tens_curr[ind_2_gt_1] = output2['eps_pipe']['sigma'][ind_2_gt_1]
+            sigma_mu_eps_pipe_tens_curr[ind_2_gt_1] = output2['eps_pipe']['sigma_mu'][ind_2_gt_1]
             ##################
             eps_pipe_comp[cond] = eps_pipe_comp_curr
             sigma_eps_pipe_comp[cond] = sigma_eps_pipe_comp_curr
@@ -487,7 +480,6 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             # post - linearly weight reverse and ss_comp strains and variance
             weight_cond = transition_weight_factor[cond]
             inv_weight_cond = 1 - weight_cond
-            transition_weight = transition_weight_factor[cond]
             eps_pipe_comp_curr = \
                 output1['eps_pipe']['mean']*weight_cond + \
                 output2['eps_pipe']['mean']*inv_weight_cond
@@ -503,6 +495,27 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             eps_pipe_comp[cond] = eps_pipe_comp_curr
             sigma_eps_pipe_comp[cond] = sigma_eps_pipe_comp_curr
             sigma_mu_eps_pipe_comp[cond] = sigma_mu_eps_pipe_comp_curr
+        
+        # where_nan = np.isnan(eps_pipe_tens)
+        # if True in where_nan:
+        #     print(primary_mech[where_nan])
+        #     print(transition_weight_factor[where_nan])
+        #     print(pgdef[where_nan])
+        #     print(d_pipe[where_nan])
+        #     print(t_pipe[where_nan])
+        #     print(sigma_y[where_nan])
+        #     print(n_param[where_nan])
+        #     print(r_param[where_nan])
+        #     print(l_anchor[where_nan])
+        #     print(beta_crossing[where_nan])
+        #     print(h_pipe[where_nan])
+        #     print(alpha_backfill[where_nan])
+        #     print(s_u_backfill[where_nan])
+        #     print(gamma_backfill[where_nan])
+        #     print(phi_backfill[where_nan])
+        #     print(delta_backfill[where_nan])
+        #     print(soil_type[where_nan])
+        #     print(steel_grade[where_nan])
         
         # prepare outputs
         output = {

@@ -10,7 +10,8 @@ import pandas as pd
 import numpy as np
 
 # geoprocessing modules
-import geopandas as gpd
+# import geopandas as gpd
+from geopandas import read_file
 from shapely.geometry import Polygon, LineString
 from pyproj import Transformer
 
@@ -73,7 +74,7 @@ def get_caprock_crossing(
     epsg_utm_zone10 = 32610
 
     # load caprocks
-    caprock_list = gpd.read_file(caprock_shp_file,crs=epsg_wgs84)
+    caprock_list = read_file(caprock_shp_file,crs=epsg_wgs84)
     n_caprock = caprock_list.shape[0]
 
     # load fault file
@@ -155,22 +156,7 @@ def get_caprock_crossing(
                             z_top=z_top, # m
                             z_bot=z_depth_curr_caprock # m
                         )
-                        
-                        
-                    # out = \
-                    #     get_fault_vertices(
-                    #         fault_trace=fault_trace_curr_meter.copy(), # (x,y,z) m
-                    #         # strike=strike, # deg
-                    #         dip=dip, # deg
-                    #         dip_dir=dip_dir, # deg
-                    #         z_top=z_top, # m
-                    #         z_bot=z_bot # m
-                    #     )
-                        
-                    # check for intersection betweehn current fault plane and caprock
-                    # curr_fault_trace_geom = Polygon(
-                    #     np.vstack([plane_pt1,plane_pt2,plane_pt3,plane_pt4])
-                    # )
+                    
                     curr_trace_at_caprock_depth = LineString(
                         np.vstack([plane_pt3,plane_pt4])
                     )

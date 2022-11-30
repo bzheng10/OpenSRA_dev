@@ -976,8 +976,8 @@
         }
     },
     "DamageMeasure": {
-        "PipeStrain": {
-			"NameToDisplay": "Pipe Strain",
+        "LandslideInducedPipeStrain": {
+			"NameToDisplay": "Landslide Induced Pipe Strain",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -985,10 +985,10 @@
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "BainEtal2022",
+					"DefaultValue": "HutabaratEtal2022",
 					"Options" : {
-						"BainEtal2022": {
-							"NameToDisplay": "Bain et al. (2022)",
+						"HutabaratEtal2022": {
+							"NameToDisplay": "Hutabarat et al. (2022)",
 							"ToDisplay": true,
 							"DisplayOrder": [
 								"d_pipe",
@@ -996,23 +996,26 @@
 								"sigma_y",
 								"n_param",
 								"r_param",
+								"l_anchor",
+								"beta_crossing",
+								"psi_dip",
+								"h_pipe",
 								"def_length",
-								"s_u_backfill",
 								"alpha_backfill",
+								"s_u_backfill",
 								"gamma_backfill",
-								"h_cover",
 								"phi_backfill",
 								"delta_backfill",
 								"soil_type",
-								"welding",
+								"soil_density",
 								"steel_grade"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"longitudinal pipe strain [pipe_strain]\".",
-								"ReturnParam": ["pipe_strain"]
+								"Description": "Return: This method returns \"tensile and compressive longitudinal pipe strain [eps_pipe_tens, eps_pipe_comp]\" for pipeline segment.",
+								"ReturnParam": ["eps_pipe_tens", "eps_pipe_comp"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from \"lateral spread\", \"ground settlement\", \"landslide\", and/or \"surface fault rupture\" under the \"Engineering Demand Parameter\" tab.",
+								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from the \"Engineering Demand Parameter - Landslide\" tab.",
 								"UpstreamParam": ["pgdef"]
 							},
 							"Params": {
@@ -1035,7 +1038,7 @@
 								"sigma_y": {
 									"NameToDisplay": "sigma_y",
 									"VarType": "random",
-									"DescToDisplay": "[kPa] pipe yield stress - required for \"level 2 and 3\" analysis",
+									"DescToDisplay": "[kPa] pipe yield stress - can be inferred from the ""steel_grade"" input parameter",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1043,7 +1046,7 @@
 								"n_param": {
 									"NameToDisplay": "n_param",
 									"VarType": "random",
-									"DescToDisplay": "Ramberg-Osgood parameter",
+									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the ""steel_grade"" input parameter",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1051,7 +1054,39 @@
 								"r_param": {
 									"NameToDisplay": "r_param",
 									"VarType": "random",
-									"DescToDisplay": "Ramberg-Osgood parameter",
+									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the ""steel_grade"" input parameter",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"l_anchor": {
+									"NameToDisplay": "l_anchor",
+									"VarType": "random",
+									"DescToDisplay": "[m] pipeline anchored length",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"beta_crossing": {
+									"NameToDisplay": "beta_crossing",
+									"VarType": "random",
+									"DescToDisplay": "[deg] pipe-fault crossing angle",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"psi_dip": {
+									"NameToDisplay": "psi_dip",
+									"VarType": "random",
+									"DescToDisplay": "[deg] pipe-fault dip angle",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"h_pipe": {
+									"NameToDisplay": "psi_dip",
+									"VarType": "random",
+									"DescToDisplay": "[m] burial depth to pipe centerline - required for \"level 3\" analysis",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1059,15 +1094,7 @@
 								"def_length": {
 									"NameToDisplay": "def_length",
 									"VarType": "random",
-									"DescToDisplay": "[m] length of ground deformation zone (both clay and sand models) - required for \"level 3\" analysis",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"s_u_backfill": {
-									"NameToDisplay": "s_u_backfill",
-									"VarType": "random",
-									"DescToDisplay": "[kPa] undrained shear strength (clay model only) - required for \"level 3\" analysis",
+									"DescToDisplay": "[m] length of ground deformation zone",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1080,18 +1107,18 @@
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"gamma_backfill": {
-									"NameToDisplay": "gamma_backfill",
+								"s_u_backfill": {
+									"NameToDisplay": "s_u_backfill",
 									"VarType": "random",
-									"DescToDisplay": "[kN/m^3] total unit weight of backfill soil (sand model only) - required for \"level 3\" analysis",
+									"DescToDisplay": "[kPa] undrained shear strength (clay model only) - required for \"level 3\" analysis",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"h_cover": {
-									"NameToDisplay": "h_cover",
+								"gamma_backfill": {
+									"NameToDisplay": "gamma_backfill",
 									"VarType": "random",
-									"DescToDisplay": "[m] burial depth to pipe centerline (sand model only) - required for \"level 3\" analysis",
+									"DescToDisplay": "[kN/m^3] total unit weight of backfill soil (sand model only) - required for \"level 3\" analysis",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1120,10 +1147,10 @@
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"welding": {
-									"NameToDisplay": "welding",
+								"soil_density": {
+									"NameToDisplay": "soil_type",
 									"VarType": "fixed",
-									"DescToDisplay": "\"welded\" or \"seamless\" for SMLS - required for \"level 2 and 3\" analysis",
+									"DescToDisplay": "soil density for sand backfill (\"medium dense\", \"dense\", or \"very dense\") - required for \"level 1, 2, 3\" analysis",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1131,7 +1158,7 @@
 								"steel_grade": {
 									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
-									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\" - required for \"level 2 and 3\" analysis",
+									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\" (default: \"X-52\")",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1163,22 +1190,21 @@
 								"t_pipe",
 								"sigma_y",
 								"op_press",
-								"welding",
 								"steel_grade"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of pipe compressive rupture [prob_comp_rupture]\".",
-								"ReturnParam": ["prob_rupture"]
+								"Description": "Return: This method returns \"probability of pipe rupture under compression [prob_comp_rup]\".",
+								"ReturnParam": ["prob_comp_rup"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"pipe strain [pipe_strain]\" from the \"Damage Measure - Pipe Strain\" tab.",
-								"UpstreamParam": ["pipe strain"]
+								"Description": "Upstream Dependency: This method requires \"compressive pipe strain [eps_pipe_comp]\" from any of the pipe strain subtabs under the \"Damage Measure\" tab.",
+								"UpstreamParam": ["eps_pipe_comp"]
 							},
 							"Params": {
 								"d_pipe": {
 									"NameToDisplay": "d_pipe",
 									"VarType": "random",
-									"DescToDisplay": "[mm] pipe outside diameter",
+									"DescToDisplay": "[mm] pipe outside diameter - required for \"level 2 and 3\" analysis",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1186,7 +1212,7 @@
 								"t_pipe": {
 									"NameToDisplay": "t_pipe",
 									"VarType": "random",
-									"DescToDisplay": "[mm] pipe wall thickness",
+									"DescToDisplay": "[mm] pipe wall thickness - required for \"level 2 and 3\" analysis",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1194,7 +1220,7 @@
 								"sigma_y": {
 									"NameToDisplay": "sigma_y",
 									"VarType": "random",
-									"DescToDisplay": " [kPa] pipe yield stress",
+									"DescToDisplay": " [kPa] pipe yield stress - can be inferred from the ""steel_grade"" input parameter",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1207,18 +1233,10 @@
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-                                "welding": {
-                                    "NameToDisplay": "welding",
-                                    "VarType": "fixed",
-                                    "DescToDisplay": "flag for welding - \"True\" for welded, \"False\" for seamless or SMLS",
-                                    "WidgetType": "QLabel",
-                                    "ToDisplay": true,
-                                    "DefaultValue": null
-                                },
 								"steel_grade": {
 									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
-									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\"",
+									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\" (default: \"X-52\")",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1246,12 +1264,12 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of pipe tensile rupture [prob_tensile_rupture]\".",
-								"ReturnParam": ["prob_rupture"]
+								"Description": "Return: This method returns \"probability of pipe rupture under tension [prob_tens_rup]\".",
+								"ReturnParam": ["prob_tens_rup"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"pipe strain [pipe_strain]\" from the \"Damage Measure - Pipe Strain\" tab.",
-								"UpstreamParam": ["pipe strain"]
+								"Description": "Upstream Dependency: This method requires \"tensile pipe strain [eps_pipe_tens]\" from any of the pipe strain subtabs under the \"Damage Measure\" tab.",
+								"UpstreamParam": ["eps_pipe_tens"]
 							},
 							"Params": {
                                 "N/A": {
@@ -1285,12 +1303,12 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of pipe tensile leakage [prob_tensile_leakage]\".",
-								"ReturnParam": ["prob_rupture"]
+								"Description": "Return: This method returns \"probability of pipe leakage under tension [prob_tens_leak]\".",
+								"ReturnParam": ["prob_tens_leak"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"pipe strain [pipe_strain]\" from the \"Damage Measure - Pipe Strain\" tab.",
-								"UpstreamParam": ["pipe strain"]
+								"Description": "Upstream Dependency: This method requires \"tensile pipe strain [eps_pipe_tens]\" from any of the pipe strain subtabs under the \"Damage Measure\" tab.",
+								"UpstreamParam": ["eps_pipe_tens"]
 							},
 							"Params": {
                                 "N/A": {

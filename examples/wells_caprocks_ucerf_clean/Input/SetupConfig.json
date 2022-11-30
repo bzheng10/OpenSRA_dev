@@ -16,7 +16,7 @@
             "Lon": "LON_TOP"
 		},
 		"WellTraceDir": "well_traces",
-		"PathToCaprockShapefile": "caprock_shapefile/Honor Rancho Caprock.shp"
+		"PathToCaprockShapefile": "caprock_shapefile"
     },
     "IntensityMeasure": {
         "SourceForIM": {

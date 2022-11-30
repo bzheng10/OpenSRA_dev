@@ -28,7 +28,7 @@ from pyproj import Transformer
 
 # precompile
 from numba import njit, float64, boolean, int32, int64, typeof
-from numba.types import Tuple, List
+from numba.types import Tuple, List, types
 from numba.core.errors import NumbaPerformanceWarning
 warnings.simplefilter(action='ignore', category=NumbaPerformanceWarning)
 
@@ -202,12 +202,18 @@ def get_well_fault_intersection_and_angle(
             List(float64),
             List(float64)
     ))(
-        float64[:,:],
-        float64[:,:],
-        float64[:,:],
-        float64[:,:],
-        float64[:,:],
-        int32[:]
+        types.Array(types.float64, 2, 'C'),
+        types.Array(types.float64, 2, 'C'),
+        types.Array(types.float64, 2, 'C'),
+        types.Array(types.float64, 2, 'C'),
+        types.Array(types.float64, 2, 'C'),
+        types.Array(types.int64, 1, 'C')
+        # float64[:,:],
+        # float64[:,:],
+        # float64[:,:],
+        # float64[:,:],
+        # float64[:,:],
+        # int32[:]
     ),
     fastmath=True,
     cache=True,
@@ -222,7 +228,7 @@ def get_fault_crossing_for_well(
     n_planes_list
 ):
     """get crossings between a well and a list of faults"""
-    
+
     # track list of wells crossed for current fault
     faults_crossed_list = []
     intersection_list = []
@@ -441,16 +447,17 @@ def get_well_crossing(
     for i in range(n_well):        
         # get current well trace list
         well_trace_curr = well_trace_list[i].copy()
+    
         # get crossings for curren well with all faults
         faults_crossed_list, intersection_list, segment_ind_at_intersection_list, \
             fault_angle_list, intersection_depth_list = \
             get_fault_crossing_for_well(
-                well_trace_curr,
-                plane_pt1_arr.copy(),
-                plane_pt2_arr.copy(),
-                plane_pt3_arr.copy(),
-                plane_pt4_arr.copy(),
-                n_planes_list
+                well_trace = well_trace_curr,
+                plane_pt1_arr = plane_pt1_arr.copy(),
+                plane_pt2_arr = plane_pt2_arr.copy(),
+                plane_pt3_arr = plane_pt3_arr.copy(),
+                plane_pt4_arr = plane_pt4_arr.copy(),
+                n_planes_list = n_planes_list
             )
         # append to dataframe
         well_crossing_ordered_by_wells.loc[well_crossing_ordered_by_wells.shape[0]] = [

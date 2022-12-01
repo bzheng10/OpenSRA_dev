@@ -1038,7 +1038,7 @@
 								"sigma_y": {
 									"NameToDisplay": "sigma_y",
 									"VarType": "random",
-									"DescToDisplay": "[kPa] pipe yield stress - can be inferred from the ""steel_grade"" input parameter",
+									"DescToDisplay": "[kPa] pipe yield stress - can be inferred from the 'steel_grade' input parameter",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1046,7 +1046,7 @@
 								"n_param": {
 									"NameToDisplay": "n_param",
 									"VarType": "random",
-									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the ""steel_grade"" input parameter",
+									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the 'steel_grade' input parameter",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1054,7 +1054,7 @@
 								"r_param": {
 									"NameToDisplay": "r_param",
 									"VarType": "random",
-									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the ""steel_grade"" input parameter",
+									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the 'steel_grade' input parameter",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -1220,7 +1220,7 @@
 								"sigma_y": {
 									"NameToDisplay": "sigma_y",
 									"VarType": "random",
-									"DescToDisplay": " [kPa] pipe yield stress - can be inferred from the ""steel_grade"" input parameter",
+									"DescToDisplay": " [kPa] pipe yield stress - can be inferred from the 'steel_grade' input parameter",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null

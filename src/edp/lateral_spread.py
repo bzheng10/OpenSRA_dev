@@ -304,7 +304,8 @@ class Hazus2020(LateralSpread):
             }
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = False
+    # _INPUT_DIST_VARY_WITH_LEVEL = False
+    _INPUT_DIST_VARY_WITH_LEVEL = True
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -324,10 +325,16 @@ class Hazus2020(LateralSpread):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'prob_liq',
+        'level1': ['prob_liq'],
+        'level2': ['prob_liq'],
+        'level3': ['prob_liq'],
+        # 'prob_liq',
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'liq_susc'
+        'level1': ['liq_susc'],
+        'level2': ['liq_susc'],
+        'level3': ['liq_susc'],
+        # 'liq_susc'
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}

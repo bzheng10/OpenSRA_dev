@@ -216,6 +216,7 @@ class _UCERF(SeismicSource):
         mag_max=None,
         rate_min=None,
         rate_max=None,
+        event_ids_to_keep=None,
         mesh_spacing=1, # km
     ):
         """a series of actions to process and filter rupture scenarios"""
@@ -225,6 +226,7 @@ class _UCERF(SeismicSource):
         self._mag_max = mag_max
         self._rate_min = rate_min
         self._rate_max = rate_max
+        self._event_ids_to_keep = event_ids_to_keep
         self._mesh_spacing = mesh_spacing
         self._oq_obj = {
             'points': None,
@@ -790,11 +792,13 @@ class ShakeMap(SeismicSource):
         self,
         mag_min=None,
         mag_max=None,
+        event_ids_to_keep=None
     ):
         """a series of actions to process and filter rupture scenarios"""
         # get inputs
         self._mag_min = mag_min
         self._mag_max = mag_max
+        self._event_ids_to_keep = event_ids_to_keep
         # some preprocessing
         # run actions
         logging.info(f"Screening ruptures...")
@@ -808,6 +812,13 @@ class ShakeMap(SeismicSource):
         if self._mag_max is not None:
             self.df_rupture = self.df_rupture.loc[self.df_rupture.Magnitude<=self._mag_max].reset_index(drop=True)
             logging.info(f"\t\t- min magnitude: {self._mag_max}")
+        # if only keeping certain events
+        if self._event_ids_to_keep is not None:
+            rows_with_event_ids_to_keep = np.asarray([
+                np.where(self.df_rupture.EventID.values==event_id)[0][0]
+                for event_id in self._event_ids_to_keep
+            ])
+            self.df_rupture = self.df_rupture.loc[rows_with_event_ids_to_keep].reset_index(drop=True)
         self._n_event = self.df_rupture.shape[0]
         logging.info(f"\t- Number of events remaining after filter: {self._n_event}")
     
@@ -984,6 +995,7 @@ class UserDefinedRupture(SeismicSource):
         mag_max=None,
         rate_min=None,
         rate_max=None,
+        event_ids_to_keep=None,
         mesh_spacing=1, # km
     ):
         """a series of actions to process and filter rupture scenarios"""
@@ -993,6 +1005,7 @@ class UserDefinedRupture(SeismicSource):
         self._mag_max = mag_max
         self._rate_min = rate_min
         self._rate_max = rate_max
+        self._event_ids_to_keep = event_ids_to_keep
         self._mesh_spacing = mesh_spacing
         self._oq_obj = {
             'points': None,
@@ -1148,6 +1161,13 @@ class UserDefinedRupture(SeismicSource):
         if self._rate_max is not None:
             self.df_rupture = self.df_rupture.loc[self.df_rupture.AnnualRate<=self._rate_max].reset_index(drop=True)  
             logging.info(f"\t\t- min mean annual rate: {self._rate_min}")
+        # if only keeping certain events
+        if self._event_ids_to_keep is not None:
+            rows_with_event_ids_to_keep = np.asarray([
+                np.where(self.df_rupture.EventID.values==event_id)[0][0]
+                for event_id in self._event_ids_to_keep
+            ])
+            self.df_rupture = self.df_rupture.loc[rows_with_event_ids_to_keep].reset_index(drop=True)
         self._n_event = self.df_rupture.shape[0]
         logging.info(f"\t- Number of events remaining after filter: {self._n_event}")
         

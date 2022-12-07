@@ -41,7 +41,7 @@ def make_def_poly_from_cpt_spt(
     pass
 
 
-def read_cpt_data(cpt_base_dir):
+def read_cpt_data(cpt_base_dir, col_with_gw_depth):
     '''
     Read the CPT data with csv format only.
         Column 0: Depth (m)
@@ -71,6 +71,9 @@ def read_cpt_data(cpt_base_dir):
             cpt_meta['Latitude'].values,
             cpt_meta['Longitude'].values,
         )
+    # see if groundwater depth is given; raise error if not
+    if not col_with_gw_depth in cpt_meta:
+        raise ValueError(f'CPT summary table does not contain the column {col_with_gw_depth} for groundwater depth')
     # number of CPTs
     n_cpt = cpt_meta.shape[0]
     # create GeoDataFrames for geospatial processing

@@ -141,8 +141,8 @@ class BainEtal2022(PipeCompressiveRupture):
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
         'level1': [],
-        'level2': ['d_pipe', 't_pipe'],
-        'level3': ['d_pipe', 't_pipe'],
+        'level2': ['d_pipe', 't_pipe', 'op_press'],
+        'level3': ['d_pipe', 't_pipe', 'op_press'],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
         'level1': [],

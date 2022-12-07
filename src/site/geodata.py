@@ -1178,7 +1178,7 @@ class LocationData(ShapefileData):
         self.component_table = self.component_table[['ID']+list(self.component_table.columns.drop('ID').drop('geometry'))+['geometry']]
     
     
-    def export_component_table(self, sdir=None, sname=None, to_replace=False, export_to_csv=True, export_to_shp=False):
+    def export_component_table(self, sdir=None, sname=None, to_replace=False, export_to_csv=True, export_to_shp=True):
         """if requested, export DataFrame to CSV file"""
         # if export is True:
         if sdir is None:
@@ -1187,10 +1187,12 @@ class LocationData(ShapefileData):
             self._component_table_sdir = sdir
         if sname is None:
             self._component_table_spath_csv = os.path.join(self._component_table_sdir,'components.csv')
-            self._component_table_spath_shp = os.path.join(self._component_table_sdir,'components.shp')
+            # self._component_table_spath_shp = os.path.join(self._component_table_sdir,'components.shp')
+            self._component_table_spath_shp = os.path.join(self._component_table_sdir,'components.gpkg')
         else:
             self._component_table_spath_csv = os.path.join(self._component_table_sdir,sname+'.csv')
-            self._component_table_spath_shp = os.path.join(self._component_table_sdir,sname+'.shp')
+            # self._component_table_spath_shp = os.path.join(self._component_table_sdir,sname+'.shp')
+            self._component_table_spath_shp = os.path.join(self._component_table_sdir,sname+'.gpkg')
         if export_to_csv:
             if os.path.exists(self._component_table_spath_csv):
                 if to_replace:
@@ -1199,7 +1201,9 @@ class LocationData(ShapefileData):
             else:
                 self.component_table.drop('geometry',axis=1).to_csv(self._component_table_spath_csv, index=False) # export operation
         if export_to_shp:
-            self.component_table.to_file(self._component_table_spath_shp) # export operation
+            # self.component_table.to_file(self._component_table_spath_shp) # export operation
+            self.component_table.to_file(self._component_table_spath_shp,layer='data',index=False) # export operation
+            # GeoSeries(self.component_table.geometry).to_file(self._component_table_spath_shp) # export operation
         if export_to_csv or export_to_shp:
             logging.info(f"Exported table with component data to:")
             logging.info(f"\t{self._component_table_sdir}")
@@ -1585,7 +1589,8 @@ class NetworkData(ShapefileData):
         df_temp = pd.DataFrame.from_dict(dict_loc)
         self.segment_table = GeoDataFrame.from_dict(
             df_temp,
-            geometry=points_from_xy(df_temp.LON_MID.values, df_temp.LAT_MID.values, crs=self.crs)
+            geometry=self.data.geometry
+            # geometry=points_from_xy(df_temp.LON_MID.values, df_temp.LAT_MID.values, crs=self.crs)
         )
         for key in dict_meta:
             self.segment_table[key] = dict_meta[key]['val']
@@ -1630,7 +1635,7 @@ class NetworkData(ShapefileData):
         self.nearest_node_table.round(decimal_count(self._grid_spacing))
     
     
-    def export_segment_table(self, sdir=None, sname=None, to_replace=False, export_to_csv=True, export_to_shp=False):
+    def export_segment_table(self, sdir=None, sname=None, to_replace=False, export_to_csv=True, export_to_shp=True):
         """if requested, export DataFrame to CSV file"""
         # if export is True:
         # self._segment_table_spath = os.path.join(os.path.dirname(self.fpath),'site_data.csv') # file path
@@ -1640,10 +1645,12 @@ class NetworkData(ShapefileData):
             self._segment_table_sdir = sdir
         if sname is None:
             self._segment_table_spath_csv = os.path.join(self._segment_table_sdir,'segments.csv')
-            self._segment_table_spath_shp = os.path.join(self._segment_table_sdir,'segments.shp')
+            # self._segment_table_spath_shp = os.path.join(self._segment_table_sdir,'segments.shp')
+            self._segment_table_spath_shp = os.path.join(self._segment_table_sdir,'segments.gpkg')
         else:
             self._segment_table_spath_csv = os.path.join(self._segment_table_sdir,sname+'.csv')
-            self._segment_table_spath_shp = os.path.join(self._segment_table_sdir,sname+'.shp')
+            # self._segment_table_spath_shp = os.path.join(self._segment_table_sdir,sname+'.shp')
+            self._segment_table_spath_shp = os.path.join(self._segment_table_sdir,sname+'.gpkg')
         if export_to_csv:
             if os.path.exists(self._segment_table_spath_csv):
                 if to_replace:
@@ -1652,7 +1659,10 @@ class NetworkData(ShapefileData):
             else:
                 self.segment_table.drop('geometry',axis=1).to_csv(self._segment_table_spath_csv, index=False) # export operation
         if export_to_shp:
-            self.segment_table.to_file(self._segment_table_spath_shp) # export operation
+            # self.segment_table.to_file(self._segment_table_spath_shp) # export operation
+            self.segment_table.to_file(self._segment_table_spath_shp, layer='data',index=False) # export operation
+            # GeoSeries(self.segment_table.geometry).to_file(self._segment_table_spath_shp) # export operation
+            # GeoSeries(self.data.geometry).to_file(self._segment_table_spath_shp) # export operation
         if export_to_csv or export_to_shp:
             logging.info(f"Exported table with network segment data to:")
             logging.info(f"\t{self._segment_table_sdir}")

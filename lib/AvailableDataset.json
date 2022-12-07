@@ -42,7 +42,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Wills et al. (2015)",
-					"Path": "lib/Datasets/CA_Vs30_WillsEtal2015_original_WGS84_mps/CA_Vs30_WillsEtal2015_original_WGS84_mps.tif",
+					"Path": "lib/Datasets/CA_Vs30_WillsEtal2015_WGS84_mps/CA_Vs30_WillsEtal2015_WGS84_mps.tif",
 					"UnitForData": "m/s",
 					"TargetUnit": "m/s",
 					"ConversionToOutputUnit": 1,
@@ -238,7 +238,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Source to be entered",
-					"Path": "lib/Datasets/CA_Aspect_30m_WGS84/CA_Aspect_30m_WGS84_EPSG4326.tif",
+					"Path": "lib/Datasets/CA_Aspect_30m_WGS84/CA_Aspect_30m_WGS84.tif",
 					"UnitForData": null,
 					"TargetUnit": null,
 					"ConversionToOutputUnit": null,
@@ -253,6 +253,34 @@
 					"FileType": "Raster",
 					"Source": "Source to be entered",
 					"Path": "lib/Datasets/CA_DEM_30m_WGS84_meter/CA_DEM_30m_WGS84_meter.tif",
+					"UnitForData": null,
+					"TargetUnit": null,
+					"ConversionToOutputUnit": null,
+					"CRS": 4326
+				}
+			}
+		},
+		"qfault_primary": {
+			"ColumnNameToStoreAs": null,
+			"Datasets": {
+				"Set1": {
+					"FileType": "Shapefile",
+					"Source": "Source to be entered",
+					"Path": "lib/Datasets/CA_FltHazZones_Primary_SC1_200m_WGS84/CA_FltHazZones_Primary_SC1_200m_WGS84.shp",
+					"UnitForData": null,
+					"TargetUnit": null,
+					"ConversionToOutputUnit": null,
+					"CRS": 4326
+				}
+			}
+		},
+		"qfault_secondary": {
+			"ColumnNameToStoreAs": null,
+			"Datasets": {
+				"Set1": {
+					"FileType": "Shapefile",
+					"Source": "Source to be entered",
+					"Path": "lib/Datasets/CA_FltHazZones_SC2_200m_WGS84/CA_FltHazZones_SC2_200m_WGS84.shp",
 					"UnitForData": null,
 					"TargetUnit": null,
 					"ConversionToOutputUnit": null,

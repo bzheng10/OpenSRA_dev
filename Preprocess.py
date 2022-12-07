@@ -24,6 +24,7 @@ import sys
 import time
 import warnings
 import zipfile
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # scientific processing modules
 import numpy as np
@@ -43,21 +44,20 @@ warnings.simplefilter(action='ignore', category=ShapelyDeprecationWarning)
 # OpenSRA modules
 from src.edp import process_cpt_spt
 from src.im import haz
-from src.pc_func.pc_workflow import get_samples_for_params 
+from src.pc_func.pc_workflow import get_samples_for_params
 from src.site import geodata
-from src.site.get_pipe_crossing import get_pipe_crossing
+from src.site.get_pipe_crossing import get_pipe_crossing_landslide_or_liq, get_pipe_crossing_fault_rup
 from src.site.get_well_crossing import get_well_crossing
 from src.site.get_caprock_crossing import get_caprock_crossing
 from src.site.site_util import make_list_of_linestrings, make_grid_nodes
 from src.util import set_logging
-
 
 # -----------------------------------------------------------
 # Main function
 def main(work_dir, logging_level='info', logging_message_detail='s',
          display_after_n_event=100):
     """main function that runs the preprocess procedures"""
-    
+
     # -----------------------------------------------------------
     # Setting logging level (e.g. DEBUG or INFO)
     set_logging(
@@ -70,7 +70,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # start of preprocess
     logging.info('Start of preprocessing for OpenSRA')
     counter = 1 # counter for stages of processing   
-        
+    
     # -----------------------------------------------------------
     # make directories
     # check current directory, if not at OpenSRA level, go up a level (happens during testing)
@@ -144,7 +144,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             r'lib\OtherData\Preprocessed\CA_Natural_Gas_Pipeline_Segments_WGS84',
             'CA_Natural_Gas_Pipeline_Segments_WGS84_Under100m.csv'
         )
-        infra_geom_fpath = infra_fpath.replace('.csv','_GeomOnly.shp')
+        infra_geom_fpath = infra_fpath.replace('.csv','.gpkg')
         flag_using_state_network = True
     elif infra_fname == 'CA_Natural_Gas_Pipeline_SUBSET':
         # use internal preprocessed CSV file for state pipeline network
@@ -153,7 +153,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             r'lib\OtherData\Preprocessed\CA_Natural_Gas_Pipeline_Segments_WGS84',
             'CA_Natural_Gas_Pipeline_Segments_WGS84_Under100m_SUBSET.csv'
         )
-        infra_geom_fpath = infra_fpath.replace('.csv','_GeomOnly.shp')
+        infra_geom_fpath = infra_fpath.replace('.csv','.gpkg')
         flag_using_state_network = True
     else:
         # create file path
@@ -203,14 +203,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     im_source = list(setup_config['IntensityMeasure']['SourceForIM'])[0]
     if im_source == 'ShakeMap':
         sm_dir = os.path.join(
-            # work_dir,
             input_dir,
             setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Directory']
         )
         sm_events = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events']
     elif im_source == 'UserDefinedRupture':
         rup_fpath = os.path.join(
-            # work_dir,
             input_dir,
             setup_config['IntensityMeasure']['SourceForIM']['UserDefinedRupture']['FaultFile']
         )
@@ -256,7 +254,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     # -----------------------------------------------------------
     # import preferred input distributions
-    pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed = \
+    # pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed = \
+    pref_param_dist, pref_param_fixed = \
         import_param_dist_table(opensra_dir, infra_type=infra_type)
     logging.info(f'{counter}. Read preferred distributions for variables')
     logging.info(f"\t{os.path.join('param_dist',f'{infra_type}.xlsx')}")
@@ -267,117 +266,160 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     rvs_input, fixed_input, site_data, site_data_geom = \
         read_input_tables(input_dir, processed_input_dir, flag_using_state_network, infra_type, infra_geom_fpath)
     if site_data.shape[0] == 0:
-        logging.info(f'\n*****FATAL*****')
+        logging.info(f'\n')
+        logging.info(f'*****FATAL*****')
         logging.info(f'- The number of components/segments is zero - the final risk metrics will all be zero!')
         logging.info(f'- Please revise input infrastructure file.')
         logging.info(f'- Preprocessing will now exit.')
-        logging.info(f'*****FATAL*****\n')
+        logging.info(f'*****FATAL*****')
+        logging.info(f'\n')
         sys.exit()
     else:
         logging.info(f'{counter}. Read input tables for random, fixed variables, and infrastructure data in input directory')
-        counter += 1   
+        counter += 1
     
     ##--------------------------
     # get crossings for below-ground infrastructure - may move to another location in Preprocess
     running_cpt_based_procedure = False
+    event_ids_to_keep = None
+    event_inds_to_keep = None
+    rupture_table_from_crossing = None
+    performed_crossing = False
+    col_headers_to_append = []
     if infra_type == 'below_ground':
         # pipe crossings crossings
         if 'EDP' in workflow:
-            # preprocessing for liquefaction crossings
-            if 'liquefaction' in workflow['EDP']:
-                # see if CPT based for method, if so, need to run CPT preprocessing
-                if 'CPTBased' in workflow['EDP']['liquefaction']:
-                    running_cpt_based_procedure = True
-                    # pass info into function to read and process CPTs and generated deformation polygons
-                    logging.info('\n---------------------------')
-                    logging.info('>>>>> Running CPT preprocessing script to generate deformation polygons...')
-                    if im_source == "ShakeMap":
-                        spath_def_poly = preprocess_cpt_data(
-                            # predetermined setup configuration parameters
-                            setup_config, opensra_dir, im_dir, processed_input_dir, user_prov_gis_dir,
-                            rvs_input, fixed_input, workflow,
-                            # OpenSRA internal files
-                            avail_data_summary,
-                            # for all IM sources
-                            im_source, im_filters,
-                            # for ShakeMaps
-                            sm_dir=sm_dir, sm_events=sm_events,
-                            # misc.
-                            display_after_n_event=display_after_n_event
-                        )
-                    elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
-                        spath_def_poly = preprocess_cpt_data(
-                            # predetermined setup configuration parameters
-                            setup_config, opensra_dir, im_dir, processed_input_dir, user_prov_gis_dir,
-                            rvs_input, fixed_input, workflow,
-                            # OpenSRA internal files
-                            avail_data_summary,
-                            # for all IM sources
-                            im_source, im_filters,
-                            # for user-defined and UCERF ruptures
-                            rup_fpath=rup_fpath,
-                            # misc.
-                            display_after_n_event=display_after_n_event
-                        )
-                    logging.info('>>>>> done with CPT preprocessing')
-                    logging.info('---------------------------\n')
+            # preprocessing for fault rupture crossings
+            if 'surface_fault_rupture' in workflow['EDP']:
+                hazard = 'surface_fault_rupture'
+                # check for validity of fault crossing inputs
+                if not im_source == 'UCERF':
+                    raise ValueError('Surface fault rupture currently set up for QFault hazard zones from LCI, which interacts with UCERF3')
+                # additional logic inputs
+                fault_disp_model = list(workflow['EDP']['surface_fault_rupture'])[0]
+                reduced_ucerf_fpath = os.path.join(opensra_dir,
+                    'lib','UCERF3','ReducedEvents_Abrahamson2022','Mean UCERF3 FM3.1',
+                    'UCERF3_reduced_senario_dM0.5_v2.shp'
+                )
+                # run get pipe crossing function
+                # site_data = 
+                site_data, rupture_table_from_crossing, col_headers_to_append, event_ids_to_keep = \
+                    get_pipe_crossing_fault_rup(
+                        opensra_dir=opensra_dir,
+                        processed_input_dir=processed_input_dir,
+                        im_dir=im_dir,
+                        infra_site_data=site_data.copy(),
+                        avail_data_summary=avail_data_summary,
+                        reduced_ucerf_fpath=reduced_ucerf_fpath,
+                        fault_disp_model=fault_disp_model,
+                        im_source=im_source,
+                        infra_site_data_geom=site_data_geom,
+                    )
+                performed_crossing = True
+                logging.info(f'{counter}. Obtained pipeline crossing for {hazard}')
+                counter += 1
+                
+            # liq and landslide share the same function for pipe crossing
+            else:
+                # preprocessing for liquefaction crossings
+                if 'liquefaction' in workflow['EDP']:
                     # get geohazard
                     if 'lateral_spread' in workflow['EDP']:
                         hazard = 'lateral_spread'
                     elif 'settlement' in workflow['EDP']:
                         hazard = 'settlement'
-                    fpath = spath_def_poly[0]
-                    def_shp_crs = 4326
-                else:
-                    # if not using CPT based methods, then assign probability of crossing of 0.25 to all components
-                    fpath = None
-                    def_shp_crs = None
-            # preprocessing for landslide crossings
-            if 'landslide' in workflow['EDP']:
-                hazard = 'landslide'
-                # get deformation polygon to use; if "statewide", then assign probability of crossing of 0.25 to all components
-                landslide_setup_meta = setup_config['EngineeringDemandParameter']['Type']['Landslide']['OtherParameters']
-                use_def_poly = landslide_setup_meta['UseDeformationGeometry']
-                if use_def_poly:
-                    def_poly_source = landslide_setup_meta['SourceForDeformationGeometry']
-                    if def_poly_source == 'CA_LandslideInventory_WGS84':
-                        file_metadata = avail_data_summary['Parameters']['ca_landslide_inventory']
-                        def_shp_crs = file_metadata['Datasets']['Set1']['CRS']
-                        fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
-                    else:
-                        fdir = os.path.join(user_prov_gis_dir,def_poly_source)
-                        for f in os.listdir(fdir):
-                            if f.endswith('.shp'):
-                                fpath = os.path.join(fdir,f)
-                                break
+                    # see if CPT based for method, if so, need to run CPT preprocessing
+                    if 'CPTBased' in workflow['EDP']['liquefaction']:
+                        running_cpt_based_procedure = True
+                        # pass info into function to read and process CPTs and generated deformation polygons
+                        logging.info('\n---------------------------')
+                        logging.info('>>>>> Running CPT preprocessing script to generate deformation polygons...')
+                        if im_source == "ShakeMap":
+                            spath_def_poly, freeface_fpath = preprocess_cpt_data(
+                                # predetermined setup configuration parameters
+                                setup_config, opensra_dir, im_dir, processed_input_dir, user_prov_gis_dir,
+                                rvs_input, fixed_input, workflow,
+                                # OpenSRA internal files
+                                avail_data_summary,
+                                # for all IM sources
+                                im_source, im_filters,
+                                # for ShakeMaps
+                                sm_dir=sm_dir, sm_events=sm_events,
+                                # misc.
+                                display_after_n_event=display_after_n_event
+                            )
+                        elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
+                            spath_def_poly, freeface_fpath = preprocess_cpt_data(
+                                # predetermined setup configuration parameters
+                                setup_config, opensra_dir, im_dir, processed_input_dir, user_prov_gis_dir,
+                                rvs_input, fixed_input, workflow,
+                                # OpenSRA internal files
+                                avail_data_summary,
+                                # for all IM sources
+                                im_source, im_filters,
+                                # for user-defined and UCERF ruptures
+                                rup_fpath=rup_fpath,
+                                # misc.
+                                display_after_n_event=display_after_n_event
+                            )
+                        logging.info('>>>>> done with CPT preprocessing')
+                        logging.info('---------------------------\n')
+                        fpath = spath_def_poly[0]
                         def_shp_crs = 4326
+                    else:
+                        # if not using CPT based methods, then assign probability of crossing of 0.25 to all components
+                        fpath = None
+                        def_shp_crs = None
+                        freeface_fpath = None
+                # preprocessing for landslide crossings
+                if 'landslide' in workflow['EDP']:
+                    hazard = 'landslide'
+                    # get deformation polygon to use; if "statewide", then assign probability of crossing of 0.25 to all components
+                    landslide_setup_meta = setup_config['EngineeringDemandParameter']['Type']['Landslide']['OtherParameters']
+                    use_def_poly = landslide_setup_meta['UseDeformationGeometry']
+                    if use_def_poly:
+                        def_poly_source = landslide_setup_meta['SourceForDeformationGeometry']
+                        if def_poly_source == 'CA_LandslideInventory_WGS84':
+                            file_metadata = avail_data_summary['Parameters']['ca_landslide_inventory']
+                            def_shp_crs = file_metadata['Datasets']['Set1']['CRS']
+                            fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
+                        else:
+                            fdir = os.path.join(user_prov_gis_dir,def_poly_source)
+                            for f in os.listdir(fdir):
+                                if f.endswith('.shp'):
+                                    fpath = os.path.join(fdir,f)
+                                    break
+                            def_shp_crs = 4326
+                    else:
+                        fpath = None
+                        def_shp_crs = None
+                    freeface_fpath = None
+                # run get pipe crossing function
+                site_data = get_pipe_crossing_landslide_or_liq(
+                    opensra_dir=opensra_dir,
+                    path_to_def_shp=fpath,
+                    infra_site_data=site_data.copy(),
+                    avail_data_summary=avail_data_summary,
+                    infra_site_data_geom=site_data_geom,
+                    export_dir=processed_input_dir,
+                    def_type=hazard,
+                    def_shp_crs=def_shp_crs,
+                    freeface_fpath=freeface_fpath
+                )
+                performed_crossing = True
+                if site_data.shape[0] == 0:
+                    logging.info(f'\n*****FATAL*****')
+                    logging.info(f'- No crossings idenfitied using {hazard} deformation polygons - the final risk metrics will all be zero!')
+                    if hazard == 'landslide':
+                        logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile.')
+                    elif 'liquefaction' in workflow['EDP']:
+                        logging.info(f'- Please revise the input infrastructure file and/or the site investigation data.')
+                    logging.info(f'- Preprocessing will now exit.')
+                    logging.info(f'*****FATAL*****\n')
+                    sys.exit()
                 else:
-                    fpath = None
-                    def_shp_crs = None
-            # run get pipe crossing function
-            site_data = get_pipe_crossing(
-                opensra_dir=opensra_dir,
-                path_to_def_shp=fpath,
-                infra_site_data=site_data.copy(),
-                avail_data_summary=avail_data_summary,
-                infra_site_data_geom=site_data_geom,
-                export_dir=processed_input_dir,
-                def_type=hazard,
-                def_shp_crs=def_shp_crs
-            )
-            if site_data.shape[0] == 0:
-                logging.info(f'\n*****FATAL*****')
-                logging.info(f'- No crossings idenfitied using {hazard} deformation polygons - the final risk metrics will all be zero!')
-                if hazard == 'landslide':
-                    logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile.')
-                elif 'liquefaction' in workflow['EDP']:
-                    logging.info(f'- Please revise the input infrastructure file and/or the site investigation data.')
-                logging.info(f'- Preprocessing will now exit.')
-                logging.info(f'*****FATAL*****\n')
-                sys.exit()
-            else:
-                logging.info(f'{counter}. Obtained pipeline crossing for landslide')
-                counter += 1
+                    logging.info(f'{counter}. Obtained pipeline crossing for {hazard}')
+                    counter += 1
     
     # -----------------------------------------------------------
     # rvs and fixed params split by preferred and user provided
@@ -416,10 +458,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             params_with_missing_dist_metric,
             param_dist_meta,
             setup_config,
+            flag_using_state_network,
             infra_type=infra_type
         )
     level_to_run = param_dist_table['level_to_run'][0]
-    logging.info(f'{counter}. Determined level of analysis to run for each site')
+    logging.info(f'{counter}. Determined level of analysis to run')
+    logging.info(f'\t- level to run: {level_to_run}')
     counter += 1
 
     # -----------------------------------------------------------
@@ -457,10 +501,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             param_dist_table,
             param_dist_meta,
             pref_param_dist,
-            pref_param_dist_const_with_level,
+            # pref_param_dist_const_with_level,
             pref_param_fixed,
             workflow,
             avail_data_summary,
+            level_to_run,
+            flag_using_state_network,
             # site_data_with_crossing_only,
             export_path_dist_table=os.path.join(processed_input_dir,'param_dist.csv'),
             export_path_dist_json=os.path.join(processed_input_dir,'param_dist_meta.json'),
@@ -478,32 +524,73 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             # for ShakeMaps
             sm_dir=sm_dir,
             sm_events=sm_events,
-            # events_to_keep='all'
+            event_ids_to_keep=event_ids_to_keep,
+            # rupture_table=rupture_table_from_crossing,
+            # col_headers_to_append=col_headers_to_append,
         )
         logging.info(f'.....\n')
     elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
         # running UCERF and using statewide pipeline, skip IM calc and use precomputed files
         # last statement to catch debugging/testing examples, which uses a subset of the statewide segments
         if im_source == 'UCERF' and flag_using_state_network and infra_fname == 'CA_Natural_Gas_Pipeline':
+            # if rupture_table is created previously, which contains events to keep
             # directory with precomputed IM files
             dir_with_precomp_im = os.path.join(
                 opensra_dir,
                 r'lib\OtherData\Preprocessed\Precomputed_IMs_for_Statewide_Pipeline'
             )
+            if performed_crossing:
+                # for each IM file, keep only keep segment IDs with crossings
+                site_ids_to_keep = site_data.ID.values
+                # always 1 less for index for preprocessed state network 
+                site_inds_to_keep = site_ids_to_keep - 1
+                site_inds_to_keep = site_inds_to_keep.astype(int)
+            if event_ids_to_keep is not None:
+                # load rupture table with IM stage
+                rupture_table_im_fpath = os.path.join(dir_with_precomp_im,'RUPTURE_METADATA.csv')
+                rupture_table_from_im = pd.read_csv(rupture_table_im_fpath)
+                rupture_table_from_im.event_id = rupture_table_from_im.event_id.values.astype(int)
+                event_inds_to_keep = np.asarray([
+                    np.where(rupture_table_from_im.event_id==event_id)[0][0]
+                    for event_id in event_ids_to_keep
+                ])
+            logging.info(f'\t-Copy/paste precomputed IMs to destination:')
             # copy each item in directory
             for each in os.listdir(dir_with_precomp_im):
                 src_path = os.path.join(dir_with_precomp_im,each)
                 dst_path = os.path.join(im_dir,each)
                 if os.path.isdir(src_path):
-                    # remove if existing
-                    if os.path.exists(dst_path):
-                        shutil.rmtree(dst_path)
-                    shutil.copytree(src=src_path,dst=dst_path)
+                    if performed_crossing:
+                        for f in os.listdir(src_path):
+                            # get and read sparse data
+                            curr_fpath = os.path.join(src_path,f)
+                            data = sparse.load_npz(curr_fpath).toarray()
+                            # get subset of datafile with sites to keep
+                            data_with_sites_to_keep = data[:,site_inds_to_keep]
+                            if event_ids_to_keep is not None:
+                                data_with_sites_to_keep = data_with_sites_to_keep[event_inds_to_keep,:]
+                            # convert back to sparse matrix and export
+                            coo_out = sparse.coo_matrix(data_with_sites_to_keep)
+                            sparse.save_npz(os.path.join(dst_path,f), coo_out)
+                    else:
+                        # remove if existing
+                        if os.path.exists(dst_path):
+                            shutil.rmtree(dst_path)
+                        shutil.copytree(src=src_path,dst=dst_path)
                 else:
-                    # remove if existing
-                    if os.path.exists(dst_path):
-                        os.remove(dst_path)
-                    shutil.copy(src=src_path,dst=dst_path)
+                    if performed_crossing and 'site_data' in os.path.basename(src_path) and \
+                        src_path.endswith('.csv'):
+                        data = pd.read_csv(src_path)
+                        # get subset of datafile with sites to keep
+                        data_with_sites_to_keep = data.loc[site_inds_to_keep].copy()
+                        # export
+                        data_with_sites_to_keep.to_csv(dst_path,index=False)
+                    else:
+                        # remove if existing
+                        if os.path.exists(dst_path):
+                            os.remove(dst_path)
+                        shutil.copy(src=src_path,dst=dst_path)
+                logging.info(f'\t\t-{dst_path}')
         else:
             logging.info(f'\n.....')
             get_im_pred(
@@ -512,8 +599,55 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 opensra_dir=opensra_dir,
                 processed_input_dir=processed_input_dir,
                 rup_fpath=rup_fpath,
+                event_ids_to_keep=event_ids_to_keep,
+                # rupture_table=rupture_table
             )
             logging.info(f'.....\n')
+    # merge rupture metadata from crossing (if exists) to that from IM
+    if rupture_table_from_crossing is not None:
+        # load rupture table with IM stage
+        rupture_table_im_fpath = os.path.join(im_dir,'RUPTURE_METADATA.csv')
+        rupture_table_from_im = pd.read_csv(rupture_table_im_fpath)
+        rupture_table_from_im.event_id = rupture_table_from_im.event_id.values.astype(int)
+        if event_ids_to_keep is not None:
+            if event_inds_to_keep is None:
+                event_inds_to_keep = np.asarray([
+                    np.where(rupture_table_from_im.event_id.values==event_id)[0][0]
+                    for event_id in event_ids_to_keep
+                ])
+            rupture_table_from_im = rupture_table_from_im.loc[event_inds_to_keep].reset_index(drop=True)
+        # initialize empty list
+        collect_list = {}
+        for col in col_headers_to_append:
+            collect_list[col] = [[]]*rupture_table_from_im.shape[0]
+        # find common event IDs
+        for i in range(rupture_table_from_im.shape[0]):
+            event_i_in_im = rupture_table_from_im.event_id[i]
+            if event_i_in_im in rupture_table_from_crossing.EventID.values:
+                row = np.where(rupture_table_from_crossing.EventID.values==event_i_in_im)[0][0]
+                for col in col_headers_to_append:
+                    collect_list[col][i] = rupture_table_from_crossing.loc[row,col]
+        # append to table
+        for col in col_headers_to_append:
+            rupture_table_from_im[col] = collect_list[col]
+        # export and update rupture_metadata file
+        rupture_table_from_im.to_csv(rupture_table_im_fpath,index=False)
+        # export to shp
+        save_name_shp = rupture_table_im_fpath.replace('.csv','.gpkg')
+        geoms = []
+        for i in range(rupture_table_from_im.shape[0]):
+            # trace = np.asarray(json.loads(rup_meta.fault_trace.iloc[i]))
+            if isinstance(rupture_table_from_im.fault_trace.iloc[i],str):
+                trace = np.asarray(json.loads(rupture_table_from_im.fault_trace.iloc[i]))
+            else:
+                trace = np.asarray(rupture_table_from_im.fault_trace.iloc[i])                
+            geoms.append(LineString(trace[:,:2]))
+        rupture_table_from_im_gdf = GeoDataFrame(
+            pd.read_csv(rupture_table_im_fpath), # reread dataframe to convert fields of lists into strings
+            # rupture_table_from_im,
+            crs=4326, geometry=geoms
+        )
+        rupture_table_from_im_gdf.to_file(save_name_shp,index=False,layer='data')
     logging.info(f'{counter}. Obtained IM predictions from {im_source} and stored to:')
     logging.info(f"\t{im_dir}")
     counter += 1
@@ -575,6 +709,7 @@ def get_im_pred(
     sm_dir=None, sm_events=None,
     # for user-defined ruptures
     opensra_dir=None, processed_input_dir=None, rup_fpath=None,
+    event_ids_to_keep=None,
     # to return haz object for additional processing
     return_haz_obj=False
 ):
@@ -747,7 +882,8 @@ def get_im_pred(
         max_dist=max_dist,
         mag_min=mag_min,
         mag_max=mag_max,
-        rate_min=rate_min
+        rate_min=rate_min,
+        event_ids_to_keep=event_ids_to_keep,
     ) # process ruptures
     seismic_hazard.get_gm_pred_from_gmc() # get GM predictions
     seismic_hazard.export_gm_pred(sdir=im_dir) # export GM predictions
@@ -772,6 +908,12 @@ def preprocess_infra_file(
             shutil.copy(
                 src=infra_fpath,
                 dst=os.path.join(processed_input_dir,'site_data_PROCESSED.csv')
+            )
+            # also make copy of shapefile
+            infra_shp_fpath = infra_fpath.replace('.csv','.gpkg')
+            shutil.copy(
+                src=infra_shp_fpath,
+                dst=os.path.join(processed_input_dir,'site_data_PROCESSED.gpkg')
             )
         else:
             if infra_fpath.endswith('shp'):
@@ -833,10 +975,10 @@ def make_workflow(setup_config, processed_input_dir, to_export=True):
         'settlement': "Settlement",
         'landslide': "Landslide",
         'surface_fault_rupture': "SurfaceFaultRupture",
-        # 'pipe_strain': "PipeStrain",
         'pipe_strain_settlement': "SettlementInducedPipeStrain",
         'pipe_strain_landslide': "LandslideInducedPipeStrain",
         'pipe_strain_lateral_spread': "LateralSpreadInducedPipeStrain",
+        'pipe_strain_surface_fault_rupture': "SurfaceFaultRuptureInducedPipeStrain",
         'pipe_comp_rupture': "PipeCompressiveRupture",
         'pipe_tensile_rupture': "PipeTensileRupture",
         'pipe_tensile_leakage': "PipeTensileLeakage",
@@ -856,7 +998,6 @@ def make_workflow(setup_config, processed_input_dir, to_export=True):
         'well_rupture_shear': "ShearInducedWellRupture",
         'well_rupture_shaking': "ShakingInducedWellRupture",
         'caprock_leakage': "CaprockLeakage",
-        
     }
     for category in cat_map:
         workflow[category] = {}
@@ -937,19 +1078,13 @@ def import_param_dist_table(opensra_dir, infra_type='below_ground'):
     # by levels
     for i in range(n_levels):
         curr_level = f'level{i+1}'
-        curr_sheet = pd.read_excel(
-            pref_param_dist_path,
-            sheet_name=curr_level
-        )
-        if i == 0:
-            pref_param_dist_const_with_level = curr_sheet[curr_sheet.vary_with_level==False].copy().reset_index(drop=True)
-        pref_param_dist[curr_level] = curr_sheet[curr_sheet.vary_with_level==True].copy().reset_index(drop=True)
+        pref_param_dist[curr_level] = pd.read_excel(pref_param_dist_path,sheet_name=curr_level)
     # fixed
     pref_param_fixed = pd.read_excel(
         pref_param_dist_path,
         sheet_name='fixed'
     )
-    return pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed
+    return pref_param_dist, pref_param_fixed
 
 
 # -----------------------------------------------------------
@@ -980,7 +1115,6 @@ def read_input_tables(
     if infra_geom_fpath is not None:
         site_data_geom = read_file(infra_geom_fpath).geometry
     else:
-        # must faster 
         if infra_type == 'below_ground':
             site_data_geom = GeoDataFrame(
                 None,
@@ -1002,7 +1136,6 @@ def read_input_tables(
                     crs=4326
                 )
             ).geometry
-            
         site_data_geom = None
     return rvs_input, fixed_input, site_data, site_data_geom
 
@@ -1019,17 +1152,6 @@ def separate_params_by_source(rvs_input, fixed_input):
     return pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, pref_fixed, user_prov_table_fixed, user_prov_gis_fixed
 
 
-# -----------------------------------------------------------
-def get_param_dist_from_user_prov_gis(
-    # user_prov_gis_map_dir,
-    # user_prov_gis_rvs,
-    # user_prov_gis_fixed,
-    # param_dist_meta,
-    # site_data
-):
-    """gets inputs for parameters flagged as 'From user-provided GIS maps'"""
-    logging.info(NotImplementedError("to be implemented"))
-    return param_dist_meta, site_data
 
 
 # -----------------------------------------------------------
@@ -1059,6 +1181,11 @@ def get_param_dist_from_user_prov_table(
         'high': 'Distribution Max',
     }
     
+    # out of bound values
+    # invalid_value_for_raster_sampling = {
+    #     'gw_depth': 999 # m
+    # }
+    
     # if running CPTs, skip gw_depth and slope for inputs
     params_to_skip = []
     if running_cpt_based_procedure:
@@ -1081,10 +1208,19 @@ def get_param_dist_from_user_prov_table(
             else:
                 curr_param_dist['dist_type'] = user_prov_table_rvs.loc[i,metric_map['dist_type']].lower()
             # mean
+            mean_val = user_prov_table_rvs.loc[i,metric_map['mean']]
+            # if param == 's_u_backfill':
+            #     print('here')
             try: # try converting to float, if can't then it's a column name
-                curr_param_dist['mean'] = float(user_prov_table_rvs.loc[i,metric_map['mean']])
+                curr_param_dist['mean'] = float(mean_val)
             except ValueError: # read from site data table
-                curr_param_dist['mean'] = site_data[user_prov_table_rvs.loc[i,metric_map['mean']].upper()].values
+                if mean_val in site_data:
+                    col_name = mean_val
+                elif mean_val.upper() in site_data:
+                    col_name = mean_val.upper()
+                else:
+                    raise ValueError(f'Cannot identify column in site_data given column name for {param}')
+                curr_param_dist['mean'] = site_data[col_name].values
             # apply ln, assuming values are given as medians
             if curr_param_dist['dist_type'] == 'lognormal':
                 curr_param_dist['mean'] = np.log(curr_param_dist['mean'])
@@ -1109,7 +1245,8 @@ def get_param_dist_from_user_prov_table(
                     if curr_param_dist['dist_type'] == 'normal':
                         curr_param_dist['sigma'] = curr_cov/100 * curr_param_dist['mean']
                     elif curr_param_dist['dist_type'] == 'lognormal':
-                        curr_param_dist['sigma'] = np.log(1+curr_cov/100)
+                        curr_param_dist['sigma'] = np.sqrt(np.log((curr_cov/100)**2 + 1))
+                        # curr_param_dist['sigma'] = np.log(1+curr_cov/100)
             # low and high
             for each in ['low','high']:
                 if np.isnan(user_prov_table_rvs.loc[i,metric_map[each]]):
@@ -1135,7 +1272,8 @@ def get_param_dist_from_user_prov_table(
                 # see if still contains np.isnan
                 curr_param_dist['still_need_pref'][each] = False
                 ind = np.where(np.isnan(curr_param_dist[each]))[0]
-                if len(ind) > 0:
+                # if len(ind) > 0:
+                if len(ind) == n_site:
                     curr_param_dist['still_need_pref'][each] = True
             # store to param_dist_meta and site_data
             for met in ['mean','sigma','low','high','dist_type']:
@@ -1231,7 +1369,8 @@ def get_param_dist_from_user_prov_table(
                 if curr_param_dist['dist_type'] == 'normal':
                     curr_param_dist['sigma'] = curr_cov/100 * curr_param_dist['mean']
                 elif curr_param_dist['dist_type'] == 'lognormal':
-                    curr_param_dist['sigma'] = np.log(1+curr_cov/100)
+                    # curr_param_dist['sigma'] = np.log(1+curr_cov/100)
+                    curr_param_dist['sigma'] = np.sqrt(np.log((curr_cov/100)**2 + 1))
         # low and high
         for each in ['low','high']:
             if np.isnan(user_prov_gis_rvs.loc[i,metric_map[each]]):
@@ -1442,6 +1581,7 @@ def get_level_to_run(
     params_with_missing_dist_metric,
     param_dist_meta,
     setup_config,
+    flag_using_state_network=False,
     infra_type='below_ground'
 ):
     """determin level of analysis to run"""
@@ -1466,33 +1606,34 @@ def get_level_to_run(
     # determine RVs needed by level
     all_rvs, req_rvs_by_level, req_fixed_by_level = get_rvs_and_fix_by_level(workflow, infra_fixed)
     
-    # print('\n')
-    # print(all_rvs)
-    # print('\n')
     # print(req_rvs_by_level)
-    # print('\n')
-    # print(req_fixed_by_level)
-    # print('\n')
-    
-    # print(list(params_with_missing_dist_metric))
-    
-    # sys.exit()
+    param_to_skip_for_determining_level = {
+        'level1': ['prob_liq','liq_susc'],
+        'level2': ['prob_liq','liq_susc','gw_depth'],
+        'level3': ['prob_liq','liq_susc','gw_depth'],
+    }
+    if flag_using_state_network:
+        for i in range(3):
+            param_to_skip_for_determining_level[f'level{i+1}'] += ['d_pipe', 't_pipe']
     
     # for each site, determine level to run
     level_to_run = np.ones(n_site).astype(int)*3
     # loop through levels
     for i in range(3,1,-1):
+        level_str = f'level{i}'
         # parameters required for current level
-        params_for_curr_level = req_rvs_by_level[f'level{i}']
+        params_for_curr_level = req_rvs_by_level[level_str]
         ind_for_cur_level = np.array([])
         for param in params_with_missing_dist_metric:
-            if param in params_for_curr_level:
+            if param in params_for_curr_level and \
+                not param in param_to_skip_for_determining_level[level_str]:
                 for met in params_with_missing_dist_metric[param]:
-                    ind_for_cur_level = np.hstack([
+                    # ind_for_cur_level = np.hstack([
+                    ind_for_cur_level = np.unique(np.hstack([
                         ind_for_cur_level,
                         # np.where(np.isnan(param_dist_meta[param][met]))[0]
                         np.where(param_dist_table[param+'_'+met].isnull())[0]
-                    ])
+                    ]))
         ind_for_cur_level = np.unique(ind_for_cur_level).astype(int)
         level_to_run[ind_for_cur_level] -= 1
         
@@ -1511,12 +1652,6 @@ def get_level_to_run(
     # store levels to run
     param_dist_table['level_to_run'] = level_to_run
     
-    # get list of sites under each level
-    # site_index_by_levels = {
-    #     f'level{i+1}': np.where(param_dist_table.level_to_run==i+1)[0]
-    #     for i in range(3)
-    # }
-    
     # return
     # return param_dist_table, site_index_by_levels
     return param_dist_table
@@ -1530,10 +1665,12 @@ def get_pref_dist_for_params(
     param_dist_table,
     param_dist_meta,
     pref_param_dist,
-    pref_param_dist_const_with_level,
+    # pref_param_dist_const_with_level,
     pref_param_fixed,
     workflow,
     avail_data_summary,
+    level_to_run,
+    flag_using_state_network,
     # site_data_with_crossing_only=None,
     export_path_dist_table=None,
     export_path_dist_json=None,
@@ -1544,7 +1681,15 @@ def get_pref_dist_for_params(
     
     # initialize
     met_list = ['dist_type','mean','sigma','low','high']
-    crossing_params = ['l_anchor','beta_crossing','psi_dip']
+    if 'EDP' in workflow:
+        # if 'surface_fault_rupture' in workflow['EDP']:
+        #     crossing_params = [
+        #         'l_anchor',
+        #         'beta_crossing_primary','psi_dip_primary','theta_rake_primary',
+        #         'beta_crossing_secondary','psi_dip_secondary','theta_rake_secondary',
+        #     ]
+        # else:
+        crossing_params = ['l_anchor','beta_crossing','psi_dip','theta_rake']
     # crossing_params = ['l_anchor','beta_crossing','psi_dip','theta_rake']
     soil_prop_map = {}
     
@@ -1565,7 +1710,7 @@ def get_pref_dist_for_params(
         else:
             raise ValueError("Cannot locate lon/lat")
         
-        # CGS geologic unit, may take this out
+        # Sample statewide geologic map for soil properties
         if 'EDP' in workflow and 'landslide' in workflow['EDP']:
             if ('phi_soil' in param_dist_meta and param_dist_meta['phi_soil']['source'] == 'Preferred') or \
                ('coh_soil' in param_dist_meta and param_dist_meta['coh_soil']['source'] == 'Preferred'):
@@ -1621,6 +1766,7 @@ def get_pref_dist_for_params(
                             'dist_type': 'lognormal'
                         }
                     
+                # CGS geologic unit, may take this out
                 # elif default_statewide_geo_map == 'cgs':
                 #     file_key = 'level1_geo_unit_cgs10'
                 #     store_name = avail_data_summary['Parameters'][file_key]['ColumnNameToStoreAs']
@@ -1648,51 +1794,53 @@ def get_pref_dist_for_params(
                 #         'coh_soil': 'Cohesion (kPa)',
                 #         'gamma_soil': 'Unit Weight (kN/m3)',
                 #     }
-            
-        # if liq susc is needed, then sample regional geologic units
-        if 'liq_susc' in param_dist_meta and param_dist_meta['liq_susc']['source'] == 'Preferred':
-            # Bedrossian et al. (2012)
-            file_key = 'level2_geo_unit_witter06'
-            file_metadata = avail_data_summary['Parameters'][file_key]
-            store_name = file_metadata['ColumnNameToStoreAs']
-            geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
-            geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
-            locs.data = locs.sample_shapefile(
-                table=locs.data,
-                fpath=geo_unit_fpath,
-                crs=geo_unit_crs,
-                attr='PTYPE',
-                store_name=store_name
-            )
-            param_dist_table[store_name] = locs.data[store_name].values
-            witter_store_name = store_name
-            logging.info(f'\tRead Witter et al. (2006) geologic units')
-            
-            # Witter et al. (2006)
-            file_key = 'level2_geo_unit_bedrossian12'
-            file_metadata = avail_data_summary['Parameters'][file_key]
-            store_name = file_metadata['ColumnNameToStoreAs']
-            geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
-            locs.data = locs.sample_shapefile(
-                table=locs.data,
-                fpath=geo_unit_fpath,
-                crs=geo_unit_crs,
-                attr='PTYPE',
-                store_name=store_name
-            )
-            param_dist_table[store_name] = locs.data[store_name].values
-            bedrossian_store_name = store_name
-            logging.info(f'\tRead Bedrossian et al. (2012) geologic units')
-            # drop liq susc from param dist table, to sample during run
-            param_dist_table.drop(columns=['liq_susc'],inplace=True)
         
-        # Merge Bedrossian et al. and Witter et al. into one column called "Regional_Geologic_Unit"
-        # param_dist_table['Regional_Geologic_Unit'] = None
-        # param_dist_table.loc[param_dist_table[witter_store_name].notna(),'Regional_Geologic_Unit'] = \
-            # param_dist_table[witter_store_name][param_dist_table[witter_store_name].notna()].values
-        # param_dist_table.loc[param_dist_table[bedrossian_store_name].notna(),'Regional_Geologic_Unit'] = \
-            # param_dist_table[bedrossian_store_name][param_dist_table[bedrossian_store_name].notna()].values
-        # print(f'\tMerged results from Witter et al. (2006) and Bedrossian et al. (2012) into column called "Regional_Geologic_Unit"')
+        if level_to_run <= 2:
+            # if liq susc is needed, then sample regional geologic units
+            if 'liq_susc' in param_dist_meta and param_dist_meta['liq_susc']['source'] == 'Preferred':
+                # read from Witter et al. (2006) and Bedrossian et al. (2012)
+                logging.info(f'\tFor getting liquefaction susceptibility category from geologic maps...')
+                for each in ['witter06','bedrossian12']:
+                    file_key = f'level2_geo_unit_{each}'
+                    file_metadata = avail_data_summary['Parameters'][file_key]
+                    store_name = file_metadata['ColumnNameToStoreAs']
+                    geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
+                    geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
+                    src_name = file_metadata['Datasets']['Set1']['Source']
+                    locs.data = locs.sample_shapefile(
+                        table=locs.data,
+                        fpath=geo_unit_fpath,
+                        crs=geo_unit_crs,
+                        attr='PTYPE',
+                        store_name=store_name
+                    )
+                    param_dist_table[store_name] = locs.data[store_name].values
+                    witter_store_name = store_name
+                    logging.info(f'\t\t- read {src_name} geologic units')
+                # file_key = 'level2_geo_unit_bedrossian12'
+                # file_metadata = avail_data_summary['Parameters'][file_key]
+                # store_name = file_metadata['ColumnNameToStoreAs']
+                # geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
+                # locs.data = locs.sample_shapefile(
+                #     table=locs.data,
+                #     fpath=geo_unit_fpath,
+                #     crs=geo_unit_crs,
+                #     attr='PTYPE',
+                #     store_name=store_name
+                # )
+                # param_dist_table[store_name] = locs.data[store_name].values
+                # bedrossian_store_name = store_name
+                # logging.info(f'\tRead Bedrossian et al. (2012) geologic units')
+                # drop liq susc from param dist table, to sample during run
+                param_dist_table.drop(columns=['liq_susc'],inplace=True)
+            
+            # Merge Bedrossian et al. and Witter et al. into one column called "Regional_Geologic_Unit"
+            # param_dist_table['Regional_Geologic_Unit'] = None
+            # param_dist_table.loc[param_dist_table[witter_store_name].notna(),'Regional_Geologic_Unit'] = \
+                # param_dist_table[witter_store_name][param_dist_table[witter_store_name].notna()].values
+            # param_dist_table.loc[param_dist_table[bedrossian_store_name].notna(),'Regional_Geologic_Unit'] = \
+                # param_dist_table[bedrossian_store_name][param_dist_table[bedrossian_store_name].notna()].values
+            # print(f'\tMerged results from Witter et al. (2006) and Bedrossian et al. (2012) into column called "Regional_Geologic_Unit"')
     
     # first go through fixed params with missing values
     param_list = list(params_with_missing_dist_metric)
@@ -1705,65 +1853,19 @@ def get_pref_dist_for_params(
                 param_dist_table.loc[rows_nan,param] = pref_param_fixed.value[row_for_param]
                 # remove param from missing param list
                 params_with_missing_dist_metric.pop(param,None)
+                
+    # given level to run, get sheet with preferred param dist for level
+    pref_param_dist_for_level = pref_param_dist[f'level{level_to_run}'].copy()
     
     # loop through rest of params with missing distribution metrics
     param_list = list(params_with_missing_dist_metric) # remaining params
     for param in param_list:
-        # see if preferred distribution for parameter varies with levels
-        if param in list(pref_param_dist['level1'].rv_label):
-            # loop through levels
-            for level in np.unique(param_dist_table.level_to_run.values):
-                # find rows with current level
-                rows_for_level = np.where(param_dist_table.level_to_run==level)[0]
-                # row for param in preferred distribution table
-                row_for_param = np.where(pref_param_dist[f'level{level}'].rv_label==param)[0][0]
-                # loop through missing metrics
-                for met in met_list:
-                    if met in params_with_missing_dist_metric[param]:
-                        # find rows where null
-                        rows_nan = np.where(param_dist_table[f'{param}_{met}'].isnull())[0]
-                        # intersection between rows_nan and rows_for_level
-                        rows_comb = list(set(rows_nan).intersection(set(rows_for_level)))
-                        # get preferred value
-                        pref_val = pref_param_dist[f'level{level}'][met][row_for_param]
-                        # specifically for sigma, check CoV
-                        if met == 'sigma':
-                            if np.isnan(pref_val):
-                                # if nan, get from cov
-                                pref_val = pref_param_dist[f'level{level}']['cov'][row_for_param]
-                                # update distribution metric
-                                if param_dist_table[f'{param}_dist_type'][0] == 'normal':
-                                    param_dist_table.loc[rows_comb,f'{param}_sigma'] = \
-                                        pref_val/100 * param_dist_table.loc[rows_comb,f'{param}_mean']
-                                elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                                    param_dist_table.loc[rows_comb,f'{param}_sigma'] = \
-                                        np.log(1+pref_val/100) * param_dist_table.loc[rows_comb,f'{param}_mean']
-                            else:
-                                # update distribution metric
-                                param_dist_table.loc[rows_comb,f'{param}_sigma'] = pref_val
-                        else:
-                            # check for lognormal and apply correction
-                            if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                                pref_val = np.log(pref_val)
-                            if met == 'low' or met == 'high':
-                                if np.isnan(pref_val):
-                                    if met == 'low':
-                                        pref_val = -np.inf
-                                    elif met == 'high':
-                                        pref_val = np.inf
-                            # update distribution metric
-                            param_dist_table.loc[rows_comb,f'{param}_{met}'] = pref_val
-                        
-            # remove param from missing param list
-            params_with_missing_dist_metric.pop(param,None)
-
-        # param does not vary with level
-        elif param in list(pref_param_dist_const_with_level.rv_label):
+        if param in list(pref_param_dist_for_level.rv_label):
             # row for param in preferred distribution table
-            row_for_param = np.where(pref_param_dist_const_with_level.rv_label==param)[0][0]
-            
+            row_for_param = np.where(pref_param_dist_for_level.rv_label==param)[0][0]
+
             # specific properties for landslide, use Wills et al. geo properties developed by Chris Bain
-            if pref_param_dist_const_with_level['mean'][row_for_param] == 'depends' and \
+            if pref_param_dist_for_level['mean'][row_for_param] == 'depends' and \
                 param in soil_prop_map:
                 # for each unique geologic unit
                 for each in unique_geo_unit:
@@ -1772,7 +1874,7 @@ def get_pref_dist_for_params(
                     # intersection of geo unit and NaN
                     rows_comb = list(set(rows_nan).intersection(set(rows_with_geo_unit)))
                     # get preferred value from Chris Bain's table
-                    rows_for_param = np.where(default_geo_prop['Unit Abbreviation'].values==each)[0][0]                    # get dist metrics
+                    rows_for_param = np.where(default_geo_prop['Unit Abbreviation'].values==each)[0][0]
                     # dist type
                     param_dist_table.loc[rows_comb,f'{param}_dist_type'] = 'lognormal'
                     # mean
@@ -1781,22 +1883,15 @@ def get_pref_dist_for_params(
                     # sigma
                     pref_val = default_geo_prop[soil_prop_map[param]['cov']][rows_for_param]
                     param_dist_table.loc[rows_comb,f'{param}_sigma'] = \
-                        np.log(1+pref_val/100) * param_dist_table.loc[rows_comb,f'{param}_mean'].values
+                        np.sqrt(np.log((pref_val/100)**2 + 1))
+                        # np.log(1+pref_val/100) * param_dist_table.loc[rows_comb,f'{param}_mean'].values
+                        # np.log(1+pref_val/100) * param_dist_table.loc[rows_comb,f'{param}_mean'].values
                     # low
                     pref_val = default_geo_prop[soil_prop_map[param]['low']][rows_for_param]
                     param_dist_table.loc[rows_comb,f'{param}_low'] = np.log(pref_val)
                     # high
                     pref_val = default_geo_prop[soil_prop_map[param]['high']][rows_for_param]
                     param_dist_table.loc[rows_comb,f'{param}_high'] = np.log(pref_val)
-                    
-                    # # get preferred value from Slate's table
-                    # rows_for_param = np.where(slate_geo_prop['Unit Abbreviation'].values==each)[0][0]
-                    # pref_val = default_geo_prop[soil_prop_map[param]][rows_for_param]
-                    # # check for lognormal and apply correction
-                    # if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
-                    #     pref_val = np.log(pref_val)
-                    # # update value
-                    # param_dist_table.loc[rows_comb,f'{param}_mean'] = pref_val
 
             # all other cases
             else:
@@ -1806,16 +1901,13 @@ def get_pref_dist_for_params(
                         # find rows where null
                         rows_nan = np.where(param_dist_table[f'{param}_{met}'].isnull())[0]
                         # get preferred value
-                        pref_val = pref_param_dist_const_with_level[met][row_for_param]
+                        pref_val = pref_param_dist_for_level[met][row_for_param]
                         # specifically for mean
                         if met == 'mean':
                             # get crossing from site datatable
                             if pref_val == 'depends':
                                 # for pipe crossing parameters
                                 if param in crossing_params:
-                                    # pass
-                                    # if param == 'l_anchor':
-                                    #     print(site_data.columns)
                                     if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
                                         param_dist_table.loc[rows_nan,f'{param}_mean'] = np.log(site_data[param][rows_nan].values)
                                     else:
@@ -1828,6 +1920,8 @@ def get_pref_dist_for_params(
                                     param_dist_table.loc[rows_nan,f'{param}_mean'] = "event_dependent"
                             # using internal GIS maps
                             elif pref_val == 'internal gis dataset':
+                                if param == 'gw_depth':
+                                    pass
                                 # path for GIS file
                                 file_metadata = avail_data_summary['Parameters'][param]
                                 gis_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
@@ -1846,6 +1940,12 @@ def get_pref_dist_for_params(
                                 # pref_val = locs.data[param].values
                                 param_dist_table.loc[rows_nan,f'{param}_mean'] = pref_val[rows_nan]
                             else:
+                                # if running statewide pipeline and level<=2, catch t_pipe and op_press:
+                                if flag_using_state_network and level_to_run <= 2:
+                                    if param == 'op_press' and pref_val == 'user provided':
+                                        pref_val = pref_param_dist['level1'].loc[row_for_param,'mean'] # set to level 1 default
+                                    if param == 't_pipe' and pref_val == 'user provided':
+                                        pref_val = param_dist_table['d_pipe_mean'].values*0.05 # mm, use 5% of diameter
                                 # check for lognormal and apply correction
                                 if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
                                     pref_val = np.log(pref_val)
@@ -1854,14 +1954,15 @@ def get_pref_dist_for_params(
                         elif met == 'sigma':
                             if np.isnan(pref_val):
                                 # if nan, get from cov
-                                pref_val = pref_param_dist_const_with_level['cov'][row_for_param]
+                                pref_val = pref_param_dist_for_level['cov'][row_for_param]
                                 # update distribution metric
                                 if param_dist_table[f'{param}_dist_type'][0] == 'normal':
                                     param_dist_table.loc[rows_nan,f'{param}_sigma'] = \
                                         pref_val/100 * param_dist_table.loc[rows_nan,f'{param}_mean'].values
                                 elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
                                     param_dist_table.loc[rows_nan,f'{param}_sigma'] = \
-                                        np.log(1+pref_val/100) * param_dist_table.loc[rows_nan,f'{param}_mean'].values
+                                        np.sqrt(np.log((pref_val/100)**2 + 1))
+                                        # np.log(1+pref_val/100) * param_dist_table.loc[rows_nan,f'{param}_mean'].values
                             else:
                                 param_dist_table.loc[rows_nan,f'{param}_sigma'] = pref_val
                         else:
@@ -1902,7 +2003,207 @@ def get_pref_dist_for_params(
                                             pref_val = np.inf
                                 param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val
             # remove param from missing param list
-            params_with_missing_dist_metric.pop(param,None)          
+            params_with_missing_dist_metric.pop(param,None)             
+        
+        
+        
+        
+        # if param == 'gw_depth':
+        #     print('gw_depth')
+        # # see if preferred distribution for parameter varies with levels
+        # if param in list(pref_param_dist['level1'].rv_label):
+        #     # loop through levels
+        #     for level in np.unique(param_dist_table.level_to_run.values):
+        #         # find rows with current level
+        #         rows_for_level = np.where(param_dist_table.level_to_run==level)[0]
+        #         # row for param in preferred distribution table
+        #         row_for_param = np.where(pref_param_dist[f'level{level}'].rv_label==param)[0][0]
+        #         # loop through missing metrics
+        #         for met in met_list:
+        #             if met in params_with_missing_dist_metric[param]:
+        #                 # find rows where null
+        #                 rows_nan = np.where(param_dist_table[f'{param}_{met}'].isnull())[0]
+        #                 # intersection between rows_nan and rows_for_level
+        #                 rows_comb = list(set(rows_nan).intersection(set(rows_for_level)))
+        #                 # get preferred value
+        #                 pref_val = pref_param_dist[f'level{level}'][met][row_for_param]
+        #                 # specifically for sigma, check CoV
+        #                 if met == 'sigma':
+        #                     if np.isnan(pref_val):
+        #                         # if nan, get from cov
+        #                         pref_val = pref_param_dist[f'level{level}']['cov'][row_for_param]
+        #                         # update distribution metric
+        #                         if param_dist_table[f'{param}_dist_type'][0] == 'normal':
+        #                             param_dist_table.loc[rows_comb,f'{param}_sigma'] = \
+        #                                 pref_val/100 * param_dist_table.loc[rows_comb,f'{param}_mean']
+        #                         elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+        #                             param_dist_table.loc[rows_comb,f'{param}_sigma'] = \
+        #                                 np.log(1+pref_val/100) * param_dist_table.loc[rows_comb,f'{param}_mean']
+        #                     else:
+        #                         # update distribution metric
+        #                         param_dist_table.loc[rows_comb,f'{param}_sigma'] = pref_val
+        #                 else:
+        #                     # check for lognormal and apply correction
+        #                     if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+        #                         pref_val = np.log(pref_val)
+        #                     if met == 'low' or met == 'high':
+        #                         if np.isnan(pref_val):
+        #                             if met == 'low':
+        #                                 pref_val = -np.inf
+        #                             elif met == 'high':
+        #                                 pref_val = np.inf
+        #                     # update distribution metric
+        #                     param_dist_table.loc[rows_comb,f'{param}_{met}'] = pref_val
+                        
+        #     # remove param from missing param list
+        #     params_with_missing_dist_metric.pop(param,None)
+
+        # # param does not vary with level
+        # elif param in list(pref_param_dist_const_with_level.rv_label):
+        #     # row for param in preferred distribution table
+        #     row_for_param = np.where(pref_param_dist_const_with_level.rv_label==param)[0][0]
+            
+        #     # specific properties for landslide, use Wills et al. geo properties developed by Chris Bain
+        #     if pref_param_dist_const_with_level['mean'][row_for_param] == 'depends' and \
+        #         param in soil_prop_map:
+        #         # for each unique geologic unit
+        #         for each in unique_geo_unit:
+        #             # get rows with geo unit
+        #             rows_with_geo_unit = np.where(param_dist_table['wills_geo_unit_desc'].values==each)[0]
+        #             # intersection of geo unit and NaN
+        #             rows_comb = list(set(rows_nan).intersection(set(rows_with_geo_unit)))
+        #             # get preferred value from Chris Bain's table
+        #             rows_for_param = np.where(default_geo_prop['Unit Abbreviation'].values==each)[0][0]
+        #             # dist type
+        #             param_dist_table.loc[rows_comb,f'{param}_dist_type'] = 'lognormal'
+        #             # mean
+        #             pref_val = default_geo_prop[soil_prop_map[param]['mean']][rows_for_param]
+        #             param_dist_table.loc[rows_comb,f'{param}_mean'] = np.log(pref_val)
+        #             # sigma
+        #             pref_val = default_geo_prop[soil_prop_map[param]['cov']][rows_for_param]
+        #             param_dist_table.loc[rows_comb,f'{param}_sigma'] = \
+        #                 np.log(1+pref_val/100) * param_dist_table.loc[rows_comb,f'{param}_mean'].values
+        #             # low
+        #             pref_val = default_geo_prop[soil_prop_map[param]['low']][rows_for_param]
+        #             param_dist_table.loc[rows_comb,f'{param}_low'] = np.log(pref_val)
+        #             # high
+        #             pref_val = default_geo_prop[soil_prop_map[param]['high']][rows_for_param]
+        #             param_dist_table.loc[rows_comb,f'{param}_high'] = np.log(pref_val)
+                    
+        #             # # get preferred value from Slate's table
+        #             # rows_for_param = np.where(slate_geo_prop['Unit Abbreviation'].values==each)[0][0]
+        #             # pref_val = default_geo_prop[soil_prop_map[param]][rows_for_param]
+        #             # # check for lognormal and apply correction
+        #             # if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+        #             #     pref_val = np.log(pref_val)
+        #             # # update value
+        #             # param_dist_table.loc[rows_comb,f'{param}_mean'] = pref_val
+
+        #     # all other cases
+        #     else:
+        #         # loop through missing metrics
+        #         for met in met_list:
+        #             if met in params_with_missing_dist_metric[param]:
+        #                 # find rows where null
+        #                 rows_nan = np.where(param_dist_table[f'{param}_{met}'].isnull())[0]
+        #                 # get preferred value
+        #                 pref_val = pref_param_dist_const_with_level[met][row_for_param]
+        #                 # specifically for mean
+        #                 if met == 'mean':
+        #                     # get crossing from site datatable
+        #                     if pref_val == 'depends':
+        #                         # for pipe crossing parameters
+        #                         if param in crossing_params:
+        #                             # pass
+        #                             # if param == 'l_anchor':
+        #                             #     print(site_data.columns)
+        #                             if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+        #                                 param_dist_table.loc[rows_nan,f'{param}_mean'] = np.log(site_data[param][rows_nan].values)
+        #                             else:
+        #                                 param_dist_table.loc[rows_nan,f'{param}_mean'] = site_data[param][rows_nan].values
+                                    
+        #                         # for other cases that are assigned as "depends"
+        #                         # leave value as NaN (likely imposed to be determined later)
+        #                         else:
+        #                             # param_dist_table.loc[rows_nan,f'{param}_mean'] = np.nan
+        #                             param_dist_table.loc[rows_nan,f'{param}_mean'] = "event_dependent"
+        #                     # using internal GIS maps
+        #                     elif pref_val == 'internal gis dataset':
+        #                         # path for GIS file
+        #                         file_metadata = avail_data_summary['Parameters'][param]
+        #                         gis_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
+        #                         gis_crs = file_metadata['Datasets']['Set1']['CRS']
+        #                         locs.data = locs.sample_raster(
+        #                             table=locs.data,
+        #                             fpath=gis_fpath,
+        #                             crs=gis_crs,
+        #                             store_name=param
+        #                         )
+        #                         # check for lognormal and apply correction
+        #                         if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+        #                             pref_val = np.log(locs.data[param].values)
+        #                         else:
+        #                             pref_val = locs.data[param].values
+        #                         # pref_val = locs.data[param].values
+        #                         param_dist_table.loc[rows_nan,f'{param}_mean'] = pref_val[rows_nan]
+        #                     else:
+        #                         # check for lognormal and apply correction
+        #                         if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+        #                             pref_val = np.log(pref_val)
+        #                         param_dist_table.loc[rows_nan,f'{param}_mean'] = pref_val
+        #                 # specifically for sigma, check CoV
+        #                 elif met == 'sigma':
+        #                     if np.isnan(pref_val):
+        #                         # if nan, get from cov
+        #                         pref_val = pref_param_dist_const_with_level['cov'][row_for_param]
+        #                         # update distribution metric
+        #                         if param_dist_table[f'{param}_dist_type'][0] == 'normal':
+        #                             param_dist_table.loc[rows_nan,f'{param}_sigma'] = \
+        #                                 pref_val/100 * param_dist_table.loc[rows_nan,f'{param}_mean'].values
+        #                         elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+        #                             param_dist_table.loc[rows_nan,f'{param}_sigma'] = \
+        #                                 np.log(1+pref_val/100) * param_dist_table.loc[rows_nan,f'{param}_mean'].values
+        #                     else:
+        #                         param_dist_table.loc[rows_nan,f'{param}_sigma'] = pref_val
+        #                 else:
+        #                     # for specific cases where it says "depends"
+        #                     if pref_val == 'depends':
+        #                         if param == 'dist_coast' or param == 'dist_river' or param == 'dist_water':
+        #                             if met == 'low':
+        #                                 # check for lognormal and apply correction
+        #                                 if param_dist_table[f'{param}_dist_type'][0] == 'normal':
+        #                                     pref_val = np.maximum(param_dist_table[f'{param}_mean'].values - 50, 0) # limit to 0
+        #                                 elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+        #                                     pref_val = np.log(np.maximum(np.exp(param_dist_table[f'{param}_mean'].values) - 50, 0)) # limit to 0
+        #                                 # pref_val = np.maximum(param_dist_table[f'{param}_mean'].values - 50, 0) # limit to 0
+        #                                 param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val[rows_nan]
+        #                             elif met == 'high':
+        #                                 # check for lognormal and apply correction
+        #                                 if param_dist_table[f'{param}_dist_type'][0] == 'normal':
+        #                                     pref_val = param_dist_table[f'{param}_mean'].values + 50 # 50 km over mean
+        #                                 elif param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+        #                                     pref_val = param_dist_table[f'{param}_mean'] + 50 # 50 km over mean
+        #                                 # pref_val = param_dist_table[f'{param}_mean'].values + 50 # 50 km over mean
+        #                                 param_dist_table.loc[rows_nan,f'{param}_{met}'] = \
+        #                                     param_dist_table.loc[rows_nan,f'{param}_mean'] + 50 # 50 km over mean
+        #                                 param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val[rows_nan]
+        #                     else:
+        #                         # for beta_crossing specifically at level 1
+        #                         if param == 'beta_crossing' and param_dist_table['level_to_run'][0] == 1:
+        #                             if met == 'low':
+        #                                 pref_val = 90 # limit low to 90
+        #                         # check for lognormal and apply correction
+        #                         if param_dist_table[f'{param}_dist_type'][0] == 'lognormal':
+        #                             pref_val = np.log(pref_val)
+        #                         if met == 'low' or met == 'high':
+        #                             if np.isnan(pref_val):
+        #                                 if met == 'low':
+        #                                     pref_val = -np.inf
+        #                                 elif met == 'high':
+        #                                     pref_val = np.inf
+        #                         param_dist_table.loc[rows_nan,f'{param}_{met}'] = pref_val
+        #     # remove param from missing param list
+        #     params_with_missing_dist_metric.pop(param,None)          
     
     # additional backend limitations
     param_list = list(param_dist_meta) # all params
@@ -1950,8 +2251,8 @@ def preprocess_cpt_data(
     sm_dir=None, sm_events=None,
     # for user-defined ruptures
     rup_fpath=None,
-    # for sampling
-    num_epi_input_samples=50,
+    # for sampling and Forward Euler differentiation for PC
+    num_epi_input_samples=50, forward_euler_multiplier=1.01,
     # misc.
     display_after_n_event=100
 ):
@@ -1971,9 +2272,11 @@ def preprocess_cpt_data(
     # -----------------------------------------------------------
     # get CPT directory
     cpt_folder_name = edp_setup_config['Type']['Liquefaction']['Method']['CPTBased']['CPTFolderInUserProvidedGISFolder']
+    col_with_gw_depth = edp_setup_config['Type']['Liquefaction']['Method']['CPTBased']['ColumnInCPTSummaryWithGWTable']
     cpt_base_dir = os.path.join(user_prov_gis_dir,cpt_folder_name)
     # read CPT data
-    cpt_meta_wgs84, cpt_meta_utm, cpt_data, n_cpt = process_cpt_spt.read_cpt_data(cpt_base_dir)
+    cpt_meta_wgs84, cpt_meta_utm, cpt_data, n_cpt = \
+        process_cpt_spt.read_cpt_data(cpt_base_dir, col_with_gw_depth)
     cpt_loc_headers = {
         'lon_header': 'Longitude',
         'lat_header': 'Latitude'
@@ -2068,18 +2371,29 @@ def preprocess_cpt_data(
     # loop through additional CPT analysis params)
     for param in ['gw_depth','slope']:
         row = np.where(rvs_input.Name.values==param)[0][0]
+        # if param == 'gw_depth':
+        #     param_source = 'From infrastructure table or enter value'
+        # else:
+        #     param_source = rvs_input.loc[row,'Source']
         param_source = rvs_input.loc[row,'Source']
         param_metadata = avail_data_summary['Parameters'][param]
         store_name = param_metadata['ColumnNameToStoreAs']
         cpt_input_dist[param] = {}
-        # get input dist for GW depth
-        if param_source == 'Preferred':
-            # get preferred distribution
-            curr_param_dist_pref = param_dist_pref.loc[param_dist_pref.rv_label==param].to_dict('list')
-            for each in curr_param_dist_pref:
-                curr_param_dist_pref[each] = curr_param_dist_pref[each][0]
-            # 1) dist type
-            cpt_input_dist[param]['dist_type'] = curr_param_dist_pref['dist_type']
+        # # get input dist for GW depth
+        # if param_source == 'Preferred':
+        # get preferred distribution
+        curr_param_dist_pref = param_dist_pref.loc[param_dist_pref.rv_label==param].to_dict('list')
+        for each in curr_param_dist_pref:
+            curr_param_dist_pref[each] = curr_param_dist_pref[each][0]
+        # 1) dist type
+        cpt_input_dist[param]['dist_type'] = curr_param_dist_pref['dist_type']
+        # 2) get mean
+        #    - for gw_depth, use data from column
+        #    - for slope, use internal gis map
+        # gw_depth
+        if param == 'gw_depth':
+            store_name = col_with_gw_depth
+        elif param == 'slope':
             # 2) sample mean from map
             pref_gis_fpath = os.path.join(opensra_dir,param_metadata['Datasets']['Set1']['Path'])
             pref_gis_crs = param_metadata['Datasets']['Set1']['CRS']
@@ -2090,80 +2404,98 @@ def preprocess_cpt_data(
                 dtype='float',
                 crs=pref_gis_crs
             )[store_name].values
-            cpt_input_dist[param]['mean'] = cpt_meta_wgs84[store_name].values
-            # if lognormal, apply ln
-            if cpt_input_dist[param]['dist_type'] == 'lognormal':
-                cpt_input_dist[param]['mean'] = np.log(cpt_input_dist[param]['mean'])
-            # 3) sigma
-            # check if sigma or cov is given in preferred dist table
-            if ~np.isnan(curr_param_dist_pref['sigma']):
-                # sigma is available, use it directly
-                cpt_input_dist[param]['sigma'] = ones_arr.copy() * curr_param_dist_pref['sigma']
+        cpt_input_dist[param]['mean'] = cpt_meta_wgs84[store_name].values
+        # if lognormal, apply ln
+        if cpt_input_dist[param]['dist_type'] == 'lognormal':
+            cpt_input_dist[param]['mean'] = np.log(cpt_input_dist[param]['mean'])
+        # 3) sigma
+        # check if sigma or cov is given in preferred dist table
+        if ~np.isnan(curr_param_dist_pref['sigma']):
+            # sigma is available, use it directly
+            cpt_input_dist[param]['sigma'] = ones_arr.copy() * curr_param_dist_pref['sigma']
+        else:
+            # calculate sigma from cov
+            if cpt_input_dist[param]['dist_type'] == 'normal':
+                cpt_input_dist[param]['sigma'] = \
+                    ones_arr.copy() * curr_param_dist_pref['cov']/100 * cpt_meta_wgs84['meanGWT'].values
+            elif cpt_input_dist[param]['dist_type'] == 'lognormal':
+                # cpt_input_dist[param]['sigma'] = ones_arr.copy() * np.log(1+curr_param_dist_pref['cov']/100)
+                cpt_input_dist[param]['sigma'] = \
+                    ones_arr.copy() * np.sqrt(np.log((curr_param_dist_pref['cov']/100)**2 + 1))
+        # 4) low and high
+        for each in ['low','high']:
+            if np.isnan(curr_param_dist_pref[each]):
+                if each == 'low':
+                    cpt_input_dist[param][each] = -np.inf
+                elif each == 'high':
+                    cpt_input_dist[param][each] = np.inf
             else:
-                # calculate sigma from cov
-                if cpt_input_dist[param]['dist_type'] == 'normal':
-                    cpt_input_dist[param]['sigma'] = curr_param_dist_pref['cov']/100 * cpt_meta_wgs84['meanGWT'].values
-                elif cpt_input_dist[param]['dist_type'] == 'lognormal':
-                    cpt_input_dist[param]['sigma'] = ones_arr.copy() * np.log(1+curr_param_dist_pref['cov']/100)
-            # 4) low and high
-            for each in ['low','high']:
-                if np.isnan(curr_param_dist_pref[each]):
-                    if each == 'low':
+                cpt_input_dist[param][each] = float(curr_param_dist_pref[each])
+                if cpt_input_dist[param]['dist_type'] == 'lognormal':
+                    if each == 'low' and cpt_input_dist[param][each] == 0:
                         cpt_input_dist[param][each] = -np.inf
-                    elif each == 'high':
-                        cpt_input_dist[param][each] = np.inf
-                else:
-                    cpt_input_dist[param][each] = float(curr_param_dist_pref[each])
-                    if cpt_input_dist[param]['dist_type'] == 'lognormal':
-                        if each == 'low' and cpt_input_dist[param][each] == 0:
-                            cpt_input_dist[param][each] = -np.inf
-                        else:
-                            cpt_input_dist[param][each] = np.log(cpt_input_dist[param][each])
-                # multiply by ones array
-                cpt_input_dist[param][each] = cpt_input_dist[param][each] * ones_arr.copy()
-        elif param_source == 'From infrastructure table or enter value':
-            # 1) dist_type
-            cpt_input_dist[param]['dist_type'] = rvs_input.loc[row,'Distribution Type']
-            # 2) collect mean for CPTs from input table
-            # check if source is a float, if so then it's a value, otherwise treat it as a column header
-            try:
-                val_float = float(rvs_input.loc[row,'Mean or Median'])
-                cpt_meta_wgs84[store_name] = val_float
-                cpt_input_dist[param]['mean'] = val_float * ones_arr.copy()
-            except:
-                # treat as column and look for values from site data table
-                cpt_meta_wgs84[store_name] = cpt_meta_wgs84[rvs_input.loc[row,'Mean or Median']].values
-                cpt_input_dist[param]['mean'] = cpt_meta_wgs84[rvs_input.loc[row,'Mean or Median']].values
-            # if lognormal, apply ln
-            if cpt_input_dist[param]['dist_type'] == 'lognormal':
-                cpt_input_dist[param]['mean'] = np.log(cpt_input_dist[param]['mean'])
-            # 3) sigma
-            # check if sigma or cov is given in preferred dist table
-            if ~np.isnan(rvs_input.loc[row,'Sigma']):
-                # sigma is available, use it directly
-                cpt_input_dist[param]['sigma'] = ones_arr.copy() * rvs_input.loc[row,'Sigma']
-            else:
-                # calculate sigma from cov
-                if cpt_input_dist[param]['dist_type'] == 'normal':
-                    cpt_input_dist[param]['sigma'] = rvs_input.loc[row,'CoV']/100 * cpt_input_dist[param]['mean']
-                elif cpt_input_dist[param]['dist_type'] == 'lognormal':
-                    cpt_input_dist[param]['sigma'] = ones_arr.copy() * np.log(1+rvs_input.loc[row,'CoV']/100)
-            # 4) low and high
-            for each in ['low','high']:
-                if np.isnan(rvs_input.loc[row,low_high_map[each]]):
-                    if each == 'low':
-                        cpt_input_dist[param][each] = -np.inf
-                    elif each == 'high':
-                        cpt_input_dist[param][each] = np.inf
-                else:
-                    cpt_input_dist[param][each] = float(rvs_input.loc[row,low_high_map[each]])
-                    if cpt_input_dist[param]['dist_type'] == 'lognormal':
-                        if each == 'low' and cpt_input_dist[param][each] == 0:
-                            cpt_input_dist[param][each] = -np.inf
-                        else:
-                            cpt_input_dist[param][each] = np.log(cpt_input_dist[param][each])
-                # multiply by ones array
-                cpt_input_dist[param][each] = cpt_input_dist[param][each] * ones_arr.copy()
+                    else:
+                        cpt_input_dist[param][each] = np.log(cpt_input_dist[param][each])
+            # multiply by ones array
+            cpt_input_dist[param][each] = cpt_input_dist[param][each] * ones_arr.copy()
+        # elif param_source == 'From infrastructure table or enter value':
+        #     # 1) dist_type
+        #     cpt_input_dist[param]['dist_type'] = rvs_input.loc[row,'Distribution Type']
+        #     # 2) collect mean for CPTs from input table
+        #     # check if source is a float, if so then it's a value, otherwise treat it as a column header
+        #     if param == 'gw_depth':
+        #         mean_val = 'Mean GWT'
+        #     else:
+        #         mean_val = rvs_input.loc[row,'Mean or Median']
+        #     try:
+        #         # val_float = float(rvs_input.loc[row,'Mean or Median'])
+        #         val_float = float(mean_val)
+        #         cpt_meta_wgs84[store_name] = val_float
+        #         cpt_input_dist[param]['mean'] = val_float * ones_arr.copy()
+        #     except:
+        #         # treat as column and look for values from site data table
+        #         if mean_val in cpt_meta_wgs84:
+        #             col_name = mean_val
+        #         elif mean_val.upper() in cpt_meta_wgs84:
+        #             col_name = mean_val.upper()
+        #         else:
+        #             raise ValueError(f'Cannot identify column in cpt_meta_wgs84 given column name for "{param}"')
+        #         cpt_meta_wgs84[store_name] = cpt_meta_wgs84[mean_val].values
+        #         cpt_input_dist[param]['mean'] = cpt_meta_wgs84[mean_val].values
+        #     # if lognormal, apply ln
+        #     if cpt_input_dist[param]['dist_type'] == 'lognormal':
+        #         cpt_input_dist[param]['mean'] = np.log(cpt_input_dist[param]['mean'])
+        #     # 3) sigma
+        #     # check if sigma or cov is given in preferred dist table
+        #     if ~np.isnan(rvs_input.loc[row,'Sigma']):
+        #         # sigma is available, use it directly
+        #         cpt_input_dist[param]['sigma'] = ones_arr.copy() * rvs_input.loc[row,'Sigma']
+        #     else:
+        #         # calculate sigma from cov
+        #         if cpt_input_dist[param]['dist_type'] == 'normal':
+        #             # cpt_input_dist[param]['sigma'] = rvs_input.loc[row,'CoV']/100 * cpt_input_dist[param]['mean']
+        #             cpt_input_dist[param]['sigma'] = \
+        #                 ones_arr.copy() * rvs_input.loc[row,'CoV']/100 * cpt_input_dist[param]['mean']
+        #         elif cpt_input_dist[param]['dist_type'] == 'lognormal':
+        #             # cpt_input_dist[param]['sigma'] = ones_arr.copy() * np.log(1+rvs_input.loc[row,'CoV']/100)
+        #             cpt_input_dist[param]['sigma'] = \
+        #                 ones_arr.copy() * np.sqrt(np.log((curr_param_dist_pref['CoV']/100)**2 + 1))
+        #     # 4) low and high
+        #     for each in ['low','high']:
+        #         if np.isnan(rvs_input.loc[row,low_high_map[each]]):
+        #             if each == 'low':
+        #                 cpt_input_dist[param][each] = -np.inf
+        #             elif each == 'high':
+        #                 cpt_input_dist[param][each] = np.inf
+        #         else:
+        #             cpt_input_dist[param][each] = float(rvs_input.loc[row,low_high_map[each]])
+        #             if cpt_input_dist[param]['dist_type'] == 'lognormal':
+        #                 if each == 'low' and cpt_input_dist[param][each] == 0:
+        #                     cpt_input_dist[param][each] = -np.inf
+        #                 else:
+        #                     cpt_input_dist[param][each] = np.log(cpt_input_dist[param][each])
+        #         # multiply by ones array
+        #         cpt_input_dist[param][each] = cpt_input_dist[param][each] * ones_arr.copy()
     logging.info(f'- Obtained distributions for CPT input parameters: "gw_depth" and "slope"')
     
     # -----------------------------------------------------------
@@ -2207,9 +2539,6 @@ def preprocess_cpt_data(
     # get lat lon of nodes
     nodes_lat_1d, nodes_lon_1d = transformer_utmzone10_to_wgs84.transform(
         gdf_nodes_utm.x.values, gdf_nodes_utm.y.values)
-    # reshape nodes for creating processed output
-    # nodes_lon_mesh = nodes_lon_1d.reshape((n_col,n_row))
-    # nodes_lat_mesh = nodes_lat_1d.reshape((n_col,n_row))
     logging.info(f'- Generated grid around CPTs:')
     logging.info(f'\t- buffer: {buffer} m')
     logging.info(f'\t- grid spacing: {grid_spacing} m')
@@ -2280,44 +2609,31 @@ def preprocess_cpt_data(
     logging.info(f'- Obtained additional liquefaction analysis paramteres from setup_config:')
 
     # -----------------------------------------------------------
-    # processing for freeface feature
+    # processing for freeface feature or L/H ratios
     if freeface_fpath is not None:
         gdf_freeface_wgs84 = read_file(freeface_fpath, crs=epsg_wgs84)
         gdf_freeface_utm = gdf_freeface_wgs84.to_crs(epsg_utm_zone10)
-        
-        # sample DEM at grid nodes for free-face
-        if freeface_fpath is not None:
-            # sample DEM at grid nodes
-            param = 'dem'
-            dem_file_metadata = avail_data_summary['Parameters'][param]
-            dem_store_name = dem_file_metadata['ColumnNameToStoreAs']
-            dem_gis_fpath = os.path.join(opensra_dir,dem_file_metadata['Datasets']['Set1']['Path'])
-            dem_gis_crs = dem_file_metadata['Datasets']['Set1']['CRS']
-            cpt_meta_wgs84[dem_store_name] = cpt_locs.sample_raster(
-                table=cpt_locs.data.copy(),
-                fpath=dem_gis_fpath,
-                store_name=dem_store_name,
-                dtype='float',
-                crs=dem_gis_crs
-            )[dem_store_name].values
-
         # for each node, get shortest distance to each freeface feature
         cpt_to_freeface_dist = np.asarray([
             cpt_meta_wgs84.to_crs(epsg_utm_zone10).distance(gdf_freeface_utm.geometry[i])
             for i in range(gdf_freeface_utm.shape[0])
         ])
-        # for each node, find minimum distance on all features
+        # for each CPT, find minimum distance on all features
         cpt_meta_wgs84['FreefaceDist_[m]'] = np.min(cpt_to_freeface_dist,axis=0)
-        # get freeface L/H for each node
-        cpt_meta_wgs84['LH_Ratio'] = cpt_meta_wgs84['FreefaceDist_[m]']/cpt_meta_wgs84[dem_store_name]
+        # for each CPT get closest freeface feature and get height from attribute
+        _, nearest_freeface_feature = GeoSeries(gdf_freeface_utm.geometry).sindex.nearest(cpt_meta_wgs84.to_crs(epsg_utm_zone10).geometry)
+        cpt_meta_wgs84['FreefaceHeight_[m]'] = gdf_freeface_utm['Height_m'].loc[nearest_freeface_feature].values
+        # get freeface L/H for each CPT
+        cpt_meta_wgs84['LH_Ratio'] = cpt_meta_wgs84['FreefaceDist_[m]']/cpt_meta_wgs84['FreefaceHeight_[m]']
         cpt_meta_wgs84['LH_Ratio'] = np.maximum(cpt_meta_wgs84['LH_Ratio'],4) # set lower limit to 4
-        logging.info(f'- Loaded free-face feature, sampled CPTs from DEM map, and computed L/H ratios')
+        logging.info(f'- Loaded free-face feature and computed L/H ratios')
 
     # -----------------------------------------------------------
     # go through each liquefaction consequence
     gdf_poly_hull = {}
     lateral_spread_control_case_by_event = []
-    l_h_average_by_event = []
+    amu_by_event = []
+    bmu_by_event = []
     time_init = time.time()
     logging.info(f'- Looping through events to calculate liquefaction-induced deformation for CPTs...')
     event_count = 0
@@ -2342,6 +2658,15 @@ def preprocess_cpt_data(
             cpt_im_dist_info[each]['sigma'] = np.maximum(
                 cpt_im_dist_info[each]['sigma'],0.001
             )
+        # forward IM for gettning derivatives
+        cpt_im_dist_info_forward = {}
+        for each in ['pga','pgv']:
+            cpt_im_dist_info_forward[each] = {
+                'mean': cpt_im_dist_info[each]['mean'].copy() * forward_euler_multiplier,
+                'dist_type': cpt_im_dist_info[each]['dist_type']
+            }
+            for met in ['sigma','sigma_mu']:
+                cpt_im_dist_info_forward[each][met] = cpt_im_dist_info[each][met].copy()
         # special mapping keys for rupture metadata
         rup_map_key = {
             'magnitude': 'mag',
@@ -2357,11 +2682,13 @@ def preprocess_cpt_data(
         #####################################################
         # initialize displacement array
         pgdef = {}
+        pgdef_forward = {}
         lateral_spread_control_case = np.empty((n_cpt, num_epi_input_samples),dtype="<U20")
         lateral_spread_control_case[:,:] = 'na' # defautl to ground slope
-        l_h_at_nodes_mapped_from_cpts = []
+        # l_h_at_nodes_mapped_from_cpts = []
         for each in haz_to_run:
             pgdef[each] = null_arr_cpt_sample.copy()
+            pgdef_forward[each] = null_arr_cpt_sample.copy()
         # additional processing that depends on other input params
         for i,each in enumerate(cpt_data):
             # dimensions
@@ -2376,6 +2703,21 @@ def preprocess_cpt_data(
                 process_cpt_spt.get_cpt_stress(qc, fs, z, cpt_input_samples['gw_depth'][i], gamma_water=9.81)
             _, Qtn, fn, ic, _ = process_cpt_spt.get_sbt_index(qc, fs, tot_sig_v0, eff_sig_v0, pa=101.3)
             
+            # additional preprocessing before calculating FS
+            # additional screening for fs_liq and also get sum of thickness with FS<1
+            # liq_thick = null_arr_sample.copy()
+            # get layer thickness
+            dz = np.hstack([z[0],np.diff(each.z.values)])
+            # if above gw_depth or below z_cutoff, also set to 4
+            z_repeat = z.repeat(num_epi_input_samples).reshape((-1, num_epi_input_samples))
+            dz_repeat = dz.repeat(num_epi_input_samples).reshape((-1, num_epi_input_samples))
+            # reshape groundwater depth
+            gw_depth_repeat = cpt_input_samples['gw_depth'][i].repeat(n_depth).reshape((-1, num_epi_input_samples))
+            # get relative density
+            dr = process_cpt_spt.get_cpt_dr(qc, tot_sig_v0, eff_sig_v0, pa=float(101.3))
+            
+            #############################
+            # at current PGA
             # get weighted fs_liq and qc1ncs
             fs_liq, _ = process_cpt_spt.get_cpt_based_fs_liq(
                 qc, fs, z, tot_sig_v0, eff_sig_v0,
@@ -2384,35 +2726,17 @@ def preprocess_cpt_data(
                 mag=cpt_rup_info['mag'],
                 weight_r09=weight_r09, pa=101.3
             )
-            # limit to 4
-            fs_liq = np.minimum(fs_liq,4)
+            fs_liq = np.minimum(fs_liq,4) # limit to 4
             
             # continue rest of analysis for current CPT for deformation if min(fs_liq) M 4:
             if np.min(fs_liq) < 4:
-                
-                # additional screening for fs_liq and also get sum of thickness with FS<1
-                liq_thick = null_arr_sample.copy()
-                # get layer thickness
-                dz = np.hstack([z[0],np.diff(each.z.values)])
-                # if above gw_depth or below z_cutoff, also set to 4
-                z_repeat = z.repeat(num_epi_input_samples).reshape((-1, num_epi_input_samples))
-                dz_repeat = dz.repeat(num_epi_input_samples).reshape((-1, num_epi_input_samples))
-                # reshape groundwater depth
-                gw_depth_repeat = cpt_input_samples['gw_depth'][i].repeat(n_depth).reshape((-1, num_epi_input_samples))
                 # limit factor of safety to 4 based on cutoff depth and groundwater depth
-                fs_liq[np.logical_or(
-                    z_repeat<=gw_depth_repeat,
-                    z_repeat>z_cutoff
-                )] = 4
-                
+                fs_liq[np.logical_or(z_repeat<=gw_depth_repeat,z_repeat>z_cutoff)] = 4
                 # get thickness of potentially liquefiable layeres
                 liq_thick = dz_repeat.copy()
-                liq_thick[fs_liq>=1] = 0
-                # sum up to get total thickness
+                liq_thick[fs_liq>=1] = 0 # set liquefiable layer thickness to 0 if FS > 1
+                # sum up to get total liquefiable thickness
                 liq_thick = np.sum(liq_thick,axis=0)
-                # get relative density
-                dr = process_cpt_spt.get_cpt_dr(qc, tot_sig_v0, eff_sig_v0, pa=float(101.3))
-                
                 # run lateral spread
                 if 'lateral_spread' in haz_to_run:
                     # get weighted maximum shear strain
@@ -2423,7 +2747,6 @@ def preprocess_cpt_data(
                     ldi = np.sum(gamma_max/100*dz_repeat*(1-(1/15)*z_repeat),axis=0)
                     # if total liquefiable layer thickness < 0.3 meter, set LDI to 0
                     ldi[liq_thick<0.3] = 0
-                    
                     # get lateral spread displacement by ground slope, m
                     # limit ground slope displacement to between 0.2% and 3.5%
                     # for slope = 3.5 to 5%, use 3.5%
@@ -2435,14 +2758,12 @@ def preprocess_cpt_data(
                     if freeface_fpath is None:
                         pgdef['lateral_spread'][i] = ld_ground_slope
                         lateral_spread_control_case[i] = 'ground_slope'
-                        l_h_at_nodes_mapped_from_cpts.append([])
                     else:
                         lh_ratio_curr_cpt = cpt_meta_wgs84['LH_Ratio'].values[i]
                         # if no L/H ratio is less than 50, then skip calculations
                         if lh_ratio_curr_cpt > 50:
                             pgdef['lateral_spread'][i] = ld_ground_slope
                             lateral_spread_control_case[i] = 'ground_slope'
-                            l_h_at_nodes_mapped_from_cpts.append([])
                         else:
                             # get freeface displacement and use max of ground slope and freeface disp
                             ld_freeface = 6*(lh_ratio_curr_cpt**(-0.8)) * ldi
@@ -2453,9 +2774,6 @@ def preprocess_cpt_data(
                             lateral_spread_control_case[i][where_freeface_pgdef_higher] = 'freeface'
                             where_ground_slope_pgdef_higher = np.where(ld_ground_slope>ld_freeface)[0]
                             lateral_spread_control_case[i][where_ground_slope_pgdef_higher] = 'ground_slope'
-                            # trach l/h for CPT pgd samples where freeface controls
-                            l_h_at_nodes_mapped_from_cpts.append([lh_ratio_curr_cpt]*len(where_freeface_pgdef_higher))
-                
                 if 'settlement' in haz_to_run:
                     # get volumetric strain
                     eps_vol = process_cpt_spt.get_cpt_based_vol_strain(fs_liq.copy(), dr.copy(), weight_z04)
@@ -2463,39 +2781,107 @@ def preprocess_cpt_data(
                     pgdef['settlement'][i] = np.sum(eps_vol/100*dz_repeat*(1-(1/15)*z_repeat),axis=0)
                     # if total liquefiable layer thickness < 0.3 meter, set deformation to 0
                     pgdef['settlement'][i][liq_thick<0.3] = 0
+            
+            ######
+            # at forward PGA (for getting derivatives)
+            # get weighted fs_liq and qc1ncs
+            fs_liq_forward, _ = process_cpt_spt.get_cpt_based_fs_liq(
+                qc, fs, z, tot_sig_v0, eff_sig_v0,
+                Qtn, fn, ic,
+                pga=np.exp(cpt_im_dist_info_forward['pga']['mean']),
+                mag=cpt_rup_info['mag'],
+                weight_r09=weight_r09, pa=101.3
+            )
+            fs_liq_forward = np.minimum(fs_liq_forward,4) # limit to 4
+            # continue rest of analysis for current CPT for deformation if min(fs_liq) M 4:
+            if np.min(fs_liq_forward) < 4:
+                # limit factor of safety to 4 based on cutoff depth and groundwater depth
+                fs_liq_forward[np.logical_or(z_repeat<=gw_depth_repeat,z_repeat>z_cutoff)] = 4
+                # get thickness of potentially liquefiable layeres
+                liq_thick = dz_repeat.copy()
+                liq_thick[fs_liq_forward>=1] = 0 # set liquefiable layer thickness to 0 if FS > 1
+                # sum up to get total liquefiable thickness
+                liq_thick = np.sum(liq_thick,axis=0)
+                # run lateral spread
+                if 'lateral_spread' in haz_to_run:
+                    # get weighted maximum shear strain
+                    gamma_max = process_cpt_spt.get_cpt_based_shear_strain(fs_liq_forward.copy(), dr.copy(), weight_z04)
+                    # get slope in percents
+                    slope_percent = np.arctan(np.radians(cpt_input_samples['slope'][i]))*100
+                    # get lateral spread index
+                    ldi = np.sum(gamma_max/100*dz_repeat*(1-(1/15)*z_repeat),axis=0)
+                    # if total liquefiable layer thickness < 0.3 meter, set LDI to 0
+                    ldi[liq_thick<0.3] = 0
+                    # get lateral spread displacement by ground slope, m
+                    # limit ground slope displacement to between 0.2% and 3.5%
+                    # for slope = 3.5 to 5%, use 3.5%
+                    # for slope < 0.2% and slope > 5%, no displacement
+                    slope_percent[np.logical_and(slope_percent>3.5,slope_percent<=5)] = 3.5
+                    ld_ground_slope = ldi * (slope_percent + 0.2) # eq. 6, Zhang et al. (2004)
+                    ld_ground_slope[np.logical_and(slope_percent<0.2,slope_percent>5)] = 0                
+                    # if freeface feature is not given, set PGDef to ground slope displacement
+                    if freeface_fpath is None:
+                        pgdef_forward['lateral_spread'][i] = ld_ground_slope
+                        lateral_spread_control_case[i] = 'ground_slope'
+                    else:
+                        lh_ratio_curr_cpt = cpt_meta_wgs84['LH_Ratio'].values[i]
+                        # if no L/H ratio is less than 50, then skip calculations
+                        if lh_ratio_curr_cpt > 50:
+                            pgdef_forward['lateral_spread'][i] = ld_ground_slope
+                        else:
+                            # get freeface displacement and use max of ground slope and freeface disp
+                            ld_freeface = 6*(lh_ratio_curr_cpt**(-0.8)) * ldi
+                            # set to PGDef                        
+                            pgdef_forward['lateral_spread'][i] = np.maximum(ld_ground_slope,ld_freeface)
+                if 'settlement' in haz_to_run:
+                    # get volumetric strain
+                    eps_vol = process_cpt_spt.get_cpt_based_vol_strain(fs_liq_forward.copy(), dr.copy(), weight_z04)
+                    # get settlement, m
+                    pgdef_forward['settlement'][i] = np.sum(eps_vol/100*dz_repeat*(1-(1/15)*z_repeat),axis=0)
+                    # if total liquefiable layer thickness < 0.3 meter, set deformation to 0
+                    pgdef_forward['settlement'][i][liq_thick<0.3] = 0
+        
         
         # go through each liquefaction consequence
         mean_pgdef_per_node_over_samples = {}
+        mean_pgdef_forward_per_node_over_samples = {}
         for each in pgdef:
             # processing on LDs
             # get mean LD for each node
             if weight_scheme == 'average':
-                # average deformation on node
+                # average deformation on node - current PGA
                 mean_pgdef_per_node = [
                     pgdef[each][ind,:].mean(axis=0)
                     if len(ind)>0 else np.zeros(num_epi_input_samples)
                     for i,ind in enumerate(cpts_per_node)
                 ]
-            elif weight_scheme == 'distance':
-                # determine distance between each node to the CPTs it is tied to
-                node_to_cpt_dists = [
-                    [gdf_nodes_utm[i].distance(cpt_meta_utm.geometry[each_cpt]) for each_cpt in ind]
+                # average deformation on node - target PGA
+                mean_pgdef_forward_per_node = [
+                    pgdef_forward[each][ind,:].mean(axis=0)
+                    if len(ind)>0 else np.zeros(num_epi_input_samples)
                     for i,ind in enumerate(cpts_per_node)
                 ]
-                # distance weighted deformation on node
-                mean_pgdef_per_node = []
-                for i,ind in enumerate(cpts_per_node):
-                    mean_pgdef_i = np.zeros((num_epi_input_samples))
-                    if len(ind)>0:
-                        ld_for_ind = pgdef[each][ind,:]
-                        dist_for_ind = np.asarray(node_to_cpt_dists[i])
-                        sum_inv_sqrt_dist = np.sum(1/dist_for_ind**2)
-                        for j in range(len(ind)):
-                            mean_pgdef_i += ld_for_ind[j,:]/node_to_cpt_dists[i][j]**2
-                        mean_pgdef_i = mean_pgdef_i / sum_inv_sqrt_dist
-                    mean_pgdef_per_node.append(mean_pgdef_i)
+            # elif weight_scheme == 'distance':
+            #     # determine distance between each node to the CPTs it is tied to
+            #     node_to_cpt_dists = [
+            #         [gdf_nodes_utm[i].distance(cpt_meta_utm.geometry[each_cpt]) for each_cpt in ind]
+            #         for i,ind in enumerate(cpts_per_node)
+            #     ]
+            #     # distance weighted deformation on node
+            #     mean_pgdef_per_node = []
+            #     for i,ind in enumerate(cpts_per_node):
+            #         mean_pgdef_i = np.zeros((num_epi_input_samples))
+            #         if len(ind)>0:
+            #             ld_for_ind = pgdef[each][ind,:]
+            #             dist_for_ind = np.asarray(node_to_cpt_dists[i])
+            #             sum_inv_sqrt_dist = np.sum(1/dist_for_ind**2)
+            #             for j in range(len(ind)):
+            #                 mean_pgdef_i += ld_for_ind[j,:]/node_to_cpt_dists[i][j]**2
+            #             mean_pgdef_i = mean_pgdef_i / sum_inv_sqrt_dist
+            #         mean_pgdef_per_node.append(mean_pgdef_i)
             # get mean LD over all samples
             mean_pgdef_per_node_over_samples[each] = np.mean(mean_pgdef_per_node,axis=1)
+            mean_pgdef_forward_per_node_over_samples[each] = np.mean(mean_pgdef_forward_per_node,axis=1)
             
         # collect all controlling cases for lateral spread and find most governing (most frequent)
         if 'lateral_spread' in haz_to_run:
@@ -2505,15 +2891,29 @@ def preprocess_cpt_data(
                 for i,ind in enumerate(cpts_per_node)
             ]
             
-        # get average of l/h based on pgdefs where freeface controls
-        if 'lateral_spread' in haz_to_run:
-            # first fltten list
-            l_h_at_nodes_mapped_from_cpts = [item for sublist in l_h_at_nodes_mapped_from_cpts for item in sublist]
-            # get average, or set to NaN if empty
-            if len(l_h_at_nodes_mapped_from_cpts) == 0:
-                l_h_average_by_event.append(np.nan)
-            else:
-                l_h_average_by_event.append(np.mean(l_h_at_nodes_mapped_from_cpts))
+        # estimate d(pgdef)/d(pga) at each node
+        tangent_intercept = {}
+        tangent_slope = {}
+        amu = {}
+        bmu = {}
+        # get PGAs        
+        curr_ln_pga = cpt_im_dist_info['pga']['mean']
+        curr_ln_pga_forward = cpt_im_dist_info_forward['pga']['mean']
+        tangent_slope_denom = curr_ln_pga_forward - curr_ln_pga
+        # for each hazard
+        for each in mean_pgdef_per_node_over_samples:
+            # pull values out
+            pgdef_at_curr_pga = mean_pgdef_per_node_over_samples[each].copy()
+            pgdef_at_forward_pga = mean_pgdef_forward_per_node_over_samples[each].copy()
+            # set pgdef == 0 to 1e-5 to avoid ln(0)
+            pgdef_at_curr_pga[pgdef_at_curr_pga==0] = 1e-5
+            pgdef_at_forward_pga[pgdef_at_forward_pga==0] = 1e-5
+            # calculate and store slope
+            tangent_slope[each] = (np.log(pgdef_at_forward_pga) - np.log(pgdef_at_curr_pga))/tangent_slope_denom
+            # store intercept
+            tangent_intercept[each] = np.log(pgdef_at_curr_pga)
+            amu[each] = tangent_slope[each].copy()
+            bmu[each] = tangent_slope[each] * (-pgdef_at_curr_pga) + tangent_intercept[each]
 
         # perform the following to get hull (i.e., deformation polygon):
         # 1) gdf of points for current sample given ld_cutoff
@@ -2545,9 +2945,10 @@ def preprocess_cpt_data(
                     0, # mm
                     None
                 ]
+                amu_by_event.append(0)
+                bmu_by_event.append(0)
                 if each == 'lateral_spread':
                     lateral_spread_control_case_by_event.append('')
-                    l_h_at_nodes_mapped_from_cpts
             else:
                 # 2) average aspect for points within hull
                 avg_aspect = preproc_hull.aspect.mean()
@@ -2564,13 +2965,20 @@ def preprocess_cpt_data(
                     np.round(avg_pgdef,decimals=4), # mm
                     poly_hull
                 ]
-                # for each deformation polygon, find all grid nodes within in, then find controlling lateral spread case
+                # for each deformation polygon, find all grid nodes within in
+                intersect_node = gdf_nodes_utm.to_crs(epsg_wgs84).sindex.query(
+                    # geometry=list(def_poly_gdf.geometry.boundary),
+                    geometry=gdf_poly_hull[each].geometry.values[-1],
+                    predicate='intersects'
+                )
+                # get average amu and bmu for nodes in hull
+                amu_intersect_node = amu[each][intersect_node].copy()
+                bmu_intersect_node = bmu[each][intersect_node].copy()
+                where_bmu_nonzero = np.where(bmu_intersect_node>-10)[0]
+                amu_by_event.append(np.mean(amu_intersect_node[where_bmu_nonzero]))
+                bmu_by_event.append(np.mean(bmu_intersect_node[where_bmu_nonzero]))
+                # find controlling lateral spread case 
                 if each == 'lateral_spread':
-                    intersect_node = gdf_nodes_utm.to_crs(epsg_wgs84).sindex.query(
-                        # geometry=list(def_poly_gdf.geometry.boundary),
-                        geometry=gdf_poly_hull[each].geometry[0],
-                        predicate='intersects'
-                    )
                     all_lateraL_spread_control_cases = [
                         case
                         for node_ind in intersect_node
@@ -2579,7 +2987,7 @@ def preprocess_cpt_data(
                     unique, pos = np.unique(all_lateraL_spread_control_cases,return_inverse=True)
                     counts = np.bincount(pos)
                     maxpos = counts.argmax()
-                    lateral_spread_control_case_by_event.append(unique[maxpos])
+                    lateral_spread_control_case_by_event.append(unique[maxpos])           
                 
         # update counter
         event_count += 1
@@ -2603,14 +3011,15 @@ def preprocess_cpt_data(
         # after removing rows with pgdef == 0, reset FID = index + 1
         gdf_poly_hull[each]['FID'] = np.arange(gdf_poly_hull[each].shape[0])
         # make sure event_id is int
-        gdf_poly_hull[each].FID = gdf_poly_hull[each].FID.astype(int)
+        gdf_poly_hull[each].FID = gdf_poly_hull[each].FID.values.astype(int)
         gdf_poly_hull[each].slip_dir = gdf_poly_hull[each].slip_dir.round(decimals=1)
         # append controlling lateral spread case and average l/h for free face controlled cases
         if each == 'lateral_spread':
             lateral_spread_control_case_by_event = np.asarray(lateral_spread_control_case_by_event)
             gdf_poly_hull[each]['ls_cond'] = lateral_spread_control_case_by_event[rows_with_zero_pgdef]
-            l_h_average_by_event = np.asarray(l_h_average_by_event)
-            gdf_poly_hull[each]['lh_ratio'] = l_h_average_by_event[rows_with_zero_pgdef]
+        # append amu and bmu estimates
+        gdf_poly_hull[each]['amu'] = np.asarray(amu_by_event)[rows_with_zero_pgdef]
+        gdf_poly_hull[each]['bmu'] = np.asarray(bmu_by_event)[rows_with_zero_pgdef]
     # define schema in case of empty geodataframe
     schema = {
         "geometry": "Polygon",
@@ -2625,18 +3034,23 @@ def preprocess_cpt_data(
     spath_def_poly = []
     for each in gdf_poly_hull:
         spath_def_poly.append(os.path.join(processed_cpt_base_dir,f'cpt_based_deformation_{each}.shp'))
+        if os.path.exists(spath_def_poly[-1]):
+            os.remove(spath_def_poly[-1])
+        logging.info(f'\t- {spath_def_poly[-1]}')
         if gdf_poly_hull[each].shape[0] == 0:
-            gdf_poly_hull[each].to_file(spath_def_poly[-1], schema=schema, crs=epsg_wgs84)
+            gdf_poly_hull[each].to_file(
+                spath_def_poly[-1], schema=schema, crs=epsg_wgs84, layer='data')
             # also export to csv, without geometry
             gdf_poly_hull[each].drop(columns=['geometry']).to_csv(
                 spath_def_poly[-1].replace('.shp','.csv'),
-                schema=schema, index=False)
+                index=False)
+            logging.info(f'\t\t- file is empty')
         else:
-            gdf_poly_hull[each].to_file(spath_def_poly[-1], crs=epsg_wgs84)
+            gdf_poly_hull[each].to_file(
+                spath_def_poly[-1], crs=epsg_wgs84, layer='data')
             gdf_poly_hull[each].drop(columns=['geometry']).to_csv(
                 spath_def_poly[-1].replace('.shp','.csv'),
                 index=False)
-        logging.info(f'\t- {spath_def_poly[-1]}')
     # updated CPT summary spreadsheet
     spath_cpt_meta = os.path.join(processed_cpt_base_dir,'cpt_data_PROCESSED.csv')
     cpt_meta_wgs84.drop('geometry',axis=1).to_csv(spath_cpt_meta,index=False)
@@ -2645,7 +3059,7 @@ def preprocess_cpt_data(
     
     # -----------------------------------------------------------
     # return
-    return spath_def_poly
+    return spath_def_poly, freeface_fpath
 
 # -----------------------------------------------------------
 # Proc main
@@ -2674,8 +3088,8 @@ if __name__ == "__main__":
     
     # infrastructure file type
     parser.add_argument('-l', '--logging_detail',
-                        help='Logging message detail: "s" for simple (default) or "d" for detailed',
-                        default='s', type=str)
+                        help='Logging message detail: "s" for simple or "d" for detailed',
+                        default='d', type=str)
     
     # infrastructure file type
     parser.add_argument('-d', '--display_after_n_event',

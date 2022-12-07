@@ -59,7 +59,7 @@ def main(detailed_verbose):
                 # 'BainEtal2022_and_HutabaratEtal2022',
             },
             'pipe_strain_settlement': {
-                'HutabaratEtal2022',
+                # 'HutabaratEtal2022',
             },
             'pipe_strain_landslide': {
                 # 'HutabaratEtal2022',

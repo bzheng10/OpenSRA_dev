@@ -39,7 +39,7 @@ warnings.simplefilter(action='ignore', category=NumbaPerformanceWarning)
     ),
     fastmath=True,
     cache=True,
-    parallel=True
+    # parallel=True
 )
 def get_fault_vertices(
     fault_trace, # (x,y) m
@@ -217,7 +217,7 @@ def get_well_fault_intersection_and_angle(
     ),
     fastmath=True,
     cache=True,
-    parallel=True
+    # parallel=True
 )
 def get_fault_crossing_for_well(
     well_trace,
@@ -390,7 +390,7 @@ def get_well_crossing(
         plane_pt4_arr = np.vstack([plane_pt4_arr,plane_pt4_curr_fault])
     
     # convert to numpy array
-    n_planes_list = np.asarray(n_planes_list)
+    n_planes_list = np.asarray(n_planes_list).astype(np.int64)
     
     # make fault plane geometry
     fault_trace_geom = []

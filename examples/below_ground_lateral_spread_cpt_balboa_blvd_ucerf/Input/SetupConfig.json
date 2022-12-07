@@ -34,6 +34,7 @@
                     "CPTBased": {
 						"ModelWeight": 1,
 						"CPTFolderInUserProvidedGISFolder": "BalboaBlvdCPTs",
+						"ColumnInCPTSummaryWithGWTable": "Mean GWT",
 						"WeightRobertson04": 0.5
 					}
 				},
@@ -51,7 +52,7 @@
                 "OtherParameters": {}
             },
             "Settlement": {
-                "ToInclude": true,
+                "ToInclude": false,
                 "Method": {},
                 "OtherParameters": {}
             },
@@ -71,10 +72,10 @@
     },
     "DamageMeasure": {
         "Type": {
-            "LandslideInducedPipeStrain": {
+            "LateralSpreadInducedPipeStrain": {
                 "ToInclude": true,
                 "Method": {
-					"HutabaratEtal2022": {
+					"BainEtal2022_and_HutabaratEtal2022": {
 						"ModelWeight": 1
 					}
 				},
@@ -86,10 +87,10 @@
     },
     "DecisionVariable": {
         "Type": {
-            "LateralSpreadInducedPipeStrain": {
+            "PipeCompressiveRupture": {
                 "ToInclude": true,
                 "Method": {
-					"BainEtal2022_and_HutabaratEtal2022": {
+					"BainEtal2022": {
 						"ModelWeight": 1
 					}
 				},

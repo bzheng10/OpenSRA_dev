@@ -86,6 +86,8 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
     Fixed:
     soil_type: str, np.ndarray or list
         soil type (sand/clay) for model
+    soil_density: str, np.ndarray or list
+        soil density: medium dense, dense, or very dense for sand
     steel_grade: str, np.ndarray or list
         steel grade: Grade-B, X-42, X-52, X-60, X-70, X-80
 
@@ -151,6 +153,7 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
         "desc": 'Geotechnical/geologic random variables:',
         'params': {
             'beta_crossing': 'pipe-fault crossing angle [deg]',
+            'psi_dip': 'pipe-fault dip angle [deg]',
             'h_pipe': 'burial depth to pipe centerline (m)',
             'def_length': 'length of ground deformation zone (m)',
             'alpha_backfill': 'adhesion factor for clay - for clay',
@@ -238,10 +241,11 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
     def _model(
         pgdef, # upstream PBEE RV
         d_pipe, t_pipe, sigma_y, n_param, r_param, l_anchor, # infrastructure
-        beta_crossing, h_pipe, def_length, # geotech - general
+        beta_crossing, psi_dip, h_pipe, def_length, # geotech - general
         alpha_backfill, s_u_backfill, # clay
         gamma_backfill, phi_backfill, delta_backfill, # sand
-        soil_type, steel_grade, # fixed/toggles
+        soil_type, soil_density, steel_grade, # fixed/toggles,
+        primary_mech, transition_weight_factor, # additional fixed params determined internally
         return_inter_params=False # to get intermediate params
     ):
         #####
@@ -474,7 +478,6 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
             'eps_pipe_comp': {
                 'mean': eps_pipe_comp,
                 'sigma': sigma_eps_pipe_comp,
-                # 'sigma_mu': np.ones(pgdef.shape)*0.3,
                 'sigma_mu': sigma_mu_eps_pipe_comp,
                 'dist_type': 'lognormal',
                 'unit': '%'
@@ -482,7 +485,6 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
             'eps_pipe_tens': {
                 'mean': eps_pipe_tens,
                 'sigma': sigma_eps_pipe_tens,
-                # 'sigma_mu': np.ones(pgdef.shape)*0.3,
                 'sigma_mu': sigma_mu_eps_pipe_tens,
                 'dist_type': 'lognormal',
                 'unit': '%'
@@ -490,7 +492,7 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
         }
         # get intermediate values if requested
         if return_inter_params:
-            output['case_to_run'] = case_to_run
+            pass
         
         # return
         return output

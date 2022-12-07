@@ -29,6 +29,8 @@ from scipy.stats import norm
 from scipy import sparse
 
 # geospatial processing modules
+from geopandas import GeoDataFrame
+from shapely.geometry import LineString
 
 # efficient processing modules
 # import numba as nb
@@ -173,6 +175,7 @@ class SeismicHazard(object):
         mag_max=None, # all sources
         rate_min=None, # all sources
         rate_max=None, # all sources
+        event_ids_to_keep=None, # all sources
         mesh_spacing=1, # km
     ):
         """performs filter on rupture scenarios"""
@@ -185,6 +188,7 @@ class SeismicHazard(object):
                 mag_max=mag_max,
                 rate_min=rate_min,
                 rate_max=rate_max,
+                event_ids_to_keep=event_ids_to_keep,
                 mesh_spacing=mesh_spacing, # km
             )
             # update params
@@ -203,6 +207,7 @@ class SeismicHazard(object):
             self.source.process_rupture(
                 mag_min=mag_min,
                 mag_max=mag_max,
+                event_ids_to_keep=event_ids_to_keep,
             )
             # update params
             self._n_event = self.source._n_event
@@ -464,11 +469,25 @@ class SeismicHazard(object):
                     #         rup_meta_out[each] = self.source.df_section[name_map[each]].values
                     # else:
                     rup_meta_out[each] = self.source.df_rupture[name_map[each]].values
-            # export
-            save_name = os.path.join(sdir,'RUPTURE_METADATA.csv')
-            rup_meta_out.to_csv(save_name,index=False)
+            # export to csv
+            save_name_csv = os.path.join(sdir,'RUPTURE_METADATA.csv')
+            rup_meta_out.to_csv(save_name_csv,index=False)
+            # export to shp
+            save_name_shp = os.path.join(sdir,'RUPTURE_METADATA.gpkg')
+            geoms = []
+            for i in range(rup_meta_out.shape[0]):
+                # trace = np.asarray(json.loads(rup_meta.fault_trace.iloc[i]))
+                trace = np.asarray(rup_meta_out.fault_trace.iloc[i])
+                geoms.append(LineString(trace[:,:2]))
+            rup_meta_out_gdf = GeoDataFrame(
+                pd.read_csv(save_name_csv), # reread dataframe to convert fields of lists into strings
+                crs=4326, geometry=geoms
+                # rup_meta_out, crs=4326, geometry=geoms
+            )
+            rup_meta_out_gdf.to_file(save_name_shp,index=False,layer='data')
             logging.info(f"Exported rupture metadata to:")
-            logging.info(f"\t- {save_name}")
+            logging.info(f"\t- {save_name_csv}")
+            logging.info(f"\t- {save_name_shp}")
             
 
     def _export_site_data(self, sdir=None):

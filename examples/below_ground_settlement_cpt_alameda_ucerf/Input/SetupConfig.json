@@ -1,0 +1,119 @@
+{
+    "General": {
+        "AnalysisID" : "TEST",
+		"Directory": {
+			"Working": "",
+			"UserProvidedGISFolder": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/below_ground_settlement_cpt_alameda_shakemap/Input/gis_data"
+		},
+        "OutputFileType": "csv"
+    },
+    "Infrastructure": {
+		"InfrastructureType": "below_ground",
+		"DataType": "Shapefile",
+        "SiteDataFile": "CA_Natural_Gas_Pipeline",
+		"SiteLocationParams": {
+            "LatMid": "LAT_MID",
+            "LonMid": "LON_MID",
+            "LatBegin": "LAT_BEGIN",
+            "LonBegin": "LON_BEGIN",
+            "LatEnd": "LAT_END",
+            "LonEnd": "LON_END"
+		}
+    },
+    "IntensityMeasure": {
+        "SourceForIM": {
+            "UCERF": {
+			}
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "Liquefaction": {
+                "ToInclude": true,
+                "Method": {
+                    "CPTBased": {
+						"ModelWeight": 1,
+						"CPTFolderInUserProvidedGISFolder": "cpts_alameda",
+						"ColumnInCPTSummaryWithGWTable": "Mean GWT",
+						"WeightRobertson04": 0.5
+					}
+				},
+                "OtherParameters": {}
+            },
+            "LateralSpread": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "Settlement": {
+                "ToInclude": true,
+                "Method": {
+                    "CPTBased": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "Landslide": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "SurfaceFaultRupture": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "SettlementInducedPipeStrain": {
+                "ToInclude": true,
+                "Method": {
+					"HutabaratEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "PipeCompressiveRupture": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileRupture": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileLeakage": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    }
+}

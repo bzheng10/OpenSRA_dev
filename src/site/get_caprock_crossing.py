@@ -11,7 +11,7 @@ import numpy as np
 
 # geoprocessing modules
 # import geopandas as gpd
-from geopandas import read_file
+from geopandas import read_file, GeoDataFrame
 from shapely.geometry import Polygon, LineString
 from pyproj import Transformer
 
@@ -180,11 +180,18 @@ def get_caprock_crossing(
 
     # if processed_input_dir is not None, export
     if processed_input_dir is not None:
-        caprock_list.to_csv(
-            os.path.join(processed_input_dir,'caprock_crossing.csv'),
-            index=False
-        ) # export operation
-        # caprock_list.to_file(os.path.join(processed_input_dir,'caprock_crossing.shp')) # export operation
+        # to csv
+        spath_csv = os.path.join(processed_input_dir,'caprock_crossing.csv')
+        caprock_list.to_csv(spath_csv,index=False)
+        # to gpkg
+        spath_gpkg = os.path.join(processed_input_dir,'caprock_crossing.gpkg')
+        geoms = caprock_list.geometry.values # keep copy
+        caprock_list_gdf = GeoDataFrame(
+            pd.read_csv(spath_csv),
+            crs=4326,
+            geometry=geoms
+        )
+        caprock_list_gdf.to_file(spath_gpkg,index=False,layer='data')
 
     # return
     if return_dict:

@@ -57,7 +57,7 @@ def make_list_of_linestrings(
 
 # -----------------------------------------------------------
 # @njit
-def get_regional_liq_susc(witter_geo_unit, bedrossian_geo_unit, gw_depth, get_mean=False):
+def get_regional_liq_susc(witter_geo_unit, bedrossian_geo_unit, gw_depth, get_mean=False, default='none'):
     """get liquefaction susceptibility category based on groundwater depth (m)"""
     
     # get dimensions
@@ -68,14 +68,19 @@ def get_regional_liq_susc(witter_geo_unit, bedrossian_geo_unit, gw_depth, get_me
     liq_susc = np.empty_like(gw_depth, dtype="<U10")
     
     # find where gw_depth is at the following ranges
-    gw_depth_le_3m = gw_depth<=3
-    gw_depth_btw_3m_9m = np.logical_and(gw_depth>3,gw_depth<=9)
-    gw_depth_btw_9m_12m = np.logical_and(gw_depth>9,gw_depth<=12)
-    gw_depth_gt_12m = gw_depth>12
+    gw_depth_le_3m_all = gw_depth<=3
+    gw_depth_btw_3m_9m_all = np.logical_and(gw_depth>3,gw_depth<=9)
+    gw_depth_btw_9m_12m_all = np.logical_and(gw_depth>9,gw_depth<=12)
+    gw_depth_gt_12m_all = gw_depth>12
     
     # first check Witter et al. (2006)
     ind_witter_geo_unit_avail = np.where(witter_geo_unit.notna())[0] # where Witter geo units exist
     if len(ind_witter_geo_unit_avail) > 0:
+        # get subset of gw_depth conditions for where witter is available
+        gw_depth_le_3m = gw_depth_le_3m_all[ind_witter_geo_unit_avail]
+        gw_depth_btw_3m_9m = gw_depth_btw_3m_9m_all[ind_witter_geo_unit_avail]
+        gw_depth_btw_9m_12m = gw_depth_btw_9m_12m_all[ind_witter_geo_unit_avail]
+        gw_depth_gt_12m = gw_depth_gt_12m_all[ind_witter_geo_unit_avail]
         # pull these geo units
         witter_geo_unit_avail = witter_geo_unit[ind_witter_geo_unit_avail].values
         # some units in Witter may end with a number or question mark, if so, map it to the unit without the added character
@@ -404,6 +409,11 @@ def get_regional_liq_susc(witter_geo_unit, bedrossian_geo_unit, gw_depth, get_me
     # next check Bedrossian et al. (2012)
     ind_bedrossian_geo_unit_avail = np.where(bedrossian_geo_unit.notna())[0] # where geo units exist
     if len(ind_bedrossian_geo_unit_avail) > 0:
+        # get subset of gw_depth conditions for where witter is available
+        gw_depth_le_3m = gw_depth_le_3m_all[ind_bedrossian_geo_unit_avail]
+        gw_depth_btw_3m_9m = gw_depth_btw_3m_9m_all[ind_bedrossian_geo_unit_avail]
+        gw_depth_btw_9m_12m = gw_depth_btw_9m_12m_all[ind_bedrossian_geo_unit_avail]
+        gw_depth_gt_12m = gw_depth_gt_12m_all[ind_bedrossian_geo_unit_avail]
         # pull these geo units
         bedrossian_geo_unit_avail = bedrossian_geo_unit[ind_bedrossian_geo_unit_avail].values
         if get_mean:
@@ -585,7 +595,10 @@ def get_regional_liq_susc(witter_geo_unit, bedrossian_geo_unit, gw_depth, get_me
             liq_susc_bedrossian[np.logical_and(where_curr_unit,gw_depth_gt_12m)] = 'very low'
         # add to liq_susc dataframe
         liq_susc[ind_bedrossian_geo_unit_avail] = liq_susc_bedrossian
-
+        
+    # for all other conds, set to default
+    liq_susc[liq_susc==''] = default
+    
     # return
     return liq_susc
 

@@ -147,7 +147,6 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             'beta_crossing': 'pipe-fault crossing angle [deg]',
             'psi_dip': 'pipe-fault dip angle [deg]',
             'h_pipe': 'burial depth to pipe centerline (m)',
-            'def_length': 'length of ground deformation zone (m)',
             'alpha_backfill': 'adhesion factor for clay - for clay',
             's_u_backfill': 'undrained shear strength (kPa) - for clay',
             'gamma_backfill': 'total unit weight of backfill soil (kN/m^3) - for sand',
@@ -266,7 +265,7 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         sigma_eps_pipe_tens = np.ones(pgdef.shape)*0.01
         sigma_mu_eps_pipe_comp = np.ones(pgdef.shape)*0.3
         sigma_mu_eps_pipe_tens = np.ones(pgdef.shape)*0.3
-         
+        
         # 1) normal only:
         cond = primary_mech == 'Normal'
         if True in cond:
@@ -323,7 +322,7 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             eps_pipe_comp[cond] = output['eps_pipe']['mean']
             sigma_eps_pipe_comp[cond] = output['eps_pipe']['sigma']
             sigma_mu_eps_pipe_comp[cond] = output['eps_pipe']['sigma_mu']
-                        
+        
         # 5) normal and strike-slip tension:
         cond = primary_mech == 'Normal_SSTens'
         if True in cond:
@@ -522,7 +521,6 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             'eps_pipe_comp': {
                 'mean': eps_pipe_comp,
                 'sigma': sigma_eps_pipe_comp,
-                # 'sigma_mu': np.ones(pgdef.shape)*0.3,
                 'sigma_mu': sigma_mu_eps_pipe_comp,
                 'dist_type': 'lognormal',
                 'unit': '%'
@@ -530,7 +528,6 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             'eps_pipe_tens': {
                 'mean': eps_pipe_tens,
                 'sigma': sigma_eps_pipe_tens,
-                # 'sigma_mu': np.ones(pgdef.shape)*0.3,
                 'sigma_mu': sigma_mu_eps_pipe_tens,
                 'dist_type': 'lognormal',
                 'unit': '%'
@@ -539,7 +536,6 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         # get intermediate values if requested
         if return_inter_params:
             pass
-            # output['case_to_run'] = case_to_run
         
         # return
         return output

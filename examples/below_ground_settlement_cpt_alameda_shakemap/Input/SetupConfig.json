@@ -41,6 +41,7 @@
                     "CPTBased": {
 						"ModelWeight": 1,
 						"CPTFolderInUserProvidedGISFolder": "cpts_alameda",
+						"ColumnInCPTSummaryWithGWTable": "Mean GWT",
 						"WeightRobertson04": 0.5
 					}
 				},

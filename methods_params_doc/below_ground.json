@@ -232,6 +232,49 @@
 									"DefaultValue": null
 								}
 							}
+						},
+						"CPTBased": {
+							"NameToDisplay": "CPT Based: Robertson (2009) and Boulanger & Idriss (2016)",
+							"ToDisplay": true,
+							"Return": {
+								"Description": "Return: This method returns \"factor of safety against liquefaction [fs_liq]\".",
+								"ReturnParam": ["prob_liq"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"PGA [pga]\" and \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
+								"UpstreamParam": ["pga", "mag"]
+							},
+                            "DisplayOrder": [
+                                "CPTFolderInUserProvidedGISFolder",
+                                "ColumnInCPTSummaryWithGWTable",
+                                "WeightRobertson04"
+                            ],
+							"Params": {
+								"CPTFolderInUserProvidedGISFolder": {
+									"NameToDisplay": "CPTFolderInUserProvidedGISFolder",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "Folder under the user specified GIS directory that contains the CPT data and summary table",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"ColumnInCPTSummaryWithGWTable": {
+									"NameToDisplay": "ColumnInCPTSummaryWithGWTable",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "Column in the CPT summary table that contains the mean groundwater depth in meters",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"WeightRobertson04": {
+									"NameToDisplay": "WeightRobertson04",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "Weight to use for Robertson (2009); weight for Boulanger & Idriss (2016) = 1 - weight for R09",
+									"ToDisplay": true,
+									"DefaultValue": 0.5
+								}
+							}
 						}
 					}
 				}
@@ -256,7 +299,7 @@
                                 "liq_susc"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
+								"Description": "Return: This method returns \"permanent ground deformation for liquefaction-induced lateral spread [pgdef]\".",
 								"ReturnParam": ["pgdef"]
 							},
 							"UpstreamDependency": {
@@ -280,9 +323,43 @@
 								}
 							}
 						},
+						"CPTBased": {
+							"NameToDisplay": "CPT Based: Zhang et al. (2004) and Idriss & Boulanger (2008)",
+							"ToDisplay": true,
+							"Return": {
+								"Description": "Return: This method returns \"permanent ground deformation for liquefaction-induced lateral spread [pgdef]\".",
+								"ReturnParam": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"factor of safety against liquefaction [fs_liq]\" from the \"CPT Based\" method under the \"Engineering Demand Parameter - Liquefaction\" tab.",
+								"UpstreamParam": ["fs_liq"]
+							},
+                            "DisplayOrder": [
+                                "WeightRobertson04",
+                                "PathToFreefaceShapefile"
+                            ],
+							"Params": {
+								"WeightZhang04": {
+									"NameToDisplay": "WeightZhang04",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "Weight to use for Zhang et al. (2004); weight for Idriss & Boulanger (2008) = 1 - weight for Z04",
+									"ToDisplay": true,
+									"DefaultValue": 0.5
+								},
+								"PathToFreefaceShapefile": {
+									"NameToDisplay": "PathToFreefaceShapefile",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "Folder under the user specified GIS directory that contains the freeface feature",
+									"ToDisplay": true,
+									"DefaultValue": null
+								}
+							}
+						},
 						"YoudEtal2002": {
 							"NameToDisplay": "Youd et al. (2002)",
-							"ToDisplay": true,
+							"ToDisplay": false,
 							"DisplayOrder": [
 								"slope_type",
 								"t_15",
@@ -292,7 +369,7 @@
 								"slope"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
+								"Description": "Return: This method returns \"permanent ground deformation for liquefaction-induced lateral spread [pgdef]\".",
 								"ReturnParam": ["pgdef"]
 							},
 							"UpstreamDependency": {
@@ -373,7 +450,7 @@
 								"liq_susc"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
+								"Description": "Return: This method returns \"permanent ground deformation for liquefaction-induced settlement [pgdef]\".",
 								"ReturnParam": ["pgdef"]
 							},
 							"UpstreamDependency": {
@@ -397,6 +474,22 @@
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
+							}
+						},
+						"CPTBased": {
+							"NameToDisplay": "CPT Based: Zhang et al. (2002)",
+							"ToDisplay": true,
+							"Return": {
+								"Description": "Return: This method returns \"permanent ground deformation for liquefaction-induced settlement [pgdef]\".",
+								"ReturnParam": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"factor of safety against liquefaction [fs_liq]\" from the \"CPT Based\" method under the \"Engineering Demand Parameter - Liquefaction\" tab.",
+								"UpstreamParam": ["fs_liq"]
+							},
+                            "DisplayOrder": [
+                            ],
+							"Params": {
 							}
 						}
 					}
@@ -425,7 +518,7 @@
 								"coh_soil"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
+								"Description": "Return: This method returns \"permanent ground deformation for landslide [pgdef]\".",
 								"ReturnParam": ["pgdef"]
 							},
 							"UpstreamDependency": {
@@ -486,7 +579,7 @@
 								"coh_soil"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
+								"Description": "Return: This method returns \"permanent ground deformation for landslide [pgdef]\".",
 								"ReturnParam": ["pgdef"]
 							},
 							"UpstreamDependency": {
@@ -887,14 +980,14 @@
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "Thompson2021",
+					"DefaultValue": "Petersen et al. (2011)",
 					"Options" : {
-						"Thompson2021": {
-							"NameToDisplay": "Thompson (2021)",
+						"PetersenEtal2011": {
+							"NameToDisplay": "Petersen et al. (2011)",
 							"ToDisplay": true,
 							"DisplayOrder": [],
 							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
+								"Description": "Return: This method returns \"permanent ground deformation for surface fault rupture [pgdef]\".",
 								"ReturnParam": ["pgdef"]
 							},
 							"UpstreamDependency": {
@@ -905,7 +998,30 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "DescToDisplay": "This model has no additional input parameters from users",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+                            }
+						},
+						"Thompson2021": {
+							"NameToDisplay": "Thompson (2021)",
+							"ToDisplay": true,
+							"DisplayOrder": [],
+							"Return": {
+								"Description": "Return: This method returns \"permanent ground deformation for surface fault rupture [pgdef]\".",
+								"ReturnParam": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"magnitude [mag]\" from the \"Intensity Measure\" tab.",
+								"UpstreamParam": ["mag"]
+							},
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters from users",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -914,10 +1030,10 @@
 						},
 						"Hazus2020": {
 							"NameToDisplay": "Hazus (FEMA, 2020)",
-							"ToDisplay": true,
+							"ToDisplay": false,
 							"DisplayOrder": [],
 							"Return": {
-								"Description": "Return: This method returns \"permanent ground deformation [pgdef]\".",
+								"Description": "Return: This method returns \"permanent ground deformation for surface fault rupture [pgdef]\".",
 								"ReturnParam": ["pgdef"]
 							},
 							"UpstreamDependency": {
@@ -928,7 +1044,7 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "DescToDisplay": "This model has no additional input parameters from users",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -951,7 +1067,7 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "DescToDisplay": "This model has no additional input parameters from users",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -976,8 +1092,8 @@
         }
     },
     "DamageMeasure": {
-        "LandslideInducedPipeStrain": {
-			"NameToDisplay": "Landslide Induced Pipe Strain",
+        "LateralSpreadInducedPipeStrain": {
+			"NameToDisplay": "Lateral Spread Induced Pipe Strain",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -985,10 +1101,10 @@
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "HutabaratEtal2022",
+					"DefaultValue": "BainEtal2022_and_HutabaratEtal2022",
 					"Options" : {
-						"HutabaratEtal2022": {
-							"NameToDisplay": "Hutabarat et al. (2022)",
+						"BainEtal2022_and_HutabaratEtal2022": {
+							"NameToDisplay": "Bain et al. (2022) and Hutabarat et al. (2022)",
 							"ToDisplay": true,
 							"DisplayOrder": [
 								"d_pipe",
@@ -997,8 +1113,6 @@
 								"n_param",
 								"r_param",
 								"l_anchor",
-								"beta_crossing",
-								"psi_dip",
 								"h_pipe",
 								"def_length",
 								"alpha_backfill",
@@ -1011,11 +1125,11 @@
 								"steel_grade"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"tensile and compressive longitudinal pipe strain [eps_pipe_tens, eps_pipe_comp]\" for pipeline segment.",
+								"Description": "Return: This method returns \"lateral spread induced tensile and compressive longitudinal pipe strain [eps_pipe_tens, eps_pipe_comp]\" for pipeline segment.",
 								"ReturnParam": ["eps_pipe_tens", "eps_pipe_comp"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from the \"Engineering Demand Parameter - Landslide\" tab.",
+								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from the \"Engineering Demand Parameter - Lateral Spread\" tab.",
 								"UpstreamParam": ["pgdef"]
 							},
 							"Params": {
@@ -1067,24 +1181,8 @@
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
-								"beta_crossing": {
-									"NameToDisplay": "beta_crossing",
-									"VarType": "random",
-									"DescToDisplay": "[deg] pipe-fault crossing angle",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
-								"psi_dip": {
-									"NameToDisplay": "psi_dip",
-									"VarType": "random",
-									"DescToDisplay": "[deg] pipe-fault dip angle",
-									"WidgetType": "QLabel",
-									"ToDisplay": true,
-									"DefaultValue": null
-								},
 								"h_pipe": {
-									"NameToDisplay": "psi_dip",
+									"NameToDisplay": "h_pipe",
 									"VarType": "random",
 									"DescToDisplay": "[m] burial depth to pipe centerline - required for \"level 3\" analysis",
 									"WidgetType": "QLabel",
@@ -1148,7 +1246,505 @@
 									"DefaultValue": null
 								},
 								"soil_density": {
+									"NameToDisplay": "soil_density",
+									"VarType": "fixed",
+									"DescToDisplay": "soil density for sand backfill (\"medium dense\", \"dense\", or \"very dense\") - required for \"level 1, 2, 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"steel_grade": {
+									"NameToDisplay": "steel_grade",
+									"VarType": "fixed",
+									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\" (default: \"X-52\")",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								}
+							}
+						}
+					}
+				}
+			}
+        },
+        "SettlementInducedPipeStrain": {
+			"NameToDisplay": "Settlement Induced Pipe Strain",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "HutabaratEtal2022",
+					"Options" : {
+						"HutabaratEtal2022": {
+							"NameToDisplay": "Hutabarat et al. (2022)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+								"d_pipe",
+								"t_pipe",
+								"sigma_y",
+								"n_param",
+								"r_param",
+								"l_anchor",
+								"h_pipe",
+								"alpha_backfill",
+								"s_u_backfill",
+								"gamma_backfill",
+								"phi_backfill",
+								"delta_backfill",
+								"soil_type",
+								"soil_density",
+								"steel_grade"
+							],
+							"Return": {
+								"Description": "Return: This method returns \"settlement induced tensile and compressive longitudinal pipe strain [eps_pipe_tens, eps_pipe_comp]\" for pipeline segment.",
+								"ReturnParam": ["eps_pipe_tens", "eps_pipe_comp"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from the \"Engineering Demand Parameter - Settlement\" tab.",
+								"UpstreamParam": ["pgdef"]
+							},
+							"Params": {
+								"d_pipe": {
+									"NameToDisplay": "d_pipe",
+									"VarType": "random",
+									"DescToDisplay": "[mm] pipe outside diameter - required for \"level 2 and 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"t_pipe": {
+									"NameToDisplay": "t_pipe",
+									"VarType": "random",
+									"DescToDisplay": "[mm] pipe wall thickness - required for \"level 2 and 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"sigma_y": {
+									"NameToDisplay": "sigma_y",
+									"VarType": "random",
+									"DescToDisplay": "[kPa] pipe yield stress - can be inferred from the 'steel_grade' input parameter",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"n_param": {
+									"NameToDisplay": "n_param",
+									"VarType": "random",
+									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the 'steel_grade' input parameter",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"r_param": {
+									"NameToDisplay": "r_param",
+									"VarType": "random",
+									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the 'steel_grade' input parameter",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"l_anchor": {
+									"NameToDisplay": "l_anchor",
+									"VarType": "random",
+									"DescToDisplay": "[m] pipeline anchored length",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"h_pipe": {
+									"NameToDisplay": "h_pipe",
+									"VarType": "random",
+									"DescToDisplay": "[m] burial depth to pipe centerline - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"alpha_backfill": {
+									"NameToDisplay": "alpha_backfill",
+									"VarType": "random",
+									"DescToDisplay": "adhesion factor (clay model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"s_u_backfill": {
+									"NameToDisplay": "s_u_backfill",
+									"VarType": "random",
+									"DescToDisplay": "[kPa] undrained shear strength (clay model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"gamma_backfill": {
+									"NameToDisplay": "gamma_backfill",
+									"VarType": "random",
+									"DescToDisplay": "[kN/m^3] total unit weight of backfill soil (sand model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"phi_backfill": {
+									"NameToDisplay": "phi_backfill",
+									"VarType": "random",
+									"DescToDisplay": "[deg] friction angle of backfill soil (sand model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"delta_backfill": {
+									"NameToDisplay": "delta_backfill",
+									"VarType": "random",
+									"DescToDisplay": "sand-pipe interface friction angle ratio (sand model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"soil_type": {
 									"NameToDisplay": "soil_type",
+									"VarType": "fixed",
+									"DescToDisplay": "soil type for backfill (\"sand\" or \"clay\" for model to use) - required for \"level 1, 2, 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"soil_density": {
+									"NameToDisplay": "soil_density",
+									"VarType": "fixed",
+									"DescToDisplay": "soil density for sand backfill (\"medium dense\", \"dense\", or \"very dense\") - required for \"level 1, 2, 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"steel_grade": {
+									"NameToDisplay": "steel_grade",
+									"VarType": "fixed",
+									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\" (default: \"X-52\")",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								}
+							}
+						}
+					}
+				}
+			}
+        },
+        "LandslideInducedPipeStrain": {
+			"NameToDisplay": "Landslide Induced Pipe Strain",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "HutabaratEtal2022",
+					"Options" : {
+						"HutabaratEtal2022": {
+							"NameToDisplay": "Hutabarat et al. (2022)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+								"d_pipe",
+								"t_pipe",
+								"sigma_y",
+								"n_param",
+								"r_param",
+								"l_anchor",
+								"h_pipe",
+								"alpha_backfill",
+								"s_u_backfill",
+								"gamma_backfill",
+								"phi_backfill",
+								"delta_backfill",
+								"soil_type",
+								"soil_density",
+								"steel_grade"
+							],
+							"Return": {
+								"Description": "Return: This method returns \"landslide induced tensile and compressive longitudinal pipe strain [eps_pipe_tens, eps_pipe_comp]\" for pipeline segment.",
+								"ReturnParam": ["eps_pipe_tens", "eps_pipe_comp"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from the \"Engineering Demand Parameter - Landslide\" tab.",
+								"UpstreamParam": ["pgdef"]
+							},
+							"Params": {
+								"d_pipe": {
+									"NameToDisplay": "d_pipe",
+									"VarType": "random",
+									"DescToDisplay": "[mm] pipe outside diameter - required for \"level 2 and 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"t_pipe": {
+									"NameToDisplay": "t_pipe",
+									"VarType": "random",
+									"DescToDisplay": "[mm] pipe wall thickness - required for \"level 2 and 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"sigma_y": {
+									"NameToDisplay": "sigma_y",
+									"VarType": "random",
+									"DescToDisplay": "[kPa] pipe yield stress - can be inferred from the 'steel_grade' input parameter",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"n_param": {
+									"NameToDisplay": "n_param",
+									"VarType": "random",
+									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the 'steel_grade' input parameter",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"r_param": {
+									"NameToDisplay": "r_param",
+									"VarType": "random",
+									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the 'steel_grade' input parameter",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"l_anchor": {
+									"NameToDisplay": "l_anchor",
+									"VarType": "random",
+									"DescToDisplay": "[m] pipeline anchored length",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"h_pipe": {
+									"NameToDisplay": "h_pipe",
+									"VarType": "random",
+									"DescToDisplay": "[m] burial depth to pipe centerline - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"alpha_backfill": {
+									"NameToDisplay": "alpha_backfill",
+									"VarType": "random",
+									"DescToDisplay": "adhesion factor (clay model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"s_u_backfill": {
+									"NameToDisplay": "s_u_backfill",
+									"VarType": "random",
+									"DescToDisplay": "[kPa] undrained shear strength (clay model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"gamma_backfill": {
+									"NameToDisplay": "gamma_backfill",
+									"VarType": "random",
+									"DescToDisplay": "[kN/m^3] total unit weight of backfill soil (sand model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"phi_backfill": {
+									"NameToDisplay": "phi_backfill",
+									"VarType": "random",
+									"DescToDisplay": "[deg] friction angle of backfill soil (sand model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"delta_backfill": {
+									"NameToDisplay": "delta_backfill",
+									"VarType": "random",
+									"DescToDisplay": "sand-pipe interface friction angle ratio (sand model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"soil_type": {
+									"NameToDisplay": "soil_type",
+									"VarType": "fixed",
+									"DescToDisplay": "soil type for backfill (\"sand\" or \"clay\" for model to use) - required for \"level 1, 2, 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"soil_density": {
+									"NameToDisplay": "soil_density",
+									"VarType": "fixed",
+									"DescToDisplay": "soil density for sand backfill (\"medium dense\", \"dense\", or \"very dense\") - required for \"level 1, 2, 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"steel_grade": {
+									"NameToDisplay": "steel_grade",
+									"VarType": "fixed",
+									"DescToDisplay": "\"Grade-B\", \"X-42\", \"X-52\", \"X-60\", \"X-70\", \"X-80\" (default: \"X-52\")",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								}
+							}
+						}
+					}
+				}
+			}
+        },
+        "SurfaceFaultRuptureInducedPipeStrain": {
+			"NameToDisplay": "Surface Fault Rupture Induced Pipe Strain",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "HutabaratEtal2022",
+					"Options" : {
+						"HutabaratEtal2022": {
+							"NameToDisplay": "Hutabarat et al. (2022)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+								"d_pipe",
+								"t_pipe",
+								"sigma_y",
+								"n_param",
+								"r_param",
+								"l_anchor",
+								"h_pipe",
+								"alpha_backfill",
+								"s_u_backfill",
+								"gamma_backfill",
+								"phi_backfill",
+								"delta_backfill",
+								"soil_type",
+								"soil_density",
+								"steel_grade"
+							],
+							"Return": {
+								"Description": "Return: This method returns \"surface fault rupture induced tensile and compressive longitudinal pipe strain [eps_pipe_tens, eps_pipe_comp]\" for pipeline segment.",
+								"ReturnParam": ["eps_pipe_tens", "eps_pipe_comp"]
+							},
+							"UpstreamDependency": {
+								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from the \"Engineering Demand Parameter - Surface Fault Rupture\" tab.",
+								"UpstreamParam": ["pgdef"]
+							},
+							"Params": {
+								"d_pipe": {
+									"NameToDisplay": "d_pipe",
+									"VarType": "random",
+									"DescToDisplay": "[mm] pipe outside diameter - required for \"level 2 and 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"t_pipe": {
+									"NameToDisplay": "t_pipe",
+									"VarType": "random",
+									"DescToDisplay": "[mm] pipe wall thickness - required for \"level 2 and 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"sigma_y": {
+									"NameToDisplay": "sigma_y",
+									"VarType": "random",
+									"DescToDisplay": "[kPa] pipe yield stress - can be inferred from the 'steel_grade' input parameter",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"n_param": {
+									"NameToDisplay": "n_param",
+									"VarType": "random",
+									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the 'steel_grade' input parameter",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"r_param": {
+									"NameToDisplay": "r_param",
+									"VarType": "random",
+									"DescToDisplay": "Ramberg-Osgood parameter - can be inferred from the 'steel_grade' input parameter",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"l_anchor": {
+									"NameToDisplay": "l_anchor",
+									"VarType": "random",
+									"DescToDisplay": "[m] pipeline anchored length",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"h_pipe": {
+									"NameToDisplay": "h_pipe",
+									"VarType": "random",
+									"DescToDisplay": "[m] burial depth to pipe centerline - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"alpha_backfill": {
+									"NameToDisplay": "alpha_backfill",
+									"VarType": "random",
+									"DescToDisplay": "adhesion factor (clay model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"s_u_backfill": {
+									"NameToDisplay": "s_u_backfill",
+									"VarType": "random",
+									"DescToDisplay": "[kPa] undrained shear strength (clay model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"gamma_backfill": {
+									"NameToDisplay": "gamma_backfill",
+									"VarType": "random",
+									"DescToDisplay": "[kN/m^3] total unit weight of backfill soil (sand model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"phi_backfill": {
+									"NameToDisplay": "phi_backfill",
+									"VarType": "random",
+									"DescToDisplay": "[deg] friction angle of backfill soil (sand model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"delta_backfill": {
+									"NameToDisplay": "delta_backfill",
+									"VarType": "random",
+									"DescToDisplay": "sand-pipe interface friction angle ratio (sand model only) - required for \"level 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"soil_type": {
+									"NameToDisplay": "soil_type",
+									"VarType": "fixed",
+									"DescToDisplay": "soil type for backfill (\"sand\" or \"clay\" for model to use) - required for \"level 1, 2, 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"soil_density": {
+									"NameToDisplay": "soil_density",
 									"VarType": "fixed",
 									"DescToDisplay": "soil density for sand backfill (\"medium dense\", \"dense\", or \"very dense\") - required for \"level 1, 2, 3\" analysis",
 									"WidgetType": "QLabel",
@@ -1275,7 +1871,7 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "DescToDisplay": "This model has no additional input parameters from users",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -1314,7 +1910,7 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "DescToDisplay": "This model has no additional input parameters from users",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null

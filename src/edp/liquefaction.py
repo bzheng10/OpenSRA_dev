@@ -514,7 +514,8 @@ class Hazus2020(Liquefaction):
             }
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = False
+    # _INPUT_DIST_VARY_WITH_LEVEL = False
+    _INPUT_DIST_VARY_WITH_LEVEL = True
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -533,10 +534,16 @@ class Hazus2020(Liquefaction):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'gw_depth',
+        # 'gw_depth',
+        'level1': [],
+        'level2': ['gw_depth'],
+        'level3': ['gw_depth'],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        'liq_susc'
+        'level1': ['liq_susc'],
+        'level2': ['liq_susc'],
+        'level3': ['liq_susc'],
+        # 'liq_susc'
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
@@ -557,6 +564,9 @@ class Hazus2020(Liquefaction):
         prob_liq_pga = np.zeros(pga.shape)
         p_ml = np.zeros(pga.shape)
         
+        # if gw_depth is nan
+        gw_depth[np.isnan(gw_depth)] = 999        
+        
         # correction factor for moment magnitudes other than M=7.5, eq. 4-21
         k_mag = 0.0027*mag**3 - 0.0267*mag**2 - 0.2055*mag + 2.9188
         # correction for groudnwater depths other than 5 feet, eq. 4-22
@@ -575,7 +585,7 @@ class Hazus2020(Liquefaction):
         p_ml[liq_susc=='high'] = 0.20
         p_ml[liq_susc=='moderate'] = 0.10
         p_ml[liq_susc=='low'] = 0.05
-        p_ml[liq_susc=='very low'] = 0.02
+        p_ml[liq_susc=='very low'       ] = 0.02
         p_ml[liq_susc=='none'] = 0.00
         
         # liquefaction likelihood, p_liq
@@ -584,7 +594,7 @@ class Hazus2020(Liquefaction):
 
         # calculate sigma_mu
         sigma_mu = (np.exp(0.25)-1) * prob_liq
-        
+
         # prepare outputs
         output = {
             # 'prob_liq': prob_liq,
@@ -720,7 +730,8 @@ class ZhuEtal2017(Liquefaction):
             }
         }
     }
-    _INPUT_DIST_VARY_WITH_LEVEL = False
+    # _INPUT_DIST_VARY_WITH_LEVEL = False
+    _INPUT_DIST_VARY_WITH_LEVEL = True
     _N_LEVEL = 3
     _MODEL_INPUT_INFRA = {
         "desc": 'Infrastructure random variables:',
@@ -744,9 +755,15 @@ class ZhuEtal2017(Liquefaction):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'vs30', 'precip', 'dist_coast', 'dist_river', 'dist_water', 'gw_depth',
+        'level1': [],
+        'level2': ['vs30', 'precip', 'dist_coast', 'dist_river', 'dist_water', 'gw_depth'],
+        'level3': ['vs30', 'precip', 'dist_coast', 'dist_river', 'dist_water', 'gw_depth'],
+        # 'vs30', 'precip', 'dist_coast', 'dist_river', 'dist_water', 'gw_depth',
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
+        'level1': [],
+        'level2': [],
+        'level3': [],
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
@@ -954,9 +971,15 @@ class ZhuEtal2015(Liquefaction):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        'vs30', 'cti',
+        'level1': [],
+        'level2': ['vs30', 'cti'],
+        'level3': ['vs30', 'cti'],
+        # 'vs30', 'cti',
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
+        'level1': [],
+        'level2': [],
+        'level3': [],
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}

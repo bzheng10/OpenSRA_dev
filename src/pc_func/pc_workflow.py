@@ -398,6 +398,22 @@ def get_workflow_order_list(methods_dict, infra_type='below_ground', verbose=Tru
         for case in workflow_order_list:
             workflow_order_list[case]['cat_list'].reverse()
             workflow_order_list[case]['haz_list'].reverse()
+        # if surface fault rupture, repeat workflow for primary and secondary
+        # if 'surface_fault_rupture' in methods_dict[starting_cat.lower()]:
+        #     workflow_order_list_fault_rup = {}
+        #     count = 1
+        #     for each in ['primary','secondary']:
+        #         for case in workflow_order_list:
+        #             workflow_order_list_fault_rup[f'case_{count}'] = workflow_order_list[case].copy()
+        #             curr_haz_list = workflow_order_list_fault_rup[f'case_{count}']['haz_list']
+        #             new_haz_list = [
+        #                 item+'_'+each if item=='surface_fault_rupture' else item
+        #                 for item in curr_haz_list
+        #             ]
+        #             workflow_order_list_fault_rup[f'case_{count}']['haz_list'] = new_haz_list
+        #             count += 1
+        #     workflow_order_list = workflow_order_list_fault_rup
+            
     # display lists
     if verbose:
         print('list of integration cases:')
@@ -444,13 +460,6 @@ def get_samples_for_params(dist, n_sample, n_site):
                     dist_type_int = 2
                 elif dist[each]['dist_type'] == 'uniform':
                     dist_type_int = 3
-                
-                # if each == 't_pipe':
-                    
-                # print(each, dist_type_int)
-                
-                # if each == 'l_p6_sys23':
-                
                 # get samples
                 samples[each] = res_to_samples(
                     residuals=res[:,:,count],
@@ -460,23 +469,6 @@ def get_samples_for_params(dist, n_sample, n_site):
                     high=dist[each]['high'],
                     dist_type=dist_type_int
                 )
-                # sys.exit()
-                    
-                # else:
-                #     pass
-                
-                # samples[each] = np.zeros((n_site,n_sample))
-                # for j in range(n_site):
-                #     samples[each][j,:] = res_to_samples(
-                #         samples=res[j,:,count],
-                #         mean=dist[each]['mean'][j],
-                #         sigma=dist[each]['sigma'][j],
-                #         low=dist[each]['low'][j],
-                #         high=dist[each]['high'][j],
-                #         dist_type=dist[each]['dist_type']
-                #     )
-                
-                    # sys.exit()
                 count += 1
         else:
             samples[each] = np.tile(dist[each]['value'],(n_sample,1)).T
@@ -680,7 +672,7 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
     if get_liq_susc:
         liq_susc_val = {}
 
-    time_start1 = time.time()
+    # time_start1 = time.time()
 
     # loop through method
     for count,method in enumerate(methods):
@@ -707,8 +699,8 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
             **input_samples
         )
         
-        print(f'\taa. time: {time.time()-time_start1} seconds')
-        time_start1 = time.time()
+        # print(f'\taa. time: {time.time()-time_start1} seconds')
+        # time_start1 = time.time()
         
         # get liq susc
         if get_liq_susc:
@@ -717,41 +709,41 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
         
         # loop through and search for return var and sigma, some methods have multiple conditions
         for param in return_params:
-            if isinstance(out[param],dict):
-                # see if output is a single value or an array
-                if np.ndim(out[param]['mean']) == 0:
-                    # make ones array for results
-                    to_expand = True
-                    ones_arr = np.ones((n_site,n_sample))
-                else:
-                    to_expand = False
+            # if isinstance(out[param],dict):
+            # see if output is a single value or an array
+            if np.ndim(out[param]['mean']) == 0:
+                # make ones array for results
+                to_expand = True
+                ones_arr = np.ones((n_site,n_sample))
+            else:
+                to_expand = False
+                
+            # get params
+            store_sigma_mu[param] = out[param]['sigma_mu']
+            store_dist_type[param] = out[param]['dist_type']
+            # repeat mat if output is a single value
+            if to_expand:
+                store_sigma_mu[param] = ones_arr*store_sigma_mu[param]
                     
-                # get params
-                store_sigma_mu[param] = out[param]['sigma_mu']
-                store_dist_type[param] = out[param]['dist_type']
-                # repeat mat if output is a single value
-                if to_expand:
-                    store_sigma_mu[param] = ones_arr*store_sigma_mu[param]
-                        
-                # store mean
-                if out[param]['dist_type'] == 'lognormal':
-                    store_rvs[param] = np.log(out[param]['mean'])
-                elif out[param]['dist_type'] == 'normal':
-                    store_rvs[param] = out[param]['mean']
-                # repeat mat if output is a single value
-                if to_expand:
-                    store_rvs[param] = ones_arr*store_rvs[param]
+            # store mean
+            if out[param]['dist_type'] == 'lognormal':
+                store_rvs[param] = np.log(out[param]['mean'])
+            elif out[param]['dist_type'] == 'normal':
+                store_rvs[param] = out[param]['mean']
+            # repeat mat if output is a single value
+            if to_expand:
+                store_rvs[param] = ones_arr*store_rvs[param]
 
             # get mean of mu
-                track_rvs_mean[param] = store_rvs[param].mean(axis=1)
-            
-                # get average base sigma_mu over domain
-                store_sigma_mu[param] = np.sqrt(np.mean(store_sigma_mu[param]**2,axis=1))
+            track_rvs_mean[param] = store_rvs[param].mean(axis=1)
         
-                # after getting mean, run loop again to get epistemic uncertainty
-                track_rvs_mean_reshape = np.tile(track_rvs_mean[param].copy(),(n_sample,1)).T
-                var_of_mu_input_vector_down = np.mean((store_rvs[param]-track_rvs_mean_reshape)**2,axis=1)
-                sigma_of_mu_vector_method_down = np.sqrt(store_sigma_mu[param]**2 + var_of_mu_input_vector_down)
+            # get average base sigma_mu over domain
+            store_sigma_mu[param] = np.sqrt(np.mean(store_sigma_mu[param]**2,axis=1))
+    
+            # after getting mean, run loop again to get epistemic uncertainty
+            track_rvs_mean_reshape = np.tile(track_rvs_mean[param].copy(),(n_sample,1)).T
+            var_of_mu_input_vector_down = np.mean((store_rvs[param]-track_rvs_mean_reshape)**2,axis=1)
+            sigma_of_mu_vector_method_down = np.sqrt(store_sigma_mu[param]**2 + var_of_mu_input_vector_down)
 
             # if tracking mean over samples
             if get_mean_over_samples:
@@ -769,8 +761,8 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
                     'sigma_of_mu': sigma_of_mu_vector_method_down,
                     'dist_type': store_dist_type[param]
                 }
-        print(f'\bb. time: {time.time()-time_start1} seconds')
-        time_start1 = time.time()
+        # print(f'\bb. time: {time.time()-time_start1} seconds')
+        # time_start1 = time.time()
     
     # combine methods
     haz_results = {}
@@ -807,8 +799,8 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
             'dist_type': store_dist_type[param]
         }
         
-    print(f'\tcc. time: {time.time()-time_start1} seconds')
-    time_start1 = time.time()
+    # print(f'\tcc. time: {time.time()-time_start1} seconds')
+    # time_start1 = time.time()
     
     # combine methods and samples of liq_susc
     if get_liq_susc:

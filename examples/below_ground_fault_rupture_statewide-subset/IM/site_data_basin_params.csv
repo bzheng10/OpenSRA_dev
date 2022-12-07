@@ -1,0 +1,37 @@
+ID,LON,LAT,vs30,z1p0,z2p5,vs30source,vs30_ref,z1p0_ref,z2p5_ref
+1,-116.5,34.1,351.9,0.0,1.35,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+2,-116.5,34.1,351.9,0.0,1.35,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+3,-118.4,34.25,293.5,0.35,2.25,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+4,-118.4,34.25,293.5,0.35,2.25,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+5,-122.0,37.25,444.0,0.593333313,0.938405762,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model R,USGS Bay Area Velocity Model R
+6,-122.0,37.25,444.0,0.593333313,0.938405762,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model R,USGS Bay Area Velocity Model R
+7,-120.75,35.3,733.4,0.0,0.0,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+8,-120.75,35.3,733.4,0.0,0.0,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+9,-119.7,34.45,386.6,0.0,4.8,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+10,-119.7,34.45,386.6,0.0,4.8,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+11,-119.7,34.45,386.6,0.0,4.8,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+12,-119.75,34.4,486.7539283,0.0,5.35,Inferred,Global Vs30 from Topographic S,SCEC Community Velocity Model ,SCEC Community Velocity Model 
+13,-119.75,34.4,486.7539283,0.0,5.35,Inferred,Global Vs30 from Topographic S,SCEC Community Velocity Model ,SCEC Community Velocity Model 
+14,-119.75,34.4,486.7539283,0.0,5.35,Inferred,Global Vs30 from Topographic S,SCEC Community Velocity Model ,SCEC Community Velocity Model 
+15,-117.2,32.8,386.6,0.0,0.0,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+16,-117.2,32.8,386.6,0.0,0.0,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+17,-117.2,32.8,386.6,0.0,0.0,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+18,-122.35,37.95,293.5,0.057872345,0.8725,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model R,USGS Bay Area Velocity Model R
+19,-118.15,34.15,386.6,0.1,1.05,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+20,-118.15,34.15,386.6,0.1,1.05,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+21,-118.6,34.5,444.0,0.35,1.8,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+22,-118.6,34.5,444.0,0.35,1.8,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+23,-118.6,34.5,444.0,0.35,1.8,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+24,-118.6,34.45,351.9,0.35,3.5,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+25,-118.6,34.45,351.9,0.35,3.5,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+26,-116.1,33.7,351.9,0.55,0.55,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+27,-116.2,33.75,386.6,1.05,1.45,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+28,-121.7,37.2,571.6,0.0,1.75,Inferred,CGS/Wills VS30 Map (2015),"SCEC CCA, Iteration 6, Basin D","SCEC CCA, Iteration 6, Basin D"
+29,-121.7,37.2,571.6,0.0,1.75,Inferred,CGS/Wills VS30 Map (2015),"SCEC CCA, Iteration 6, Basin D","SCEC CCA, Iteration 6, Basin D"
+30,-121.7,37.2,571.6,0.0,1.75,Inferred,CGS/Wills VS30 Map (2015),"SCEC CCA, Iteration 6, Basin D","SCEC CCA, Iteration 6, Basin D"
+31,-121.7,37.2,571.6,0.0,1.75,Inferred,CGS/Wills VS30 Map (2015),"SCEC CCA, Iteration 6, Basin D","SCEC CCA, Iteration 6, Basin D"
+32,-121.5,37.05,502.5,0.0,1.85,Inferred,CGS/Wills VS30 Map (2015),"SCEC CCA, Iteration 6, Basin D","SCEC CCA, Iteration 6, Basin D"
+33,-117.0,34.5,386.6,0.0,0.85,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+34,-117.0,34.5,386.6,0.0,0.85,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+35,-117.0,34.5,386.6,0.0,0.85,Inferred,CGS/Wills VS30 Map (2015),SCEC Community Velocity Model ,SCEC Community Velocity Model 
+36,-121.6,41.0,518.9,518.9,518.9,Inferred,CGS/Wills VS30 Map (2015),CGS/Wills VS30 Map (2015),CGS/Wills VS30 Map (2015)

@@ -41,8 +41,22 @@ def main():
         'below_ground_landslide_statewide-subset_level1_ucerf',
         'below_ground_landslide_statewide-subset_level2_shakemap',
         # -- lateral spread
+        'below_ground_lateral_spread_cpt_alameda_ucerf',
+        'below_ground_lateral_spread_cpt_balboa_blvd_shakemap',
+        # 'below_ground_lateral_spread_cpt_balboa_blvd_ucerf',
+        # 'below_ground_lateral_spread_level1_balboa_blvd_shakemap',
+        'below_ground_lateral_spread_level1_statewide-subset_shakemap',
+        'below_ground_lateral_spread_level1_statewide-subset_ucerf',
+        'below_ground_lateral_spread_level2_balboa_blvd_shakemap',
         # -- settlement
+        ####'below_ground_settlement_cpt_alameda_shakemap',
+        ####'below_ground_settlement_cpt_alameda_ucerf',
+        ####'below_ground_settlement_cpt_balboa_blvd_shakemap',
+        ####'below_ground_settlement_cpt_balboa_blvd_ucerf',
+        ####'below_ground_settlement_level2_statewide-subset_shakemap',
+        ####'below_ground_settlement_level2_statewide-subset_ucerf',
         # -- surface fault rupture
+        # 'below_ground_fault_rupture_statewide-subset',
         ##############################
         # wells and caprocks
         'wells_caprocks_ucerf',

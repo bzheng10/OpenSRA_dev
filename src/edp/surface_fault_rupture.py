@@ -24,17 +24,142 @@ from src.base_class import BaseModel
 # -----------------------------------------------------------
 class SurfaceFaultRupture(BaseModel):
     "Inherited class specfic to surface fault rupture"
-    
-    # _RETURN_PBEE_META = {
-    #     'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
-    #     'type': 'lateral spread',       # Type of model (e.g., liquefaction, landslide, pipe strain)
-    #     'variable': [
-    #         'pgdef',
-    #     ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
-    # }
 
     def __init__(self):
         super().__init__()
+
+
+# -----------------------------------------------------------
+class PetersenEtal2011(SurfaceFaultRupture):
+    """
+    Compute surface fault rupture displacement using Petersen et al. (2021).
+    
+    Parameters
+    ----------
+    From upstream PBEE:
+    
+    Geotechnical/geologic:
+    
+    Fixed:
+    
+    Returns
+    -------
+    pgdef : float, np.ndarray
+        [m] permanent ground deformation
+        
+    References
+    ----------
+    .. [1] Petersen et al. (2011) - To be completed.
+    
+    """
+
+    _NAME = 'Petersen et al. (2011)'       # Name of the model
+    _ABBREV = None                     # Abbreviated name of the model
+    _REF = "".join([                     # Reference for the model
+        'Petersen, et al., 2011, ',
+        'XX, ',
+        'YY, ',
+        'ZZ.'
+    ])
+    _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
+        "desc": 'returned PBEE upstream random variables:',
+        'params': {
+            'pgdef': {
+                'desc': 'permanent ground deformation (m)',
+                'unit': 'm',
+            }
+        }
+    }
+    _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+        "desc": 'PBEE upstream random variables:',
+        'params': {
+            'mag': {
+                'desc': 'moment magnitude',
+                'unit': '',
+            },
+        }
+    }
+    _INPUT_DIST_VARY_WITH_LEVEL = False
+    _N_LEVEL = 3
+    _MODEL_INPUT_INFRA = {
+        "desc": 'Infrastructure random variables:',
+        "params": {
+            'norm_dist': {
+                'desc': 'normalized distance of crossing from fault end (max=0.5)',
+                'unit': '',
+            },
+            'f_r': {
+                'desc': 'faulting frequency (nonzero for secondary hazard), recommended by LCI',
+                'unit': '',
+            },
+            'f_ds': {
+                'desc': 'displacement scale factor (nonzero for secondary hazard), recommended by LCI',
+                'unit': '',
+            },
+        }
+    }
+    _MODEL_INPUT_GEO = {
+        "desc": 'Geotechnical/geologic random variables:',
+        'params': {}
+    }
+    _MODEL_INPUT_FIXED = {
+        'desc': 'Fixed input variables:',
+        'params': {}
+    }
+    _REQ_MODEL_RV_FOR_LEVEL = {
+    }
+    _REQ_MODEL_FIXED_FOR_LEVEL = {
+    }
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
+    _MODEL_FORM_DETAIL = {}
+    _MODEL_INPUT_RV = {}
+    
+    
+    @staticmethod
+    # @njit
+    def _model(
+        mag, norm_dist, f_r, f_ds, # upstream PBEE RV
+        return_inter_params=False # to get intermediate params
+    ):
+        """Model"""
+        
+        # disp magnitude by Petersen et al. (2011)
+        x_star = (1 - ((norm_dist-0.5)/0.5)**2)**0.5
+        # calculate deformation
+        ln_pgdef = 1.7927*mag + 3.3041*x_star -11.2192 # ln(cm)
+        
+        # calculate probability of surface rupture
+        term = np.exp(-12.51+2.053*mag)
+        prob_surf_rup = term / (1+term)
+        
+        # apply prob and scale factors as recommended by LCI
+        # - prob of surface rupture
+        # - faulting frequency prob
+        # - displacement scale factor
+        ln_pgdef = ln_pgdef * prob_surf_rup * f_r * f_ds # applied to ln(d)
+        
+        # convert to meters and limit to 1e-5 m to avoid ln(0)
+        pgdef = np.maximum(np.exp(ln_pgdef)/100, 1e-5) # m
+
+        # prepare outputs
+        output = {
+            'pgdef': {
+                'mean': pgdef,
+                'sigma': np.ones(pgdef.shape)*0.498,
+                'sigma_mu': np.ones(pgdef.shape)*1.0197,
+                'dist_type': 'lognormal',
+                'unit': 'm'
+            },
+        }
+        # get intermediate values if requested
+        if return_inter_params:
+            output['x_star'] = x_star
+            output['prob_surf_rup'] = prob_surf_rup
+        
+        # return
+        return output
 
 
 # -----------------------------------------------------------

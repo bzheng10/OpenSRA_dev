@@ -27,6 +27,35 @@ from numba_stats import truncnorm, norm
 from scipy.interpolate import interp2d
 
 
+def get_cdf_given_pts(pts_arr):
+    """2d array, n pts, x valus must be within 0 and 1"""
+    dist_cdf = []
+    for i in range(len(pts_arr)):
+        if i == 0:
+            dist_cdf.append([pts_arr[i][0],0])
+        else:
+            dist_cdf.append([
+                pts_arr[i][0],
+                dist_cdf[-1][1] + \
+                    (pts_arr[i][0]-pts_arr[i-1][0])*
+                    (pts_arr[i][1]+pts_arr[i-1][1])/2
+            ])
+    # if dist_cdf doesn't start at x=0
+    if dist_cdf[0][0] != 0:
+        dist_cdf = np.vstack([
+            [0,0],
+            dist_cdf
+        ])
+    # if dist_cdf doesn't end at x=1
+    if dist_cdf[-1][0] != 1:
+        dist_cdf = np.vstack([
+            dist_cdf,
+            [1,dist_cdf[-1][1]],
+        ])
+    # normalize cdf to area = 1
+    dist_cdf[:,1] = dist_cdf[:,1]/dist_cdf[-1][1]
+    return dist_cdf
+
 
 # -----------------------------------------------------------
 @njit(

@@ -76,14 +76,16 @@ class HutabaratEtal2022(SettlementInducedPipeStrain):
     soil_type: str, np.ndarray or list
         soil type (sand/clay) for model
     soil_density: str, np.ndarray or list
-        soil density: soft, medium stiff, or stiff for clay; medium dense, dense, or very dense for sand
+        soil density: medium dense, dense, or very dense for sand
     steel_grade: str, np.ndarray or list
         steel grade: Grade-B, X-42, X-52, X-60, X-70, X-80
 
     Returns
     -------
-    eps_pipe : float, np.ndarray
-        [%] longitudinal pipe strain
+    eps_pipe_comp : float, np.ndarray
+        [%] longitudinal pipe strain in compression
+    eps_pipe_tens : float, np.ndarray
+        [%] longitudinal pipe strain in tension
     
     References
     ----------
@@ -103,8 +105,12 @@ class HutabaratEtal2022(SettlementInducedPipeStrain):
         'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'returned PBEE upstream random variables:',
         'params': {
-            'eps_pipe': {
-                'desc': 'longitudinal pipe strain (%)',
+            'eps_pipe_comp': {
+                'desc': 'longitudinal pipe strain in compression (%)',
+                'unit': '%',
+            },
+            'eps_pipe_tens': {
+                'desc': 'longitudinal pipe strain in tension (%)',
                 'unit': '%',
             },
         }
@@ -230,8 +236,23 @@ class HutabaratEtal2022(SettlementInducedPipeStrain):
         soil_type, soil_density, steel_grade, # fixed/toggles
         return_inter_params=False # to get intermediate params
     ):
-        """Model"""        
-        # run Hutabarat et al. (2022) - normal case
+        """Model"""
+        #####
+        # always Hutabarat - normal
+        #####
+        
+        # for PGD less than 5 cm or 0.05 m, set to 0
+        pgdef[pgdef<0.05] == 0
+        
+        # initialize output variables
+        eps_pipe_comp = np.ones(pgdef.shape)*1e-5
+        eps_pipe_tens = np.ones(pgdef.shape)*1e-5
+        sigma_eps_pipe_comp = np.ones(pgdef.shape)*0.01
+        sigma_eps_pipe_tens = np.ones(pgdef.shape)*0.01
+        sigma_mu_eps_pipe_comp = np.ones(pgdef.shape)*0.3
+        sigma_mu_eps_pipe_tens = np.ones(pgdef.shape)*0.3
+        
+        # Hutabarat normal:
         output = HutabaratEtal2022_Normal._model(
             pgdef, # upstream PBEE RV
             d_pipe, t_pipe, sigma_y, n_param, r_param, l_anchor, # infrastructure
@@ -240,6 +261,27 @@ class HutabaratEtal2022(SettlementInducedPipeStrain):
             gamma_backfill, phi_backfill, delta_backfill, # sand
             soil_type, soil_density, steel_grade, # fixed/toggles
         )
+        eps_pipe_tens = output['eps_pipe']['mean']
+        sigma_eps_pipe_tens = output['eps_pipe']['sigma']
+        sigma_mu_eps_pipe_tens = output['eps_pipe']['sigma_mu']
+        
+        # prepare outputs
+        output = {
+            'eps_pipe_comp': {
+                'mean': eps_pipe_comp,
+                'sigma': sigma_eps_pipe_comp,
+                'sigma_mu': sigma_mu_eps_pipe_comp,
+                'dist_type': 'lognormal',
+                'unit': '%'
+            },
+            'eps_pipe_tens': {
+                'mean': eps_pipe_tens,
+                'sigma': sigma_eps_pipe_tens,
+                'sigma_mu': sigma_mu_eps_pipe_tens,
+                'dist_type': 'lognormal',
+                'unit': '%'
+            },
+        }
         
         # get intermediate values if requested
         if return_inter_params:

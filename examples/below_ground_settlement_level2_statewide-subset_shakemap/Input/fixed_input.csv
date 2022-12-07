@@ -1,0 +1,5 @@
+Name,Description,Source,Value
+soil_type,soil type (sand/clay) for model,From infrastructure table or enter value,clay
+soil_density,,From infrastructure table or enter value,soft
+steel_grade,"steel grade: Grade-B, X-42, X-52 (default), X-60, X-70, X-80",Preferred,
+liq_susc,liquefaction susceptibility category,Preferred,

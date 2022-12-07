@@ -9,12 +9,11 @@
             "CPTBased": {
                 "ModelWeight": 1
             }
-        },
-        "settlement": {}
+        }
     },
     "DM": {
-        "pipe_strain_landslide": {
-            "HutabaratEtal2022": {
+        "pipe_strain_lateral_spread": {
+            "BainEtal2022_and_HutabaratEtal2022": {
                 "ModelWeight": 1
             }
         }

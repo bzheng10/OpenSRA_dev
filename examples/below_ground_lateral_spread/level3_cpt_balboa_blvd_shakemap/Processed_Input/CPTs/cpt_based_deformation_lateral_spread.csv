@@ -1,0 +1,3 @@
+FID,event_id,slip_dir,pgdef_m,sigma,sigma_mu,dist_type,ls_cond,amu,bmu
+0,1,170.6,0.2559,0.6,0.25,lognormal,ground_slope,0.872989578412036,-1.9978578642534848
+1,4,166.8,0.2452,0.6,0.25,lognormal,ground_slope,0.6878657654645978,-1.8763477826766304

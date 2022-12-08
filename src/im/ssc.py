@@ -930,7 +930,7 @@ class UserDefinedRupture(SeismicSource):
         
         # invoke parent function
         super().__init__()
-        
+                
         # get inputs
         self.fpath = fpath
         

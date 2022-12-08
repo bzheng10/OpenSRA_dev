@@ -1,6 +1,0 @@
-Name,Description,Source,Value
-d_production_boring,,From infrastructure table or enter value,PRODUCTION BORING DIAMETER (M)
-d_production_casing,,From infrastructure table or enter value,PRODUCTION CASING OUTER DIAMETER (M)
-d_tubing,,From infrastructure table or enter value,TUBING OUTER DIAMETER (M)
-casing_flow,,From infrastructure table or enter value,CASING FLOW?
-z_top_of_cement,,From infrastructure table or enter value,DEPTH TO TOP OF CEMENT (M)

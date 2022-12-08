@@ -1,5 +1,0 @@
-Name,Description,Source,Value
-sys_type,,From infrastructure table or enter value,SUBSYSTEM
-tee_flag,,From infrastructure table or enter value,tee_exist
-elbow_flag,,From infrastructure table or enter value,elbow_exist
-stretch_length_flag,,From infrastructure table or enter value,stretch_length_flag

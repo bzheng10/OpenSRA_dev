@@ -25,6 +25,7 @@ import argparse
 import json
 import logging
 import os
+import shutil
 import sys
 import time
 
@@ -55,7 +56,7 @@ from src.util import set_logging, lhs, get_cdf_given_pts
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Main function
 def main(work_dir, logging_level='info', logging_message_detail='s',
-         display_after_n_event=100, get_timer=False):
+         display_after_n_event=100, clean_prev_output=True, get_timer=False):
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Setting logging level (e.g. DEBUG or INFO)
@@ -2300,8 +2301,14 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # Export summary file
     # results directory
     sdir = os.path.join(work_dir,'Results')
-    if not os.path.isdir(sdir):
-        os.mkdir(sdir)
+    # clean prev outputs
+    if clean_prev_output:
+        if os.path.isdir(sdir):
+            shutil.rmtree(sdir) # remove directory/start clean
+        os.mkdir(sdir) # make directory
+    else:
+        if not os.path.isdir(sdir):
+            os.mkdir(sdir) # make directory
     # formats
     rows_pad_btw_table = 2
     # store to one file
@@ -2377,10 +2384,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # Export gpkg file with mean fractiles
     # export path
     spath = os.path.join(sdir,'mean_fractiles_for_all_cases.gpkg')
+    if os.path.exists(spath):
+        os.remove(spath)
     # get list of cases in df_frac, get all mean columns
     cases_in_df_frac = sorted(list(df_frac)) # also sort by alphabetical order
     # for below or above ground, everything fits into one summary sheet (same number of rows):
-    if infra_type == 'below_ground' or infra_type == 'above_ground':
+    if infra_type == 'below_ground':
         # create a gpkg file to store mean fractiles
         if 'LON_MID' in df_locs:
             gdf_frac_mean = GeoDataFrame(
@@ -2409,7 +2418,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 if 'mean_' in col:
                     gdf_frac_mean[f'{case}_{col}'] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='data', index=False)  
+        gdf_frac_mean.to_file(spath, layer='data', index=False)
         
     # for wells and caprocks - one sheet for wells, one sheet for caprocks if exists
     if infra_type == 'wells_caprocks':
@@ -2444,7 +2453,31 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         gdf_frac_mean['caprocks'][f'{case}_{col}'] = df_frac[case][col].values
         # export
         for layer in gdf_frac_mean:
-            gdf_frac_mean[layer].to_file(spath, layer=layer, index=False)  
+            gdf_frac_mean[layer].to_file(spath, layer=layer, index=False)
+            
+    if infra_type == 'above_ground':
+        # create a gpkg file to store mean fractiles
+        gdf_frac_mean = GeoDataFrame(
+            None,
+            crs=4326,
+            geometry=points_from_xy(
+                x=df_locs.LON.values,
+                y=df_locs.LAT.values,
+            )
+        )
+        gdf_frac_mean['ComponentID'] = index
+        # for each case in df_frac, get all mean columns
+        for case in cases_in_df_frac:
+            if case+'_worst_case' in cases_in_df_frac:
+                pass
+            else:
+                for col in df_frac[case].columns:
+                    if 'mean_' in col:
+                        gdf_frac_mean[f'{case}_{col}'] = df_frac[case][col].values
+                    if 'worst_case' in col:
+                        gdf_frac_mean[f'{case}_{col}'] = df_frac[case][col].values
+        # export
+        gdf_frac_mean.to_file(spath, layer='data', index=False)
 
     logging.info(f'{counter}. Exported geopackage with mean fractiles for all cases to:')
     logging.info(f'\t{spath}')
@@ -2468,7 +2501,7 @@ if __name__ == "__main__":
     
     # input directory
     # parser.add_argument('-i', '--input', help='Path of input directory"]')
-    parser.add_argument('-w', '--work_dir', help='Path to working/analysis directory')
+    parser.add_argument('-w', '--workdir', help='Path to working/analysis directory')
     
     # clean previous analysis
     # parser.add_argument('-c', '--clean', help='Clean previous analysis: "y" or "n" (default)', default='n')
@@ -2477,14 +2510,19 @@ if __name__ == "__main__":
     # parser.add_argument('-l', '--logging', help='Logging level: "info"(default) or "debug"', default='info')
     
     # infrastructure file type
-    parser.add_argument('-l', '--logging_detail',
+    parser.add_argument('-l', '--logging',
                         help='Logging message detail: "s" for simple or "d" for detailed',
-                        default='d', type=str)
+                        default='s', type=str)
     
     # infrastructure file type
-    parser.add_argument('-d', '--display_after_n_event',
+    parser.add_argument('-d', '--display',
                         help='Display a message every n scenarios',
                         default=10, type=int)
+    
+    # infrastructure file type
+    parser.add_argument('-c', '--clean',
+                        help='Clean "Results" directory from previous OpenSRA run if exists',
+                        default=True, type=bool)
     
     ###########################
     # display temporary timer messages
@@ -2499,10 +2537,11 @@ if __name__ == "__main__":
     
     # Run "Main"
     main(
-        work_dir = args.work_dir,
+        work_dir = args.workdir,
         # clean_prev_run = args.clean,
         # logging_level = args.logging,
-        display_after_n_event=args.display_after_n_event,
-        logging_message_detail=args.logging_detail,
+        display_after_n_event=args.display,
+        logging_message_detail=args.logging,
+        clean_prev_output=args.clean,
         get_timer=args.timer,
     )

@@ -37,12 +37,12 @@ from shapely.geometry import LineString
 # from numba import njit
 
 # plotting modules
-if importlib.util.find_spec('matplotlib') is not None:
-    import matplotlib.pyplot as plt
-    from matplotlib.collections import LineCollection
-if importlib.util.find_spec('contextily') is not None:
-    import contextily as ctx
-    
+# if importlib.util.find_spec('matplotlib') is not None:
+#     import matplotlib.pyplot as plt
+#     from matplotlib.collections import LineCollection
+# if importlib.util.find_spec('contextily') is not None:
+#     import contextily as ctx
+
 # OpenSRA modules
 from src.util import from_dict_to_array
 from src.im import gmc, ssc

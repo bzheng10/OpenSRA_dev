@@ -1,0 +1,6 @@
+Name,Description,Source,Value
+d_production_boring,[m] diameter of production boring,From infrastructure table or enter value,PRODUCTION BORING DIAMETER (M)
+d_production_casing,[m] outer diameter of production casing,From infrastructure table or enter value,PRODUCTION CASING OUTER DIAMETER (M)
+d_tubing,[m] outer diameter of tubing,From infrastructure table or enter value,TUBING OUTER DIAMETER (M)
+casing_flow,flag for whether well is configured for casing flow,From infrastructure table or enter value,CASING FLOW?
+z_top_of_cement,[m] depth to top of cement,From infrastructure table or enter value,DEPTH TO TOP OF CEMENT (M)

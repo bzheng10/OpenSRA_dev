@@ -245,17 +245,22 @@
 								"UpstreamParam": ["pga", "mag"]
 							},
                             "DisplayOrder": [
-                                "CPTFolderInUserProvidedGISFolder",
-                                "ColumnInCPTSummaryWithGWTable",
-                                "WeightRobertson04"
                             ],
 							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters from users",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
 								"CPTFolderInUserProvidedGISFolder": {
 									"NameToDisplay": "CPTFolderInUserProvidedGISFolder",
                                     "VarType": "UserInput",
 									"WidgetType": "QLineEdit",
 									"DescToDisplay": "Folder under the user specified GIS directory that contains the CPT data and summary table",
-									"ToDisplay": true,
+									"ToDisplay": false,
 									"DefaultValue": null
 								},
 								"ColumnInCPTSummaryWithGWTable": {
@@ -263,7 +268,7 @@
                                     "VarType": "UserInput",
 									"WidgetType": "QLineEdit",
 									"DescToDisplay": "Column in the CPT summary table that contains the mean groundwater depth in meters",
-									"ToDisplay": true,
+									"ToDisplay": false,
 									"DefaultValue": null
 								},
 								"WeightRobertson04": {
@@ -271,7 +276,7 @@
                                     "VarType": "UserInput",
 									"WidgetType": "QLineEdit",
 									"DescToDisplay": "Weight to use for Robertson (2009); weight for Boulanger & Idriss (2016) = 1 - weight for R09",
-									"ToDisplay": true,
+									"ToDisplay": false,
 									"DefaultValue": 0.5
 								}
 							}
@@ -335,16 +340,22 @@
 								"UpstreamParam": ["fs_liq"]
 							},
                             "DisplayOrder": [
-                                "WeightRobertson04",
-                                "PathToFreefaceShapefile"
                             ],
 							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters from users",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
 								"WeightZhang04": {
 									"NameToDisplay": "WeightZhang04",
                                     "VarType": "UserInput",
 									"WidgetType": "QLineEdit",
 									"DescToDisplay": "Weight to use for Zhang et al. (2004); weight for Idriss & Boulanger (2008) = 1 - weight for Z04",
-									"ToDisplay": true,
+									"ToDisplay": false,
 									"DefaultValue": 0.5
 								},
 								"PathToFreefaceShapefile": {
@@ -352,7 +363,7 @@
                                     "VarType": "UserInput",
 									"WidgetType": "QLineEdit",
 									"DescToDisplay": "Folder under the user specified GIS directory that contains the freeface feature",
-									"ToDisplay": true,
+									"ToDisplay": false,
 									"DefaultValue": null
 								}
 							}
@@ -490,6 +501,14 @@
                             "DisplayOrder": [
                             ],
 							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This model has no additional input parameters from users",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
 							}
 						}
 					}
@@ -980,7 +999,7 @@
 					"NameToDisplay": "Available Method(s)",
 					"WidgetType": "QComboBox",
 					"ToDisplay": true,
-					"DefaultValue": "Petersen et al. (2011)",
+					"DefaultValue": "PetersenEtal2011",
 					"Options" : {
 						"PetersenEtal2011": {
 							"NameToDisplay": "Petersen et al. (2011)",

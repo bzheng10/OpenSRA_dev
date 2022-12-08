@@ -55,7 +55,7 @@ from src.util import set_logging
 # -----------------------------------------------------------
 # Main function
 def main(work_dir, logging_level='info', logging_message_detail='s',
-         display_after_n_event=100):
+         display_after_n_event=100, clean_prev_output=True):
     """main function that runs the preprocess procedures"""
 
     # -----------------------------------------------------------
@@ -81,11 +81,20 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     opensra_dir = os.path.dirname(os.path.abspath(__file__))
     input_dir = os.path.join(work_dir,'Input')
     processed_input_dir = os.path.join(work_dir,'Processed_Input')
-    if not os.path.isdir(processed_input_dir):
-        os.mkdir(processed_input_dir)
     im_dir = os.path.join(work_dir,'IM')
-    if not os.path.isdir(im_dir):
+    # clean prev outputs
+    if clean_prev_output:
+        if os.path.isdir(processed_input_dir):
+            shutil.rmtree(processed_input_dir) # remove directory/start clean
+        if os.path.isdir(im_dir):
+            shutil.rmtree(im_dir) # remove directory/start clean
+        os.mkdir(processed_input_dir)
         os.mkdir(im_dir)
+    else:
+        if not os.path.isdir(processed_input_dir):
+            os.mkdir(processed_input_dir)
+        if not os.path.isdir(im_dir):
+            os.mkdir(im_dir)
     logging.info(f'{counter}. Check and create file directories')
     logging.info('\tPerforming preprocessing of methods and input variables for OpenSRA')
     logging.info('\t\tOpenSRA backend directory')
@@ -156,20 +165,21 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         infra_geom_fpath = infra_fpath.replace('.csv','.gpkg')
         flag_using_state_network = True
     else:
-        # create file path
+        # check if infra_fname is already a valid filepath, if not then infer from input_dir
+        if os.path.exists(infra_fname):
+            infra_fpath = infra_fname
+        else:
+            infra_fpath = os.path.join(input_dir,infra_fname)
+            # check path validity
+            if not os.path.exists(infra_fpath):
+                raise ValueError("Path to infrastructure data file does not exist")
+        # further search within fpath for shapefile
         if infra_ftype == 'Shapefile':
-            infra_fpath = os.path.join(
-                # work_dir,
-                input_dir,
-                setup_config['Infrastructure']['SiteDataFile']
-            )
             files = os.listdir(infra_fpath)
             for each in files:
                 if each.endswith('shp'):
                     infra_fpath = os.path.join(infra_fpath,each)
                     break
-        else:
-            infra_fpath = os.path.join(input_dir,setup_config['Infrastructure']['SiteDataFile'])
         flag_using_state_network = False
     infra_loc_headers_in = setup_config['Infrastructure']['SiteLocationParams']
     if infra_type == 'below_ground':
@@ -202,16 +212,26 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # Intensity Measure
     im_source = list(setup_config['IntensityMeasure']['SourceForIM'])[0]
     if im_source == 'ShakeMap':
-        sm_dir = os.path.join(
-            input_dir,
-            setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Directory']
-        )
+        sm_dir = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Directory']
+        # check if user-input sm_dir is valid directory, if not then infer from input_dir
+        if os.path.exists(sm_dir):
+            pass
+        else:
+            sm_dir = os.path.join(input_dir,sm_dir)
+            # check path validity
+            if not os.path.exists(sm_dir):
+                raise ValueError("Path to ShakeMap directory does not exist")
         sm_events = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events']
     elif im_source == 'UserDefinedRupture':
-        rup_fpath = os.path.join(
-            input_dir,
-            setup_config['IntensityMeasure']['SourceForIM']['UserDefinedRupture']['FaultFile']
-        )
+        rup_fpath = setup_config['IntensityMeasure']['SourceForIM']['UserDefinedRupture']['FaultFile']
+        # check if user-input sm_dir is valid directory, if not then infer from input_dir
+        if os.path.exists(rup_fpath):
+            pass
+        else:
+            rup_fpath = os.path.join(input_dir,rup_fpath)
+            # check path validity
+            if not os.path.exists(rup_fpath):
+                raise ValueError("Path to user defined rupture file does not exist")
     elif im_source == 'UCERF':
         rup_fpath = None
     else:
@@ -268,9 +288,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     if site_data.shape[0] == 0:
         logging.info(f'\n')
         logging.info(f'*****FATAL*****')
-        logging.info(f'- The number of components/segments is zero - the final risk metrics will all be zero!')
-        logging.info(f'- Please revise input infrastructure file.')
-        logging.info(f'- Preprocessing will now exit.')
+        logging.info(f'- The number of components/segments is zero!')
+        logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
+        logging.info(f'- Please revise the input infrastruture file and try preprocessing again.')
+        # logging.info(f'- Preprocessing will now exit.')
         logging.info(f'*****FATAL*****')
         logging.info(f'\n')
         sys.exit()
@@ -409,12 +430,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 performed_crossing = True
                 if site_data.shape[0] == 0:
                     logging.info(f'\n*****FATAL*****')
-                    logging.info(f'- No crossings idenfitied using {hazard} deformation polygons - the final risk metrics will all be zero!')
+                    logging.info(f'- No crossings idenfitied using CPT generated deformation polygons for {hazard}!')
+                    logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
                     if hazard == 'landslide':
-                        logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile.')
+                        logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile and try preprocessing again.')
                     elif 'liquefaction' in workflow['EDP']:
-                        logging.info(f'- Please revise the input infrastructure file and/or the site investigation data.')
-                    logging.info(f'- Preprocessing will now exit.')
+                        logging.info(f'- Please revise the input infrastructure file and/or the site investigation data and try preprocessing again.')
+                    # logging.info(f'- Preprocessing will now exit.')
                     logging.info(f'*****FATAL*****\n')
                     sys.exit()
                 else:
@@ -657,11 +679,15 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # well_crossing_ordered_by_faults = None           
     if infra_type == 'wells_caprocks':
         # get well crossings
-        well_trace_dir = os.path.join(
-            # work_dir,
-            input_dir,
-            setup_config['Infrastructure']['WellTraceDir']
-        )
+        # check if path is already a valid filepath, if not then infer from input_dir
+        well_trace_dir = setup_config['Infrastructure']['WellTraceDir']
+        if os.path.exists(well_trace_dir):
+            pass
+        else:
+            well_trace_dir = os.path.join(input_dir,well_trace_dir)
+            # check path validity
+            if not os.path.exists(well_trace_dir):
+                raise ValueError("Path to directory with well traces does not exist")
         # well_crossing_ordered_by_faults, _ = get_well_crossing(
         get_well_crossing(
             im_dir=im_dir,
@@ -674,12 +700,16 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         
         # get caprock crossings
         if 'CaprockLeakage' in setup_config['DecisionVariable']['Type']:
+            # check if path is already a valid filepath, if not then infer from input_dir
+            caprock_fdir = setup_config['Infrastructure']['PathToCaprockShapefile']
+            if os.path.exists(caprock_fdir):
+                pass
+            else:
+                caprock_fdir = os.path.join(input_dir,caprock_fdir)
+                # check path validity
+                if not os.path.exists(caprock_fdir):
+                    raise ValueError("Path to directory with caprock shapefile does not exist")
             # get shapefile for caprock
-            caprock_fdir = os.path.join(
-                # work_dir,
-                input_dir,
-                setup_config['Infrastructure']['PathToCaprockShapefile']
-            )
             if caprock_fdir.endswith('.shp'):
                 caprock_shp_file = caprock_fdir
             else:
@@ -1029,7 +1059,7 @@ def get_rvs_and_fix_by_level(workflow, infra_fixed={}):
     req_rvs_by_level = {} # RVs needed by levels
     req_fixed_by_level = {} # fixed params needed by levels
 
-    # for each category
+    # for each catesgory
     for category in workflow:
         curr_cat = workflow[category]
         # for each hazard
@@ -2271,9 +2301,18 @@ def preprocess_cpt_data(
     
     # -----------------------------------------------------------
     # get CPT directory
-    cpt_folder_name = edp_setup_config['Type']['Liquefaction']['Method']['CPTBased']['CPTFolderInUserProvidedGISFolder']
-    col_with_gw_depth = edp_setup_config['Type']['Liquefaction']['Method']['CPTBased']['ColumnInCPTSummaryWithGWTable']
-    cpt_base_dir = os.path.join(user_prov_gis_dir,cpt_folder_name)
+    cpt_folder_name = setup_config['CPTParams']['CPTFolderInUserProvidedGISFolder']
+    # check if name is already a valid filepath, if not then infer from user provided GIS directory
+    if os.path.exists(cpt_folder_name):
+        cpt_base_dir = cpt_folder_name
+    else:
+        cpt_base_dir = os.path.join(user_prov_gis_dir,cpt_folder_name)
+        # check path validity
+        if not os.path.exists(cpt_base_dir):
+            print(cpt_base_dir)
+            raise ValueError("Path to folder with CPT data is not valid")
+    # get column with groundwater table depth
+    col_with_gw_depth = setup_config['CPTParams']['ColumnInCPTSummaryWithGWTable']
     # read CPT data
     cpt_meta_wgs84, cpt_meta_utm, cpt_data, n_cpt = \
         process_cpt_spt.read_cpt_data(cpt_base_dir, col_with_gw_depth)
@@ -2580,22 +2619,28 @@ def preprocess_cpt_data(
             haz_to_run.append(each)
     # weights for methods
     weight_r09 = 0.5
-    if 'WeightRobertson04' in edp_setup_config['Type']['Liquefaction']['Method']['CPTBased']:
-        weight_r09 = edp_setup_config['Type']['Liquefaction']['Method']['CPTBased']['WeightRobertson04']
+    if 'WeightRobertson09' in setup_config['CPTParams']:
+        weight_r09 = setup_config['CPTParams']['WeightRobertson09']
     weight_z04 = 0.5
     if 'lateral_spread' in workflow['EDP']:
-        if 'WeightZhang04' in edp_setup_config['Type']['LateralSpread']['Method']['CPTBased']:
-            weight_z04 = edp_setup_config['Type']['LateralSpread']['Method']['CPTBased']['WeightZhang04']
+        if 'WeightZhang04' in setup_config['CPTParams']:
+            weight_z04 = setup_config['CPTParams']['WeightZhang04']
     # get free-face feature if provided
     freeface_fpath = None
     if 'lateral_spread' in workflow['EDP']:
-        if 'PathToFreefaceShapefile' in edp_setup_config['Type']['LateralSpread']['Method']['CPTBased']:
-            freeface_fpath = os.path.join(
-                user_prov_gis_dir,
-                edp_setup_config['Type']['LateralSpread']['Method']['CPTBased']['PathToFreefaceShapefile']
-            )
-            if not os.path.exists(freeface_fpath):
-                raise ValueError("Location provided for free face feature does not exist in the user provided GIS folder")
+        if 'PathToFreefaceShapefile' in setup_config['CPTParams']:
+            if setup_config['CPTParams']['PathToFreefaceShapefile'] is None:
+                pass
+            else:
+                freeface_fpath = setup_config['CPTParams']['PathToFreefaceShapefile']
+                # check if fname is already a valid filepath, if not then infer from user provided gis dir
+                if os.path.exists(freeface_fpath):
+                    pass
+                else:
+                    freeface_fpath = os.path.join(user_prov_gis_dir,freeface_fpath)
+                    # check path validity
+                    if not os.path.exists(freeface_fpath):
+                        raise ValueError("User provided path to freeface feature, but path is not valid")
     # for liquefaction calcs
     z_cutoff = 15 # m
     null_arr_cpt_sample = np.zeros((n_cpt, num_epi_input_samples))
@@ -3073,7 +3118,7 @@ if __name__ == "__main__":
     # Define arguments
     
     # analysis directory
-    parser.add_argument('-w', '--work_dir', help='Path to working/analysis directory')
+    parser.add_argument('-w', '--workdir', help='Path to working/analysis directory')
     
     # json with workflow
     # parser.add_argument('-w', '--workflow', help='Path to json file with workflow')
@@ -3087,22 +3132,28 @@ if __name__ == "__main__":
     #                     default='shp', type=str)
     
     # infrastructure file type
-    parser.add_argument('-l', '--logging_detail',
+    parser.add_argument('-l', '--logging',
                         help='Logging message detail: "s" for simple or "d" for detailed',
-                        default='d', type=str)
+                        default='s', type=str)
     
     # infrastructure file type
-    parser.add_argument('-d', '--display_after_n_event',
+    parser.add_argument('-d', '--display',
                         help='Display a message every n scenarios (CPT processing only)',
                         default=100, type=int)
+    
+    # infrastructure file type
+    parser.add_argument('-c', '--clean',
+                        help='Clean "IM" and "Processed_Input" directories from previous preprocessing if exists',
+                        default=True, type=bool)
     
     # Parse command line input
     args = parser.parse_args()
     
     # Run "Main"
     main(
-        work_dir = args.work_dir,
+        work_dir = args.workdir,
         # infra_fpath = args.file_type,
-        logging_message_detail=args.logging_detail,
-        display_after_n_event=args.display_after_n_event,
+        logging_message_detail=args.logging,
+        display_after_n_event=args.display,
+        clean_prev_output=args.clean,
     )

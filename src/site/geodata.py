@@ -52,11 +52,11 @@ from rasterio.plot import show, adjust_band
 from numba import typeof
 
 # plotting modules
-if importlib.util.find_spec('matplotlib') is not None:
-    import matplotlib.pyplot as plt
-    from matplotlib.collections import LineCollection
-if importlib.util.find_spec('contextily') is not None:
-    import contextily as ctx
+# if importlib.util.find_spec('matplotlib') is not None:
+#     import matplotlib.pyplot as plt
+#     from matplotlib.collections import LineCollection
+# if importlib.util.find_spec('contextily') is not None:
+#     import contextily as ctx
 
 # OpenSRA modules
 # from src.im import opensha as sha

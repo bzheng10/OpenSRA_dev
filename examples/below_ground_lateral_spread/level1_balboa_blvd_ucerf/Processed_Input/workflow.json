@@ -1,0 +1,38 @@
+{
+    "EDP": {
+        "liquefaction": {
+            "Hazus2020": {
+                "ModelWeight": 1
+            }
+        },
+        "lateral_spread": {
+            "Hazus2020": {
+                "ModelWeight": 1
+            }
+        }
+    },
+    "DM": {
+        "pipe_strain_lateral_spread": {
+            "BainEtal2022_and_HutabaratEtal2022": {
+                "ModelWeight": 1
+            }
+        }
+    },
+    "DV": {
+        "pipe_comp_rupture": {
+            "BainEtal2022": {
+                "ModelWeight": 1
+            }
+        },
+        "pipe_tensile_rupture": {
+            "BainEtal2022": {
+                "ModelWeight": 1
+            }
+        },
+        "pipe_tensile_leakage": {
+            "BainEtal2022": {
+                "ModelWeight": 1
+            }
+        }
+    }
+}

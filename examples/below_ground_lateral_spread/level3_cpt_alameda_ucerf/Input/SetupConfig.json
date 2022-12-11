@@ -9,7 +9,7 @@
     },
     "Infrastructure": {
 		"InfrastructureType": "below_ground",
-		"DataType": "Shapefile",
+		"DataType": "STATE_CSV",
         "SiteDataFile": "CA_Natural_Gas_Pipeline",
 		"SiteLocationParams": {
             "LatMid": "LAT_MID",
@@ -117,11 +117,14 @@
 		"RandomVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\rvs_input.csv",
 		"FixedVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\fixed_input.csv"
     },
-	"CPTParams": {
-		"CPTFolderInUserProvidedGISFolder": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\gis_data\\cpts_alameda",
-		"PathToFreefaceShapefile": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\gis_data\\free_face_feature",
-		"ColumnInCPTSummaryWithGWTable": "Mean GWT",
-		"WeightRobertson09": 0.5,
-		"WeightZhang04": 0.5
-	}
+    "UserSpecifiedGISandCPTData": {
+        "CPTParameters": {
+            "ColumnInCPTSummaryWithGWTable": "Mean GWT",
+            "PathToCPTDataFolder": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/below_ground_lateral_spread/level3_cpt_alameda_ucerf/Input/gis_data/cpts_alameda/CPTs",
+            "PathToCPTSummaryCSV": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/below_ground_lateral_spread/level3_cpt_alameda_ucerf/Input/gis_data/cpts_alameda/Summary.csv",
+            "PathToFreefaceDir": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/below_ground_lateral_spread/level3_cpt_alameda_ucerf/Input/gis_data/free_face_feature",
+            "WeightRobertson09": 0.25,
+            "WeightZhang04": 0.75
+        }
+    }
 }

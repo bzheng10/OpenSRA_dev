@@ -1695,13 +1695,13 @@ def get_pipe_crossing_landslide_or_liq(
         if poly_exist:
             crossing_summary_gdf['beta_crossing'] = beta_crossing
             crossing_summary_gdf['psi_dip'] = "sampling_dependent"
-            # crossing_summary_gdf['theta_rake'] = "sampling_dependent"
         else:
             crossing_summary_gdf['beta_crossing'] = 135 # for SSComp
             crossing_summary_gdf['psi_dip'] = 15 # not used
-            # crossing_summary_gdf['theta_rake'] = 45 # not used
+        crossing_summary_gdf['theta_rake'] = 45 # not used
     # lateral spread or landslide
     elif def_type == 'lateral_spread' or def_type == 'settlement':
+        crossing_summary_gdf['theta_rake'] = 45 # not used
         if def_type == 'lateral_spread':
             # for lateral spread, if deformation polygons exist, psi and theta are dependent on sampled beta
             crossing_summary_gdf['psi_dip'] = 45 # just a placeholder, to be determined in OpenSRA.py

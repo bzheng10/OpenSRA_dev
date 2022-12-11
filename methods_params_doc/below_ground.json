@@ -255,30 +255,6 @@
                                     "ToDisplay": true,
                                     "DefaultValue": null
                                 }
-								"CPTFolderInUserProvidedGISFolder": {
-									"NameToDisplay": "CPTFolderInUserProvidedGISFolder",
-                                    "VarType": "UserInput",
-									"WidgetType": "QLineEdit",
-									"DescToDisplay": "Folder under the user specified GIS directory that contains the CPT data and summary table",
-									"ToDisplay": false,
-									"DefaultValue": null
-								},
-								"ColumnInCPTSummaryWithGWTable": {
-									"NameToDisplay": "ColumnInCPTSummaryWithGWTable",
-                                    "VarType": "UserInput",
-									"WidgetType": "QLineEdit",
-									"DescToDisplay": "Column in the CPT summary table that contains the mean groundwater depth in meters",
-									"ToDisplay": false,
-									"DefaultValue": null
-								},
-								"WeightRobertson04": {
-									"NameToDisplay": "WeightRobertson04",
-                                    "VarType": "UserInput",
-									"WidgetType": "QLineEdit",
-									"DescToDisplay": "Weight to use for Robertson (2009); weight for Boulanger & Idriss (2016) = 1 - weight for R09",
-									"ToDisplay": false,
-									"DefaultValue": 0.5
-								}
 							}
 						}
 					}
@@ -350,22 +326,6 @@
                                     "ToDisplay": true,
                                     "DefaultValue": null
                                 }
-								"WeightZhang04": {
-									"NameToDisplay": "WeightZhang04",
-                                    "VarType": "UserInput",
-									"WidgetType": "QLineEdit",
-									"DescToDisplay": "Weight to use for Zhang et al. (2004); weight for Idriss & Boulanger (2008) = 1 - weight for Z04",
-									"ToDisplay": false,
-									"DefaultValue": 0.5
-								},
-								"PathToFreefaceShapefile": {
-									"NameToDisplay": "PathToFreefaceShapefile",
-                                    "VarType": "UserInput",
-									"WidgetType": "QLineEdit",
-									"DescToDisplay": "Folder under the user specified GIS directory that contains the freeface feature",
-									"ToDisplay": false,
-									"DefaultValue": null
-								}
 							}
 						},
 						"YoudEtal2002": {

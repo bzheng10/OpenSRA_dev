@@ -4,8 +4,10 @@
 # base modules from Python
 import argparse
 import os
+import shutil
 import subprocess
 import time
+import sys
 
 
 # -----------------------------------------------------------
@@ -28,43 +30,56 @@ def main():
     opensra_py_fpath = os.path.abspath(os.path.join(opensra_dir,"OpenSRA.py"))
 
     # example wdir
-    ex_list = [
+    ex_list = {
         ##############################
         # above ground
-        'above_ground_shakemap',
-        'above_ground_ucerf',
-        'above_ground_ucerf_with_filters',
+        'above_ground': [
+            'shakemap',
+            'ucerf',
+            'ucerf_with_filters',
+        ],
         ##############################
         # below ground
         # -- landslide
-        'below_ground_landslide_statewide-subset_level1_shakemap',
-        'below_ground_landslide_statewide-subset_level1_ucerf',
-        'below_ground_landslide_statewide-subset_level2_shakemap',
+        'below_ground_landslide': [
+            'statewide-subset_level1_no_landslide_polygon_shakemap',
+            'statewide-subset_level1_no_landslide_polygon_ucerf',
+            'statewide-subset_level1_with_landslide_inventory_shakemap',
+        ],
         # -- lateral spread
-        'below_ground_lateral_spread_cpt_alameda_ucerf',
-        'below_ground_lateral_spread_cpt_balboa_blvd_shakemap',
-        # 'below_ground_lateral_spread_cpt_balboa_blvd_ucerf',
-        # 'below_ground_lateral_spread_level1_balboa_blvd_shakemap',
-        'below_ground_lateral_spread_level1_statewide-subset_shakemap',
-        'below_ground_lateral_spread_level1_statewide-subset_ucerf',
-        'below_ground_lateral_spread_level2_balboa_blvd_shakemap',
+        'below_ground_lateral_spread': [
+            'level1_balboa_blvd_shakemap',
+            'level1_statewide-subset_shakemap',
+            'level1_statewide-subset_ucerf',
+            'level2_balboa_blvd_shakemap',
+            'level3_cpt_alameda_ucerf',
+            'level3_cpt_balboa_blvd_shakemap',
+            'level3_cpt_balboa_blvd_ucerf',
+        ],
         # -- settlement
-        ####'below_ground_settlement_cpt_alameda_shakemap',
-        ####'below_ground_settlement_cpt_alameda_ucerf',
-        ####'below_ground_settlement_cpt_balboa_blvd_shakemap',
-        ####'below_ground_settlement_cpt_balboa_blvd_ucerf',
-        ####'below_ground_settlement_level2_statewide-subset_shakemap',
-        ####'below_ground_settlement_level2_statewide-subset_ucerf',
+        'below_ground_settlement': [
+            'level2_statewide-subset_shakemap',
+            'level2_statewide-subset_ucerf',
+            'level3_cpt_alameda_shakemap',
+            'level3_cpt_alameda_ucerf',
+            'level3_cpt_balboa_blvd_shakemap',
+            'level3_cpt_balboa_blvd_ucerf',
+        ],
         # -- surface fault rupture
-        # 'below_ground_fault_rupture_statewide-subset',
+        'below_ground_surface_fault_rupture': [
+            'statewide-subset',
+        ],
         ##############################
         # wells and caprocks
-        'wells_caprocks_ucerf',
-        'wells_caprocks_userdef_rupture',
-    ]
+        'wells_caprocks': [
+            'ucerf',
+            'userdef_rupture',
+        ]
+    }
     ex_wdir = [
-        os.path.abspath(os.path.join(opensra_dir,'examples',each))
-        for each in ex_list
+        os.path.abspath(os.path.join(opensra_dir,'examples',cat, fname))
+        for cat in ex_list
+        for fname in ex_list[cat]
     ]
     
     # mapping for scripts
@@ -77,6 +92,7 @@ def main():
     output = {}
     err = {}
     rc = {}
+    time_init = time.time()
     time_start = time.time()
     
     # loop through each example
@@ -123,7 +139,11 @@ def main():
                 print(f'\t\t\t{err_curr}')
 
     print("\n>>>>>>>>>>>>>>>>> Finished testing all examples\n")
-
+    total_time_spent = time.time() - time_init
+    if total_time_spent > 60:
+        print(f'\t- total run time: {round(total_time_spent/60,1)} min')
+    else:
+        print(f'\t- total run time: {round(total_time_spent,1)} sec')
 
 # -----------------------------------------------------------
 # Proc main

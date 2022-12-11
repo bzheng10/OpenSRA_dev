@@ -41,7 +41,7 @@ def make_def_poly_from_cpt_spt(
     pass
 
 
-def read_cpt_data(cpt_base_dir, col_with_gw_depth):
+def read_cpt_data(cpt_summary_fpath, cpt_data_fdir, col_with_gw_depth):
     '''
     Read the CPT data with csv format only.
         Column 0: Depth (m)
@@ -51,21 +51,24 @@ def read_cpt_data(cpt_base_dir, col_with_gw_depth):
     Note: Every row must contain valid data
     '''
     # check if paths are valid
-    if not os.path.exists(cpt_base_dir):
-        raise ValueError("Path to CPT root folder is not valid")
-    cpt_data_dir = os.path.join(cpt_base_dir,'CPTs')
-    if not os.path.exists(cpt_data_dir):
-        raise ValueError(r'Path to CPT data folder (root/CPTs/) is not valid')
+    # if not os.path.exists(cpt_base_dir):
+    #     raise ValueError("Path to CPT root folder is not valid")
+    # cpt_data_dir = os.path.join(cpt_base_dir,'CPTs')
+    # if not os.path.exists(cpt_data_dir):
+    #     raise ValueError(r'Path to CPT data folder (root/CPTs/) is not valid')
     # get list of CPT files
-    cpt_data_files = os.listdir(cpt_data_dir)
+    cpt_data_files = os.listdir(cpt_data_fdir)
     # create transformers for transforming coordinates
     epsg_wgs84 = 4326 # degrees
     epsg_utm_zone10 = 32610 # meters
     transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10)
     transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84)
     # read CPT metadata with locations
-    cpt_meta_fpath = os.path.join(cpt_base_dir,'Summary.csv')
-    cpt_meta = read_csv(cpt_meta_fpath)
+    # cpt_meta_fpath = os.path.join(cpt_base_dir,'Summary.csv')
+    cpt_meta = read_csv(cpt_summary_fpath)
+    # make sure summary file has the required columns:
+    if not ('CPT_FileName' in cpt_meta and 'Longitude' in cpt_meta and 'Latitude' in cpt_meta):
+        raise ValueError('CPT summary file must contained the following columns: "CPT_FileName", "Longitude", and "Latitude"')
     cpt_meta['utm_x'], cpt_meta['utm_y'] = \
         transformer_wgs84_to_utmzone10.transform(
             cpt_meta['Latitude'].values,
@@ -73,7 +76,7 @@ def read_cpt_data(cpt_base_dir, col_with_gw_depth):
         )
     # see if groundwater depth is given; raise error if not
     if not col_with_gw_depth in cpt_meta:
-        raise ValueError(f'CPT summary table does not contain the column {col_with_gw_depth} for groundwater depth')
+        raise ValueError(f'CPT summary table does not contain the column {col_with_gw_depth} for mean groundwater depth')
     # number of CPTs
     n_cpt = cpt_meta.shape[0]
     # create GeoDataFrames for geospatial processing
@@ -88,7 +91,7 @@ def read_cpt_data(cpt_base_dir, col_with_gw_depth):
         crs=epsg_wgs84
     )
     # read CPT files in a folder
-    cpt_data = [read_csv(os.path.join(cpt_data_dir,each)) for each in cpt_data_files]
+    cpt_data = [read_csv(os.path.join(cpt_data_fdir,each)) for each in cpt_data_files]
     cpt_file_headers = list(cpt_data[0].columns)
     if 'qt' in cpt_file_headers:
         cpt_file_headers = list(map(lambda x: x.replace('qt','qc'), cpt_file_headers))

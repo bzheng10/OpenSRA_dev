@@ -57,9 +57,9 @@ lib/OtherData/Preprocessed/Precomputed_IMs_for_Statewide_Pipeline
 
 # examples
 examples/(DO_NOT_RUN)_below_ground_landslide_statewide_level1_ucerf/
-examples/**/IM
-examples/**/Processed_Input_IM
-examples/**/Results
+examples/**/IM/
+examples/**/Processed_Input_IM/
+examples/**/Results/
 
 # others
 **/superseded

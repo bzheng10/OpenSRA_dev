@@ -50,7 +50,7 @@ From "conda-forge"
 ```
 conda install -c conda-forge geopandas rasterio shapely pygeos openpyxl numba icc_rt h5py
 ```
-note: the above command may take awhile to solve
+-- note: the above command may take awhile to solve
 
 From "pip"
 

@@ -415,11 +415,25 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             def_shp_crs = file_metadata['Datasets']['Set1']['CRS']
                             fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                         else:
-                            fdir = os.path.join(user_prov_gis_dir,def_poly_source)
-                            for f in os.listdir(fdir):
-                                if f.endswith('.shp'):
-                                    fpath = os.path.join(fdir,f)
-                                    break
+                            # first check if def_poly_source is a valid path
+                            if os.path.exists(def_poly_source):
+                                fdir = def_poly_source
+                            # otherwise infer from user provided GIS directory
+                            else:
+                                fdir = os.path.join(user_prov_gis_dir,def_poly_source)
+                            # next check if fdir is a folder with shapefile or is already a shapefile
+                            if fdir.endswith('.shp'):
+                                fpath = fdir
+                            # go through fdir and find filename that ends with .shp and make path
+                            else:
+                                fpath = None
+                                for f in os.listdir(fdir):
+                                    if f.endswith('.shp'):
+                                        fpath = os.path.join(fdir,f)
+                                        break
+                                # if fpath is still None, 
+                                if fpath_valid is False:
+                                    raise ValueError("A path was provided for user defined landslide deformation polygons, but path is invalid")
                             def_shp_crs = 4326
                     else:
                         fpath = None
@@ -437,6 +451,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     def_shp_crs=def_shp_crs,
                     freeface_fpath=freeface_fpath
                 )
+                # if can't find crossing, end preprocessing
+                if site_data is None:
+                    sys.exit()
+                # continue
                 performed_crossing = True
                 if site_data.shape[0] == 0:
                     logging.info(f'\n*****FATAL*****')

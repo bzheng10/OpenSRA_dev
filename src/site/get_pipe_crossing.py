@@ -1165,7 +1165,7 @@ def get_pipe_crossing_landslide_or_liq(
             logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
             logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile and try preprocessing again.')
             logging.info(f'*****FATAL*****\n')
-            sys.exit()
+            return None
         # crossed_segment_id = crossed_segment_index + 1
         crossed_segment_id = segment_index_full[crossed_segment_index]
         # get unique deformation polygons that crossed with segments

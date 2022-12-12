@@ -48,8 +48,9 @@ From "conda-forge"
 [pygeos (0.12.0)](https://pygeos.readthedocs.io/en/stable/)
 
 ```
-conda install -c conda-forge geopandas shapely pygeos openpyxl numba icc_rt h5py
+conda install -c conda-forge geopandas rasterio shapely pygeos openpyxl numba icc_rt h5py
 ```
+note: the above command may take awhile to solve
 
 From "pip"
 

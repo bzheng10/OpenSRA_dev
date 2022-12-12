@@ -1,0 +1,2 @@
+FID,event_id,slip_dir,pgdef_m,sigma,sigma_mu,dist_type,amu,bmu
+0,3.0,176.6,0.0504,0.6,0.25,lognormal,0.0,-2.9883138815121604

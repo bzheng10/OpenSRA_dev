@@ -1,0 +1,23 @@
+,IM,EDP,DM,DV
+case_1,PGA,wellhead rotation,wellhead strain,wellhead rupture
+case_2,PGA,wellhead rotation,wellhead strain,wellhead leakage
+case_3,PGA,,vessel moment ratio,vessel rupture
+
+
+Abbrevations,Description
+IM,"Intensity measure (e.g., PGA)"
+EDP,"Engineering demand parameter (e.g., ground displacement)"
+DM,"Damage measure (e.g., pipe strain)"
+DV,"Decision variable (e.g., probability of rupture)"
+
+
+Source for IM
+ShakeMap scenario(s)
+
+
+Notes,
+1,"Results are provided as annual rate of occurrence (i.e., number of ocurrence per year)."
+2,"Results are given at the 5th, 16th, 50th (median), 84th, and 95th percentiles. The mean of the distribution is also provided."
+3,"The decision variable for each case is given in the table above, along with its upstream dependencies."
+
+

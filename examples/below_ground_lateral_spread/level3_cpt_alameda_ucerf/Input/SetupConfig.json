@@ -1,0 +1,130 @@
+{
+    "General": {
+        "AnalysisID" : "TEST",
+		"Directory": {
+			"Working": "",
+			"UserProvidedGISFolder": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\gis_data"
+		},
+        "OutputFileType": "csv"
+    },
+    "Infrastructure": {
+		"InfrastructureType": "below_ground",
+		"DataType": "STATE_CSV",
+        "SiteDataFile": "CA_Natural_Gas_Pipeline",
+		"SiteLocationParams": {
+            "LatMid": "LAT_MID",
+            "LonMid": "LON_MID",
+            "LatBegin": "LAT_BEGIN",
+            "LonBegin": "LON_BEGIN",
+            "LatEnd": "LAT_END",
+            "LonEnd": "LON_END"
+		}
+    },
+    "IntensityMeasure": {
+        "SourceForIM": {
+            "UCERF": {
+			}
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "Liquefaction": {
+                "ToInclude": true,
+                "Method": {
+                    "CPTBased": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "LateralSpread": {
+                "ToInclude": true,
+                "Method": {
+                    "CPTBased": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "Settlement": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "Landslide": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "SurfaceFaultRupture": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "LateralSpreadInducedPipeStrain": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022_and_HutabaratEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "PipeCompressiveRupture": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileRupture": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileLeakage": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "InputParameters": {
+		"RandomVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\rvs_input.csv",
+		"FixedVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\fixed_input.csv"
+    },
+    "UserSpecifiedGISandCPTData": {
+        "CPTParameters": {
+            "ColumnInCPTSummaryWithGWTable": "Mean GWT",
+            "PathToCPTDataFolder": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/below_ground_lateral_spread/level3_cpt_alameda_ucerf/Input/gis_data/cpts_alameda/CPTs",
+            "PathToCPTSummaryCSV": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/below_ground_lateral_spread/level3_cpt_alameda_ucerf/Input/gis_data/cpts_alameda/Summary.csv",
+            "PathToFreefaceDir": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/below_ground_lateral_spread/level3_cpt_alameda_ucerf/Input/gis_data/free_face_feature",
+            "WeightRobertson09": 0.25,
+            "WeightZhang04": 0.75
+        }
+    }
+}

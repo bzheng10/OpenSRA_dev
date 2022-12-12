@@ -1,0 +1,314 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>2. Assessment Class Object &#8212; OpenSRA (2022) documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3. Intensity Measures" href="IM.html" />
+    <link rel="prev" title="1. OpenSRA Framework" href="Framework.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="IM.html" title="3. Intensity Measures"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Framework.html" title="1. OpenSRA Framework"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (2022) documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">2. </span>Assessment Class Object</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-Model.assessment">
+<span id="assessment-class-object"></span><h1><span class="section-number">2. </span>Assessment Class Object<a class="headerlink" href="#module-Model.assessment" title="Permalink to this headline">¶</a></h1>
+<p>Assess the damages and decision values at target sites using ground motion predictions and demand parameters.</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#Model.assessment.get_IM_means" title="Model.assessment.get_IM_means"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_IM_means</span></code></a>(setup_config, …)</p></td>
+<td><p>Get IM predictions from user-defined sources (e.g, OpenSHA, ShakeMap, User-Input) and stores in <strong>_IM_dict</strong>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#Model.assessment.sim_IM" title="Model.assessment.sim_IM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sim_IM</span></code></a>(setup_config, other_config_param, …)</p></td>
+<td><p>Perform multivariate random sampling of <strong>PGA</strong> and <strong>PGV</strong> using means and sigmas for all scenarios.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#Model.assessment.assess_EDP" title="Model.assessment.assess_EDP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assess_EDP</span></code></a>(setup_config, other_config_param, …)</p></td>
+<td><p>Using the simulated intensity measures to calculate engineering demand parameters.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#Model.assessment.assess_DM" title="Model.assessment.assess_DM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assess_DM</span></code></a>(setup_config, other_config_param, …)</p></td>
+<td><p>Using the simulated intensity measures and engineering demand parameters to calculate damage measures.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#Model.assessment.assess_DV" title="Model.assessment.assess_DV"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assess_DV</span></code></a>(setup_config, other_config_param, …)</p></td>
+<td><p>Using the simulated intensity measures, engineering demand parameters, and damage measures to calculate decision variables/values.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#Model.assessment.export_DV" title="Model.assessment.export_DV"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_DV</span></code></a>(setup_config, other_config_param, …)</p></td>
+<td><p>Exports calculated DVs to directory</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="Model.assessment.assess_DM">
+<span class="sig-prename descclassname"><span class="pre">Model.assessment.</span></span><span class="sig-name descname"><span class="pre">assess_DM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_config_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_param_for_assess</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Model.assessment.assess_DM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using the simulated intensity measures and engineering demand parameters to calculate damage measures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>For input parameters to each method, refer to the method documentation under :func:`dm`.</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>output</strong><span class="classifier">varies</span></dt><dd><p>[varies] output depends on the target demand and methods.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Model.assessment.assess_DV">
+<span class="sig-prename descclassname"><span class="pre">Model.assessment.</span></span><span class="sig-name descname"><span class="pre">assess_DV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_config_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_param_for_assess</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Model.assessment.assess_DV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using the simulated intensity measures, engineering demand parameters, and damage measures to calculate decision variables/values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>dv_category</strong><span class="classifier">str</span></dt><dd><p>decision variable category to calculate; options are <strong>rr</strong> (more to be added, see <code class="xref py py-func docutils literal notranslate"><span class="pre">dv()</span></code> for meaning of the options)</p>
+</dd>
+<dt><strong>dv_method</strong><span class="classifier">str</span></dt><dd><p>method/procedure to use to calculate the damage; see <code class="xref py py-func docutils literal notranslate"><span class="pre">dv()</span></code> for available methods.</p>
+</dd>
+<dt><strong>return_param</strong><span class="classifier">str, list</span></dt><dd><p>single of a list of parameters to return, see the return variables under each function (<code class="xref py py-func docutils literal notranslate"><span class="pre">dv()</span></code>)</p>
+</dd>
+<dt><strong>store_name</strong><span class="classifier">str, list, optional</span></dt><dd><p>names to store parameter as; default = <strong>return_param</strong></p>
+</dd>
+<dt><strong>ims</strong><span class="classifier">str, list, optional</span></dt><dd><p>list of <strong>IM</strong> variables to create: <strong>pga</strong> or <strong>pgv</strong> (default = both)</p>
+</dd>
+<dt><strong>flag_clear_dict</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> to clear the calculated damages or <strong>False</strong> to keep them; default = <strong>False</strong></p>
+</dd>
+<dt><strong>flag_pga</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> include simulated <strong>PGA</strong>; default = <strong>False</strong></p>
+</dd>
+<dt><strong>flag_pgv</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> include simulated <strong>PGV</strong>; default = <strong>False</strong></p>
+</dd>
+<dt><strong>flag_mag</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> include moment magnitude <strong>mag</strong> from rupture metadata; default = <strong>False</strong></p>
+</dd>
+<dt><strong>flag_rup_depend</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> if dependent on rupture scenario; default = <strong>False</strong></p>
+</dd>
+<dt><strong>source_dict</strong><span class="classifier">str, list, optional</span></dt><dd><p>dictionary that contains <strong>source_param</strong> and <strong>source_method</strong>; default = None</p>
+</dd>
+<dt><strong>source_param</strong><span class="classifier">str, list, optional</span></dt><dd><p>parameter to get from <strong>existing</strong> stored parameters in (e.g., <strong>liq_susc</strong>); default = None</p>
+</dd>
+<dt><strong>source_method</strong><span class="classifier">str, list, optional</span></dt><dd><p>method used to obtain the source_param (e.g., <strong>zhu_etal_2017</strong>); default = None</p>
+</dd>
+<dt><strong>For method parameters, refer to the method documentation under :func:`dv`.</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>output</strong><span class="classifier">varies</span></dt><dd><p>[varies] output depends on the target decision variables and methods.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Model.assessment.assess_EDP">
+<span class="sig-prename descclassname"><span class="pre">Model.assessment.</span></span><span class="sig-name descname"><span class="pre">assess_EDP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_config_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_param_for_assess</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Model.assessment.assess_EDP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using the simulated intensity measures to calculate engineering demand parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>edp_category</strong><span class="classifier">str</span></dt><dd><p>demand category to calculate; options are <strong>corr_spt</strong>, <strong>liq</strong>, <strong>ls</strong>, <strong>gs</strong>, etc. (see <code class="xref py py-func docutils literal notranslate"><span class="pre">edp()</span></code> for all <strong>EDP</strong> categories)</p>
+</dd>
+<dt><strong>method</strong><span class="classifier">str</span></dt><dd><p>method/procedure to use to calculate the demand; see <code class="xref py py-func docutils literal notranslate"><span class="pre">edp()</span></code> for available methods</p>
+</dd>
+<dt><strong>return_param</strong><span class="classifier">str, list</span></dt><dd><p>single of a list of parameters to return, see the return variables under each function (<code class="xref py py-func docutils literal notranslate"><span class="pre">edp()</span></code>)</p>
+</dd>
+<dt><strong>store_name</strong><span class="classifier">str, list, optional</span></dt><dd><p>names to store parameter as; default = <strong>return_param</strong></p>
+</dd>
+<dt><strong>flag_clear_dict</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> to clear the calculated demands or <strong>False</strong> to keep them; default = <strong>False</strong></p>
+</dd>
+<dt><strong>flag_pga</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> include simulated <strong>PGA</strong>; default = <strong>False</strong></p>
+</dd>
+<dt><strong>flag_pgv</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> include simulated <strong>PGV</strong>; default = <strong>False</strong></p>
+</dd>
+<dt><strong>flag_mag</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> include moment magnitude <strong>mag</strong> from rupture metadata; default = <strong>False</strong></p>
+</dd>
+<dt><strong>flag_rup_depend</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> if dependent on rupture scenario; default = <strong>False</strong></p>
+</dd>
+<dt><strong>source_dict</strong><span class="classifier">str, list, optional</span></dt><dd><p>dictionary that contains <strong>source_param</strong> and <strong>source_method</strong>; default = None</p>
+</dd>
+<dt><strong>source_param</strong><span class="classifier">str, list, optional</span></dt><dd><p>parameter to get from <strong>existing</strong> stored parameters (e.g., <strong>liq_susc</strong>); default = None</p>
+</dd>
+<dt><strong>source_method</strong><span class="classifier">str, list, optional</span></dt><dd><p>method used to obtain the source_param (e.g., <strong>zhu_etal_2017</strong>); default = None</p>
+</dd>
+<dt><strong>For input parameters to each method, refer to the method documentation under :func:`edp`.</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>output</strong><span class="classifier">varies</span></dt><dd><p>[varies] output depends on the target demand and methods.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Model.assessment.export_DV">
+<span class="sig-prename descclassname"><span class="pre">Model.assessment.</span></span><span class="sig-name descname"><span class="pre">export_DV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_config_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Model.assessment.export_DV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exports calculated DVs to directory</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Model.assessment.get_IM_means">
+<span class="sig-prename descclassname"><span class="pre">Model.assessment.</span></span><span class="sig-name descname"><span class="pre">get_IM_means</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_config_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Model.assessment.get_IM_means" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get IM predictions from user-defined sources (e.g, OpenSHA, ShakeMap, User-Input) and stores in <strong>_IM_dict</strong>. Event information is stored in <strong>_EVENT_dict</strong></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>setup_config</strong><span class="classifier">dictionary</span></dt><dd><p>dictionary with configuration parameters from GUI</p>
+</dd>
+<dt><strong>other_config_param</strong><span class="classifier">dictionary</span></dt><dd><p>dictionary with additional configuration parameters created in OpenSRA</p>
+</dd>
+<dt><strong>site_data</strong><span class="classifier">pandas.DataFrame</span></dt><dd><p>table with user-defined site data</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Model.assessment.sim_IM">
+<span class="sig-prename descclassname"><span class="pre">Model.assessment.</span></span><span class="sig-name descname"><span class="pre">sim_IM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_config_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Model.assessment.sim_IM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform multivariate random sampling of <strong>PGA</strong> and <strong>PGV</strong> using means and sigmas for all scenarios. Spatial and spectral orrelations can be applied.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>n_samp_im</strong><span class="classifier">float</span></dt><dd><p>number of samples/realizations for intensity measures</p>
+</dd>
+<dt><strong>ims</strong><span class="classifier">str, list, optional</span></dt><dd><p>list of <strong>IM</strong> variables to create: <strong>pga</strong> or <strong>pgv</strong> (default = both)</p>
+</dd>
+<dt><strong>flag_spatial_corr</strong><span class="classifier">boolean, optional</span></dt><dd><p>decision on performing correlation between sites (distance); default = True</p>
+</dd>
+<dt><strong>flag_cross_corr</strong><span class="classifier">boolean, optional</span></dt><dd><p>decision on performing correlation between periods; default = True (only if <strong>ims</strong> contains <strong>pga</strong> and <strong>pgv</strong>)</p>
+</dd>
+<dt><strong>T_pga</strong><span class="classifier">float, optional</span></dt><dd><p>[sec] approximate period for <strong>PGA</strong> to be used in spectral correlation; default = 0.01 sec</p>
+</dd>
+<dt><strong>T_pgv</strong><span class="classifier">float, optional</span></dt><dd><p>[sec] approximate period for <strong>PGV</strong> to be used in spectral correlation; default = 1.0 sec</p>
+</dd>
+<dt><strong>method_d = str, optional</strong></dt><dd><p>method to use for spatial correlation; default = jayaram_baker_2009</p>
+</dd>
+<dt><strong>method_T = str, optional</strong></dt><dd><p>method to use for spectral correlation; default = baker_jayaram_2008</p>
+</dd>
+<dt><strong>flag_clear_dict</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> to clear the calculated demands or <strong>False</strong> to keep them; default = <strong>False</strong></p>
+</dd>
+<dt><strong>flag_im_sample_exist</strong><span class="classifier">boolean, optional</span></dt><dd><p><strong>True</strong> if IM samples are available or <strong>False</strong> to import statistical parameters and create random variables; default = <strong>False</strong></p>
+</dd>
+<dt><strong>sample_dir</strong><span class="classifier">str, optional</span></dt><dd><p>directory with samples; default = None</p>
+</dd>
+<dt><strong>store_file_type</strong><span class="classifier">str, optional</span></dt><dd><p>file type used to store the GM predictions (<strong>npz</strong> or <strong>txt</strong>), default = <strong>npz</strong></p>
+</dd>
+<dt><strong>For additional parameters, see the respective methods under :func:`im.corr_spatial.py` and :func:`im.corr_spectral.py`</strong></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>_IM_dict</strong><span class="classifier">dict</span></dt><dd><p>stored samples for all intensity measures and rupture scenarios</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/OpenSRA_logo_1600ppi.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Framework.html"
+                        title="previous chapter"><span class="section-number">1. </span>OpenSRA Framework</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="IM.html"
+                        title="next chapter"><span class="section-number">3. </span>Intensity Measures</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/src/Model.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="IM.html" title="3. Intensity Measures"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Framework.html" title="1. OpenSRA Framework"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OpenSRA (2022) documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">2. </span>Assessment Class Object</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Slate Geotechnical Consultants and The Regents of the University of California.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.2.
+    </div>
+  </body>
+</html>

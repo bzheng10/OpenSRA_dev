@@ -1,0 +1,11 @@
+Name,Description,From Model,Source,Distribution Type,Mean or Median,Sigma,CoV,Distribution Min,Distribution Max
+theta,[deg] fault angle,,Preferred,,,,,,
+w_fc,[m] fault core width,,Preferred,,,,,,
+w_dz,[m] damage zone width,,Preferred,,,,,,
+z_crossing,[m] fault depth,,Preferred,,,,,,
+e_rock,[GPa] Young's modulus of rock,,Preferred,,,,,,
+phi_cmt,[deg] internal friction angle of cement,,Preferred,,,,,,
+ucs_cmt,[MPa] uniaxial compressive strength of cement,,Preferred,,,,,,
+height_wh,"[m] wellhead height, for all modes",,Preferred,,,,,,
+mpl_wh,"[kg/m] wellhead mass per length, for all modes",,Preferred,,,,,,
+phi_soil,"[deg] soil friction angle, modes 1 and 2 only",,From infrastructure table or enter value,Normal,SOIL FRICTION ANGLE (DEG),3,,29,40

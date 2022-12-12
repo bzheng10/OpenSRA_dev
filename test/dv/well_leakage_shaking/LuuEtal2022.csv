@@ -1,0 +1,4 @@
+casing_flow,tubing_flow,d_production_casing_in,d_tubing_in,d_production_casing,d_tubing,mode,moment_crit_rup_conductor,moment_crit_rup_surface,moment_crit_rup_production,moment_crit_rup_tubing,sigma_moment_crit_rup_conductor,sigma_moment_crit_rup_surface,sigma_moment_crit_rup_production,sigma_moment_crit_rup_tubing,sigma_mu_moment_crit_rup_conductor,sigma_mu_moment_crit_rup_surface,sigma_mu_moment_crit_rup_production,sigma_mu_moment_crit_rup_tubing
+TRUE,FALSE,9,4,0.2286,0.1016,1,1311917.834,564045.0387,211194.8578,27913.05453,0.2,0.2,0.2,0.2,0.25,0.25,0.25,0.25
+TRUE,FALSE,7,3.5,0.1778,0.0889,2,1311917.834,300336.8095,109907.6238,21532.92778,0.2,0.2,0.2,0.2,0.25,0.25,0.25,0.25
+TRUE,FALSE,6,3,0.1524,0.0762,4,1066185.86,435757.8627,162947.3442,12302.58423,0.2,0.2,0.2,0.2,0.25,0.25,0.25,0.25

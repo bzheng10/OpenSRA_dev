@@ -1,0 +1,5 @@
+ID,LON,LAT,vs30,z1p0,z2p5,vs30source,vs30_ref,z1p0_ref,z2p5_ref
+1,-122.31,37.84,199.996544,0.152112671,0.86,Inferred,Global Vs30 from Topographic Slope (Wald & Allen 2008),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+2,-122.3,37.84,225.6,0.133055557,0.8575,Inferred,Thompson VS30 Map (2018),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+3,-122.3,37.84,225.6,0.133055557,0.8575,Inferred,Thompson VS30 Map (2018),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+4,-122.3,37.84,225.6,0.133055557,0.8575,Inferred,Thompson VS30 Map (2018),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0

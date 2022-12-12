@@ -1,0 +1,81 @@
+ID,LON,LAT,vs30,z1p0,z2p5,vs30source,vs30_ref,z1p0_ref,z2p5_ref
+1,-118.52,34.3,444.0,0.15,3.9,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+2,-118.52,34.3,444.0,0.15,3.9,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+3,-118.52,34.3,444.0,0.15,3.9,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+4,-118.52,34.3,444.0,0.15,3.9,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+5,-118.52,34.3,444.0,0.15,3.9,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+6,-118.52,34.3,444.0,0.15,3.9,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+7,-118.52,34.3,444.0,0.15,3.9,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+8,-118.52,34.31,468.4,0.35,3.7,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+9,-118.52,34.31,468.4,0.35,3.7,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+10,-118.52,34.31,468.4,0.35,3.7,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+11,-118.52,34.31,468.4,0.35,3.7,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+12,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+13,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+14,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+15,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+16,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+17,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+18,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+19,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+20,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+21,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+22,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+23,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+24,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+25,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+26,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+27,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+28,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+29,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+30,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+31,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+32,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+33,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+34,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+35,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+36,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+37,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+38,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+39,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+40,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+41,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+42,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+43,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+44,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+45,-122.14,38.18,351.9,0.604,3.513333496,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+46,-121.94,37.42,228.2,0.608,1.156911743,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+47,-121.94,37.42,228.2,0.608,1.156911743,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+48,-121.94,37.42,228.2,0.608,1.156911743,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+49,-121.94,37.42,228.2,0.608,1.156911743,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+50,-121.94,37.42,228.2,0.608,1.156911743,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+51,-121.94,37.42,228.2,0.608,1.156911743,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+52,-121.94,37.42,228.2,0.608,1.156911743,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+53,-121.94,37.42,228.2,0.608,1.156911743,Inferred,CGS/Wills VS30 Map (2015),USGS Bay Area Velocity Model Release 8.3.0,USGS Bay Area Velocity Model Release 8.3.0
+54,-118.4,33.97,386.6,0.6,4.55,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+55,-118.4,33.97,386.6,0.6,4.55,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+56,-118.4,33.97,386.6,0.6,4.55,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+57,-118.4,33.97,386.6,0.6,4.55,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+58,-118.4,33.97,386.6,0.6,4.55,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+59,-118.4,33.97,386.6,0.6,4.55,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+60,-118.4,33.97,386.6,0.6,4.55,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+61,-118.4,33.97,386.6,0.6,4.55,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+62,-118.4,33.97,386.6,0.6,4.55,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+63,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+64,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+65,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+66,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+67,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+68,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+69,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+70,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+71,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+72,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+73,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+74,-118.4,33.96,386.6,0.65,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+75,-118.39,33.96,386.6,0.6,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+76,-118.39,33.96,386.6,0.6,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+77,-118.39,33.96,386.6,0.6,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+78,-118.39,33.96,386.6,0.6,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+79,-118.39,33.96,386.6,0.6,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"
+80,-118.39,33.96,386.6,0.6,4.5,Inferred,CGS/Wills VS30 Map (2015),"SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth","SCEC Community Velocity Model Version 4, Iteration 26, Basin Depth"

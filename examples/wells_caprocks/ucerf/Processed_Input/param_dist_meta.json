@@ -1,0 +1,181 @@
+{
+    "casing_flow": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "casing_flow"
+    },
+    "d_production_boring": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "d_production_boring"
+    },
+    "d_production_casing": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "d_production_casing"
+    },
+    "d_tubing": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "d_tubing"
+    },
+    "e_rock": {
+        "dist_type": "e_rock_dist_type",
+        "high": "e_rock_high",
+        "low": "e_rock_low",
+        "mean": "e_rock_mean",
+        "sigma": "e_rock_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "height_wh": {
+        "dist_type": "height_wh_dist_type",
+        "high": "height_wh_high",
+        "low": "height_wh_low",
+        "mean": "height_wh_mean",
+        "sigma": "height_wh_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "mpl_wh": {
+        "dist_type": "mpl_wh_dist_type",
+        "high": "mpl_wh_high",
+        "low": "mpl_wh_low",
+        "mean": "mpl_wh_mean",
+        "sigma": "mpl_wh_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "phi_cmt": {
+        "dist_type": "phi_cmt_dist_type",
+        "high": "phi_cmt_high",
+        "low": "phi_cmt_low",
+        "mean": "phi_cmt_mean",
+        "sigma": "phi_cmt_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "phi_soil": {
+        "dist_type": "phi_soil_dist_type",
+        "high": "phi_soil_high",
+        "low": "phi_soil_low",
+        "mean": "phi_soil_mean",
+        "sigma": "phi_soil_sigma",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {
+            "high": false,
+            "low": false,
+            "mean": false,
+            "sigma": false
+        }
+    },
+    "theta": {
+        "dist_type": "theta_dist_type",
+        "high": "theta_high",
+        "low": "theta_low",
+        "mean": "theta_mean",
+        "sigma": "theta_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "ucs_cmt": {
+        "dist_type": "ucs_cmt_dist_type",
+        "high": "ucs_cmt_high",
+        "low": "ucs_cmt_low",
+        "mean": "ucs_cmt_mean",
+        "sigma": "ucs_cmt_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "w_dz": {
+        "dist_type": "w_dz_dist_type",
+        "high": "w_dz_high",
+        "low": "w_dz_low",
+        "mean": "w_dz_mean",
+        "sigma": "w_dz_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "w_fc": {
+        "dist_type": "w_fc_dist_type",
+        "high": "w_fc_high",
+        "low": "w_fc_low",
+        "mean": "w_fc_mean",
+        "sigma": "w_fc_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "z_crossing": {
+        "dist_type": "z_crossing_dist_type",
+        "high": "z_crossing_high",
+        "low": "z_crossing_low",
+        "mean": "z_crossing_mean",
+        "sigma": "z_crossing_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "z_top_of_cement": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "z_top_of_cement"
+    }
+}

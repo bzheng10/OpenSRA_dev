@@ -1,0 +1,373 @@
+{
+    "alpha_backfill": {
+        "dist_type": "alpha_backfill_dist_type",
+        "high": "alpha_backfill_high",
+        "low": "alpha_backfill_low",
+        "mean": "alpha_backfill_mean",
+        "sigma": "alpha_backfill_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "beta_crossing": {
+        "dist_type": "beta_crossing_dist_type",
+        "high": "beta_crossing_high",
+        "low": "beta_crossing_low",
+        "mean": "beta_crossing_mean",
+        "sigma": "beta_crossing_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "d_pipe": {
+        "dist_type": "d_pipe_dist_type",
+        "high": "d_pipe_high",
+        "low": "d_pipe_low",
+        "mean": "d_pipe_mean",
+        "sigma": "d_pipe_sigma",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {
+            "high": false,
+            "low": false,
+            "mean": false,
+            "sigma": false
+        }
+    },
+    "def_length": {
+        "dist_type": "def_length_dist_type",
+        "high": "def_length_high",
+        "low": "def_length_low",
+        "mean": "def_length_mean",
+        "sigma": "def_length_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "delta_backfill": {
+        "dist_type": "delta_backfill_dist_type",
+        "high": "delta_backfill_high",
+        "low": "delta_backfill_low",
+        "mean": "delta_backfill_mean",
+        "sigma": "delta_backfill_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "dist_coast": {
+        "dist_type": "dist_coast_dist_type",
+        "high": "dist_coast_high",
+        "low": "dist_coast_low",
+        "mean": "dist_coast_mean",
+        "sigma": "dist_coast_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "dist_river": {
+        "dist_type": "dist_river_dist_type",
+        "high": "dist_river_high",
+        "low": "dist_river_low",
+        "mean": "dist_river_mean",
+        "sigma": "dist_river_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "dist_water": {
+        "dist_type": "dist_water_dist_type",
+        "high": "dist_water_high",
+        "low": "dist_water_low",
+        "mean": "dist_water_mean",
+        "sigma": "dist_water_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "gamma_backfill": {
+        "dist_type": "gamma_backfill_dist_type",
+        "high": "gamma_backfill_high",
+        "low": "gamma_backfill_low",
+        "mean": "gamma_backfill_mean",
+        "sigma": "gamma_backfill_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "gw_depth": {
+        "dist_type": "gw_depth_dist_type",
+        "high": "gw_depth_high",
+        "low": "gw_depth_low",
+        "mean": "gw_depth_mean",
+        "sigma": "gw_depth_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "h_pipe": {
+        "dist_type": "h_pipe_dist_type",
+        "high": "h_pipe_high",
+        "low": "h_pipe_low",
+        "mean": "h_pipe_mean",
+        "sigma": "h_pipe_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "l_anchor": {
+        "dist_type": "l_anchor_dist_type",
+        "high": "l_anchor_high",
+        "low": "l_anchor_low",
+        "mean": "l_anchor_mean",
+        "sigma": "l_anchor_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "liq_susc": {
+        "dist_type": "fixed",
+        "source": "Preferred",
+        "still_need_pref": {
+            "value": true
+        },
+        "value": "liq_susc"
+    },
+    "n_param": {
+        "dist_type": "n_param_dist_type",
+        "high": "n_param_high",
+        "low": "n_param_low",
+        "mean": "n_param_mean",
+        "sigma": "n_param_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "op_press": {
+        "dist_type": "op_press_dist_type",
+        "high": "op_press_high",
+        "low": "op_press_low",
+        "mean": "op_press_mean",
+        "sigma": "op_press_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "phi_backfill": {
+        "dist_type": "phi_backfill_dist_type",
+        "high": "phi_backfill_high",
+        "low": "phi_backfill_low",
+        "mean": "phi_backfill_mean",
+        "sigma": "phi_backfill_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "precip": {
+        "dist_type": "precip_dist_type",
+        "high": "precip_high",
+        "low": "precip_low",
+        "mean": "precip_mean",
+        "sigma": "precip_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "psi_dip": {
+        "dist_type": "psi_dip_dist_type",
+        "high": "psi_dip_high",
+        "low": "psi_dip_low",
+        "mean": "psi_dip_mean",
+        "sigma": "psi_dip_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "r_param": {
+        "dist_type": "r_param_dist_type",
+        "high": "r_param_high",
+        "low": "r_param_low",
+        "mean": "r_param_mean",
+        "sigma": "r_param_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "s_u_backfill": {
+        "dist_type": "s_u_backfill_dist_type",
+        "high": "s_u_backfill_high",
+        "low": "s_u_backfill_low",
+        "mean": "s_u_backfill_mean",
+        "sigma": "s_u_backfill_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "sigma_y": {
+        "dist_type": "sigma_y_dist_type",
+        "high": "sigma_y_high",
+        "low": "sigma_y_low",
+        "mean": "sigma_y_mean",
+        "sigma": "sigma_y_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "soil_density": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "soil_density"
+    },
+    "soil_type": {
+        "dist_type": "fixed",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {},
+        "value": "soil_type"
+    },
+    "steel_grade": {
+        "dist_type": "fixed",
+        "source": "Preferred",
+        "still_need_pref": {
+            "value": true
+        },
+        "value": "steel_grade"
+    },
+    "t_pipe": {
+        "dist_type": "t_pipe_dist_type",
+        "high": "t_pipe_high",
+        "low": "t_pipe_low",
+        "mean": "t_pipe_mean",
+        "sigma": "t_pipe_sigma",
+        "source": "From infrastructure table or enter value",
+        "still_need_pref": {
+            "high": false,
+            "low": false,
+            "mean": false,
+            "sigma": false
+        }
+    },
+    "theta_rake": {
+        "dist_type": "theta_rake_dist_type",
+        "high": "theta_rake_high",
+        "low": "theta_rake_low",
+        "mean": "theta_rake_mean",
+        "sigma": "theta_rake_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
+    "vs30": {
+        "dist_type": "vs30_dist_type",
+        "high": "vs30_high",
+        "low": "vs30_low",
+        "mean": "vs30_mean",
+        "sigma": "vs30_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    }
+}

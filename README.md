@@ -21,7 +21,7 @@ Maxime Lacour, PhD @ UC Berkeley: [LinkedIn](https://www.linkedin.com/in/maxime-
 ### Python
 OpenSRA has been tested on **Python version 3.9.9**
 s
-The Python modules required for the current version of OpenSRA are listed below, along with the versions used for testing. Modules were installed via the "conda-forge" channel and "pip". If you are experiencing difficulty installing the modules, consider working in a clean environment.
+The Python modules required for the current version of OpenSRA are listed below, along with the versions used for testing. Modules were installed via "conda", the "conda-forge" channel, and "pip". If you are experiencing difficulty installing the modules, consider working in a clean environment.
 
 From "conda-forge"
 
@@ -41,11 +41,15 @@ From "conda-forge"
 
 [shapely (1.8.0)](https://shapely.readthedocs.io/en/stable/manual.html)
 
-[pygeos (0.12.0)](https://pygeos.readthedocs.io/en/stable/)
-
-[numba (0.54.1)](https://numba.pydata.org
+[numba (0.54.1)](https://numba.pydata.org)
 
 [icc_rt (2022.1.0)](https://numba.pydata.org/numba-doc/latest/user/performance-tips.html)
+
+[pygeos (0.12.0)](https://pygeos.readthedocs.io/en/stable/)
+
+```
+conda install -c conda-forge geopandas shapely pygeos openpyxl numba icc_rt h5py
+```
 
 From "pip"
 
@@ -54,6 +58,10 @@ From "pip"
 [openquake.engine (3.14.0)](https://github.com/gem/oq-engine/)
 
 [tables (3.7.0)](https://www.pytables.org/usersguide/installation.html/)
+
+```
+install numba_stats openquake.engine tables
+```
 
 ## User's Guide
 To run OpenSRA in the command prompt:

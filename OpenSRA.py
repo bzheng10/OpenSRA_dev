@@ -178,6 +178,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     running_fault_rupture_below_ground = False
     if 'surface_fault_rupture' in workflow['EDP'] and infra_type == 'below_ground':
         running_fault_rupture_below_ground = True
+        
+    # Check if running caprocks for wells_caprocks, requires special processing
+    running_caprock = False
+    if 'caprock_leakage' in workflow['DV']:
+        running_caprock = True
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # for analysis with crossings with deformation polygons
@@ -2383,11 +2388,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Export gpkg file with mean fractiles
     # export path
-    spath = os.path.join(sdir,'mean_fractiles_for_all_cases.gpkg')
+    spath = os.path.join(sdir,'analysis_summary.gpkg')
     if os.path.exists(spath):
         os.remove(spath)
     # get list of cases in df_frac, get all mean columns
     cases_in_df_frac = sorted(list(df_frac)) # also sort by alphabetical order
+    # tracking what is in gpkg
+    gpkg_contains = []
     # for below or above ground, everything fits into one summary sheet (same number of rows):
     if infra_type == 'below_ground':
         # create a gpkg file to store mean fractiles
@@ -2418,13 +2425,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 if 'mean_' in col:
                     gdf_frac_mean[f'{case}_{col}'] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='data', index=False)
+        gdf_frac_mean.to_file(spath, layer='mean_fractiles', index=False)
         
     # for wells and caprocks - one sheet for wells, one sheet for caprocks if exists
     if infra_type == 'wells_caprocks':
         gdf_frac_mean = {}
         # first get mean fractile summary for wells
-        gdf_frac_mean['wells'] = GeoDataFrame(
+        gdf_frac_mean['mean_fractiles_wells'] = GeoDataFrame(
             None,
             crs=4326,
             geometry=points_from_xy(
@@ -2432,25 +2439,26 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 y=df_locs.LAT.values,
             )
         )
-        gdf_frac_mean['wells']['WellID'] = index
+        gdf_frac_mean['mean_fractiles_wells']['WellID'] = index
         # for each case in df_frac, get all mean columns
         for case in cases_in_df_frac:
             if not 'caprock_leakage' in workflow_order_list[case]['haz_list']:
                 for col in df_frac[case].columns:
                     if 'mean_' in col:
-                        gdf_frac_mean['wells'][f'{case}_{col}'] = df_frac[case][col].values
-        # next get mean fractile summary for caprocks
-        gdf_frac_mean['caprock_leakage'] = GeoDataFrame(
-            None,
-            crs=4326,
-            geometry=caprock_crossing.geometry.values
-        )
+                        gdf_frac_mean['mean_fractiles_wells'][f'{case}_{col}'] = df_frac[case][col].values
         # for each case in df_frac, get all mean columns
         for case in cases_in_df_frac:
             if 'caprock' in workflow_order_list[case]['haz_list']:
+                # next get mean fractile summary for caprocks
+                if not 'mean_fractiles_caprocks' in gdf_frac_mean:
+                    gdf_frac_mean['mean_fractiles_caprocks'] = GeoDataFrame(
+                        None,
+                        crs=4326,
+                        geometry=caprock_crossing.geometry.values
+                    )
                 for col in df_frac[case].columns:
                     if 'mean_' in col:
-                        gdf_frac_mean['caprocks'][f'{case}_{col}'] = df_frac[case][col].values
+                        gdf_frac_mean['mean_fractiles_caprocks'][f'{case}_{col}'] = df_frac[case][col].values
         # export
         for layer in gdf_frac_mean:
             gdf_frac_mean[layer].to_file(spath, layer=layer, index=False)
@@ -2477,10 +2485,69 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     if 'worst_case' in col:
                         gdf_frac_mean[f'{case}_{col}'] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='data', index=False)
+        gdf_frac_mean.to_file(spath, layer='mean_fractiles', index=False)
+    gpkg_contains.append('mean fractiles from call cases')
+    
+    # append other gpkg to gdf_frac_mean if they exist
+    # 1) rupture metadata
+    gdf_rupture_table = read_file(os.path.join(im_dir,'RUPTURE_METADATA.gpkg'))
+    gdf_rupture_table.to_file(spath, layer='ruptures', index=False)
+    gpkg_contains.append('rupture scenarios close to sites')
+    
+    # 2) site data table with crossings only
+    if flag_crossing_file_exists:
+        # update previous string in gpkg_contains
+        gpkg_contains[-1] = 'rupture scenarios crossed and/or close to sites'
+        gdf_crossings_only = read_file(os.path.join(processed_input_dir,'site_data_PROCESSED_CROSSING_ONLY.gpkg'))
+        gdf_crossings_only.to_file(spath, layer=f'locations_with_crossings', index=False)
+        gpkg_contains.append('locations with crossings')
+        if os.path.exists(os.path.join(processed_input_dir,'deformation_polygons_crossed.gpkg')):
+            gdf_def_poly = read_file(os.path.join(processed_input_dir,'deformation_polygons_crossed.gpkg'))
+            gdf_def_poly.to_file(spath, layer=f'deformation_polygons_crossed', index=False)
+            gpkg_contains.append('deformation polygons with crossings')
+    
+    # 3) qfaults if running below_ground and surface_fault_rupture
+    if running_fault_rupture_below_ground:
+        for each in ['primary','secondary']:
+            gdf_qfault_primary = read_file(os.path.join(im_dir,'qfaults_crossed.gpkg'),layer=each)
+            gdf_qfault_primary.to_file(spath, layer=f'qfault_crossed_{each}', index=False)
+        gpkg_contains.append('qfaults crossed')
+    
+    # 4) if running CPTBased
+    if running_cpt_based_procedure:
+        # processed CPT
+        gdf_processed_cpt = read_file(os.path.join(processed_input_dir,'CPTs','cpt_data_PROCESSED.gpkg'))
+        gdf_processed_cpt.to_file(spath, layer=f'processed_cpts', index=False)
+        gpkg_contains.append('processed CPTs')
+        # if freeface feature is given
+        if 'PathToFreefaceDir' in setup_config['UserSpecifiedGISandCPTData']['CPTParameters']:
+            freeface_fpath = setup_config['UserSpecifiedGISandCPTData']['CPTParameters']['PathToFreefaceDir']
+            # check length of filepath: if ==0, then assume nothing was provided
+            if len(freeface_fpath) == 0:
+                freeface_fpath = None
+            else:
+                # if len>0, check if fname is already a valid filepath, if not then infer from user provided gis dir
+                if os.path.exists(freeface_fpath):
+                    pass
+                else:
+                    freeface_fpath = None
+        if freeface_fpath is None:
+            gdf_freeface_wgs84 = read_file(freeface_fpath, crs=epsg_wgs84)
+            gdf_freeface_wgs84.to_file(spath, layer=f'freeface_features', index=False)
+            gpkg_contains.append('freeface features')
+            
+    # 5) if running caprock analysis
+    if running_caprock:
+        if os.path.exists(os.path.join(processed_input_dir,'caprock_crossing.gpkg')):
+            gdf_caprock_crossing = read_file(os.path.join(processed_input_dir,'caprock_crossing.gpkg'))
+            gdf_caprock_crossing.to_file(spath, layer=f'caprocks_with_crossings', index=False)
+            gpkg_contains.append('caprocks with crossings')            
 
-    logging.info(f'{counter}. Exported geopackage with mean fractiles for all cases to:')
+    logging.info(f'{counter}. Exported a summary geopackage to:')
     logging.info(f'\t{spath}')
+    logging.info(f'The summary geopackage contains the following:')
+    for each in gpkg_contains:
+        logging.info(f'\t- {each}')
     counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

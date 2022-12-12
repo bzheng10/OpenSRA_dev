@@ -1,0 +1,38 @@
+{
+    "EDP": {
+        "wellhead_rotation": {
+            "PantoliEtal2022": {
+                "ModelWeight": 1
+            }
+        }
+    },
+    "DM": {
+        "wellhead_strain": {
+            "PantoliEtal2022": {
+                "ModelWeight": 1
+            }
+        },
+        "vessel_moment_ratio": {
+            "PantoliEtal2022": {
+                "ModelWeight": 1
+            }
+        }
+    },
+    "DV": {
+        "wellhead_rupture": {
+            "BainEtal2022": {
+                "ModelWeight": 1
+            }
+        },
+        "wellhead_leakage": {
+            "BainEtal2022": {
+                "ModelWeight": 1
+            }
+        },
+        "vessel_rupture": {
+            "PantoliEtal2022": {
+                "ModelWeight": 1
+            }
+        }
+    }
+}

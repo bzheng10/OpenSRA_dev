@@ -125,68 +125,81 @@ class GeoData(object):
     
     
     @classmethod
-    def sample_csv(cls, table, fpath, cols_to_get='all', 
+    def sample_table(cls, input_table, sample_table, cols_to_get='all', 
                    append_header_str='', interp_scheme='nearest', out_of_bound_value=np.nan,
-                   use_hull=True
+                   use_hull=True, 
+    ):
+        """sample values from a sample_set for columns to get and update GeoDataFrame table, must be GeoDataFrame"""        
+        input_table = cls.sample_gdf(
+            input_table=input_table.copy(), sample_set=sample_table.copy(), cols_to_get=cols_to_get, 
+            append_header_str=append_header_str, interp_scheme=interp_scheme,
+            out_of_bound_value=out_of_bound_value, use_hull=use_hull
+        )
+        return input_table
+    
+    
+    @classmethod
+    def sample_csv(cls, input_table, fpath, cols_to_get='all', 
+                   append_header_str='', interp_scheme='nearest', out_of_bound_value=np.nan,
+                   use_hull=True, 
     ):
         """sample values from CSV files for columns to get and update GeoDataFrame table, must be GeoDataFrame"""        
         # import sample set
         sample_set = LocationData(fpath=fpath).data
-        table = cls.sample_gdf(
-            table=table.copy(), sample_set=sample_set, cols_to_get=cols_to_get, 
+        input_table = cls.sample_gdf(
+            input_table=input_table.copy(), sample_set=sample_set, cols_to_get=cols_to_get, 
             append_header_str=append_header_str, interp_scheme=interp_scheme,
             out_of_bound_value=out_of_bound_value, use_hull=use_hull
         )
-        return table
+        return input_table
     
     
     @staticmethod
-    def sample_gdf(table, sample_set, cols_to_get='all', 
+    def sample_gdf(input_table, sample_set, cols_to_get='all', 
                    append_header_str='', interp_scheme='nearest',
                    out_of_bound_value=np.nan, use_hull=False
     ):
-        """sample values from GeoDataFrame table (sample_set) and add to table; table must also be a GeoDataFrame"""
+        """sample values from GeoDataFrame sample_set and add to input_table; input_table must also be a GeoDataFrame"""
         # check columns to get
         if cols_to_get == 'all':
             cols_to_get = sample_set.columns.drop('geometry')
         if interp_scheme == 'nearest':
             # first determine which locations are within and outside the convex hull of the sample set
-            sindex = table.sindex # spatial index for location data
+            sindex = input_table.sindex # spatial index for location data
             if use_hull:
                 hull = sample_set.geometry.unary_union.convex_hull
                 loc_ind_in_hull = sindex.query(hull,predicate='intersects')
-                # loc_ind_in_hull = sindex.query(hull)
-                loc_ind_outside_hull = list(set(list(table.index)).difference(set(loc_ind_in_hull)))
+                loc_ind_outside_hull = list(set(list(input_table.index)).difference(set(loc_ind_in_hull)))
                 # perform sampling for locations within convex hull
-                locs_in_hull = table.loc[loc_ind_in_hull].copy().reset_index(drop=True) # get subset of table in hull
+                locs_in_hull = input_table.loc[loc_ind_in_hull].copy().reset_index(drop=True) # get subset of table in hull
                 nearest_pt_in_sample_set = sample_set.sindex.nearest(locs_in_hull.geometry,return_all=False) # sampling
             else:
-                nearest_pt_in_sample_set = sample_set.sindex.nearest(table.geometry,return_all=False) # sampling
+                nearest_pt_in_sample_set = sample_set.sindex.nearest(input_table.geometry,return_all=False) # sampling
             # update data table with samples
             str_cols = ['vs30source', 'vs30_ref', 'z1p0_ref', 'z2p5_ref']
             for col in cols_to_get:
                 # initialize
                 if col in str_cols:
-                    sampled_vals = np.empty(table.shape[0],dtype='<U30')
+                    sampled_vals = np.empty(input_table.shape[0],dtype='<U30')
                     if use_hull:
                         sampled_vals[loc_ind_outside_hull] = 'Inferred'
                 else:
-                    sampled_vals = np.empty(table.shape[0])*out_of_bound_value
+                    sampled_vals = np.empty(input_table.shape[0])*out_of_bound_value
                 # get samples
                 if use_hull:
                     sampled_vals[loc_ind_in_hull] = sample_set[col].loc[nearest_pt_in_sample_set[1]].values
                 else:
                     sampled_vals = sample_set[col].loc[nearest_pt_in_sample_set[1]].values
                 # store samples
-                table[col+append_header_str] = sampled_vals
-            return table
+                input_table[col+append_header_str] = sampled_vals
+            return input_table
         else:
             raise NotImplementedError('Only "nearest" is available as interpolation scheme')
     
     
     @staticmethod
     def sample_raster(
-        table, fpath, crs=4326,
+        input_table, fpath, crs=4326,
         band=1, store_name=None, interp_scheme='nearest',
         out_of_bound_value=np.nan, invalid_value=np.nan,
         dtype=None
@@ -194,8 +207,8 @@ class GeoData(object):
         """sample values from raster file and update (Geo)DataFrame datatable"""
         # create raster object
         raster = RasterData(fpath, crs=crs)
-        x = table.geometry.x.values
-        y = table.geometry.y.values
+        x = input_table.geometry.x.values
+        y = input_table.geometry.y.values
         # perform sampling
         raster.get_sample(
             x=x,
@@ -209,26 +222,26 @@ class GeoData(object):
         # update data table with samples
         if store_name is None:
             store_name = get_basename_without_extension(fpath) # use raster file name, without extension
-        table[store_name] = raster.sample
-        return table
+        input_table[store_name] = raster.sample
+        return input_table
     
     
     @staticmethod
-    def sample_shapefile(table, fpath, attr, crs=4326, store_name=None, missing_val=np.nan):
-        """sample values from shapefile and update GeoDataFrame table, must be GeoDataFrame"""
+    def sample_shapefile(input_table, fpath, attr, crs=4326, store_name=None, missing_val=np.nan):
+        """sample values from shapefile and update GeoDataFrame input_table, must be GeoDataFrame"""
         # create shapefile object
         # shapefile = ShapefileData(fpath)
         shapefile = ShapefileData(fpath, crs=crs, to_cleanup=False)
         # perform sampling
-        shapefile.get_sample(attr=attr, site_geometry=table.geometry)
+        shapefile.get_sample(attr=attr, site_geometry=input_table.geometry)
         index = shapefile.site_index_with_sample
         sample = shapefile.sample
         # update data table with samples
         if store_name is None:
             store_name = get_basename_without_extension(fpath) # use raster file name, without extension
-        table[store_name] = missing_val # create new column and initialize all values as nan
-        table.loc[index, store_name] = sample
-        return table
+        input_table[store_name] = missing_val # create new column and initialize all values as nan
+        input_table.loc[index, store_name] = sample
+        return input_table
     
     
     @staticmethod

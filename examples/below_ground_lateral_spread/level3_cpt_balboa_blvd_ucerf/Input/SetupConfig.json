@@ -117,11 +117,14 @@
 		"RandomVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_balboa_blvd_ucerf\\Input\\rvs_input.csv",
 		"FixedVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_balboa_blvd_ucerf\\Input\\fixed_input.csv"
     },
-	"CPTParams": {
-		"CPTFolderInUserProvidedGISFolder": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_balboa_blvd_ucerf\\Input\\gis_data\\BalboaBlvdCPTs",
-		"PathToFreefaceShapefile": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_balboa_blvd_ucerf\\Input\\gis_data\\free_face_feature",
-		"ColumnInCPTSummaryWithGWTable": "Mean GWT",
-		"WeightRobertson09": 0.5,
-		"WeightZhang04": 0.5
-	}
+    "UserSpecifiedGISandCPTData": {
+        "CPTParameters": {
+			"PathToCPTSummaryCSV": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_balboa_blvd_ucerf\\Input\\gis_data\\BalboaBlvdCPTs\\Summary.csv",
+			"PathToCPTDataFolder": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_balboa_blvd_ucerf\\Input\\gis_data\\BalboaBlvdCPTs\\CPTs",
+			"PathToFreefaceDir": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_balboa_blvd_ucerf\\Input\\gis_data\\free_face_feature",
+			"ColumnInCPTSummaryWithGWTable": "Mean GWT",
+			"WeightRobertson09": 0.5,
+			"WeightZhang04": 0.5
+        }
+    }
 }

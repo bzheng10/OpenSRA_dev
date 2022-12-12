@@ -203,12 +203,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 infra_loc_header[infra_loc_header_map[each]] = infra_loc_headers_in[each]
     else:
         infra_loc_header = {
-            "LatMid": "LAT_MID",
-            "LonMid": "LON_MID",
-            "LatBegin": "LAT_BEGIN",
-            "LonBegin": "LON_BEGIN",
-            "LatEnd": "LAT_END",
-            "LonEnd": "LON_END"
+            "lat_header": "LAT_MID",
+            "lon_header": "LON_MID",
+            "lat_begin_header": "LAT_BEGIN",
+            "lon_begin_header": "LON_BEGIN",
+            "lat_end_header": "LAT_END",
+            "lon_end_header": "LON_END"
         }
     # user provided GIS folder
     if 'UserProvidedGISFolder' in setup_config['General']['Directory']:
@@ -440,7 +440,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 performed_crossing = True
                 if site_data.shape[0] == 0:
                     logging.info(f'\n*****FATAL*****')
-                    logging.info(f'- No crossings idenfitied using CPT generated deformation polygons for {hazard}!')
+                    logging.info(f'- No crossings identified using CPT generated deformation polygons for {hazard}!')
                     logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
                     if hazard == 'landslide':
                         logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile and try preprocessing again.')
@@ -859,12 +859,13 @@ def get_im_pred(
         
         # set _infra.nearest_node_table to temp_nearest_node_table
         _infra.nearest_node_table = temp_nearest_node_table.copy()
-        # once the nearest_node_table has been populated, then sites from nearest node
-        _infra.component_table = _infra.sample_csv(
-            table=_infra.component_table.copy(),
-            fpath=gmc_site_data_path,
+        # once the nearest_node_table has been populated, then get sites from nearest node
+        _infra.component_table = _infra.sample_table(
+            input_table=_infra.component_table.copy(),
+            sample_table=temp_nearest_node_table.copy(),
             # cols_to_get=cols_to_get,
-            use_hull=True
+            # use_hull=True
+            use_hull=False
         )
         
         # export sampled basin params
@@ -1229,7 +1230,7 @@ def get_param_dist_from_user_prov_table(
     # }
     
     # if running CPTs, skip gw_depth and slope for inputs
-    # params_to_skip = []
+    params_to_skip = []
     if running_cpt_based_procedure:
     #     pref_params_to_add = ['beta_crossing','psi_dip','theta_rake','gw_depth','slope']
         params_to_skip = ['gw_depth','slope']
@@ -1375,13 +1376,13 @@ def get_param_dist_from_user_prov_table(
             if gis_type == 'raster':
                 # get sample from GIS file
                 locs.data = locs.sample_raster(
-                    table=locs.data,
+                    input_table=locs.data,
                     fpath=curr_user_prov_gis_fpath,
                     store_name=param
                 )
             elif gis_type == 'shapefile':
                 locs.data = locs.sample_shapefile(
-                    table=locs.data,
+                    input_table=locs.data,
                     fpath=geo_unit_fpath,
                     attr=None,
                     store_name=param
@@ -1524,13 +1525,13 @@ def get_param_dist_from_user_prov_table(
             if gis_type == 'raster':
                 # get sample from GIS file
                 locs.data = locs.sample_raster(
-                    table=locs.data,
+                    input_table=locs.data,
                     fpath=curr_user_prov_gis_fpath,
                     store_name=param
                 )
             elif gis_type == 'shapefile':
                 locs.data = locs.sample_shapefile(
-                    table=locs.data,
+                    input_table=locs.data,
                     fpath=geo_unit_fpath,
                     attr=None,
                     store_name=param
@@ -1804,7 +1805,7 @@ def get_pref_dist_for_params(
                     geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                     geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
                     locs.data = locs.sample_shapefile(
-                        table=locs.data,
+                        input_table=locs.data,
                         fpath=geo_unit_fpath,
                         crs=geo_unit_crs,
                         attr='PTYPE',
@@ -1853,7 +1854,7 @@ def get_pref_dist_for_params(
                 #     store_name = avail_data_summary['Parameters'][file_key]['ColumnNameToStoreAs']
                 #     geo_unit_fpath = avail_data_summary['Parameters'][file_key]['Datasets']['Set1']['Path']
                 #     locs.data = locs.sample_shapefile(
-                #         table=locs.data,
+                #         input_table=locs.data,
                 #         fpath=geo_unit_fpath,
                 #         attr='PTYPE',
                 #         store_name=store_name
@@ -1889,7 +1890,7 @@ def get_pref_dist_for_params(
                     geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
                     src_name = file_metadata['Datasets']['Set1']['Source']
                     locs.data = locs.sample_shapefile(
-                        table=locs.data,
+                        input_table=locs.data,
                         fpath=geo_unit_fpath,
                         crs=geo_unit_crs,
                         attr='PTYPE',
@@ -1903,7 +1904,7 @@ def get_pref_dist_for_params(
                 # store_name = file_metadata['ColumnNameToStoreAs']
                 # geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                 # locs.data = locs.sample_shapefile(
-                #     table=locs.data,
+                #     input_table=locs.data,
                 #     fpath=geo_unit_fpath,
                 #     crs=geo_unit_crs,
                 #     attr='PTYPE',
@@ -2008,7 +2009,7 @@ def get_pref_dist_for_params(
                                 gis_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                                 gis_crs = file_metadata['Datasets']['Set1']['CRS']
                                 locs.data = locs.sample_raster(
-                                    table=locs.data,
+                                    input_table=locs.data,
                                     fpath=gis_fpath,
                                     crs=gis_crs,
                                     store_name=param
@@ -2270,6 +2271,10 @@ def preprocess_cpt_data(
         'low': 'Distribution Min',
         'high': 'Distribution Max'
     }
+    store_names = {
+        'slope': 'slope_deg',
+        'gw_depth': 'gw_depth_m'
+    }
     # loop through additional CPT analysis params)
     for param in ['gw_depth','slope']:
         try:
@@ -2283,7 +2288,8 @@ def preprocess_cpt_data(
         except:
             param_source = 'Preferred'
         param_metadata = avail_data_summary['Parameters'][param]
-        store_name = param_metadata['ColumnNameToStoreAs']
+        # store_name = param_metadata['ColumnNameToStoreAs']
+        store_name = store_names[param]
         cpt_input_dist[param] = {}
         # # get input dist for GW depth
         # if param_source == 'Preferred':
@@ -2298,13 +2304,15 @@ def preprocess_cpt_data(
         #    - for slope, use internal gis map
         # gw_depth
         if param == 'gw_depth':
-            store_name = col_with_gw_depth
+            # store_name = col_with_gw_depth
+            # store_name = store_names[param]
+            cpt_meta_wgs84[store_name] = cpt_meta_wgs84[col_with_gw_depth].values
         elif param == 'slope':
             # 2) sample mean from map
             pref_gis_fpath = os.path.join(opensra_dir,param_metadata['Datasets']['Set1']['Path'])
             pref_gis_crs = param_metadata['Datasets']['Set1']['CRS']
             cpt_meta_wgs84[store_name] = cpt_locs.sample_raster(
-                table=cpt_locs.data.copy(),
+                input_table=cpt_locs.data.copy(),
                 fpath=pref_gis_fpath,
                 store_name=store_name,
                 dtype='float',
@@ -2465,7 +2473,7 @@ def preprocess_cpt_data(
     )
     aspect_gis_crs = aspect_file_metadata['Datasets']['Set1']['CRS']
     grid_locs.data = grid_locs.sample_raster(
-        table=grid_locs.data.copy(),
+        input_table=grid_locs.data.copy(),
         fpath=aspect_gis_fpath,
         store_name=aspect_store_name,
         dtype='float',
@@ -2535,12 +2543,12 @@ def preprocess_cpt_data(
             for i in range(gdf_freeface_utm.shape[0])
         ])
         # for each CPT, find minimum distance on all features
-        cpt_meta_wgs84['FreefaceDist_[m]'] = np.min(cpt_to_freeface_dist,axis=0)
+        cpt_meta_wgs84['FreefaceDist_m'] = np.min(cpt_to_freeface_dist,axis=0)
         # for each CPT get closest freeface feature and get height from attribute
         _, nearest_freeface_feature = GeoSeries(gdf_freeface_utm.geometry).sindex.nearest(cpt_meta_wgs84.to_crs(epsg_utm_zone10).geometry)
-        cpt_meta_wgs84['FreefaceHeight_[m]'] = gdf_freeface_utm['Height_m'].loc[nearest_freeface_feature].values
+        cpt_meta_wgs84['FreefaceHeight_m'] = gdf_freeface_utm['Height_m'].loc[nearest_freeface_feature].values
         # get freeface L/H for each CPT
-        cpt_meta_wgs84['LH_Ratio'] = cpt_meta_wgs84['FreefaceDist_[m]']/cpt_meta_wgs84['FreefaceHeight_[m]']
+        cpt_meta_wgs84['LH_Ratio'] = cpt_meta_wgs84['FreefaceDist_m']/cpt_meta_wgs84['FreefaceHeight_m']
         cpt_meta_wgs84['LH_Ratio'] = np.maximum(cpt_meta_wgs84['LH_Ratio'],4) # set lower limit to 4
         logging.info(f'- Loaded free-face feature and computed L/H ratios')
 
@@ -2970,8 +2978,16 @@ def preprocess_cpt_data(
     # updated CPT summary spreadsheet
     spath_cpt_meta = os.path.join(processed_cpt_base_dir,'cpt_data_PROCESSED.csv')
     cpt_meta_wgs84.drop('geometry',axis=1).to_csv(spath_cpt_meta,index=False)
+    # export to gpkg
+    cpt_meta_wgs84_copy = cpt_meta_wgs84.copy()
+    if 'UTM_x' in cpt_meta_wgs84:
+        cpt_meta_wgs84_copy.drop(columns=['UTM_x'],inplace=True)
+    if 'UTM_y' in cpt_meta_wgs84:
+        cpt_meta_wgs84_copy.drop(columns=['UTM_y'],inplace=True)
+    cpt_meta_wgs84_copy.to_file(spath_cpt_meta.replace('.csv','.gpkg'), crs=epsg_wgs84, layer='data')
     logging.info(f'- Exported processed CPT summary spreadsheet to:')
     logging.info(f'\t- {spath_cpt_meta}')
+    logging.info(f"\t- {spath_cpt_meta.replace('.csv','.gpkg')}")
     
     # -----------------------------------------------------------
     # return

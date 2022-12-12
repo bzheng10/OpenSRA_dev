@@ -1,3 +1,3 @@
 ,5th_elbow,16th_elbow,50th_elbow,84th_elbow,95th_elbow,mean_elbow,elbow_worst_case_joint,5th_tee,16th_tee,50th_tee,84th_tee,95th_tee,mean_tee,tee_worst_case_joint
-component_1,0.0,0.0,2.184e-05,8.191e-05,9.887e-05,6.393e-05,jointA,0.0,0.0,7.206e-05,0.0002785,0.0003438,0.0002469,jointA
-component_2,0.0,0.0,7.135e-09,3.027e-08,5.225e-08,2.32e-08,jointA,0.0,0.0,4.185e-07,1.836e-06,5.494e-06,1.751e-06,jointA
+component_1,0.0,0.0,9.351e-07,5.251e-06,6.083e-06,2.861e-06,jointA,0.0,0.0,6.547e-06,4.165e-05,4.567e-05,2.311e-05,jointA
+component_2,0.0,0.0,2.34e-08,1.67e-07,2.503e-07,1.09e-07,jointA,0.0,0.0,6.044e-07,6.073e-06,1.01e-05,4.713e-06,jointA

@@ -488,6 +488,8 @@ def get_pipe_crossing_fault_rup(
         segment_id_crossed_by_rupture = {}
         prob_crossing_by_rupture = {}
         norm_dist_by_rupture = {}
+        # export qfault
+        gdf_qfault_crossed_export = {}
 
         # for each fault displacement hazard shapefile
         for each in['primary','secondary']:
@@ -871,6 +873,9 @@ def get_pipe_crossing_fault_rup(
             
             # append column to denote if haz zone is primary or secondary
             segment_by_qfault[each]['qfault_type'] = each
+            
+            # store qfault
+            gdf_qfault_crossed_export[each] = gdf_qfault_crossed.to_crs(epsg_wgs84).copy().reset_index()
         
         # ---
         # clean up segment crossing summary before export
@@ -1066,7 +1071,15 @@ def get_pipe_crossing_fault_rup(
             ), layer='data', index=False
         )
         # all_segments_crossed_gdf = all_segments_crossed_gdf.to_crs(epsg_wgs84)
-            
+        
+        # store qfault crossed
+        for each in ['primary','secondary']:
+            gdf_qfault_crossed_export[each].to_crs(epsg_wgs84).to_file(
+                os.path.join(im_dir,'qfaults_crossed.csv').replace(
+                    '.csv','.gpkg'
+                ), layer=each, index=False
+            )
+        
         # ---
         # return
         return all_segments_crossed_expand_gdf, rupture_table_crossing_only, col_headers_to_append, event_ids_to_keep
@@ -1146,6 +1159,13 @@ def get_pipe_crossing_landslide_or_liq(
             geometry=def_poly_gdf.geometry.boundary,
             predicate='intersects'
         )
+        if len(crossed_poly_index) == 0:
+            logging.info(f'\n*****FATAL*****')
+            logging.info(f'- No crossings identified using specified deformation polygons!')
+            logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
+            logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile and try preprocessing again.')
+            logging.info(f'*****FATAL*****\n')
+            sys.exit()
         # crossed_segment_id = crossed_segment_index + 1
         crossed_segment_id = segment_index_full[crossed_segment_index]
         # get unique deformation polygons that crossed with segments
@@ -1218,7 +1238,7 @@ def get_pipe_crossing_landslide_or_liq(
         if def_type == 'lateral_spread' or def_type == 'settlement':
             pass
         elif def_type == 'landslide':
-            # get boundary coordinates for deformatoin polygons with crossings for DEM sampling
+            # get boundary coordinates for deformation polygons with crossings for DEM sampling
             n_bound_coord = []
             # wgs84
             bound_coord = []
@@ -1253,7 +1273,7 @@ def get_pipe_crossing_landslide_or_liq(
             if not os.path.exists(dem_raster_fpath):
                 raise ValueError("Path to DEM raster does not exist. Check pipe crossing function")
             bound_coord_flat_df.data = bound_coord_flat_df.sample_raster(
-                table=bound_coord_flat_df.data,
+                input_table=bound_coord_flat_df.data,
                 fpath=dem_raster_fpath,
                 dtype='float',
                 crs=dem_raster_crs
@@ -1408,7 +1428,7 @@ def get_pipe_crossing_landslide_or_liq(
             crs=epsg_utm_zone10,
             geometry=points_from_xy(
                 x=segment_full_mid_utm[:,0],
-                y=segment_full_mid_utm[:,0],
+                y=segment_full_mid_utm[:,1],
                 crs=epsg_utm_zone10
             )
         )
@@ -1739,7 +1759,7 @@ def get_pipe_crossing_landslide_or_liq(
         raise ValueError(f'For surface fault rupture, use the "get_pipe_crossing_fault_rup" function')
     else:
         raise ValueError(f'The hazard "{def_type}" is not a hazard under this study')
-    
+
     #################
     # add a new row to induce repeating crossings
     # crossing_summary_gdf.loc[crossing_summary_gdf.shape[0]] = crossing_summary_gdf.loc[crossing_summary_gdf.shape[0]-1]
@@ -1768,8 +1788,16 @@ def get_pipe_crossing_landslide_or_liq(
         # pass
     else:
         # GeoSeries(crossing_summary_gdf.geometry).to_file(
-        crossing_summary_gdf.to_file(
+        crossing_summary_gdf.to_crs(epsg_wgs84).to_file(
             os.path.join(export_dir,f'site_data_PROCESSED_CROSSING_ONLY.gpkg'),
+            index=False,
+            layer='data'
+        )
+        
+    # export deformation polygons crossed
+    if poly_exist:
+        def_poly_crossed_unique_gdf_utm.to_crs(epsg_wgs84).to_file(
+            os.path.join(export_dir,'deformation_polygons_crossed.gpkg'),
             index=False,
             layer='data'
         )

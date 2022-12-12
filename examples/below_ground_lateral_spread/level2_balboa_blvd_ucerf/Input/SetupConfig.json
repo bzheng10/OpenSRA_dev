@@ -10,7 +10,7 @@
     "Infrastructure": {
 		"InfrastructureType": "below_ground",
 		"DataType": "Shapefile",
-        "SiteDataFile": "C:\\Users\\BarryZheng\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_ucerf\\Input\\gis_data/Clipped_State_Network_Balboa",
+        "SiteDataFile": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_ucerf\\Input\\gis_data/Clipped_State_Network_Balboa",
 		"SiteLocationParams": {
             "LatMid": "LAT_MID",
             "LonMid": "LON_MID",
@@ -114,8 +114,8 @@
         "OtherParameters": {}
     },
     "InputParameters": {
-		"RandomVariablesFileName": "C:\\Users\\BarryZheng\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_ucerf\\Input\\rvs_input.csv",
-		"FixedVariablesFileName": "C:\\Users\\BarryZheng\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_ucerf\\Input\\fixed_input.csv"
+		"RandomVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_ucerf\\Input\\rvs_input.csv",
+		"FixedVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_ucerf\\Input\\fixed_input.csv"
     },
 	"CPTParams": {}
 }

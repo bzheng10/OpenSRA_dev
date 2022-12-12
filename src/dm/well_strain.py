@@ -704,10 +704,8 @@ class SasakiEtal2022(WellStrain):
         # if dist_type is normal, then sigma_mu = exp(0.25), geometric sigma
         sigma_mu_strain_tubing[dist_type_strain_tubing=='normal'] = \
             np.exp(sigma_mu_strain_tubing[dist_type_strain_tubing=='normal'])
-            # np.exp(sigma_mu_strain_tubing[dist_type_strain_tubing=='normal']) * strain_tubing[dist_type_strain_tubing=='normal']
         sigma_mu_strain_casing[dist_type_strain_casing=='normal'] = \
             np.exp(sigma_mu_strain_casing[dist_type_strain_casing=='normal'])
-            # np.exp(sigma_mu_strain_casing[dist_type_strain_casing=='normal']) * strain_casing[dist_type_strain_casing=='normal']
 
         # limit sigma to be above 0 to avoid PC error
         sigma_strain_tubing[theta<=0] = 0.001
@@ -715,39 +713,19 @@ class SasakiEtal2022(WellStrain):
         # limit sigma to be above 0 to avoid PC error
         sigma_mu_strain_tubing[theta<=0] = 0
         sigma_mu_strain_casing[theta<=0] = 0
-            
-            # run if current mode exist
-            # if len(set_ind_1) > 0:
-            #     for part in ['tubing', 'casing']:
-            #         for key in ['uncemented', 'cemented']:
-            #             # case name
-            #             case = f'mode_{num}_{key}_{part}'
-            #             # get indices for current mode, well part, and cementation flag
-            #             set_ind_2 = set(locals()[f'ind_{part}'][key])
-            #             ind_joint = list(set_ind_1.intersection(set_ind_2))
-            #             # continue if length of intersection list is at least 1
-            #             if len(ind_joint) > 0:
-            #                 # run calc using lambda function
-            #                 locals()[f'strain_{part}'][ind_joint] = cls._MODEL_FORM['func'][case](
-            #                     # mean coefficients
-            #                     **cls._get_mean_coeff_for_lambda_func(
-            #                         cls._MODEL_FORM_DETAIL[case],
-            #                         cls._MODEL_FORM['func'][case]
-            #                     ),
-            #                     # inputs
-            #                     **cls._get_kwargs_for_lambda_func(
-            #                         locals(),
-            #                         cls._MODEL_FORM['func'][case],
-            #                         inds=ind_joint
-            #                     )
-            #                 )
+        
+        if True in np.isnan(strain_casing) or True in np.isnan(strain_casing):
+            if np.isnan(strain_casing):
+                print(strain_casing[np.isnan(strain_casing)])
+            if np.isnan(strain_casing):
+                print(strain_casing[np.isnan(strain_casing)])
+                
+            print(1)
 
         # prepare outputs
         output = {
             'strain_tubing': {
                 'mean': strain_tubing,
-                # 'mean': np.minimum(np.maximum(strain_tubing * 100,0),200),
-                # 'mean': np.maximum(strain_tubing * 100,0), # convert to %, limit to 0 to 500%
                 'sigma': sigma_strain_tubing,
                 'sigma_mu': sigma_mu_strain_tubing,
                 # 'dist_type': 'lognormal',
@@ -756,18 +734,12 @@ class SasakiEtal2022(WellStrain):
             },
             'strain_casing': {
                 'mean': strain_casing, # convert to %, limit to 0 to 500%
-                # 'mean': np.minimum(np.maximum(strain_casing * 100,0),200), # convert to %, limit to 0 to 500%
-                # 'mean': np.maximum(strain_casing * 100,0), # convert to %, limit to 0 to 500%
                 'sigma': sigma_strain_casing,
                 'sigma_mu': sigma_mu_strain_casing,
                 # 'dist_type': 'lognormal',
                 'dist_type': dist_type_strain_casing,
                 'unit': '%'
             },
-            # 'strain_tubing': strain_tubing*100, # convert to %
-            # 'strain_casing': strain_casing*100, # convert to %
-            # 'sigma_strain_tubing': sigma_strain_tubing,
-            # 'sigma_strain_casing': sigma_strain_casing,
         }
         # get intermediate values if requested
         if return_inter_params:

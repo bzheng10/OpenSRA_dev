@@ -325,6 +325,21 @@
             "sigma": false
         }
     },
+    "theta_rake": {
+        "dist_type": "theta_rake_dist_type",
+        "high": "theta_rake_high",
+        "low": "theta_rake_low",
+        "mean": "theta_rake_mean",
+        "sigma": "theta_rake_sigma",
+        "source": "Preferred",
+        "still_need_pref": {
+            "dist_type": true,
+            "high": true,
+            "low": true,
+            "mean": true,
+            "sigma": true
+        }
+    },
     "vs30": {
         "dist_type": "vs30_dist_type",
         "high": "vs30_high",

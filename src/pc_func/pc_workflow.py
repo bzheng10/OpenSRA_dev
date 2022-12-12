@@ -49,69 +49,10 @@ def sum_pc_terms_v2(pc_coeffs, hermite_prob_table):
     n_samples = hermite_prob_table.shape[1]
     # loop through pc terms
     pc_sum = np.inner(pc_coeffs,hermite_prob_table)
-    # pc_sum = np.transpose([
-    #     np.sum(np.outer(pc_coeffs[:,i],hermite_prob_table[i]),axis=1)
-    #     for i in range(n_pc_terms)
-    # ])
     # keep sum within 0 and 1
     pc_sum = np.maximum(np.minimum(pc_sum,1),0)
     # return
     return pc_sum
-    
-
-def main(work_dir):
-    """main script to run PC"""
-    
-    # define some directories
-    input_dir = os.path.join(work_dir,'Input')
-    im_fdir = os.path.join(work_dir,'IM')
-
-    # import site data
-    site_data = pd.read_csv(os.path.join(input_dir,'site_data.csv'))
-
-    # import IM distributions
-    im_import = {}
-    for each in ['pga','pgv']:
-        im_import[each] = {
-            'mean_table': pd.read_csv(os.path.join(im_fdir,each.upper(),'MEAN.csv'),header=None),
-            'sigma_table': pd.read_csv(os.path.join(im_fdir,each.upper(),'ALEATORY.csv'),header=None),
-            'sigma_mu_table': pd.read_csv(os.path.join(im_fdir,each.upper(),'EPISTEMIC.csv'),header=None)
-        }
-
-    # import rupture information
-    rupture_table = pd.read_csv(os.path.join(im_fdir,'RUPTURE_METADATA.csv'))
-
-    # number of sites
-    n_site = im_import[list(im_import)[0]]['mean_table'].shape[1]
-    
-    # pull workflow json file
-    workflow_fpath = os.path.join(input_dir,'workflow.json')
-    if os.path.exists(workflow_fpath):
-        with open(workflow_fpath, 'r') as f:
-            workflow = json.load(f)
-    else:
-        print("path to workflow does not exist (see below):")
-        print(f"\t{workflow_fpath}")
-
-    # preprocess workflow to use in PC
-    methods_dict = prepare_methods(workflow, n_site)
-    workflow_order_list = get_workflow_order_list(methods_dict)
-    n_cases = len(workflow_order_list)
-    
-    # initialize some dictionaries for storage
-    df_frac = {}
-    last_cdf_integrated = {}
-    
-    # get parameters required by workflow
-    cat_params = {}
-    all_params = []
-    for cat in methods_dict:
-        cat_params[cat] = list(np.unique(np.hstack([
-            methods_dict[cat.lower()][haz]['input_params']
-            for haz in methods_dict[cat.lower()]
-        ])))
-        all_params += cat_params[cat]
-    all_params = list(set(all_params))
     
 
 def get_mean_kwargs(dictionary):
@@ -398,21 +339,6 @@ def get_workflow_order_list(methods_dict, infra_type='below_ground', verbose=Tru
         for case in workflow_order_list:
             workflow_order_list[case]['cat_list'].reverse()
             workflow_order_list[case]['haz_list'].reverse()
-        # if surface fault rupture, repeat workflow for primary and secondary
-        # if 'surface_fault_rupture' in methods_dict[starting_cat.lower()]:
-        #     workflow_order_list_fault_rup = {}
-        #     count = 1
-        #     for each in ['primary','secondary']:
-        #         for case in workflow_order_list:
-        #             workflow_order_list_fault_rup[f'case_{count}'] = workflow_order_list[case].copy()
-        #             curr_haz_list = workflow_order_list_fault_rup[f'case_{count}']['haz_list']
-        #             new_haz_list = [
-        #                 item+'_'+each if item=='surface_fault_rupture' else item
-        #                 for item in curr_haz_list
-        #             ]
-        #             workflow_order_list_fault_rup[f'case_{count}']['haz_list'] = new_haz_list
-        #             count += 1
-        #     workflow_order_list = workflow_order_list_fault_rup
             
     # display lists
     if verbose:
@@ -526,6 +452,10 @@ def process_methods_for_mean_and_sigma_of_mu(
             **input_samples
         )
         
+        # if method == 'SasakiEtal2022' and 'strain_casing' in haz_dict['return_params']:
+        #     if True in np.isnan(out['strain_casing']['mean']) or True in np.isnan(out['strain_tubing']['mean']):
+        #         print(1)
+        
         # print(f'\t2a---2b. time: {time.time()-time_start} seconds')
         # time_start = time.time()
         
@@ -593,7 +523,6 @@ def process_methods_for_mean_and_sigma_of_mu(
                 'sigma': store_sigma[param],
                 'dist_type': store_dist_type[param]
             }
-
             
         # print(f'\t2a---2c. time: {time.time()-time_start} seconds')
         # time_start = time.time()

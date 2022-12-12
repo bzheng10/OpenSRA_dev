@@ -117,9 +117,12 @@
 		"RandomVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_settlement\\level3_cpt_alameda_ucerf\\Input\\rvs_input.csv",
 		"FixedVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_settlement\\level3_cpt_alameda_ucerf\\Input\\fixed_input.csv"
     },
-	"CPTParams": {
-		"CPTFolderInUserProvidedGISFolder": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_settlement\\level3_cpt_alameda_ucerf\\Input\\gis_data\\cpts_alameda",
-		"ColumnInCPTSummaryWithGWTable": "Mean GWT",
-		"WeightRobertson09": 0.5
-	}
+    "UserSpecifiedGISandCPTData": {
+        "CPTParameters": {
+			"PathToCPTSummaryCSV": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_settlement\\level3_cpt_alameda_ucerf\\Input\\gis_data\\cpts_alameda\\Summary.csv",
+			"PathToCPTDataFolder": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_settlement\\level3_cpt_alameda_ucerf\\Input\\gis_data\\cpts_alameda\\CPTs",
+			"ColumnInCPTSummaryWithGWTable": "Mean GWT",
+			"WeightZhang04": 0.5
+        }
+    }
 }

@@ -50,7 +50,7 @@ from src.pc_func import pc_util, pc_workflow
 from src.pc_func.pc_coeffs_single_int import pc_coeffs_single_int
 from src.pc_func.pc_coeffs_double_int import pc_coeffs_double_int
 from src.pc_func.pc_coeffs_triple_int import pc_coeffs_triple_int
-from src.util import set_logging, lhs, get_cdf_given_pts
+from src.util import set_logging, lhs, get_cdf_given_pts, check_and_get_abspath
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -152,6 +152,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     workflow_order_list = pc_workflow.get_workflow_order_list(methods_dict, infra_type=infra_type)
     logging.info(f'{counter}. Loaded and processed workflow')
     counter += 1
+    
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # standard epsgs
+    epsg_wgs84 = 4326 # lat lon, deg
+    epsg_utm_zone10 = 32610 # m
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Check if CPT is needed - make toggle if running CPT-based procedure
@@ -2526,12 +2531,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             if len(freeface_fpath) == 0:
                 freeface_fpath = None
             else:
-                # if len>0, check if fname is already a valid filepath, if not then infer from user provided gis dir
-                if os.path.exists(freeface_fpath):
-                    pass
-                else:
-                    freeface_fpath = None
-        if freeface_fpath is None:
+                freeface_fpath = check_and_get_abspath(freeface_fpath, input_dir)
+        if freeface_fpath is not None:
             gdf_freeface_wgs84 = read_file(freeface_fpath, crs=epsg_wgs84)
             gdf_freeface_wgs84.to_file(spath, layer=f'freeface_features', index=False)
             gpkg_contains.append('freeface features')

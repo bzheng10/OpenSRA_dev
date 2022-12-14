@@ -23,7 +23,7 @@
     "IntensityMeasure": {
         "SourceForIM": {
             "ShakeMap": {
-                "Directory": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_landslide\\statewide-subset_level1_with_landslide_inventory_shakemap\\Input\\ShakeMaps",
+                "Directory": "ShakeMaps",
                 "Events": [
 					"1989_Loma Prieta",
 					"1989_Loma Prieta_to0p5g",
@@ -119,8 +119,8 @@
         "OtherParameters": {}
     },
     "InputParameters": {
-		"RandomVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_landslide\\statewide-subset_level1_with_landslide_inventory_shakemap\\Input\\rvs_input.csv",
-		"FixedVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_landslide\\statewide-subset_level1_with_landslide_inventory_shakemap\\Input\\fixed_input.csv"
+		"RandomVariablesFileName": "rvs_input.csv",
+		"FixedVariablesFileName": "fixed_input.csv"
     },
 	"CPTParams": {}
 }

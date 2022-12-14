@@ -50,7 +50,7 @@ from src.site.get_pipe_crossing import get_pipe_crossing_landslide_or_liq, get_p
 from src.site.get_well_crossing import get_well_crossing
 from src.site.get_caprock_crossing import get_caprock_crossing
 from src.site.site_util import make_list_of_linestrings, make_grid_nodes
-from src.util import set_logging
+from src.util import set_logging, check_and_get_abspath, get_shp_file_from_dir
 
 # -----------------------------------------------------------
 # Main function
@@ -166,20 +166,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         flag_using_state_network = True
     else:
         # check if infra_fname is already a valid filepath, if not then infer from input_dir
-        if os.path.exists(infra_fname):
-            infra_fpath = infra_fname
-        else:
-            infra_fpath = os.path.join(input_dir,infra_fname)
-            # check path validity
-            if not os.path.exists(infra_fpath):
-                raise ValueError("Path to infrastructure data file does not exist")
+        infra_fpath = check_and_get_abspath(infra_fname, input_dir)
         # further search within fpath for shapefile
         if infra_ftype == 'Shapefile':
-            files = os.listdir(infra_fpath)
-            for each in files:
-                if each.endswith('shp'):
-                    infra_fpath = os.path.join(infra_fpath,each)
-                    break
+            infra_fpath = get_shp_file_from_dir(infra_fpath)
         flag_using_state_network = False
     if 'SiteLocationParams' in setup_config['Infrastructure']:
         infra_loc_headers_in = setup_config['Infrastructure']['SiteLocationParams']
@@ -224,24 +214,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     if im_source == 'ShakeMap':
         sm_dir = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Directory']
         # check if user-input sm_dir is valid directory, if not then infer from input_dir
-        if os.path.exists(sm_dir):
-            pass
-        else:
-            sm_dir = os.path.join(input_dir,sm_dir)
-            # check path validity
-            if not os.path.exists(sm_dir):
-                raise ValueError("Path to ShakeMap directory does not exist")
+        sm_dir = check_and_get_abspath(sm_dir, input_dir)
         sm_events = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events']
     elif im_source == 'UserDefinedRupture':
         rup_fpath = setup_config['IntensityMeasure']['SourceForIM']['UserDefinedRupture']['FaultFile']
         # check if user-input sm_dir is valid directory, if not then infer from input_dir
-        if os.path.exists(rup_fpath):
-            pass
-        else:
-            rup_fpath = os.path.join(input_dir,rup_fpath)
-            # check path validity
-            if not os.path.exists(rup_fpath):
-                raise ValueError("Path to user defined rupture file does not exist")
+        rup_fpath = check_and_get_abspath(rup_fpath, input_dir)
     elif im_source == 'UCERF':
         rup_fpath = None
     else:
@@ -368,7 +346,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         if im_source == "ShakeMap":
                             spath_def_poly, freeface_fpath = preprocess_cpt_data(
                                 # predetermined setup configuration parameters
-                                setup_config, opensra_dir, im_dir, processed_input_dir, user_prov_gis_dir,
+                                setup_config, opensra_dir, im_dir, processed_input_dir, user_prov_gis_dir, input_dir,
                                 rvs_input, fixed_input, workflow,
                                 # OpenSRA internal files
                                 avail_data_summary,
@@ -382,7 +360,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
                             spath_def_poly, freeface_fpath = preprocess_cpt_data(
                                 # predetermined setup configuration parameters
-                                setup_config, opensra_dir, im_dir, processed_input_dir, user_prov_gis_dir,
+                                setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
                                 rvs_input, fixed_input, workflow,
                                 # OpenSRA internal files
                                 avail_data_summary,
@@ -415,25 +393,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             def_shp_crs = file_metadata['Datasets']['Set1']['CRS']
                             fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                         else:
-                            # first check if def_poly_source is a valid path
-                            if os.path.exists(def_poly_source):
-                                fdir = def_poly_source
-                            # otherwise infer from user provided GIS directory
-                            else:
-                                fdir = os.path.join(user_prov_gis_dir,def_poly_source)
+                            # check if def_poly_source is a valid path
+                            fdir = check_and_get_abspath(def_poly_source, user_prov_gis_dir)
                             # next check if fdir is a folder with shapefile or is already a shapefile
-                            if fdir.endswith('.shp'):
-                                fpath = fdir
-                            # go through fdir and find filename that ends with .shp and make path
-                            else:
-                                fpath = None
-                                for f in os.listdir(fdir):
-                                    if f.endswith('.shp'):
-                                        fpath = os.path.join(fdir,f)
-                                        break
-                                # if fpath is still None, 
-                                if fpath_valid is False:
-                                    raise ValueError("A path was provided for user defined landslide deformation polygons, but path is invalid")
+                            fpath = get_shp_file_from_dir(fdir)
+                            # if fpath is still None, 
+                            if fpath is None:
+                                raise ValueError("A path was provided for user defined landslide deformation polygons, but path is invalid")
                             def_shp_crs = 4326
                     else:
                         fpath = None
@@ -710,13 +676,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         # get well crossings
         # check if path is already a valid filepath, if not then infer from input_dir
         well_trace_dir = setup_config['Infrastructure']['WellTraceDir']
-        if os.path.exists(well_trace_dir):
-            pass
-        else:
-            well_trace_dir = os.path.join(input_dir,well_trace_dir)
-            # check path validity
-            if not os.path.exists(well_trace_dir):
-                raise ValueError("Path to directory with well traces does not exist")
+        well_trace_dir = check_and_get_abspath(well_trace_dir, input_dir)
         # well_crossing_ordered_by_faults, _ = get_well_crossing(
         get_well_crossing(
             im_dir=im_dir,
@@ -731,21 +691,9 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         if 'CaprockLeakage' in setup_config['DecisionVariable']['Type']:
             # check if path is already a valid filepath, if not then infer from input_dir
             caprock_fdir = setup_config['Infrastructure']['PathToCaprockShapefile']
-            if os.path.exists(caprock_fdir):
-                pass
-            else:
-                caprock_fdir = os.path.join(input_dir,caprock_fdir)
-                # check path validity
-                if not os.path.exists(caprock_fdir):
-                    raise ValueError("Path to directory with caprock shapefile does not exist")
+            caprock_fdir = check_and_get_abspath(caprock_fdir, input_dir)
             # get shapefile for caprock
-            if caprock_fdir.endswith('.shp'):
-                caprock_shp_file = caprock_fdir
-            else:
-                for f in os.listdir(caprock_fdir):
-                    if f.endswith('.shp'):
-                        caprock_shp_file = os.path.join(caprock_fdir,f)
-                        break
+            caprock_shp_file = get_shp_file_from_dir(caprock_fdir)
             # run caprock crossing algorith
             get_caprock_crossing(
                 caprock_shp_file=caprock_shp_file,
@@ -2141,7 +2089,7 @@ def get_pref_dist_for_params(
 # -----------------------------------------------------------
 def preprocess_cpt_data(
     # predetermined setup configuration parameters
-    setup_config, opensra_dir, im_dir, processed_input_dir, user_prov_gis_dir,
+    setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
     rvs_input, fixed_input, workflow,
     # OpenSRA internal files
     avail_data_summary,
@@ -2173,26 +2121,11 @@ def preprocess_cpt_data(
     # -----------------------------------------------------------
     # get summary file
     cpt_summary_fpath = cpt_setup_params['PathToCPTSummaryCSV']
-    # check if fpath is already a valid filepath, if not then infer from user provided GIS directory
-    if os.path.exists(cpt_summary_fpath):
-        pass
-    else:
-        cpt_summary_fpath = os.path.join(user_prov_gis_dir,cpt_summary_fpath)
-        # check path validity
-        if not os.path.exists(cpt_summary_fpath):
-            print(cpt_summary_fpath)
-            raise ValueError("Path to CPT summary csv file is not valid")
     # get folder with CPT data
     cpt_data_fdir = cpt_setup_params['PathToCPTDataFolder']
     # check if fpath is already a valid filepath, if not then infer from user provided GIS directory
-    if os.path.exists(cpt_data_fdir):
-        pass
-    else:
-        cpt_data_fdir = os.path.join(user_prov_gis_dir,cpt_data_fdir)
-        # check path validity
-        if not os.path.exists(cpt_data_fdir):
-            print(cpt_data_fdir)
-            raise ValueError("Path to folder with CPT csv files is not valid")
+    cpt_summary_fpath = check_and_get_abspath(cpt_summary_fpath, input_dir)
+    cpt_data_fdir = check_and_get_abspath(cpt_data_fdir, input_dir)
     # get column with groundwater table depth
     col_with_gw_depth = cpt_setup_params['ColumnInCPTSummaryWithGWTable']
     # read CPT data
@@ -2530,14 +2463,7 @@ def preprocess_cpt_data(
             if len(freeface_fpath) == 0:
                 freeface_fpath = None
             else:
-                # if len>0, check if fname is already a valid filepath, if not then infer from user provided gis dir
-                if os.path.exists(freeface_fpath):
-                    pass
-                else:
-                    freeface_fpath = os.path.join(user_prov_gis_dir,freeface_fpath)
-                    # check path validity
-                    if not os.path.exists(freeface_fpath):
-                        raise ValueError("User provided a path to the freeface feature shapefile, but path is not valid")
+                freeface_fpath = check_and_get_abspath(freeface_fpath, input_dir)
     # for liquefaction calcs
     z_cutoff = 15 # m
     null_arr_cpt_sample = np.zeros((n_cpt, num_epi_input_samples))

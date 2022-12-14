@@ -57,12 +57,12 @@ lib/OtherData/Preprocessed/Precomputed_IMs_for_Statewide_Pipeline
 
 # examples
 examples/(DO_NOT_RUN)_below_ground_landslide_statewide_level1_ucerf/
-/opensra/examples/**/IM/
-/opensra/examples/**/Processed_Input/
-/opensra/examples/**/Results/
-/opensra/examples/**/IM
-/opensra/examples/**/Processed_Input
-/opensra/examples/**/Results
+examples/**/**/IM/
+examples/**/**/Processed_Input/
+examples/**/**/Results/
+examples/**/**/IM
+examples/**/**/Processed_Input
+examples/**/**/Results
 
 # others
 **/superseded

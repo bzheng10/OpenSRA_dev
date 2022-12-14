@@ -27,6 +27,41 @@ from numba_stats import truncnorm, norm
 from scipy.interpolate import interp2d
 
 
+def get_shp_file_from_dir(fdir):
+    """
+    given file dir, find the shapefile and return the full path to the shapefile;
+    if fdir is already path to the shapefile, then return fdir as the fpath to the shapefile
+    """
+    if fdir.endswith('.shp'):
+        return os.path.abspath(fdir)
+    else:
+        for f in os.listdir(fdir):
+            if f.endswith('.shp'):
+                return os.path.abspath(os.path.join(fdir,f))
+    return None
+    
+
+def check_and_get_abspath(fpath, fdir=None):
+    """
+    given fpath, first check if it exists, if so then return abspath,
+    otherwise, infer from given dir, and check validity again
+    """
+    # check path validity
+    if os.path.exists(fpath):
+        return os.path.abspath(fpath)
+    else:
+        fpath = os.path.join(fdir,fpath)
+        # check path validity
+        if not os.path.exists(fpath):
+            logging.info("The following path does not exist:")
+            logging.info(f"\t{fpath}")
+            logging.info("Attempted to infer path from this directory and failed:")
+            logging.info(f"\t{fdir}")
+            raise ValueError("Check path validity and try again")
+        else:
+            return os.path.abspath(fpath)
+
+
 def get_cdf_given_pts(pts_arr):
     """2d array, n pts, x valus must be within 0 and 1"""
     dist_cdf = []

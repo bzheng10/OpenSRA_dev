@@ -3,14 +3,14 @@
         "AnalysisID" : "TEST",
 		"Directory": {
 			"Working": "",
-			"UserProvidedGISFolder": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_shakemap\\Input\\gis_data"
+			"UserProvidedGISFolder": "gis_data"
 		},
         "OutputFileType": "csv"
     },
     "Infrastructure": {
 		"InfrastructureType": "below_ground",
 		"DataType": "Shapefile",
-        "SiteDataFile": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_shakemap\\Input\\gis_data/Clipped_State_Network_Balboa",
+        "SiteDataFile": "gis_data/Clipped_State_Network_Balboa",
 		"SiteLocationParams": {
             "LatMid": "LAT_MID",
             "LonMid": "LON_MID",
@@ -23,7 +23,7 @@
     "IntensityMeasure": {
         "SourceForIM": {
             "ShakeMap": {
-                "Directory": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_shakemap\\Input\\ShakeMaps",
+                "Directory": "ShakeMaps",
                 "Events": [
 					"1971_SanFernando",
 					"1989_Loma Prieta",
@@ -121,8 +121,8 @@
         "OtherParameters": {}
     },
     "InputParameters": {
-		"RandomVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_shakemap\\Input\\rvs_input.csv",
-		"FixedVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level2_balboa_blvd_shakemap\\Input\\fixed_input.csv"
+		"RandomVariablesFileName": "rvs_input.csv",
+		"FixedVariablesFileName": "fixed_input.csv"
     },
 	"CPTParams": {}
 }

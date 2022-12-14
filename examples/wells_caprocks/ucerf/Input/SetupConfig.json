@@ -10,13 +10,13 @@
     "Infrastructure": {
 		"InfrastructureType": "wells_caprocks",
 		"DataType": "CSV",
-        "SiteDataFile": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\wells_caprocks\\ucerf\\Input\\site_data.csv",
+        "SiteDataFile": "site_data.csv",
 		"SiteLocationParams": {
             "Lat": "LAT_TOP",
             "Lon": "LON_TOP"
 		},
-		"WellTraceDir": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\wells_caprocks\\ucerf\\Input\\well_traces",
-		"PathToCaprockShapefile": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\wells_caprocks\\ucerf\\Input\\caprock_shapefile"
+		"WellTraceDir": "well_traces",
+		"PathToCaprockShapefile": "caprock_shapefile"
     },
     "IntensityMeasure": {
         "SourceForIM": {
@@ -97,8 +97,8 @@
         "OtherParameters": {}
     },
     "InputParameters": {
-		"RandomVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\wells_caprocks\\ucerf\\Input\\rvs_input.csv",
-		"FixedVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\wells_caprocks\\ucerf\\Input\\fixed_input.csv"
+		"RandomVariablesFileName": "rvs_input.csv",
+		"FixedVariablesFileName": "fixed_input.csv"
     },
 	"CPTParams": {}
 }

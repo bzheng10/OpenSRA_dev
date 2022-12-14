@@ -114,8 +114,8 @@
         "OtherParameters": {}
     },
     "InputParameters": {
-		"RandomVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level1_statewide-subset_ucerf\\Input\\rvs_input.csv",
-		"FixedVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level1_statewide-subset_ucerf\\Input\\fixed_input.csv"
+		"RandomVariablesFileName": "rvs_input.csv",
+		"FixedVariablesFileName": "fixed_input.csv"
     },
 	"CPTParams": {}
 }

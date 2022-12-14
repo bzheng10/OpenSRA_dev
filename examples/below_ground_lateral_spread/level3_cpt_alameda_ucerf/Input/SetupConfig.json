@@ -3,7 +3,7 @@
         "AnalysisID" : "TEST",
 		"Directory": {
 			"Working": "",
-			"UserProvidedGISFolder": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\gis_data"
+			"UserProvidedGISFolder": "gis_data"
 		},
         "OutputFileType": "csv"
     },
@@ -114,15 +114,15 @@
         "OtherParameters": {}
     },
     "InputParameters": {
-		"RandomVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\rvs_input.csv",
-		"FixedVariablesFileName": "C:\\Users\\barry\\OneDrive - SlateGeotech\\CEC\\OpenSRA\\examples\\below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\fixed_input.csv"
+		"RandomVariablesFileName": "rvs_input.csv",
+		"FixedVariablesFileName": "fixed_input.csv"
     },
     "UserSpecifiedGISandCPTData": {
         "CPTParameters": {
             "ColumnInCPTSummaryWithGWTable": "Mean GWT",
-            "PathToCPTDataFolder": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/below_ground_lateral_spread/level3_cpt_alameda_ucerf/Input/gis_data/cpts_alameda/CPTs",
-            "PathToCPTSummaryCSV": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/below_ground_lateral_spread/level3_cpt_alameda_ucerf/Input/gis_data/cpts_alameda/Summary.csv",
-            "PathToFreefaceDir": "C:/Users/barry/OneDrive - SlateGeotech/CEC/OpenSRA/examples/below_ground_lateral_spread/level3_cpt_alameda_ucerf/Input/gis_data/free_face_feature",
+            "PathToCPTDataFolder": "gis_data/cpts_alameda/CPTs",
+            "PathToCPTSummaryCSV": "gis_data/cpts_alameda/Summary.csv",
+            "PathToFreefaceDir": "gis_data/free_face_feature",
             "WeightRobertson09": 0.25,
             "WeightZhang04": 0.75
         }

@@ -1,0 +1,14 @@
+{
+  "Examples": [
+    {
+      "name": "E1 ",
+      "description": "Something about example 1.\n",
+      "inputFile": "above_ground/shakemap/Input/SetupConfig.json"
+    },
+    {
+      "name": "E2 ",
+      "description": "Something about example 2.\n",
+      "inputFile": "above_ground/ucerf/Input/SetupConfig.json"
+    }
+  ]
+}

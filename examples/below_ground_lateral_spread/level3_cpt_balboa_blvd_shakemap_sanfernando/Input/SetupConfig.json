@@ -1,0 +1,134 @@
+{
+    "General": {
+        "AnalysisID" : "TEST",
+		"Directory": {
+			"Working": "",
+			"UserProvidedGISFolder": "gis_data"
+		},
+        "OutputFileType": "csv"
+    },
+    "Infrastructure": {
+		"InfrastructureType": "below_ground",
+		"DataType": "Shapefile",
+        "SiteDataFile": "gis_data/Clipped_State_Network_Balboa",
+		"SiteLocationParams": {
+            "LatMid": "LAT_MID",
+            "LonMid": "LON_MID",
+            "LatBegin": "LAT_BEGIN",
+            "LonBegin": "LON_BEGIN",
+            "LatEnd": "LAT_END",
+            "LonEnd": "LON_END"
+		}
+    },
+    "IntensityMeasure": {
+        "SourceForIM": {
+            "ShakeMap": {
+                "Directory": "ShakeMaps",
+                "Events": [
+					"1971_SanFernando"
+                ]
+			}
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "Liquefaction": {
+                "ToInclude": true,
+                "Method": {
+                    "CPTBased": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "LateralSpread": {
+                "ToInclude": true,
+                "Method": {
+                    "CPTBased": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "Settlement": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "Landslide": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "SurfaceFaultRupture": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "LateralSpreadInducedPipeStrain": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022_and_HutabaratEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "PipeCompressiveRupture": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileRupture": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileLeakage": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "InputParameters": {
+		"RandomVariablesFileName": "rvs_input.csv",
+		"FixedVariablesFileName": "fixed_input.csv"
+    },
+    "UserSpecifiedGISandCPTData": {
+        "CPTParameters": {
+			"PathToCPTSummaryCSV": "gis_data\\BalboaBlvdCPTs\\Summary.csv",
+			"PathToCPTDataFolder": "gis_data\\BalboaBlvdCPTs\\CPTs",
+			"PathToFreefaceDir": "gis_data\\free_face_feature",
+			"ColumnInCPTSummaryWithGWTable": "Mean GWT",
+			"WeightRobertson09": 0.5,
+			"WeightZhang04": 0.5
+        }
+    }
+}

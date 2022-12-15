@@ -309,11 +309,8 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
                 soil_type[cond], soil_density[cond], steel_grade[cond], # fixed/toggles
             )
             # post - pick worst case, likely comp
-            eps_pipe_comp_curr = np.ones(subset_shape)*1e-5
             eps_pipe_tens_curr = np.ones(subset_shape)*1e-5
-            sigma_eps_pipe_comp_curr = np.ones(subset_shape)*0.01
             sigma_eps_pipe_tens_curr = np.ones(subset_shape)*0.01
-            sigma_mu_eps_pipe_comp_curr = np.ones(subset_shape)*0.3
             sigma_mu_eps_pipe_tens_curr = np.ones(subset_shape)*0.3
             # where Bain (tension) > Hutabarat normal
             ind_1_gt_2 = output1['eps_pipe']['mean'] > output2['eps_pipe']['mean']
@@ -322,17 +319,13 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
             sigma_mu_eps_pipe_tens_curr[ind_1_gt_2] = output1['eps_pipe']['sigma_mu'][ind_1_gt_2]
             # where Hutabarat normal > Bain (tension)
             ind_2_gt_1 = output2['eps_pipe']['mean'] > output1['eps_pipe']['mean']
-            eps_pipe_comp_curr[ind_2_gt_1] = output2['eps_pipe']['mean'][ind_2_gt_1]
-            sigma_eps_pipe_comp_curr[ind_2_gt_1] = output2['eps_pipe']['sigma'][ind_2_gt_1]
-            sigma_mu_eps_pipe_comp_curr[ind_2_gt_1] = output2['eps_pipe']['sigma_mu'][ind_2_gt_1]
+            eps_pipe_tens_curr[ind_2_gt_1] = output2['eps_pipe']['mean'][ind_2_gt_1]
+            sigma_eps_pipe_tens_curr[ind_2_gt_1] = output2['eps_pipe']['sigma'][ind_2_gt_1]
+            sigma_mu_eps_pipe_tens_curr[ind_2_gt_1] = output2['eps_pipe']['sigma_mu'][ind_2_gt_1]
             ##################
             # linearly weight the strains by transition factor
-            eps_pipe_comp_curr = eps_pipe_comp_curr*transition_weight_factor[cond]
             eps_pipe_tens_curr = eps_pipe_tens_curr*transition_weight_factor[cond]
             ##################
-            eps_pipe_comp[cond] = eps_pipe_comp_curr
-            sigma_eps_pipe_comp[cond] = sigma_eps_pipe_comp_curr
-            sigma_mu_eps_pipe_comp[cond] = sigma_mu_eps_pipe_comp_curr
             eps_pipe_tens[cond] = eps_pipe_tens_curr
             sigma_eps_pipe_tens[cond] = sigma_eps_pipe_tens_curr
             sigma_mu_eps_pipe_tens[cond] = sigma_mu_eps_pipe_tens_curr
@@ -362,14 +355,14 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
             # post - linearly weight reverse and ss_comp strains and variance
             weight_cond = transition_weight_factor[cond]
             inv_weight_cond = 1 - weight_cond
-            eps_pipe_comp_curr = \
+            eps_pipe_tens_curr = \
                 output1['eps_pipe']['mean']*weight_cond + \
                 output2['eps_pipe']['mean']*inv_weight_cond
-            sigma_eps_pipe_comp_curr = ((
+            sigma_eps_pipe_tens_curr = ((
                 output1['eps_pipe']['sigma']**2*weight_cond + \
                 output2['eps_pipe']['sigma']**2*inv_weight_cond
             ))**0.5
-            sigma_mu_eps_pipe_comp_curr = ((
+            sigma_mu_eps_pipe_tens_curr = ((
                 output1['eps_pipe']['sigma_mu']**2*weight_cond +\
                 output2['eps_pipe']['sigma_mu']**2*inv_weight_cond
             ))**0.5

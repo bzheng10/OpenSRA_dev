@@ -216,6 +216,9 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         # check if user-input sm_dir is valid directory, if not then infer from input_dir
         sm_dir = check_and_get_abspath(sm_dir, input_dir)
         sm_events = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events']
+        
+        print(sm_dir)
+        
     elif im_source == 'UserDefinedRupture':
         rup_fpath = setup_config['IntensityMeasure']['SourceForIM']['UserDefinedRupture']['FaultFile']
         # check if user-input sm_dir is valid directory, if not then infer from input_dir
@@ -346,7 +349,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         if im_source == "ShakeMap":
                             spath_def_poly, freeface_fpath = preprocess_cpt_data(
                                 # predetermined setup configuration parameters
-                                setup_config, opensra_dir, im_dir, processed_input_dir, user_prov_gis_dir, input_dir,
+                                setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
                                 rvs_input, fixed_input, workflow,
                                 # OpenSRA internal files
                                 avail_data_summary,
@@ -2455,9 +2458,6 @@ def preprocess_cpt_data(
     freeface_fpath = None
     if 'lateral_spread' in workflow['EDP']:
         if 'PathToFreefaceDir' in cpt_setup_params:
-            # if cpt_setup_params['PathToFreefaceDir'] is None:
-            #     pass
-            # else:
             freeface_fpath = cpt_setup_params['PathToFreefaceDir']
             # check length of filepath: if ==0, then assume nothing was provided
             if len(freeface_fpath) == 0:

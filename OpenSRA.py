@@ -2425,10 +2425,14 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             )
         gdf_frac_mean['SegmentID'] = index
         # for each case in df_frac, get all mean columns
-        for case in cases_in_df_frac:
+        for i, case in enumerate(cases_in_df_frac):
+            case_num = int(case[-1])
+            dv_str = df_workflow['DV'].iloc[case_num-1]
+            dv_str = dv_str.replace(' ','_')
             for col in df_frac[case].columns:
                 if 'mean_' in col:
-                    gdf_frac_mean[f'{case}_{col}'] = df_frac[case][col].values
+                    new_col_name = f'{case}-{dv_str}-{col}'
+                    gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
         gdf_frac_mean.to_file(spath, layer='mean_fractiles', index=False)
         
@@ -2446,14 +2450,21 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         )
         gdf_frac_mean['mean_fractiles_wells']['WellID'] = index
         # for each case in df_frac, get all mean columns
-        for case in cases_in_df_frac:
+        for i, case in enumerate(cases_in_df_frac):
+            case_num = int(case[-1])
+            dv_str = df_workflow['DV'].iloc[case_num-1]
+            dv_str = dv_str.replace(' ','_')
             if not 'caprock_leakage' in workflow_order_list[case]['haz_list']:
                 for col in df_frac[case].columns:
                     if 'mean_' in col:
-                        gdf_frac_mean['mean_fractiles_wells'][f'{case}_{col}'] = df_frac[case][col].values
+                        new_col_name = f'{case}-{dv_str}-{col}'
+                        gdf_frac_mean['mean_fractiles_wells'][new_col_name] = df_frac[case][col].values
         # for each case in df_frac, get all mean columns
-        for case in cases_in_df_frac:
+        for i, case in enumerate(cases_in_df_frac):
             if 'caprock' in workflow_order_list[case]['haz_list']:
+                case_num = int(case[-1])
+                dv_str = df_workflow['DV'].iloc[case_num-1]
+                dv_str = dv_str.replace(' ','_')
                 # next get mean fractile summary for caprocks
                 if not 'mean_fractiles_caprocks' in gdf_frac_mean:
                     gdf_frac_mean['mean_fractiles_caprocks'] = GeoDataFrame(
@@ -2463,7 +2474,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     )
                 for col in df_frac[case].columns:
                     if 'mean_' in col:
-                        gdf_frac_mean['mean_fractiles_caprocks'][f'{case}_{col}'] = df_frac[case][col].values
+                        new_col_name = f'{case}-{dv_str}-{col}'
+                        gdf_frac_mean['mean_fractiles_caprocks'][new_col_name] = df_frac[case][col].values
         # export
         for layer in gdf_frac_mean:
             gdf_frac_mean[layer].to_file(spath, layer=layer, index=False)
@@ -2484,11 +2496,18 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             if case+'_worst_case' in cases_in_df_frac:
                 pass
             else:
+                if 'worst_case' in case:
+                    case_num = int(case[case.find('worst_case')-2])
+                else:
+                    case_num = int(case[-1])
+                dv_str = df_workflow['DV'].iloc[case_num-1]
+                dv_str = dv_str.replace(' ','_')
                 for col in df_frac[case].columns:
+                    new_col_name = f'{case}-{dv_str}-{col}'
                     if 'mean_' in col:
-                        gdf_frac_mean[f'{case}_{col}'] = df_frac[case][col].values
+                        gdf_frac_mean[new_col_name] = df_frac[case][col].values
                     if 'worst_case' in col:
-                        gdf_frac_mean[f'{case}_{col}'] = df_frac[case][col].values
+                        gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
         gdf_frac_mean.to_file(spath, layer='mean_fractiles', index=False)
     gpkg_contains.append('mean fractiles from call cases')

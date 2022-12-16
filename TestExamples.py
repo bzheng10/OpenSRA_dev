@@ -49,11 +49,13 @@ def main():
         # -- lateral spread
         'below_ground_lateral_spread': [
             'level1_balboa_blvd_shakemap',
-            'level1_statewide-subset_shakemap',
+            'level1_statewide-subset_shakemap_northridge',
+            'level1_statewide-subset_shakemap_sanfernando',
             'level1_statewide-subset_ucerf',
             'level2_balboa_blvd_shakemap',
             'level3_cpt_alameda_ucerf',
-            'level3_cpt_balboa_blvd_shakemap',
+            'level3_cpt_balboa_blvd_shakemap_northridge',
+            'level3_cpt_balboa_blvd_shakemap_sanfernando',
             'level3_cpt_balboa_blvd_ucerf',
         ],
         # -- settlement

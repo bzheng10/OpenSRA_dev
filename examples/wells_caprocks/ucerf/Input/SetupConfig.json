@@ -12,8 +12,8 @@
 		"DataType": "CSV",
         "SiteDataFile": "site_data.csv",
 		"SiteLocationParams": {
-            "Lat": "LAT_TOP",
-            "Lon": "LON_TOP"
+            "Lat": "LAT",
+            "Lon": "LON"
 		},
 		"WellTraceDir": "well_traces",
 		"PathToCaprockShapefile": "caprock_shapefile"

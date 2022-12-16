@@ -1,102 +1,139 @@
 {
     "Infrastructure": {
-        "SiteLocationParams": {
-            "NameToDisplay": "Component Locations",
-            "WidgetType": null,
-            "ToDisplay": true,
-            "Params": {
-                "LatBegin": {
-                    "NameToDisplay": "Startpoint - Latitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "LatMid": {
-                    "NameToDisplay": "Midpoint - Latitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "LatEnd": {
-                    "NameToDisplay": "Endpoint - Latitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "LonBegin": {
-                    "NameToDisplay": "Startpoint - Longitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "LonMid": {
-                    "NameToDisplay": "Midpoint - Longitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "LonEnd": {
-                    "NameToDisplay": "Endpoint - Longitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "Length": {
-                    "NameToDisplay": "Component Length (km)",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": false,
-                    "DefaultValue": false,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                }
-            }
+		"LineAsset": {
+			"SiteLocationParams": {
+				"NameToDisplay": "Component Locations",
+				"WidgetType": null,
+				"ToDisplay": true,
+				"Params": {
+					"LatBegin": {
+						"NameToDisplay": "Start - Latitude",
+						"WidgetType": "QComboBox",
+						"ToDisplay": true,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					},
+					"LatMid": {
+						"NameToDisplay": "Mid - Latitude",
+						"WidgetType": "QComboBox",
+						"ToDisplay": true,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					},
+					"LatEnd": {
+						"NameToDisplay": "End - Latitude",
+						"WidgetType": "QComboBox",
+						"ToDisplay": true,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					},
+					"LonBegin": {
+						"NameToDisplay": "Start - Longitude",
+						"WidgetType": "QComboBox",
+						"ToDisplay": true,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					},
+					"LonMid": {
+						"NameToDisplay": "Mid - Longitude",
+						"WidgetType": "QComboBox",
+						"ToDisplay": true,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					},
+					"LonEnd": {
+						"NameToDisplay": "End - Longitude",
+						"WidgetType": "QComboBox",
+						"ToDisplay": true,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					},
+					"Length": {
+						"NameToDisplay": "Component Length (km)",
+						"WidgetType": "QComboBox",
+						"ToDisplay": false,
+						"DefaultValue": false,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					}
+				}
+			}
+		},
+		"PointAsset": {
+			"SiteLocationParams": {
+				"NameToDisplay": "Component Locations",
+				"WidgetType": null,
+				"ToDisplay": true,
+				"Params": {
+					"Lat": {
+						"NameToDisplay": "Latitude",
+						"WidgetType": "QComboBox",
+						"ToDisplay": true,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					},
+					"Lon": {
+						"NameToDisplay": "Longitude",
+						"WidgetType": "QComboBox",
+						"ToDisplay": true,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					}
+				}
+			}
         }
     },
     "SamplingMethod": {

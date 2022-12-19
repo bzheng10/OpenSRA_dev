@@ -4,57 +4,69 @@
 		"Directory": {
 			"Working": "",
 			"UserProvidedGISFolder": ""
-		},
-        "OutputFileType": "csv"
+		}
     },
     "Infrastructure": {
-		"InfrastructureType": "wells_caprocks",
+		"InfrastructureType": "above_ground",
 		"DataType": "CSV",
         "SiteDataFile": "site_data.csv",
 		"SiteLocationParams": {
             "Lat": "LAT",
             "Lon": "LON"
-		},
-		"WellTraceDir": "well_traces",
-		"PathToCaprockShapefile": "caprock_shapefile"
+		}
     },
     "IntensityMeasure": {
         "SourceForIM": {
-            "UserDefinedRupture": {
-                "FaultFile": "virtual_fault.csv"
+            "UCERF": {
+                "Filter": {
+                    "MeanAnnualRate": {
+                        "ToInclude": true,
+                        "Minimum": 1e-5
+                    },
+                    "Distance": {
+                        "ToInclude": true,
+                        "Maximum": 100
+                    },
+                    "Magnitude": {
+                        "ToInclude": true,
+                        "Minimum": 5,
+                        "Maximum": null
+                    }
+                }
 			}
         }
     },
     "EngineeringDemandParameter": {
         "Type": {
-            "SurfaceFaultRupture": {
+            "WellheadRotation": {
                 "ToInclude": true,
                 "Method": {
-                    "Thompson2021": {
+                    "PantoliEtal2022": {
 						"ModelWeight": 1
 					}
 				},
                 "OtherParameters": {}
             }
-		},
+        },
         "EpistemicUncertainty": {},
         "OtherParameters": {}
     },
     "DamageMeasure": {
         "Type": {
-            "WellStrain": {
+            "WellheadStrain": {
                 "ToInclude": true,
                 "Method": {
-                    "SasakiEtal2022": {
-						"ModelWeight": 1
+                    "PantoliEtal2022": {
+						"ModelWeight": 1,
+						"high_pressure_weight": 0.7
 					}
 				},
                 "OtherParameters": {}
             },
-            "WellMoment": {
+            "VesselMomentRatio": {
                 "ToInclude": true,
                 "Method": {
-					"LuuEtal2022": {
+					"PantoliEtal2022": {
 						"ModelWeight": 1
 					}
 				},
@@ -66,28 +78,28 @@
     },
     "DecisionVariable": {
         "Type": {
-            "ShearInducedWellRupture": {
+            "WellheadRupture": {
                 "ToInclude": true,
                 "Method": {
-					"SasakiEtal2022": {
+					"BainEtal2022": {
 						"ModelWeight": 1
 					}
 				},
                 "OtherParameters": {}
             },
-            "ShakingInducedWellRupture": {
+            "WellheadLeakage": {
                 "ToInclude": true,
                 "Method": {
-					"LuuEtal2022": {
+					"BainEtal2022": {
 						"ModelWeight": 1
 					}
 				},
                 "OtherParameters": {}
             },
-            "CaprockLeakage": {
+            "VesselRupture": {
                 "ToInclude": true,
                 "Method": {
-					"ZhangEtal2022": {
+					"PantoliEtal2022": {
 						"ModelWeight": 1
 					}
 				},

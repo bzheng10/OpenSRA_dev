@@ -57,7 +57,7 @@ from src.util import set_logging, check_and_get_abspath, get_shp_file_from_dir
 def main(work_dir, logging_level='info', logging_message_detail='s',
          display_after_n_event=100, clean_prev_output=True):
     """main function that runs the preprocess procedures"""
-
+    
     # -----------------------------------------------------------
     # Setting logging level (e.g. DEBUG or INFO)
     set_logging(
@@ -927,7 +927,7 @@ def preprocess_infra_file(
                 dst=os.path.join(processed_input_dir,'site_data_PROCESSED.gpkg')
             )
         else:
-            if infra_fpath.endswith('shp'):
+            if infra_fpath.endswith('shp') or infra_fpath.endswith('gpkg'):
                 infra = geodata.NetworkData(fpath=infra_fpath)
             elif infra_fpath.endswith('csv'):
                 infra = geodata.NetworkData(
@@ -940,7 +940,7 @@ def preprocess_infra_file(
                     lat_end_header=infra_loc_header["lat_end_header"],
                 )
             else:
-                raise ValueError('Only suports "shp" or "csv" as input file type')
+                raise ValueError('Only supports "shp" or "gpkg" for shapefiles or "csv" as input file type')
             # network
             infra.split_network_by_max_length(l_max) # l_max in km
             infra.make_segment_table()
@@ -950,7 +950,7 @@ def preprocess_infra_file(
                 to_replace=True
             )
     else:
-        if infra_fpath.endswith('shp'):
+        if infra_fpath.endswith('shp') or infra_fpath.endswith('gpkg'):
             infra = geodata.LocationData(fpath=infra_fpath)
         elif infra_fpath.endswith('csv'):
             infra = geodata.LocationData(
@@ -959,7 +959,7 @@ def preprocess_infra_file(
                 lat_header=infra_loc_header["lat_header"],
             )
         else:
-            raise ValueError('Only suports "shp" or "csv" as input file type')
+            raise ValueError('Only supports "shp" or "gpkg" for shapefiles or "csv" as input file type')
         # process components/sites
         infra.make_component_table()
         infra.export_component_table(

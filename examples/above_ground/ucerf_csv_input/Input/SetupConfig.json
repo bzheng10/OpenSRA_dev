@@ -11,28 +11,13 @@
 		"DataType": "CSV",
         "SiteDataFile": "site_data.csv",
 		"SiteLocationParams": {
-            "Lat": "Latitude",
-            "Lon": "Longitude"
+            "Lat": "LAT",
+            "Lon": "LON"
 		}
     },
     "IntensityMeasure": {
         "SourceForIM": {
             "UCERF": {
-                "Filter": {
-                    "MeanAnnualRate": {
-                        "ToInclude": true,
-                        "Minimum": 1e-5
-                    },
-                    "Distance": {
-                        "ToInclude": true,
-                        "Maximum": 100
-                    },
-                    "Magnitude": {
-                        "ToInclude": true,
-                        "Minimum": 5,
-                        "Maximum": null
-                    }
-                }
 			}
         }
     },

@@ -29,14 +29,14 @@ from scipy.interpolate import interp2d
 
 def get_shp_file_from_dir(fdir):
     """
-    given file dir, find the shapefile and return the full path to the shapefile;
+    given file dir, find the shapefile (shp or gpkg) and return the full path to the shapefile;
     if fdir is already path to the shapefile, then return fdir as the fpath to the shapefile
     """
-    if fdir.endswith('.shp'):
+    if fdir.endswith('.shp') or fdir.endswith('.gpkg'):
         return os.path.abspath(fdir)
     else:
         for f in os.listdir(fdir):
-            if f.endswith('.shp'):
+            if f.endswith('.shp') or f.endswith('.gpkg'):
                 return os.path.abspath(os.path.join(fdir,f))
     return None
     

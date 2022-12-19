@@ -80,7 +80,7 @@ class GeoData(object):
     
     
     # class definitions
-    SUPPORTED_FTYPE = ['.shp', '.gdb','.tif','.xml', '.csv', '.from_args'] # supported file types
+    SUPPORTED_FTYPE = ['.shp', '.gpkg', '.gdb', '.tif', '.xml', '.csv', '.from_args'] # supported file types
     
     
     # instantiation
@@ -437,10 +437,10 @@ class CSVData(GeoData):
     def export_data_to_shp(self, spath=None):
         """exports geopandas.GeoDataFrame to shapefile"""
         if spath is None:
-            self._spath = self.fpath.replace('.csv','.shp') # file path
+            self._spath = self.fpath.replace('.csv','.gpkg') # file path
         else:
             self._spath = spath
-        self.data.to_file(self._spath) # export operation
+        self.data.to_file(self._spath, layer='data') # export operation
         logging.info(f"Exported GeoDataFrame to:")
         logging.info(f"\t{self._spath}")
     
@@ -923,27 +923,31 @@ class ShapefileData(GeoData):
         if export_grid:
             if grid_spath is None:
                 if export_fdir is None:
-                    self._grid_spath = self.fpath.replace('.shp',f"_GRID_{spacing_string}.shp") # file path
+                    # self._grid_spath = self.fpath.replace('.shp',f"_GRID_{spacing_string}.shp") # file path
+                    self._grid_spath = self.fpath.replace('.gpkg',f"_GRID_{spacing_string}.gpkg") # file path
                 else:
                     self._grid_spath = os.path.join(
                         export_fdir,
-                        os.path.basename(self.fpath).replace('.shp',f"_GRID_{spacing_string}.shp")
+                        # os.path.basename(self.fpath).replace('.shp',f"_GRID_{spacing_string}.shp")
+                        os.path.basename(self.fpath).replace('.gpkg',f"_GRID_{spacing_string}.gpkg")
                     ) # file path
             else:
                 self._grid_spath = grid_spath
-            self.grid.to_file(self._grid_spath) # export operation
+            self.grid.to_file(self._grid_spath, layer='data') # export operation
             logging.info(f"Exported grid to:")
             logging.info(f"\t{self._grid_spath}")
         # for grid nodes
         if export_grid_node:
             if grid_node_spath is None:
                     if export_fdir is None:
-                        self._grid_node_spath = self.fpath.replace('.shp',f"_GRID_NODE_{spacing_string}.csv") # file path
+                        # self._grid_node_spath = self.fpath.replace('.shp',f"_GRID_NODE_{spacing_string}.csv") # file path
+                        self._grid_node_spath = self.fpath.replace('.gpkg',f"_GRID_NODE_{spacing_string}.csv") # file path
                         # self._grid_node_spath = os.path.join(os.path.dirname(self.fpath),'grid_nodes.csv')
                     else:
                         self._grid_node_spath = os.path.join(
                             export_fdir,
-                            os.path.basename(self.fpath).replace('.shp',f"_GRID_NODE_{spacing_string}.csv")
+                            # os.path.basename(self.fpath).replace('.shp',f"_GRID_NODE_{spacing_string}.csv")
+                            os.path.basename(self.fpath).replace('.gpkg',f"_GRID_NODE_{spacing_string}.csv")
                         ) # file path
             else:
                 self._grid_node_spath = grid_node_spath
@@ -1038,7 +1042,7 @@ class LocationData(ShapefileData):
         super().__init__(fpath=fpath, crs=crs, minimal_init=True)
         
         # compile data into GeoDataFrame
-        if self.ftype == '.shp' or self.ftype == '.gdb':
+        if self.ftype == '.shp' or self.ftype == '.gdb' or self.ftype == '.gpkg':
             self.data = ShapefileData(fpath=fpath, gdf=gdf, rows_to_keep=rows_to_keep).data
         elif self.ftype == '.tif':
             self.data = RasterData(fpath=fpath).data
@@ -1359,7 +1363,7 @@ class NetworkData(ShapefileData):
                 lat_header = 'LAT'
         
         # compile data into GeoDataFrame
-        if self.ftype == '.shp' or self.ftype == '.gdb':
+        if self.ftype == '.shp' or self.ftype == '.gdb' or self.ftype == '.gpkg':
             self.data = ShapefileData(fpath=fpath, gdf=gdf, crs=crs, rows_to_keep=rows_to_keep).data
         elif self.ftype == '.csv':
             self.data = CSVData(
@@ -1490,10 +1494,10 @@ class NetworkData(ShapefileData):
     def export_processed_data(self, spath=None):
         """exports data to s(ave)path; user-defined or auto-generated"""
         if spath is None:
-            self._spath = self.fpath.replace('.shp','_PROCESSED.shp')
+            self._spath = self.fpath.replace('.gpkg','_PROCESSED.gpkg')
         else:
             self._spath = spath
-        self.data.to_file(self._spath)
+        self.data.to_file(self._spath, layer='data')
         logging.info(f"Exported preprocessed network shapefile to:")
         logging.info(f"\t{self._spath}")
         

@@ -63,6 +63,7 @@ examples/**/**/Results/
 examples/**/**/IM
 examples/**/**/Processed_Input
 examples/**/**/Results
+examples/Examples_backup.json
 
 # others
 **/superseded

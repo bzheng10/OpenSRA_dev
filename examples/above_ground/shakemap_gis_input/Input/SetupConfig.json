@@ -8,11 +8,11 @@
     },
     "Infrastructure": {
 		"InfrastructureType": "above_ground",
-		"DataType": "CSV",
-        "SiteDataFile": "site_data.csv",
+		"DataType": "Shapefile",
+        "SiteDataFile": "above_ground_info/site_data.gpkg",
 		"SiteLocationParams": {
-            "Lat": "Latitude",
-            "Lon": "Longitude"
+            "Lat": "LAT",
+            "Lon": "LON"
 		}
     },
     "IntensityMeasure": {
@@ -99,7 +99,7 @@
         "OtherParameters": {}
     },
     "InputParameters": {
-		"RandomVariablesFileName": "./\rvs_input.csv",
+		"RandomVariablesFileName": "./rvs_input.csv",
 		"FixedVariablesFileName": "./fixed_input.csv"
     },
 	"CPTParams": {}

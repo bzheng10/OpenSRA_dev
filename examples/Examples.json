@@ -4,17 +4,17 @@
             {
                 "name": "ShakeMap_GIS_Input",
                 "description": "Placeholder\n",
-                "inputFile": "above_ground\\shakemap_gis_input\\Input\\SetupConfig.json"
+                "inputFile": "above_ground/shakemap_gis_input/Input/SetupConfig.json"
             },
             {
                 "name": "UCERF_CSV_Input",
                 "description": "Placeholder\n",
-                "inputFile": "above_ground\\ucerf_csv_input\\Input\\SetupConfig.json"
+                "inputFile": "above_ground/ucerf_csv_input/Input/SetupConfig.json"
             },
             {
                 "name": "UCERF_with_Filters_CSV_Input",
                 "description": "Placeholder\n",
-                "inputFile": "above_ground\\ucerf_with_filters_csv_input\\Input\\SetupConfig.json"
+                "inputFile": "above_ground/ucerf_with_filters_csv_input/Input/SetupConfig.json"
             }
         ]
     },
@@ -23,22 +23,22 @@
             {
                 "name": "Level1_Balboa_Blvd_Landslide_with_Landslide_Inventory_ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide\\level1_balboa_blvd_landslide_with_landslide_inventory_shakemap\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_landslide/level1_balboa_blvd_landslide_with_landslide_inventory_shakemap/Input/SetupConfig.json"
             },
             {
                 "name": "Statewide-Subset_Level1_no_Landslide_Polygon_ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide\\statewide-subset_level1_no_landslide_polygon_shakemap\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_landslide/statewide-subset_level1_no_landslide_polygon_shakemap/Input/SetupConfig.json"
             },
             {
                 "name": "Statewide-Subset_Level1_no_Landslide_Polygon_UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide\\statewide-subset_level1_no_landslide_polygon_ucerf\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_landslide/statewide-subset_level1_no_landslide_polygon_ucerf/Input/SetupConfig.json"
             },
             {
                 "name": "Statewide-Subset_Level1_with_Landslide_Inventory_ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide\\statewide-subset_level1_with_landslide_inventory_shakemap\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_landslide/statewide-subset_level1_with_landslide_inventory_shakemap/Input/SetupConfig.json"
             }
         ]
     },
@@ -47,57 +47,57 @@
             {
                 "name": "Level1_Balboa_Blvd_ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level1_balboa_blvd_shakemap\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level1_balboa_blvd_shakemap/Input/SetupConfig.json"
             },
             {
                 "name": "Level1_Balboa_Blvd_UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level1_balboa_blvd_ucerf\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level1_balboa_blvd_ucerf/Input/SetupConfig.json"
             },
             {
                 "name": "Level1_Statewide-Subset_ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level1_statewide-subset_shakemap\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level1_statewide-subset_shakemap/Input/SetupConfig.json"
             },
             {
                 "name": "Level1_Statewide-Subset_UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level1_statewide-subset_ucerf\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level1_statewide-subset_ucerf/Input/SetupConfig.json"
             },
             {
                 "name": "Level2_Balboa_Blvd_ShakeMap_Northridge",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level2_balboa_blvd_shakemap_northridge\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_shakemap_northridge/Input/SetupConfig.json"
             },
             {
                 "name": "Level2_Balboa_Blvd_ShakeMap_SanFernando",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level2_balboa_blvd_shakemap_sanfernando\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_shakemap_sanfernando/Input/SetupConfig.json"
             },
             {
                 "name": "Level2_Balboa_Blvd_UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level2_balboa_blvd_ucerf\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_ucerf/Input/SetupConfig.json"
             },
             {
                 "name": "Level3_CPT_Alameda_UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level3_cpt_alameda_ucerf\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level3_cpt_alameda_ucerf/Input/SetupConfig.json"
             },
             {
                 "name": "Level3_CPT_Balboa_Blvd_ShakeMap_Northridge",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level3_cpt_balboa_blvd_shakemap_northridge\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level3_cpt_balboa_blvd_shakemap_northridge/Input/SetupConfig.json"
             },
             {
                 "name": "Level3_CPT_Balboa_Blvd_ShakeMap_SanFernando",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level3_cpt_balboa_blvd_shakemap_sanfernando\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level3_cpt_balboa_blvd_shakemap_sanfernando/Input/SetupConfig.json"
             },
             {
                 "name": "Level3_CPT_Balboa_Blvd_UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread\\level3_cpt_balboa_blvd_ucerf\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level3_cpt_balboa_blvd_ucerf/Input/SetupConfig.json"
             }
         ]
     },
@@ -106,32 +106,32 @@
             {
                 "name": "Level1_Statewide-Subset_ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement\\level1_statewide-subset_shakemap\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_settlement/level1_statewide-subset_shakemap/Input/SetupConfig.json"
             },
             {
                 "name": "Level1_Statewide-Subset_UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement\\level1_statewide-subset_ucerf\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_settlement/level1_statewide-subset_ucerf/Input/SetupConfig.json"
             },
             {
                 "name": "Level3_CPT_Alameda_ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement\\level3_cpt_alameda_shakemap\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_settlement/level3_cpt_alameda_shakemap/Input/SetupConfig.json"
             },
             {
                 "name": "Level3_CPT_Alameda_UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement\\level3_cpt_alameda_ucerf\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_settlement/level3_cpt_alameda_ucerf/Input/SetupConfig.json"
             },
             {
                 "name": "Level3_CPT_Balboa_Blvd_ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement\\level3_cpt_balboa_blvd_shakemap\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_settlement/level3_cpt_balboa_blvd_shakemap/Input/SetupConfig.json"
             },
             {
                 "name": "Level3_CPT_Balboa_Blvd_UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement\\level3_cpt_balboa_blvd_ucerf\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_settlement/level3_cpt_balboa_blvd_ucerf/Input/SetupConfig.json"
             }
         ]
     },
@@ -140,7 +140,7 @@
             {
                 "name": "Statewide-Subset",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_surface_fault_rupture\\statewide-subset\\Input\\SetupConfig.json"
+                "inputFile": "below_ground_surface_fault_rupture/statewide-subset/Input/SetupConfig.json"
             }
         ]
     },
@@ -149,12 +149,12 @@
             {
                 "name": "UCERF_CSV_Input",
                 "description": "Placeholder\n",
-                "inputFile": "wells_caprocks\\ucerf_csv_input\\Input\\SetupConfig.json"
+                "inputFile": "wells_caprocks/ucerf_csv_input/Input/SetupConfig.json"
             },
             {
                 "name": "Userdef_Rupture_GIS_Input",
                 "description": "Placeholder\n",
-                "inputFile": "wells_caprocks\\userdef_rupture_gis_input\\Input\\SetupConfig.json"
+                "inputFile": "wells_caprocks/userdef_rupture_gis_input/Input/SetupConfig.json"
             }
         ]
     }

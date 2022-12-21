@@ -123,7 +123,7 @@
     },
     "UserSpecifiedGISandCPTData": {
         "CPTParameters": {
-			"PathToCPTSummaryCSV": "gis_data/alboaBlvdCPTs/Summary.csv",
+			"PathToCPTSummaryCSV": "gis_data/BalboaBlvdCPTs/Summary.csv",
 			"PathToCPTDataFolder": "gis_data/BalboaBlvdCPTs/CPTs",
 			"PathToFreefaceDir": "gis_data/free_face_feature",
 			"ColumnInCPTSummaryWithGWTable": "Mean GWT",

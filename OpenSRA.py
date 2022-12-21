@@ -2433,7 +2433,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     new_col_name = f'{case}-{dv_str}-{col}'
                     gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='mean_fractile\', index=False)
+        gdf_frac_mean.to_file(spath, layer='mean_fractile', index=False, crs=4326)
         
     # for wells and caprocks - one sheet for wells, one sheet for caprocks if exists
     if infra_type == 'wells_caprocks':
@@ -2477,7 +2477,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         gdf_frac_mean['mean_fractile_caprocks'][new_col_name] = df_frac[case][col].values
         # export
         for layer in gdf_frac_mean:
-            gdf_frac_mean[layer].to_file(spath, layer=layer, index=False)
+            gdf_frac_mean[layer].to_file(spath, layer=layer, index=False, crs=4326)
             
     if infra_type == 'above_ground':
         # create a gpkg file to store mean fractiles
@@ -2508,13 +2508,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     if 'worst_case' in col:
                         gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='mean_fractile', index=False)
+        gdf_frac_mean.to_file(spath, layer='mean_fractile', index=False, crs=4326)
     gpkg_contains.append('mean fractiles from call cases')
     
     # append other gpkg to gdf_frac_mean if they exist
     # 1) rupture metadata
     gdf_rupture_table = read_file(os.path.join(im_dir,'RUPTURE_METADATA.gpkg'))
-    gdf_rupture_table.to_file(spath, layer='ruptures', index=False)
+    gdf_rupture_table.to_file(spath, layer='ruptures', index=False, crs=4326)
     gpkg_contains.append('rupture scenarios close to sites')
     
     # 2) site data table with crossings only
@@ -2522,25 +2522,25 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         # update previous string in gpkg_contains
         gpkg_contains[-1] = 'rupture scenarios crossed and/or close to sites'
         gdf_crossings_only = read_file(os.path.join(processed_input_dir,'site_data_PROCESSED_CROSSING_ONLY.gpkg'))
-        gdf_crossings_only.to_file(spath, layer=f'locations_with_crossings', index=False)
+        gdf_crossings_only.to_file(spath, layer=f'locations_with_crossings', index=False, crs=4326)
         gpkg_contains.append('locations with crossings')
         if os.path.exists(os.path.join(processed_input_dir,'deformation_polygons_crossed.gpkg')):
             gdf_def_poly = read_file(os.path.join(processed_input_dir,'deformation_polygons_crossed.gpkg'))
-            gdf_def_poly.to_file(spath, layer=f'deformation_polygons_crossed', index=False)
+            gdf_def_poly.to_file(spath, layer=f'deformation_polygons_crossed', index=False, crs=4326)
             gpkg_contains.append('deformation polygons with crossings')
     
     # 3) qfaults if running below_ground and surface_fault_rupture
     if running_fault_rupture_below_ground:
         for each in ['primary','secondary']:
             gdf_qfault_primary = read_file(os.path.join(im_dir,'qfaults_crossed.gpkg'),layer=each)
-            gdf_qfault_primary.to_file(spath, layer=f'qfault_crossed_{each}', index=False)
+            gdf_qfault_primary.to_file(spath, layer=f'qfault_crossed_{each}', index=False, crs=4326)
         gpkg_contains.append('qfaults crossed')
     
     # 4) if running CPTBased
     if running_cpt_based_procedure:
         # processed CPT
         gdf_processed_cpt = read_file(os.path.join(processed_input_dir,'CPTs','cpt_data_PROCESSED.gpkg'))
-        gdf_processed_cpt.to_file(spath, layer=f'processed_cpts', index=False)
+        gdf_processed_cpt.to_file(spath, layer=f'processed_cpts', index=False, crs=4326)
         gpkg_contains.append('processed CPTs')
         # if freeface feature is given
         if 'PathToFreefaceDir' in setup_config['UserSpecifiedGISandCPTData']['CPTParameters']:
@@ -2552,14 +2552,14 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 freeface_fpath = check_and_get_abspath(freeface_fpath, input_dir)
         if freeface_fpath is not None:
             gdf_freeface_wgs84 = read_file(freeface_fpath, crs=epsg_wgs84)
-            gdf_freeface_wgs84.to_file(spath, layer=f'freeface_features', index=False)
+            gdf_freeface_wgs84.to_file(spath, layer=f'freeface_features', index=False, crs=4326)
             gpkg_contains.append('freeface features')
             
     # 5) if running caprock analysis
     if running_caprock:
         if os.path.exists(os.path.join(processed_input_dir,'caprock_crossing.gpkg')):
             gdf_caprock_crossing = read_file(os.path.join(processed_input_dir,'caprock_crossing.gpkg'))
-            gdf_caprock_crossing.to_file(spath, layer=f'caprocks_with_crossings', index=False)
+            gdf_caprock_crossing.to_file(spath, layer=f'caprocks_with_crossings', index=False, crs=4326)
             gpkg_contains.append('caprocks with crossings')            
 
     logging.info(f'{counter}. Exported a summary geopackage to:')

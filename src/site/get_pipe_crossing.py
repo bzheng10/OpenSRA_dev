@@ -482,6 +482,23 @@ def get_pipe_crossing_fault_rup(
         gdf_segment_utm['y2'] = segment_full_end_utm[:,1]
         
         # ---
+        # headers for primary and secondary
+        header_map = {
+            'primary': {
+                'DipDir': 'DipDirec_1',
+                'AveDip': 'AveDip_1',
+                'AveRake': 'AveRake_1',
+                'ParentSect': 'parentSe_1',
+            },
+            'secondary': {
+                'DipDir': 'DipDirec_2',
+                'AveDip': 'AveDip_12',
+                'AveRake': 'AveRake_12',
+                'ParentSect': 'parentSe_3',
+            }
+        }
+        
+        # ---
         # storing indices of segment and qfault crossed
         segment_by_qfault = {}
         # segment_crossed_by_rupture = {}
@@ -552,9 +569,9 @@ def get_pipe_crossing_fault_rup(
             segment_by_qfault[each] = gdf_segment_utm.loc[segment_crossed].copy()
             
             # get fault angles
-            strike = gdf_qfault_crossed.DipDirec_1.values - 90
-            dip = gdf_qfault_crossed.AveDip_1.values
-            rake = gdf_qfault_crossed.AveRake_1.values
+            strike = gdf_qfault_crossed[header_map[each]['DipDir']].values - 90
+            dip = gdf_qfault_crossed[header_map[each]['AveDip']].values
+            rake = gdf_qfault_crossed[header_map[each]['AveRake']].values
             # get azimuth (slip dir)
             azimuth = get_rake_azimuth(strike,dip,rake)
             # get unit slip in dx and dy, to be used for crossing angles later
@@ -623,9 +640,7 @@ def get_pipe_crossing_fault_rup(
             else:
                 # get unique parent IDs with crossings
                 unique_parent_id_crossed = np.unique(
-                    gdf_qfault_crossed.parentSe_1.values)
-                # get strike
-                strike = gdf_qfault_crossed.DipDirec_1.values - 90
+                    gdf_qfault_crossed[header_map[each]['ParentSect']].values)
                 # get segment start and end arrays
                 segment_crossed_start = np.vstack([
                     segment_by_qfault[each].x1.values,
@@ -656,7 +671,7 @@ def get_pipe_crossing_fault_rup(
                     # segment ID
                     segment_id_crossed_i = segment_by_qfault[each].ID.iloc[i]
                     # parentID crossed
-                    parent_id_crossed_i = gdf_qfault_crossed.iloc[i].parentSe_1
+                    parent_id_crossed_i = gdf_qfault_crossed.iloc[i][header_map[each]['ParentSect']]
                     # get scenarios from Norm for parent ID crossed
                     rows_for_parent_id_crossed_i = rows_with_parent_ids_in_norm_scenario[parent_id_crossed_i]
                     # get subset of scenarios
@@ -1765,6 +1780,10 @@ def get_pipe_crossing_landslide_or_liq(
     # crossing_summary_gdf.loc[crossing_summary_gdf.shape[0]] = crossing_summary_gdf.loc[crossing_summary_gdf.shape[0]-1]
     # crossing_summary_gdf.loc[crossing_summary_gdf.shape[0]-1,'l_anchor'] = crossing_summary_gdf.loc[crossing_summary_gdf.shape[0]-1,'l_anchor'] * 2
     #################
+    
+    # convert columns to numerics
+    for col in crossing_summary_gdf:
+        crossing_summary_gdf[col] = pd.to_numeric(crossing_summary_gdf[col],errors='ignore')
     
     # sort by ID column
     crossing_summary_gdf.sort_values('ID',inplace=True)

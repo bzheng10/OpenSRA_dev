@@ -1,4 +1,4 @@
-import numpy as np
+from numpy import zeros, pi, vstack
 from numba import njit, float64
 
 @njit(
@@ -64,25 +64,25 @@ def pc_coeffs_first_int(
     b00 = muY*(sigmaMuY**2+sigmaY**2)**(-1)+(-1)*amuZ*bmuZ*(sigmaMuZ**2+ \
         sigmaZ**2)**(-1)
     b01 = amuZ*(sigmaMuZ**2+sigmaZ**2)**(-1)
-    P_1 =  np.zeros((1, n_sites))
-    P_2 =  np.zeros((2, n_sites))
-    P_3 =  np.zeros((2, n_sites))
-    P_4 =  np.zeros((3, n_sites))
-    P_5 =  np.zeros((3, n_sites))
-    P_6 =  np.zeros((3, n_sites))
-    P_7 =  np.zeros((4, n_sites))
-    P_8 =  np.zeros((4, n_sites))
-    P_9 =  np.zeros((4, n_sites))
-    P_10 =  np.zeros((4, n_sites))
-    P_11 =  np.zeros((5, n_sites))
-    P_12 =  np.zeros((5, n_sites))
-    P_13 =  np.zeros((5, n_sites))
-    P_14 =  np.zeros((5, n_sites))
-    P_15 =  np.zeros((5, n_sites))
+    P_1 =  zeros((1, n_sites))
+    P_2 =  zeros((2, n_sites))
+    P_3 =  zeros((2, n_sites))
+    P_4 =  zeros((3, n_sites))
+    P_5 =  zeros((3, n_sites))
+    P_6 =  zeros((3, n_sites))
+    P_7 =  zeros((4, n_sites))
+    P_8 =  zeros((4, n_sites))
+    P_9 =  zeros((4, n_sites))
+    P_10 =  zeros((4, n_sites))
+    P_11 =  zeros((5, n_sites))
+    P_12 =  zeros((5, n_sites))
+    P_13 =  zeros((5, n_sites))
+    P_14 =  zeros((5, n_sites))
+    P_15 =  zeros((5, n_sites))
     #;
     ## Polynomial Constants;
     #;
-    constantTerm1 = (1/2)*((-1)*a1)**(-1/2)*np.pi**(-1/2)*(1+sigmaMuY**2*sigmaY**(-2))**( \
+    constantTerm1 = (1/2)*((-1)*a1)**(-1/2)*pi**(-1/2)*(1+sigmaMuY**2*sigmaY**(-2))**( \
         -1/2)*sigmaY**(-1)*(1+sigmaMuZ**2*sigmaZ**(-2))**(-1/2)*sigmaZ**(-1) \
         
     P_C_1 = constantTerm1
@@ -294,7 +294,7 @@ def pc_coeffs_first_int(
         a1**2*(muY**2+(-1)*sigmaMuY**2+(-1)*sigmaY**2))
     P_15[3,:] = 4*(P_C_15)*b01**3*(b00+2*a1*muY)*sigmaMuY**4
     P_15[4,:] = (P_C_15)*b01**4*sigmaMuY**4
-    P_output = np.vstack((P_1, P_2, P_3, P_4, P_5, P_6, P_7, P_8, P_9, P_10, P_11, P_12, P_13, P_14, P_15))
+    P_output = vstack((P_1, P_2, P_3, P_4, P_5, P_6, P_7, P_8, P_9, P_10, P_11, P_12, P_13, P_14, P_15))
     
     #
     return P_output

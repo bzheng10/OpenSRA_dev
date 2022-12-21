@@ -9,7 +9,7 @@
     },
     "Infrastructure": {
 		"InfrastructureType": "below_ground",
-		"DataType": "STATE_CSV",
+		"DataType": "State_Network",
         "SiteDataFile": "CA_Natural_Gas_Pipeline_SUBSET",
 		"SiteLocationParams": {
             "LatMid": "LAT_MID",

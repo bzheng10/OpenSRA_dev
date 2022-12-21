@@ -8,11 +8,9 @@ from src.nb_stats.stats_util import *
 
 
 njit(
-    # float64[:](float64[:],float64,float64,float64,float64),
     float64[:,:](float64[:,:],float64[:],float64[:],float64[:],float64[:],int64),
     fastmath=True,
-    # cache=True,
-    parallel=True
+    cache=True,
 )
 def res_to_samples(residuals, mean, sigma, low, high, dist_type):
     """
@@ -26,22 +24,13 @@ def res_to_samples(residuals, mean, sigma, low, high, dist_type):
     dim1 = residuals.shape[0]
     dim2 = residuals.shape[1]
     samples = np.zeros((dim1,dim2))
-    # if 'norm' in dist_type:
+    # normal or lognormal
     if dist_type == 1 or dist_type == 2:
         # find where low == -np.inf or high == np.inf
         low_is_neg_inf = set(np.where(low==-np.inf)[0])
         high_is_inf = set(np.where(high==np.inf)[0])
-        # union_cond = np.unique(np.hstack([low_is_neg_inf,high_is_inf]))
-        # union_cond = list(low_is_neg_inf.union(high_is_inf))
         ind_with_both_bounds_inf_cond = list(low_is_neg_inf.intersection(high_is_inf))
-        # ind_with_at_least_one_noninf_bounds = list(set(np.arange(dim1)).difference(set(union_cond)))
         ind_with_at_least_one_noninf_bounds = list(set(np.arange(dim1)).difference(set(ind_with_both_bounds_inf_cond)))
-        # print(dim1)
-        # print(list(low_is_neg_inf))
-        # print(list(high_is_inf))
-        # print(list(ind_with_both_bounds_inf_cond))
-        # print(list(ind_with_at_least_one_noninf_bounds))
-        # if len(ind_with_noninf_bounds) > 0:
         if len(ind_with_at_least_one_noninf_bounds) > 0:
             samples[ind_with_at_least_one_noninf_bounds,:] = truncnorm2_ppf_2d(
                 p=norm2_cdf_2d(residuals[ind_with_at_least_one_noninf_bounds,:],0.0,1.0),
@@ -50,89 +39,20 @@ def res_to_samples(residuals, mean, sigma, low, high, dist_type):
                 loc=mean[ind_with_at_least_one_noninf_bounds].astype(float),
                 scale=sigma[ind_with_at_least_one_noninf_bounds].astype(float)
             )
-            # for ind in ind_with_noninf_bounds:
-            #     samples[ind,:] = truncnorm.ppf(
-            #         # q=norm.cdf(samples,0,1),
-            #         p=norm.cdf(residuals[ind,:],0,1),
-            #         xmin=low[ind],
-            #         xmax=high[ind],
-            #         loc=mean[ind],
-            #         scale=sigma[ind]
-            #     )
-        # if neither low nor high are inf
-        # if len(union_cond) > 0:
+            # for ind in ind_with
         if len(ind_with_both_bounds_inf_cond) > 0:
             sigma_repeat = sigma[ind_with_both_bounds_inf_cond].repeat(dim2).reshape((-1, dim2))
             mean_repeat = mean[ind_with_both_bounds_inf_cond].repeat(dim2).reshape((-1, dim2))
-            samples[ind_with_both_bounds_inf_cond,:] = residuals[ind_with_both_bounds_inf_cond,:] * sigma_repeat + mean_repeat
-        # if neither low nor high are inf
-        # else:
-        #     mean_repeat = np.repeat(np.expand_dims(mean,axis=1), dim2, axis=1)
-        #     sigma_repeat = np.repeat(np.expand_dims(sigma,axis=1), dim2, axis=1)
-        #     samples = residuals*mean_repeat + mean_repeat
-        # if dist_type == 'lognormal':
+            samples[ind_with_both_bounds_inf_cond,:] = \
+                residuals[ind_with_both_bounds_inf_cond,:] * sigma_repeat + mean_repeat
         if dist_type == 2:
             samples = np.exp(samples)
-    # elif dist_type == 'uniform':
+    # uniform
     elif dist_type == 3:
-        # for ind in range(dim1):
-            # samples[ind,:] = uniform.ppf(
-            #     # q=norm.cdf(samples,0,1),
-            #     p=norm.cdf(residuals[ind,:],0,1),
-            #     a=low[ind],
-            #     w=high[ind]-low[ind],
-            # )
         samples = norm2_cdf_2d(residuals,0.0,1.0) * (high[ind]-low[ind]) + low[ind]
     return samples
 
 
-# def res_to_samples(samples, mean, sigma, low, high, dist_type):
-#     """
-#     convert lhs residuals to samples, for dist_type:
-#     1 = normal
-#     2 = lognormal
-#     3 = uniform
-#     mean, sigma, low, and high are arrays with length = dim1
-#     """
-#     # get dimensions
-#     dim1 = samples.shape[0]
-#     dim2 = samples.shape[1]
-#     # if 'norm' in dist_type:
-#     if dist_type == 1 or dist_type == 2:
-#         if low != -np.inf or high != np.inf:
-#             # samples = truncnorm.ppf(
-#             #     q=norm.cdf(samples),
-#             #     a=(low-mean)/sigma,
-#             #     b=(high-mean)/sigma,
-#             #     loc=mean,
-#             #     scale=sigma
-#             # )
-#             for i in range(dim1):
-#             samples = truncnorm.ppf(
-#                 # q=norm.cdf(samples,0,1),
-#                 p=norm.cdf(samples,0,1),
-#                 xmin=low,
-#                 xmax=high,
-#                 loc=mean,
-#                 scale=sigma
-#             )
-#         else:
-#             samples = samples*sigma + mean
-#         # if dist_type == 'lognormal':
-#         if dist_type == 2:
-#             samples = np.exp(samples)
-#     # elif dist_type == 'uniform':
-#     elif dist_type == 3:
-#         samples = uniform.ppf(
-#             # q=norm.cdf(samples,0,1),
-#             p=norm.cdf(samples,0,1),
-#             a=low,
-#             w=high-low,
-#         )
-#     return samples
-
-
-# def make_domain_vector(left, right, num_pts, dist_type='lognormal'):
 def make_domain_vector(left, right, num_pts, dist_type='lognormal'):
     """make logspace domain vector given left and right"""
     if dist_type == 'lognormal':

@@ -146,21 +146,22 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     infra_ftype = setup_config['Infrastructure']['DataType']
     infra_fname = setup_config['Infrastructure']['SiteDataFile']
     infra_geom_fpath = None
-    if infra_fname == 'CA_Natural_Gas_Pipeline':
+    if infra_ftype == 'State_Network':
         # use internal preprocessed CSV file for state pipeline network
+        if 'SUBSET' in infra_fname:
+            infra_fpath = os.path.join(
+                'CA_Natural_Gas_Pipeline_Segments_WGS84_SUBSET',
+                'CA_Natural_Gas_Pipeline_Segments_WGS84_Under100m_SUBSET.csv'
+            )
+        else:
+            infra_fpath = os.path.join(
+                'CA_Natural_Gas_Pipeline_Segments_WGS84',
+                'CA_Natural_Gas_Pipeline_Segments_WGS84_Under100m.csv'
+            )
         infra_fpath = os.path.join(
             opensra_dir,
-            r'lib\OtherData\Preprocessed\CA_Natural_Gas_Pipeline_Segments_WGS84',
-            'CA_Natural_Gas_Pipeline_Segments_WGS84_Under100m.csv'
-        )
-        infra_geom_fpath = infra_fpath.replace('.csv','.gpkg')
-        flag_using_state_network = True
-    elif infra_fname == 'CA_Natural_Gas_Pipeline_SUBSET':
-        # use internal preprocessed CSV file for state pipeline network
-        infra_fpath = os.path.join(
-            opensra_dir,
-            r'lib\OtherData\Preprocessed\CA_Natural_Gas_Pipeline_Segments_WGS84',
-            'CA_Natural_Gas_Pipeline_Segments_WGS84_Under100m_SUBSET.csv'
+            r'lib\OtherData\Preprocessed',
+            infra_fpath
         )
         infra_geom_fpath = infra_fpath.replace('.csv','.gpkg')
         flag_using_state_network = True

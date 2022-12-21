@@ -44,8 +44,7 @@ from numba_stats import truncnorm as nb_truncnorm
 from numba_stats import norm as nb_norm
 
 # OpenSRA modules and functions
-from src.site import site_util
-from src.site.site_util import make_list_of_linestrings
+from src.site.site_util import make_list_of_linestrings, get_regional_liq_susc
 from src.pc_func import pc_util, pc_workflow
 from src.pc_func.pc_coeffs_single_int import pc_coeffs_single_int
 from src.pc_func.pc_coeffs_double_int import pc_coeffs_double_int
@@ -422,7 +421,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         'Hazus2020' in workflow['EDP']['liquefaction'] and \
         not 'liq_susc' in input_dist:
         if 'gw_depth' in input_samples:
-            input_samples['liq_susc'] = site_util.get_regional_liq_susc(
+            input_samples['liq_susc'] = get_regional_liq_susc(
                 input_table.GeologicUnit_Witter2006.copy(),
                 input_table.GeologicUnit_BedrossianEtal2012.copy(),
                 input_samples['gw_depth'],
@@ -432,7 +431,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             if input_dist['gw_depth']['dist_type'] == 'lognormal':
                 gw_depth_mean = np.exp(gw_depth_mean)
             input_dist['liq_susc'] = {
-                'value': site_util.get_regional_liq_susc(
+                'value': get_regional_liq_susc(
                     input_table.GeologicUnit_Witter2006.copy(),
                     input_table.GeologicUnit_BedrossianEtal2012.copy(),
                     gw_depth_mean,
@@ -2434,13 +2433,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     new_col_name = f'{case}-{dv_str}-{col}'
                     gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='mean_fractiles', index=False)
+        gdf_frac_mean.to_file(spath, layer='mean_fractile\', index=False)
         
     # for wells and caprocks - one sheet for wells, one sheet for caprocks if exists
     if infra_type == 'wells_caprocks':
         gdf_frac_mean = {}
         # first get mean fractile summary for wells
-        gdf_frac_mean['mean_fractiles_wells'] = GeoDataFrame(
+        gdf_frac_mean['mean_fractile_wells'] = GeoDataFrame(
             None,
             crs=4326,
             geometry=points_from_xy(
@@ -2448,7 +2447,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 y=df_locs.LAT.values,
             )
         )
-        gdf_frac_mean['mean_fractiles_wells']['WellID'] = index
+        gdf_frac_mean['mean_fractile_wells']['WellID'] = index
         # for each case in df_frac, get all mean columns
         for i, case in enumerate(cases_in_df_frac):
             case_num = int(case[-1])
@@ -2458,7 +2457,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 for col in df_frac[case].columns:
                     if 'mean_' in col:
                         new_col_name = f'{case}-{dv_str}-{col}'
-                        gdf_frac_mean['mean_fractiles_wells'][new_col_name] = df_frac[case][col].values
+                        gdf_frac_mean['mean_fractile_wells'][new_col_name] = df_frac[case][col].values
         # for each case in df_frac, get all mean columns
         for i, case in enumerate(cases_in_df_frac):
             if 'caprock' in workflow_order_list[case]['haz_list']:
@@ -2466,8 +2465,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 dv_str = df_workflow['DV'].iloc[case_num-1]
                 dv_str = dv_str.replace(' ','_')
                 # next get mean fractile summary for caprocks
-                if not 'mean_fractiles_caprocks' in gdf_frac_mean:
-                    gdf_frac_mean['mean_fractiles_caprocks'] = GeoDataFrame(
+                if not 'mean_fractile_caprocks' in gdf_frac_mean:
+                    gdf_frac_mean['mean_fractile_caprocks'] = GeoDataFrame(
                         None,
                         crs=4326,
                         geometry=caprock_crossing.geometry.values
@@ -2475,7 +2474,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 for col in df_frac[case].columns:
                     if 'mean_' in col:
                         new_col_name = f'{case}-{dv_str}-{col}'
-                        gdf_frac_mean['mean_fractiles_caprocks'][new_col_name] = df_frac[case][col].values
+                        gdf_frac_mean['mean_fractile_caprocks'][new_col_name] = df_frac[case][col].values
         # export
         for layer in gdf_frac_mean:
             gdf_frac_mean[layer].to_file(spath, layer=layer, index=False)
@@ -2509,7 +2508,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     if 'worst_case' in col:
                         gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='mean_fractiles', index=False)
+        gdf_frac_mean.to_file(spath, layer='mean_fractile', index=False)
     gpkg_contains.append('mean fractiles from call cases')
     
     # append other gpkg to gdf_frac_mean if they exist

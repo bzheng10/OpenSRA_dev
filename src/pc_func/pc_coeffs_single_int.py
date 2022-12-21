@@ -1,8 +1,6 @@
-# import numpy as np
 from numpy import exp, pi, zeros
 from .pc_util import erf
 from numba import njit, float64
-# from .pc_coeffs_first_int import pc_coeffs_first_int
 
 @njit(
     float64[:,:](

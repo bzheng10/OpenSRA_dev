@@ -1,4 +1,3 @@
-# import numpy as np
 from numpy import exp, pi, zeros
 from .pc_util import erf
 from numba import njit, float64

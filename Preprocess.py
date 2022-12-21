@@ -82,6 +82,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     input_dir = os.path.join(work_dir,'Input')
     processed_input_dir = os.path.join(work_dir,'Processed_Input')
     im_dir = os.path.join(work_dir,'IM')
+    print(opensra_dir)
+    print(input_dir)
+    print(processed_input_dir)
+    print(im_dir)
     # clean prev outputs
     if clean_prev_output:
         if os.path.isdir(processed_input_dir):
@@ -160,7 +164,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             )
         infra_fpath = os.path.join(
             opensra_dir,
-            r'lib/OtherData/Preprocessed',
+            'lib','OtherData','Preprocessed',
             infra_fpath
         )
         infra_geom_fpath = infra_fpath.replace('.csv','.gpkg')
@@ -558,7 +562,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             # directory with precomputed IM files
             dir_with_precomp_im = os.path.join(
                 opensra_dir,
-                r'lib\OtherData\Preprocessed\Precomputed_IMs_for_Statewide_Pipeline'
+                'lib','OtherData','Preprocessed','Precomputed_IMs_for_Statewide_Pipeline',
             )
             if performed_crossing:
                 # for each IM file, keep only keep segment IDs with crossings
@@ -2127,6 +2131,8 @@ def preprocess_cpt_data(
     cpt_summary_fpath = cpt_setup_params['PathToCPTSummaryCSV']
     # get folder with CPT data
     cpt_data_fdir = cpt_setup_params['PathToCPTDataFolder']
+    print(cpt_summary_fpath)
+    print(input_dir)
     # check if fpath is already a valid filepath, if not then infer from user provided GIS directory
     cpt_summary_fpath = check_and_get_abspath(cpt_summary_fpath, input_dir)
     cpt_data_fdir = check_and_get_abspath(cpt_data_fdir, input_dir)

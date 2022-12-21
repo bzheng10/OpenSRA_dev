@@ -160,7 +160,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             )
         infra_fpath = os.path.join(
             opensra_dir,
-            r'lib\OtherData\Preprocessed',
+            r'lib/OtherData/Preprocessed',
             infra_fpath
         )
         infra_geom_fpath = infra_fpath.replace('.csv','.gpkg')

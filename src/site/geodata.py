@@ -296,8 +296,10 @@ class GeoData(object):
         """
         sindex = data.sindex
         query = sindex.query_bulk(polygon, predicate='intersects')
-        # query = sindex.query_bulk(polygon)
-        return np.sort(query[1])
+        if np.ndim(query) == 1:
+            return np.sort(query)
+        elif np.ndim(query) == 2:
+            return np.sort(query[1]) # for backward compatibility with shapely < 2.0
     
     
     def add_basemap(self, source=None, zoom='auto'):

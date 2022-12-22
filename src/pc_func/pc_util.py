@@ -3,7 +3,7 @@
 import numpy as np
 from scipy.special import comb
 from numba import njit, float64, int64
-from numba_stats import truncnorm, norm, uniform
+# from numba_stats import truncnorm, norm, uniform
 from src.nb_stats.stats_util import *
 
 

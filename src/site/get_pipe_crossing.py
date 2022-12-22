@@ -1058,6 +1058,11 @@ def get_pipe_crossing_fault_rup(
         event_ids_to_keep = np.unique(rupture_table_crossing_only.EventID.values)
         
         # ---
+        # convert columns to numerics
+        for col in all_segments_crossed_expand:
+            all_segments_crossed_expand[col] = pd.to_numeric(all_segments_crossed_expand[col],errors='ignore')
+        
+        # ---
         # export
         # segment table
         # all_segments_crossed.to_csv(
@@ -1175,11 +1180,13 @@ def get_pipe_crossing_landslide_or_liq(
             predicate='intersects'
         )
         if len(crossed_poly_index) == 0:
-            logging.info(f'\n*****FATAL*****')
+            logging.info('\n')
+            logging.info(f'*****FATAL*****')
             logging.info(f'- No crossings identified using specified deformation polygons!')
             logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
             logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile and try preprocessing again.')
-            logging.info(f'*****FATAL*****\n')
+            logging.info(f'*****FATAL*****')
+            logging.info('\n')
             return None
         # crossed_segment_id = crossed_segment_index + 1
         crossed_segment_id = segment_index_full[crossed_segment_index]

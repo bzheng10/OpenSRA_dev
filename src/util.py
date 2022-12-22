@@ -410,31 +410,19 @@ def lhs(n_site, n_var, n_samp, dist='normal', low=None, high=None, return_prob=F
     cdfs = (boxes+norm_uniform_samples)/n_samp
     # residuals
     if 'norm' in dist.lower() and not 'trunc' in dist.lower():
-        # res = stats.norm.ppf(cdfs)
         res = norm.ppf(p=cdfs,loc=0,scale=1)
-        # if return_prob:
-            # probs = stats.norm.pdf(res)
     elif 'trunc' in dist.lower():
         if low is None:
             low = -np.inf
         if high is None:
             high = np.inf
-        # res = stats.truncnorm.ppf(cdfs,low,high)
         res = truncnorm.ppf(p=cdfs,xmin=low,xmax=high,loc=0,scale=1)
-        # if return_prob:
-            # probs = stats.truncnorm.pdf(res,low,high)
     elif 'uniform' in dist.lower():
         if low is None:
             low = 0
         if high is None:
             high = 1
-        res = cdfs*(high-low)+low
-        # if return_prob:
-            # probs = np.ones(res.shape)/n_samp
-    #
-    # if return_prob:
-        # return res, probs
-        
+        res = cdfs*(high-low)+low        
     # else:
     return res
 

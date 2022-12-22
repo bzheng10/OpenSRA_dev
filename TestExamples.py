@@ -34,34 +34,38 @@ def main():
         ##############################
         # above ground
         'above_ground': [
-            'shakemap',
-            'ucerf',
-            'ucerf_with_filters',
+            # 'shakemap_gis_input',
+            # 'ucerf_csv_input',
+            # 'ucerf_with_filters_csv_input',
         ],
         ##############################
         # below ground
         # -- landslide
         'below_ground_landslide': [
-            'statewide-subset_level1_no_landslide_polygon_shakemap',
-            'statewide-subset_level1_no_landslide_polygon_ucerf',
-            'statewide-subset_level1_with_landslide_inventory_shakemap',
+            # 'level1_balboa_blvd_landslide_with_landslide_inventory_shakemap',
+            # 'statewide-subset_level1_no_landslide_polygon_shakemap',
+            # 'statewide-subset_level1_no_landslide_polygon_ucerf',
+            # 'statewide-subset_level1_with_landslide_inventory_shakemap',
         ],
         # -- lateral spread
         'below_ground_lateral_spread': [
-            'level1_balboa_blvd_shakemap',
-            'level1_statewide-subset_shakemap_northridge',
-            'level1_statewide-subset_shakemap_sanfernando',
-            'level1_statewide-subset_ucerf',
-            'level2_balboa_blvd_shakemap',
-            'level3_cpt_alameda_ucerf',
-            'level3_cpt_balboa_blvd_shakemap_northridge',
-            'level3_cpt_balboa_blvd_shakemap_sanfernando',
-            'level3_cpt_balboa_blvd_ucerf',
+            # 'level1_balboa_blvd_shakemap',
+            # 'level1_balboa_blvd_ucerf',
+            # 'level1_statewide-subset_shakemap',
+            # 'level1_statewide-subset_ucerf',
+            # 'level2_balboa_blvd_shakemap_northridge',
+            # 'level2_balboa_blvd_shakemap_sanfernando',
+            # 'level2_balboa_blvd_shakemap_sanfernando',
+            # 'level2_balboa_blvd_ucerf',
+            # 'level3_cpt_alameda_ucerf',
+            # 'level3_cpt_balboa_blvd_shakemap_northridge',
+            # 'level3_cpt_balboa_blvd_shakemap_sanfernando',
+            # 'level3_cpt_balboa_blvd_ucerf',
         ],
         # -- settlement
         'below_ground_settlement': [
-            'level2_statewide-subset_shakemap',
-            'level2_statewide-subset_ucerf',
+            # 'level1_statewide-subset_shakemap',
+            # 'level1_statewide-subset_ucerf',
             'level3_cpt_alameda_shakemap',
             'level3_cpt_alameda_ucerf',
             'level3_cpt_balboa_blvd_shakemap',
@@ -74,12 +78,12 @@ def main():
         ##############################
         # wells and caprocks
         'wells_caprocks': [
-            'ucerf',
-            'userdef_rupture',
+            'ucerf_csv_input',
+            'userdef_rupture_gis_input',
         ]
     }
     ex_wdir = [
-        os.path.abspath(os.path.join(opensra_dir,'examples',cat, fname))
+        os.path.abspath(os.path.join(opensra_dir,'examples',cat,fname))
         for cat in ex_list
         for fname in ex_list[cat]
     ]
@@ -99,13 +103,14 @@ def main():
     
     # loop through each example
     for i,each in enumerate(ex_wdir):
+        catname = os.path.basename(os.path.dirname(each))
         basename = os.path.basename(each)
         
         # track messages
         output[basename] = {'preprocess': None,'opensra': None}
         err[basename] = {'preprocess': None,'opensra': None}
         rc[basename] = {'preprocess': None,'opensra': None}
-        print(f'\n{i+1}. Running example: {basename}')
+        print(f'\n{i+1}. Running example: {catname} - {basename}')
         
         # loop through scripts
         for phase in script_map:

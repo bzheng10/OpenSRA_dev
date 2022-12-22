@@ -40,8 +40,8 @@ from geopandas import GeoDataFrame, points_from_xy, read_file
 from shapely.geometry import Polygon
 
 # precompiling
-from numba_stats import truncnorm as nb_truncnorm
-from numba_stats import norm as nb_norm
+# from numba_stats import truncnorm as nb_truncnorm
+# from numba_stats import norm as nb_norm
 
 # OpenSRA modules and functions
 from src.site.site_util import make_list_of_linestrings, get_regional_liq_susc
@@ -2369,7 +2369,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     writer,
                     index=val['index'],
                     header=val['header'],
-                    line_terminator='\n'
+                    lineterminator='\n'
                 )
                 for _ in range(rows_pad_btw_table):
                     writer.write("\n")

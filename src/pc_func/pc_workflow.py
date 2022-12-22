@@ -11,7 +11,7 @@ import numpy as np
 from pandas import DataFrame
 
 # precompile
-from numba_stats import norm
+# from numba_stats import norm
 from numba import njit, float64
 
 # OpenSRA modules and functionsx

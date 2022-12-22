@@ -290,7 +290,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         # logging.info(f'- Preprocessing will now exit.')
         logging.info(f'*****FATAL*****')
         logging.info(f'\n')
-        sys.exit()
+        # sys.exit()
+        raise ValueError("FATAL: The number of components/segments is zero!")
     else:
         logging.info(f'{counter}. Read input tables for random, fixed variables, and infrastructure data in input directory')
         counter += 1
@@ -427,11 +428,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 )
                 # if can't find crossing, end preprocessing
                 if site_data is None:
-                    sys.exit()
+                    raise ValueError(f"FATAL: No crossings identified using specified deformation polygons!")
+                    # sys.exit()
                 # continue
                 performed_crossing = True
                 if site_data.shape[0] == 0:
-                    logging.info(f'\n*****FATAL*****')
+                    logging.info('\n')
+                    logging.info(f'*****FATAL*****')
                     logging.info(f'- No crossings identified using CPT generated deformation polygons for {hazard}!')
                     logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
                     if hazard == 'landslide':
@@ -439,8 +442,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     elif 'liquefaction' in workflow['EDP']:
                         logging.info(f'- Please revise the input infrastructure file and/or the site investigation data and try preprocessing again.')
                     # logging.info(f'- Preprocessing will now exit.')
-                    logging.info(f'*****FATAL*****\n')
-                    sys.exit()
+                    logging.info(f'*****FATAL*****')
+                    logging.info('\n')
+                    raise ValueError(f"FATAL: No crossings identified using CPT generated deformation polygons for {hazard}!")
+                    # sys.exit()
                 else:
                     logging.info(f'{counter}. Obtained pipeline crossing for {hazard}')
                     counter += 1

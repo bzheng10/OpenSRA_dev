@@ -19,36 +19,32 @@ Maxime Lacour, PhD @ UC Berkeley: [LinkedIn](https://www.linkedin.com/in/maxime-
 ## Dependencies
 
 ### Python
-OpenSRA has been tested on **Python version 3.9.9**
+OpenSRA has been tested on **Python version 3.10.8**
 s
 The Python modules required for the current version of OpenSRA are listed below, along with the versions used for testing. Modules were installed via "conda", the "conda-forge" channel, and "pip". If you are experiencing difficulty installing the modules, consider working in a clean environment.
 
 From "conda-forge"
 
-[numpy (1.20.3)](https://numpy.org/doc/stable/)
+[numpy (1.23.5)](https://numpy.org/doc/stable/)
 
-[pandas (1.3.5)](https://pandas.pydata.org/docs/)
+[pandas (1.5.2)](https://pandas.pydata.org/docs/)
 
-[scipy (1.5.3)](https://docs.scipy.org/doc/scipy/reference/)
+[scipy (1.9.3)](https://docs.scipy.org/doc/scipy/reference/)
 
-[openpyxl (3.0.9)](https://openpyxl.readthedocs.io/en/stable/)
+[openpyxl (3.0.10)](https://openpyxl.readthedocs.io/en/stable/)
 
-[h5py (3.6.0)](https://www.h5py.org/)
+[h5py (3.7.0)](https://www.h5py.org/)
 
-[geopandas (0.10.2)](https://geopandas.org/)
+[geopandas (0.12.2)](https://geopandas.org/)
 
-[rasterio (1.2.10)](https://rasterio.readthedocs.io/en/latest/)
+[rasterio (1.3.4)](https://rasterio.readthedocs.io/en/latest/)
 
-[shapely (1.8.0)](https://shapely.readthedocs.io/en/stable/manual.html)
+[shapely (2.0.0)](https://shapely.readthedocs.io/en/stable/manual.html)
 
-[numba (0.54.1)](https://numba.pydata.org)
-
-[icc_rt (2022.1.0)](https://numba.pydata.org/numba-doc/latest/user/performance-tips.html)
-
-[pygeos (0.12.0)](https://pygeos.readthedocs.io/en/stable/)
+[numba (0.56.4)](https://numba.pydata.org)
 
 ```
-conda install -c conda-forge geopandas rasterio shapely pygeos openpyxl numba icc_rt h5py
+conda install -c conda-forge geopandas rasterio shapely openpyxl numba h5py
 ```
 -- note: the above command may take awhile to solve
 
@@ -56,7 +52,7 @@ From "pip"
 
 [numba_stats (1.1.0)](https://github.com/HDembinski/numba-stats/)
 
-[openquake.engine (3.14.0)](https://github.com/gem/oq-engine/)
+[openquake.engine (3.15.0)](https://github.com/gem/oq-engine/)
 
 [tables (3.7.0)](https://www.pytables.org/usersguide/installation.html/)
 

@@ -635,6 +635,9 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
         if get_liq_susc:
             if 'liq_susc_val' in out:
                 liq_susc_val[method] = out['liq_susc_val']
+                # drop it from out
+                out.pop('liq_susc_val')
+                return_params.remove('liq_susc_val')
         
         # loop through and search for return var and sigma, some methods have multiple conditions
         for param in return_params:
@@ -734,29 +737,25 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
     # combine methods and samples of liq_susc
     if get_liq_susc:
         if get_mean_over_samples:
-            liq_susc[method] = np.empty((n_site), dtype='<U10')
+            liq_susc = np.empty((n_site), dtype='<U10')
             liq_susc_val_mean = np.zeros(n_site)
         else:
-            liq_susc[method] = np.empty((n_site,n_sample), dtype='<U10')
+            liq_susc = np.empty((n_site,n_sample), dtype='<U10')
             liq_susc_val_mean = np.zeros((n_site,n_sample))
-        # liq_susc = {}
-        # liq_susc = None
         for count,method in enumerate(methods):
-            # liq_susc[method] = None
             if liq_susc_val[method] is not None:
                 if get_mean_over_samples:
                     liq_susc_val_mean += np.mean(liq_susc_val[method],axis=1)
                 else:
                     liq_susc_val_mean += liq_susc_val[method]
-                # liq_susc[method] = np.empty(liq_susc_val[method].shape, dtype='<U10')
         
         # get liq susc category
-        liq_susc[liq_susc_val_mean[method]>-1.15] = 'very high'
-        liq_susc[liq_susc_val_mean[method]<=-1.15] = 'high'
-        liq_susc[liq_susc_val_mean[method]<=-1.95] = 'moderate'
-        liq_susc[liq_susc_val_mean[method]<=-3.15] = 'low'
-        liq_susc[liq_susc_val_mean[method]<=-3.20] = 'very low'
-        liq_susc[liq_susc_val_mean[method]<=-38.1] = 'none'
+        liq_susc[liq_susc_val_mean>-1.15] = 'very high'
+        liq_susc[liq_susc_val_mean<=-1.15] = 'high'
+        liq_susc[liq_susc_val_mean<=-1.95] = 'moderate'
+        liq_susc[liq_susc_val_mean<=-3.15] = 'low'
+        liq_susc[liq_susc_val_mean<=-3.20] = 'very low'
+        liq_susc[liq_susc_val_mean<=-38.1] = 'none'
     else:
         liq_susc = None
 

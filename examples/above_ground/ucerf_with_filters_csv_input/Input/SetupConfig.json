@@ -2,8 +2,7 @@
     "General": {
         "AnalysisID" : "TEST",
 		"Directory": {
-			"Working": "",
-			"UserProvidedGISFolder": ""
+			"Working": ""
 		}
     },
     "Infrastructure": {
@@ -113,5 +112,10 @@
 		"RandomVariablesFileName": "rvs_input.csv",
 		"FixedVariablesFileName": "fixed_input.csv"
     },
-	"CPTParams": {}
+	"UserSpecifiedData": {
+		"GISDatasets": {
+			"Directory": ""
+		},
+		"CPTParameters": {}
+	}
 }

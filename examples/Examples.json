@@ -60,6 +60,11 @@
                 "inputFile": "below_ground_lateral_spread/level1_statewide-subset_shakemap/Input/SetupConfig.json"
             },
             {
+                "name": "Level1_Statewide-Subset_ShakeMap_User_Specified_Data",
+                "description": "Placeholder\n",
+                "inputFile": "below_ground_lateral_spread/level1_statewide-subset_shakemap_user_specified_data/Input/SetupConfig.json"
+            },
+            {
                 "name": "Level1_Statewide-Subset_UCERF",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level1_statewide-subset_ucerf/Input/SetupConfig.json"

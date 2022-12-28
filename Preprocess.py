@@ -15,6 +15,7 @@
 # Python base modules
 import argparse
 import copy
+import glob
 import importlib
 import json
 import logging
@@ -46,7 +47,7 @@ from src.edp import process_cpt_spt
 from src.im import haz
 from src.pc_func.pc_workflow import get_samples_for_params
 from src.site import geodata
-from src.site.get_pipe_crossing import get_pipe_crossing_landslide_or_liq, get_pipe_crossing_fault_rup
+from src.site.get_pipe_crossing import get_pipe_crossing_landslide_and_liq, get_pipe_crossing_fault_rup
 from src.site.get_well_crossing import get_well_crossing
 from src.site.get_caprock_crossing import get_caprock_crossing
 from src.site.site_util import make_list_of_linestrings, make_grid_nodes
@@ -69,23 +70,20 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # -----------------------------------------------------------
     # start of preprocess
     logging.info('Start of preprocessing for OpenSRA')
+    config = {} # dictionary to store configuration params
     counter = 1 # counter for stages of processing   
     
     # -----------------------------------------------------------
-    # make directories
+    # get paths and make directories
     # check current directory, if not at OpenSRA level, go up a level (happens during testing)
-    
-    if not os.path.basename(os.getcwd()) == 'OpenSRA' and not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
+    if not os.path.basename(os.getcwd()) == 'OpenSRA' and \
+        not os.path.basename(os.getcwd()) == 'OpenSRABackEnd':
         os.chdir('..')
-        
+    # get paths to directories
     opensra_dir = os.path.dirname(os.path.abspath(__file__))
     input_dir = os.path.join(work_dir,'Input')
     processed_input_dir = os.path.join(work_dir,'Processed_Input')
     im_dir = os.path.join(work_dir,'IM')
-    print(opensra_dir)
-    print(input_dir)
-    print(processed_input_dir)
-    print(im_dir)
     # clean prev outputs
     if clean_prev_output:
         if os.path.isdir(processed_input_dir):
@@ -206,10 +204,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             "lon_end_header": "LON_END"
         }
     # user provided GIS folder
-    if 'UserProvidedGISFolder' in setup_config['General']['Directory']:
-        user_prov_gis_dir = setup_config['General']['Directory']['UserProvidedGISFolder']
-    else:
-        user_prov_gis_dir = ''
+    user_prov_gis_dir = ''
+    if 'UserSpecifiedData' in setup_config:
+        if 'GISDatasets' in setup_config['UserSpecifiedData']:
+            gis_data_params = setup_config['UserSpecifiedData']['GISDatasets']
+            if 'Directory' in gis_data_params:
+                user_prov_gis_dir = check_and_get_abspath(gis_data_params['Directory'], input_dir)
     logging.info(f'{counter}. Processed setup configuration file')
     counter += 1
     
@@ -221,9 +221,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         # check if user-input sm_dir is valid directory, if not then infer from input_dir
         sm_dir = check_and_get_abspath(sm_dir, input_dir)
         sm_events = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events']
-        
-        print(sm_dir)
-        
+        rup_fpath = None
     elif im_source == 'UserDefinedRupture':
         rup_fpath = setup_config['IntensityMeasure']['SourceForIM']['UserDefinedRupture']['FaultFile']
         # check if user-input sm_dir is valid directory, if not then infer from input_dir
@@ -270,7 +268,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     # -----------------------------------------------------------
     # import preferred input distributions
-    # pref_param_dist, pref_param_dist_const_with_level, pref_param_fixed = \
     pref_param_dist, pref_param_fixed = \
         import_param_dist_table(opensra_dir, infra_type=infra_type)
     logging.info(f'{counter}. Read preferred distributions for variables')
@@ -352,41 +349,28 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         # pass info into function to read and process CPTs and generated deformation polygons
                         logging.info('\n---------------------------')
                         logging.info('>>>>> Running CPT preprocessing script to generate deformation polygons...')
-                        if im_source == "ShakeMap":
-                            spath_def_poly, freeface_fpath = preprocess_cpt_data(
-                                # predetermined setup configuration parameters
-                                setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
-                                rvs_input, fixed_input, workflow,
-                                # OpenSRA internal files
-                                avail_data_summary,
-                                # for all IM sources
-                                im_source, im_filters,
-                                # for ShakeMaps
-                                sm_dir=sm_dir, sm_events=sm_events,
-                                # misc.
-                                display_after_n_event=display_after_n_event
-                            )
-                        elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
-                            spath_def_poly, freeface_fpath = preprocess_cpt_data(
-                                # predetermined setup configuration parameters
-                                setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
-                                rvs_input, fixed_input, workflow,
-                                # OpenSRA internal files
-                                avail_data_summary,
-                                # for all IM sources
-                                im_source, im_filters,
-                                # for user-defined and UCERF ruptures
-                                rup_fpath=rup_fpath,
-                                # misc.
-                                display_after_n_event=display_after_n_event
-                            )
+                        spath_def_poly, freeface_fpath = preprocess_cpt_data(
+                            # predetermined setup configuration parameters
+                            setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
+                            rvs_input, fixed_input, workflow,
+                            # OpenSRA internal files
+                            avail_data_summary,
+                            # for all IM sources
+                            im_source, im_filters,
+                            # for ShakeMaps
+                            sm_dir=sm_dir, sm_events=sm_events,
+                            # for user-defined and UCERF ruptures
+                            rup_fpath=rup_fpath,
+                            # misc.
+                            display_after_n_event=display_after_n_event
+                        )
                         logging.info('>>>>> done with CPT preprocessing')
                         logging.info('---------------------------\n')
-                        fpath = spath_def_poly[0]
+                        spath_def_poly = spath_def_poly[0]
                         def_shp_crs = 4326
                     else:
                         # if not using CPT based methods, then assign probability of crossing of 0.25 to all components
-                        fpath = None
+                        spath_def_poly = None
                         def_shp_crs = None
                         freeface_fpath = None
                 # preprocessing for landslide crossings
@@ -400,24 +384,24 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         if def_poly_source == 'CA_LandslideInventory_WGS84':
                             file_metadata = avail_data_summary['Parameters']['ca_landslide_inventory']
                             def_shp_crs = file_metadata['Datasets']['Set1']['CRS']
-                            fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
+                            spath_def_poly = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                         else:
                             # check if def_poly_source is a valid path
                             fdir = check_and_get_abspath(def_poly_source, user_prov_gis_dir)
                             # next check if fdir is a folder with shapefile or is already a shapefile
-                            fpath = get_shp_file_from_dir(fdir)
+                            spath_def_poly = get_shp_file_from_dir(fdir)
                             # if fpath is still None, 
-                            if fpath is None:
+                            if spath_def_poly is None:
                                 raise ValueError("A path was provided for user defined landslide deformation polygons, but path is invalid")
                             def_shp_crs = 4326
                     else:
-                        fpath = None
+                        spath_def_poly = None
                         def_shp_crs = None
                     freeface_fpath = None
                 # run get pipe crossing function
-                site_data = get_pipe_crossing_landslide_or_liq(
+                site_data = get_pipe_crossing_landslide_and_liq(
                     opensra_dir=opensra_dir,
-                    path_to_def_shp=fpath,
+                    path_to_def_shp=spath_def_poly,
                     infra_site_data=site_data.copy(),
                     avail_data_summary=avail_data_summary,
                     infra_site_data_geom=site_data_geom,
@@ -1173,8 +1157,6 @@ def separate_params_by_source(rvs_input, fixed_input):
     return pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, pref_fixed, user_prov_table_fixed, user_prov_gis_fixed
 
 
-
-
 # -----------------------------------------------------------
 def get_param_dist_from_user_prov_table(
     user_prov_table_rvs,
@@ -1335,42 +1317,50 @@ def get_param_dist_from_user_prov_table(
         # mean
         # currently can sample Shapefiles or raster
         # get full file path for GIS map
-        curr_user_prov_gis_dir = os.path.join(user_prov_gis_dir,user_prov_gis_rvs['Mean or Median'][i])
+        # curr_user_prov_gis_dir = os.path.join(user_prov_gis_dir,user_prov_gis_rvs['Mean or Median'][i])
         # find files under fdir
-        files = os.listdir(curr_user_prov_gis_dir)
+        # files = os.listdir(curr_user_prov_gis_dir)
         # look for either ".tif" for raster of ".shp" for Shapefile
-        curr_user_prov_gis_fpath = None
-        for f in files:
-            if f.endswith('.tif') or f.endswith('.shp'):
-                if f.endswith('.tif'):
-                    gis_type = 'raster'
-                else:
-                    gis_type = 'shapefile'
-                curr_user_prov_gis_fpath = os.path.join(curr_user_prov_gis_dir,f)
-                break
-        if curr_user_prov_gis_fpath is None:
-            logging.info('Cannot locate user provided GIS file: file must end with ".tif" or ".shp"')
+        # curr_user_prov_gis_fpath = None
+        files = glob.glob(os.path.join(user_prov_gis_dir,'*',user_prov_gis_rvs['Mean or Median'][i]))
+        curr_user_prov_gis_fpath = files[0]
+        # for f in files:
+        #     if f.endswith('.tif') or f.endswith('.shp') or f.endswith('.gpkg'):
+        #         if f.endswith('.tif'):
+        #             gis_type = 'raster'
+        #         else:
+        #             gis_type = 'shapefile'
+        #         curr_user_prov_gis_fpath = os.path.join(curr_user_prov_gis_dir,f)
+        #         break
+        # if curr_user_prov_gis_fpath is None:
+        #     logging.info('Cannot locate user provided GIS file: file must end with ".tif", ".shp", or ".gpkg"')
+        if curr_user_prov_gis_fpath.endswith('.tif'):
+            gis_type = 'raster'
+        elif curr_user_prov_gis_fpath.endswith('.shp') or \
+            curr_user_prov_gis_fpath.endswith('.gpkg'):
+            gis_type = 'shapefile'
         else:
-            # with file path, now sample
-            if gis_type == 'raster':
-                # get sample from GIS file
-                locs.data = locs.sample_raster(
-                    input_table=locs.data,
-                    fpath=curr_user_prov_gis_fpath,
-                    store_name=param
-                )
-            elif gis_type == 'shapefile':
-                locs.data = locs.sample_shapefile(
-                    input_table=locs.data,
-                    fpath=geo_unit_fpath,
-                    attr=None,
-                    store_name=param
-                )
-            # check for lognormal and apply correction
-            if curr_param_dist['dist_type'] == 'lognormal':
-                curr_param_dist['mean'] = np.log(locs.data[param].values)
-            else:
-                curr_param_dist['mean'] = locs.data[param].values
+            raise ValueError('GIS file must end with ".tif", ".shp", or ".gpkg"')
+        # with file path, now sample
+        if gis_type == 'raster':
+            # get sample from GIS file
+            locs.data = locs.sample_raster(
+                input_table=locs.data,
+                fpath=curr_user_prov_gis_fpath,
+                store_name=param
+            )
+        elif gis_type == 'shapefile':
+            locs.data = locs.sample_shapefile(
+                input_table=locs.data,
+                fpath=geo_unit_fpath,
+                attr=None,
+                store_name=param
+            )
+        # check for lognormal and apply correction
+        if curr_param_dist['dist_type'] == 'lognormal':
+            curr_param_dist['mean'] = np.log(locs.data[param].values)
+        else:
+            curr_param_dist['mean'] = locs.data[param].values
         # sigma/cov
         if np.isnan(user_prov_gis_rvs.loc[i,metric_map['sigma']]) and \
             np.isnan(user_prov_gis_rvs.loc[i,metric_map['cov']]):
@@ -1651,14 +1641,10 @@ def get_level_to_run(
     infra_fixed = {
         key: param_dist_table[key].values for key in param_fixed
     }
-    # infra_fixed = {
-        # key: param_dist_table[key].values for key in ['soil_type','steel_grade'] if key in param_dist_table.columns
-    # }
     
     # determine RVs needed by level
     all_rvs, req_rvs_by_level, req_fixed_by_level = get_rvs_and_fix_by_level(workflow, infra_fixed)
     
-    # print(req_rvs_by_level)
     param_to_skip_for_determining_level = {
         'level1': ['prob_liq','liq_susc'],
         'level2': ['prob_liq','liq_susc','gw_depth'],
@@ -1780,7 +1766,6 @@ def get_pref_dist_for_params(
                     file_metadata = avail_data_summary['Parameters'][file_key]
                     store_name = file_metadata['ColumnNameToStoreAs']
                     geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
-                    # print(1)
                     geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                     geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
                     locs.data = locs.sample_shapefile(
@@ -1791,12 +1776,8 @@ def get_pref_dist_for_params(
                         store_name=store_name,
                         missing_val='water'
                     )
-                    # print(2)
                     param_dist_table[store_name] = locs.data[store_name].values
-                    # print(locs.data[store_name].values)
-                    # print(locs.data[store_name].values.dtype)
                     param_dist_table[store_name] = param_dist_table[store_name].astype('<U20')
-                    # print(locs.data[store_name].values.dtype)
                     # load strength params from Bain et al. (2022)
                     default_geo_prop_fpath = os.path.join(
                         opensra_dir,
@@ -2129,15 +2110,13 @@ def preprocess_cpt_data(
     # setup config shorthands
     im_setup_config = setup_config['IntensityMeasure']
     edp_setup_config = setup_config['EngineeringDemandParameter']
-    cpt_setup_params = setup_config['UserSpecifiedGISandCPTData']['CPTParameters']
+    cpt_setup_params = setup_config['UserSpecifiedData']['CPTParameters']
     
     # -----------------------------------------------------------
     # get summary file
     cpt_summary_fpath = cpt_setup_params['PathToCPTSummaryCSV']
     # get folder with CPT data
     cpt_data_fdir = cpt_setup_params['PathToCPTDataFolder']
-    print(cpt_summary_fpath)
-    print(input_dir)
     # check if fpath is already a valid filepath, if not then infer from user provided GIS directory
     cpt_summary_fpath = check_and_get_abspath(cpt_summary_fpath, input_dir)
     cpt_data_fdir = check_and_get_abspath(cpt_data_fdir, input_dir)

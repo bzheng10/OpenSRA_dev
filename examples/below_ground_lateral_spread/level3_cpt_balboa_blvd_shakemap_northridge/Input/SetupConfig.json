@@ -2,8 +2,7 @@
     "General": {
         "AnalysisID" : "TEST",
 		"Directory": {
-			"Working": "",
-			"UserProvidedGISFolder": "gis_data"
+			"Working": ""
 		},
         "OutputFileType": "csv"
     },
@@ -121,7 +120,10 @@
 		"RandomVariablesFileName": "rvs_input.csv",
 		"FixedVariablesFileName": "fixed_input.csv"
     },
-    "UserSpecifiedGISandCPTData": {
+	"UserSpecifiedData": {
+		"GISDatasets": {
+			"Directory": ""
+		},
         "CPTParameters": {
 			"PathToCPTSummaryCSV": "gis_data/BalboaBlvdCPTs/Summary.csv",
 			"PathToCPTDataFolder": "gis_data/BalboaBlvdCPTs/CPTs",
@@ -130,5 +132,5 @@
 			"WeightRobertson09": 0.5,
 			"WeightZhang04": 0.5
         }
-    }
+	}
 }

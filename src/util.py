@@ -27,6 +27,26 @@ from numba_stats import truncnorm, norm
 from scipy.interpolate import interp2d
 
 
+def remap_str(string, map_dict, delimiter=' '):
+    """
+    split string into 'words' by delimiter,
+    then for each word, remap if is in map_dict
+    """
+    split_str = string.split(delimiter)
+    # new_str_list = [
+    #     map_dict[key] if key in w else w
+    #     for w in split_str
+    #     for key in map_dict
+    # ]
+    new_str_list = []
+    for w in split_str:
+        new_str_list.append(w)
+        for key in map_dict:
+            if key in w:
+                new_str_list[-1] = new_str_list[-1].replace(key,map_dict[key])
+    return delimiter.join(new_str_list)
+
+
 def get_shp_file_from_dir(fdir):
     """
     given file dir, find the shapefile (shp or gpkg) and return the full path to the shapefile;

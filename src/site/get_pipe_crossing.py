@@ -1106,7 +1106,7 @@ def get_pipe_crossing_fault_rup(
         
 
 # ---
-def get_pipe_crossing_landslide_or_liq(
+def get_pipe_crossing_landslide_and_liq(
     opensra_dir,
     path_to_def_shp,
     infra_site_data,

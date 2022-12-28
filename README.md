@@ -57,7 +57,7 @@ From "pip"
 [tables (3.7.0)](https://www.pytables.org/usersguide/installation.html/)
 
 ```
-install numba_stats openquake.engine tables
+pip install numba_stats openquake.engine tables
 ```
 
 ## User's Guide

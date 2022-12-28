@@ -2,8 +2,7 @@
     "General": {
         "AnalysisID" : "TEST",
 		"Directory": {
-			"Working": "",
-			"UserProvidedGISFolder": ""
+			"Working": ""
 		}
     },
     "Infrastructure": {
@@ -18,7 +17,7 @@
     "IntensityMeasure": {
         "SourceForIM": {
             "ShakeMap": {
-                "Directory": "ShakeMaps/",
+                "Directory": "ShakeMaps",
                 "Events": [
                     "1989_Loma Prieta_10x"
                 ]
@@ -102,5 +101,10 @@
 		"RandomVariablesFileName": "./rvs_input.csv",
 		"FixedVariablesFileName": "./fixed_input.csv"
     },
-	"CPTParams": {}
+	"UserSpecifiedData": {
+		"GISDatasets": {
+			"Directory": ""
+		},
+		"CPTParameters": {}
+	}
 }

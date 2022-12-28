@@ -2,8 +2,7 @@
     "General": {
         "AnalysisID" : "TEST",
 		"Directory": {
-			"Working": "",
-			"UserProvidedGISFolder": "gis_data"
+			"Working": ""
 		},
         "OutputFileType": "csv"
     },
@@ -117,7 +116,10 @@
 		"RandomVariablesFileName": "rvs_input.csv",
 		"FixedVariablesFileName": "fixed_input.csv"
     },
-    "UserSpecifiedGISandCPTData": {
+	"UserSpecifiedData": {
+		"GISDatasets": {
+			"Directory": ""
+		},
         "CPTParameters": {
             "ColumnInCPTSummaryWithGWTable": "Mean GWT",
             "PathToCPTDataFolder": "gis_data/cpts_alameda/CPTs",
@@ -126,5 +128,5 @@
             "WeightRobertson09": 0.25,
             "WeightZhang04": 0.75
         }
-    }
+	}
 }

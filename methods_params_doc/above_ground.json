@@ -1,457 +1,4 @@
 {
-	"Infrastructure": {
-		"SiteLocationParams": {
-			"NameToDisplay": "Component Locations",
-			"WidgetType": null,
-			"ToDisplay": true,
-			"Params": {
-                "Lat": {
-                    "NameToDisplay": "Latitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                },
-                "Lon": {
-                    "NameToDisplay": "Longitude",
-                    "WidgetType": "QComboBox",
-                    "ToDisplay": true,
-                    "DefaultValue": null,
-                    "Options": {
-                        "ColumnHeaders": {
-                            "NameToDisplay": "Column Headers",
-                            "ToDisplay": true,
-                            "Params": {}
-                        }
-                    }
-                }
-			}
-		}
-	},
-	"SamplingMethod": {
-		"Method": {
-			"NameToDisplay": "Sampling Method",
-			"WidgetType": "QComboBox",
-			"ToDisplay": false,
-			"DefaultValue": "MonteCarlo",
-			"Options": {
-				"MonteCarlo": {
-					"NameToDisplay": "Monte Carlo",
-					"WidgetType": null,
-					"ToDisplay": false,
-					"Params": {
-						"Algorithm": {
-							"NameToDisplay": "Sampling Algorithm",
-							"WidgetType": "QComboBox",
-							"ToDisplay": false,
-							"DefaultValue": "LatinHypercube",
-							"Options": {
-								"Random": {
-									"NameToDisplay": "Random",
-									"WidgetType": null,
-									"ToDisplay": false,
-									"Params": {}
-								},
-								"LatinHypercube": {
-									"NameToDisplay": "Latin Hypercube",
-									"WidgetType": null,
-									"ToDisplay": false,
-									"Params": {}
-								}
-							}
-						},
-						"NumberOfSamples": {
-							"NameToDisplay": "Number of Samples",
-							"WidgetType": "QLineEdit",
-							"ToDisplay": false,
-							"DefaultValue": 3
-						},
-						"Seed": {
-							"NameToDisplay": "Seed Number (for Repeatability of Sampling)",
-							"WidgetType": "QLineEdit",
-							"ToDisplay": false,
-							"DefaultValue": 1
-						}
-					}
-				},
-				"LogicTree": {
-					"NameToDisplay": "Logic Tree",
-					"WidgetType": null,
-					"ToDisplay": false,
-					"Params": {
-						"Branch": {
-							"NameToDisplay": "Branches",
-							"WidgetType": "QLineEdit",
-							"ToDisplay": false,
-							"DefaultValue": [-1.65, 0, 1.65]
-						},
-						"Weights": {
-							"NameToDisplay": "Weights",
-							"WidgetType": "QLineEdit",
-							"ToDisplay": false,
-							"DefaultValue": [0.2, 0.6, 0.2]
-						}
-					}
-				},
-				"PolynomialChaosExpansion": {
-					"NameToDisplay": "Polynomial Chaos (Under Development)",
-					"WidgetType": null,
-					"ToDisplay": false,
-					"Params": {}
-				}
-			}
-		}
-	},
-    "IntensityMeasure": {
-		"UCERF": {
-			"NameToDisplay": "UCERF",
-			"WidgetType": null,
-			"ToDisplay": true,
-            "DisplayOrder": [
-                "SeismicSourceModel",
-                "Filter",
-                "GroundMotionModel",
-                "Vs30",
-                "Vs30Source",
-                "Z1p0",
-                "Z2p5"
-            ],
-			"Params": {
-				"SeismicSourceModel": {
-					"NameToDisplay": "Seismic Source Model",
-					"WidgetType": null,
-					"ToDisplay": true,
-					"DefaultValue": "Mean UCERF3",
-					"Options": {
-						"Mean UCERF3": {
-							"NameToDisplay": "Mean UCERF3",
-							"ToDisplay": false,
-							"Params": {}
-						},
-						"Mean UCERF3 FM3.1": {
-							"NameToDisplay": "Mean UCERF3 FM3.1",
-							"ToDisplay": true,
-							"Params": {}
-						},
-						"Mean UCERF3 FM3.2": {
-							"NameToDisplay": "Mean UCERF3 FM3.2",
-							"ToDisplay": false,
-							"Params": {}
-						}
-					}
-				},
-                "Filter": {
-                    "NameToDisplay": "Filters",
-                    "WidgetType": "QWidget",
-                    "ToDisplay": true,
-                    "Params": {
-                        "MeanAnnualRate": {
-                            "NameToDisplay": "Mean Annual Rate",
-                            "WidgetType": "QCheckBox",
-                            "ToDisplay": true,
-                            "DefaultValue": false,
-                            "Params": {
-                                "Minimum" : {
-                                    "NameToDisplay": "Minimum",
-                                    "WidgetType": "QLineEdit",
-                                    "ToDisplay": true,
-                                    "DefaultValue": 1e-6
-                                }
-                            }
-                        },
-                        "Distance": {
-                            "NameToDisplay": "Distance (km)",
-                            "WidgetType": "QCheckBox",
-                            "ToDisplay": true,
-                            "DefaultValue": false,
-                            "Params": {
-                                "Maximum" : {
-                                    "NameToDisplay": "Maximum",
-                                    "WidgetType": "QLineEdit",
-                                    "ToDisplay": true,
-                                    "DefaultValue": 100
-                                }
-                            }
-                        },
-                        "Magnitude": {
-                            "NameToDisplay": "Magnitude",
-                            "WidgetType": "QCheckBox",
-                            "ToDisplay": true,
-                            "DefaultValue": false,
-                            "Params": {
-                                "Minimum" : {
-                                    "NameToDisplay": "Minimum",
-                                    "WidgetType": "QLineEdit",
-                                    "ToDisplay": true,
-                                    "DefaultValue": 2
-                                },
-                                "Maximum" : {
-                                    "NameToDisplay": "Maximum",
-                                    "WidgetType": "QLineEdit",
-                                    "ToDisplay": true,
-                                    "DefaultValue": 8
-                                }
-                            }
-                        },
-                        "PointSource": {
-                            "NameToDisplay": "Include background seismicity?",
-                            "WidgetType": "QCheckBox",
-                            "ToDisplay": false,
-                            "DefaultValue": false,
-                            "Params": {}
-                        }
-                    }
-                },
-				"GroundMotionModel": {
-					"NameToDisplay": "Ground Motion Model",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "NGAWest2 2014 Averaged No Idriss",
-					"Options": {
-						"Abrahamson, Silva & Kamai (2014)": {
-							"NameToDisplay": "Abrahamson, Silva & Kamai (2014)",
-							"ToDisplay": false,
-							"Params": {}
-						},
-						"Boore, Stewart, Seyhan & Atkinson (2014)": {
-							"NameToDisplay": "Boore, Stewart, Seyhan & Atkinson (2014)",
-							"ToDisplay": false,
-							"Params": {}
-						},
-						"Campbell & Bozorgnia (2014)": {
-							"NameToDisplay": "Campbell & Bozorgnia (2014)",
-							"ToDisplay": false,
-							"Params": {}
-						},
-						"Chiou & Youngs (2014)": {
-							"NameToDisplay": "Chiou & Youngs (2014)",
-							"ToDisplay": false,
-							"Params": {}
-						},
-						"Idriss (2014)": {
-							"NameToDisplay": "Idriss (2014)",
-							"ToDisplay": false,
-							"Params": {}
-						},
-						"NGAWest2 2014 Averaged Attenuation Relationship": {
-							"NameToDisplay": "NGAWest2 2014 Averaged Relationship",
-							"ToDisplay": false,
-							"Params": {}
-						},
-						"NGAWest2 2014 Averaged No Idriss": {
-							"NameToDisplay": "NGAWest2 2014 Averaged, No Idriss",
-							"ToDisplay": true,
-							"Params": {}
-						}
-					}
-				},
-				"Vs30": {
-					"NameToDisplay": "Vs30 (m/s); preferred: default values used in OpenSHA",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "Preferred",
-					"Options": {
-						"Preferred": {
-							"NameToDisplay": "Preferred",
-							"ToDisplay": true,
-							"Params": {}
-						},
-						"UserDefined": {
-							"NameToDisplay": "User Defined",
-							"ToDisplay": true,
-							"Params": {
-								"ColumnIDWithData": {
-									"NameToDisplay": "Column ID With Data",
-									"WidgetType": "QComboBox",
-									"ToDisplay": true,
-									"DefaultValue": null,
-                                    "Options": {
-                                        "ColumnHeaders": {
-                                            "NameToDisplay": "Column Headers",
-                                            "ToDisplay": true,
-                                            "Params": {}
-                                        }
-                                    }
-								}
-							}
-						}
-					}
-				},
-				"Vs30Source": {
-					"NameToDisplay": "Source for Vs30, inferred or measured; preferred: inferred",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "Preferred",
-					"Options": {
-						"Preferred": {
-							"NameToDisplay": "Preferred",
-							"ToDisplay": true,
-							"Params": {}
-						},
-						"UserDefined": {
-							"NameToDisplay": "User Defined",
-							"ToDisplay": true,
-							"Params": {
-								"ColumnIDWithData": {
-									"NameToDisplay": "Column ID With Data",
-									"WidgetType": "QComboBox",
-									"ToDisplay": true,
-									"DefaultValue": null,
-                                    "Options": {
-                                        "ColumnHeaders": {
-                                            "NameToDisplay": "Column Headers",
-                                            "ToDisplay": true,
-                                            "Params": {}
-                                        }
-                                    }
-								}
-							}
-						}
-					}
-				},
-				"Z1p0": {
-					"NameToDisplay": "Depth to Vs of 1.0 km/s (km), preferred: default values used in OpenSHA",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "Preferred",
-					"Options": {
-						"Preferred": {
-							"NameToDisplay": "Preferred",
-							"ToDisplay": true,
-							"Params": {}
-						},
-						"UserDefined": {
-							"NameToDisplay": "User Defined",
-							"ToDisplay": true,
-							"Params": {
-								"ColumnIDWithData": {
-									"NameToDisplay": "Column ID With Data",
-									"WidgetType": "QComboBox",
-									"ToDisplay": true,
-									"DefaultValue": null,
-                                    "Options": {
-                                        "ColumnHeaders": {
-                                            "NameToDisplay": "Column Headers",
-                                            "ToDisplay": true,
-                                            "Params": {}
-                                        }
-                                    }
-								}
-							}
-						}
-					}
-				},
-				"Z2p5": {
-					"NameToDisplay": "Depth to Vs of 2.5 km/s (km), preferred: default values used in OpenSHA",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "Preferred",
-					"Options": {
-						"Preferred": {
-							"NameToDisplay": "Preferred",
-							"ToDisplay": true,
-							"Params": {}
-						},
-						"UserDefined": {
-							"NameToDisplay": "User Defined",
-							"ToDisplay": true,
-							"Params": {
-								"ColumnIDWithData": {
-									"NameToDisplay": "Column ID With Data",
-									"WidgetType": "QComboBox",
-									"ToDisplay": true,
-									"DefaultValue": null,
-                                    "Options": {
-                                        "ColumnHeaders": {
-                                            "NameToDisplay": "Column Headers",
-                                            "ToDisplay": true,
-                                            "Params": {}
-                                        }
-                                    }
-								}
-							}
-						}
-					}
-				}
-			}
-        },
-        "Correlation": {
-			"NameToDisplay": "Correlations for Intensity Measures",
-			"WidgetType": "QWidget",
-			"ToDisplay": false,
-			"Params": {
-				"Spatial": {
-					"NameToDisplay": "Spatial Correlation",
-                    "WidgetType": "QCheckBox",
-                    "ToDisplay": true,
-                    "DefaultValue": false,
-					"Params": {
-						"Method": {
-							"NameToDisplay": "Available Method(s)",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "JayaramBaker2009",
-							"Options": {
-								"JayaramBaker2009": {
-									"NameToDisplay": "Jayaram and Baker (2009)",
-									"ToDisplay": true,
-									"Params": {}
-								}
-							}
-						}
-					}
-				},
-				"Spectral": {
-					"NameToDisplay": "Cross Correlation",
-                    "WidgetType": "QCheckBox",
-                    "ToDisplay": true,
-                    "DefaultValue": false,
-					"Params": {
-						"Method": {
-							"NameToDisplay": "Available Method(s)",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "BakerJayaram2008",
-							"Options": {
-								"BakerJayaram2008": {
-									"NameToDisplay": "Baker and Jayaram (2008)",
-									"ToDisplay": true,
-									"Params": {}
-								}
-							}
-						}
-					}
-				}
-			}
-        },
-        "Type": {
-            "NameToDisplay": "Intensity Measures",
-            "WidgetType": "QWidget",
-            "ToDisplay": false,
-            "Params": {
-                "PGA": {
-                    "NameToDisplay": "Peak Ground Acceleration (PGA)",
-                    "WidgetType": "QCheckBox",
-                    "ToDisplay": true,
-                    "DefaultValue": false,
-                    "Params": {}
-                },
-                "PGV": {
-                    "NameToDisplay": "Peak Ground Velocity (PGV)",
-                    "WidgetType": "QCheckBox",
-                    "ToDisplay": true,
-                    "DefaultValue": false,
-                    "Params": {}
-                }
-            }
-        }
-    },
     "EngineeringDemandParameter": {
         "WellheadRotation": {
 			"NameToDisplay": "Wellhead Rotation",
@@ -490,14 +37,14 @@
 									"NameToDisplay": "h_tree",
 									"VarType": "random",
 									"WidgetType": "QLabel",
-									"DescToDisplay": "[m] tree height, for all subsystem types",
+									"DescToDisplay": "\t[m] tree height, for all subsystem types",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
 								"l_p2": {
 									"NameToDisplay": "l_p2",
 									"VarType": "random",
-									"DescToDisplay": "[m] length of pipe segment S2, for subsystem types 2 and 3",
+									"DescToDisplay": "\t[m] length of pipe segment S2, for subsystem types 2 and 3",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -505,7 +52,7 @@
 								"l_p6_sys23": {
 									"NameToDisplay": "l_p6_sys23",
 									"VarType": "random",
-									"DescToDisplay": "[m] length of pipe segment S6, for subsystem types 2 and 3",
+									"DescToDisplay": "\t[m] length of pipe segment S6, for subsystem types 2 and 3",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -513,7 +60,7 @@
 								"l_p6_sys4": {
 									"NameToDisplay": "l_p6_sys4",
 									"VarType": "random",
-									"DescToDisplay": "[m] length of pipe segment S6, for all subsystem type 4",
+									"DescToDisplay": "\t[m] length of pipe segment S6, for all subsystem type 4",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -521,7 +68,7 @@
 								"w_valve": {
 									"NameToDisplay": "w_valve",
 									"VarType": "random",
-									"DescToDisplay": "[kN] valve weight, for subsystem type 4",
+									"DescToDisplay": "\t[kN] valve weight, for subsystem type 4",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -529,7 +76,7 @@
 								"sys_type": {
 									"NameToDisplay": "sys_type",
 									"VarType": "fixed",
-									"DescToDisplay": "subsystem type: 2 for p2, 3 for p3, 4 for p4",
+									"DescToDisplay": "\tsubsystem type: 2 for p2, 3 for p3, 4 for p4",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -537,7 +84,7 @@
 								"tee_flag": {
 									"NameToDisplay": "tee_flag",
 									"VarType": "fixed",
-									"DescToDisplay": "flag for tee-joints in subsystem: True/False",
+									"DescToDisplay": "\tflag for tee-joints in subsystem: True/False",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -545,7 +92,7 @@
 								"elbow_flag": {
 									"NameToDisplay": "elbow_flag",
 									"VarType": "fixed",
-									"DescToDisplay": "flag for elbows in subsystem: True/False",
+									"DescToDisplay": "\tflag for elbows in subsystem: True/False",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -591,14 +138,14 @@
 									"NameToDisplay": "high_pressure_weight",
                                     "VarType": "UserInput",
 									"WidgetType": "QLineEdit",
-									"DescToDisplay": "weight to apply to high pressure model; for low pressure model, weight = 1 - high_pressure_weight, default: 0.7",
+									"DescToDisplay": "\tweight to apply to high pressure model; for low pressure model, weight = 1 - high_pressure_weight, default: 0.7",
 									"ToDisplay": true,
 									"DefaultValue": 0.7
 								},
 								"sys_type": {
 									"NameToDisplay": "sys_type",
 									"VarType": "fixed",
-									"DescToDisplay": "subsystem type: 2 for p2, 3 for p3, 4 for p4",
+									"DescToDisplay": "\tsubsystem type: 2 for p2, 3 for p3, 4 for p4",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -606,7 +153,7 @@
 								"tee_flag": {
 									"NameToDisplay": "tee_flag",
 									"VarType": "fixed",
-									"DescToDisplay": "flag for tee-joints in subsystem: True/False",
+									"DescToDisplay": "\tflag for tee-joints in subsystem: True/False",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -614,7 +161,7 @@
 								"elbow_flag": {
 									"NameToDisplay": "elbow_flag",
 									"VarType": "fixed",
-									"DescToDisplay": "flag for elbows in subsystem: True/False",
+									"DescToDisplay": "\tflag for elbows in subsystem: True/False",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -658,7 +205,7 @@
 								"h_vessel": {
 									"NameToDisplay": "h_vessel",
 									"VarType": "random",
-									"DescToDisplay": "[m] height of pressure vessels",
+									"DescToDisplay": "\t[m] height of pressure vessels",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -666,7 +213,7 @@
 								"h_d_ratio_vessel": {
 									"NameToDisplay": "h_d_ratio_vessel",
 									"VarType": "random",
-									"DescToDisplay": "height-to-diameter ratio for pressure vessels",
+									"DescToDisplay": "\theight-to-diameter ratio for pressure vessels",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -674,7 +221,7 @@
 								"p_vessel": {
 									"NameToDisplay": "sys_type",
 									"VarType": "random",
-									"DescToDisplay": "[MPa] design pressure for pressure vessels",
+									"DescToDisplay": "\t[MPa] design pressure for pressure vessels",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -682,7 +229,7 @@
 								"d_anchor": {
 									"NameToDisplay": "sys_type",
 									"VarType": "random",
-									"DescToDisplay": "[mm] diameter for anchors",
+									"DescToDisplay": "\t[mm] diameter for anchors",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -690,7 +237,7 @@
 								"stretch_length_flag": {
 									"NameToDisplay": "stretch_length_flag",
 									"VarType": "fixed",
-									"DescToDisplay": "flag for presence of stretch length for anchors: True/False",
+									"DescToDisplay": "\tflag for presence of stretch length for anchors: True/False",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -731,7 +278,7 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "DescToDisplay": "\tThis model has no additional input parameters",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -770,7 +317,7 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "DescToDisplay": "\tThis model has no additional input parameters",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -809,7 +356,7 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This model has no additional input parameters",
+                                    "DescToDisplay": "\tThis model has no additional input parameters",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null

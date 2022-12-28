@@ -786,7 +786,7 @@ class ZhuEtal2017(Liquefaction):
         # initialize arrays
         x_logistic = np.empty(pgv.shape)
         prob_liq = np.empty(pgv.shape)
-        liq_susc_val = np.ones(pgv.shape)*-999
+        liq_susc_val = np.ones(pgv.shape)*-99
         liq_susc = np.empty(pgv.shape, dtype='<U10')
         
         # magnitude correction, from Baise & Rashidian (2020) and Allstadt et al. (2022)
@@ -810,9 +810,6 @@ class ZhuEtal2017(Liquefaction):
             5.408e-4 * precip[ind_global] + \
             -0.2054  * dist_water[ind_global] + \
             -0.0333  * gw_depth[ind_global]
-        # x-term for logistic model = liq susc val + pgv term
-        x_logistic[ind_global] = liq_susc_val[ind_global] + 0.334*np.log(pgv_mag[ind_global])
-        # if len(ind_coastal) > 0:
         # liquefaction susceptbility value, disregard pgv term
         liq_susc_val[ind_coastal] = \
             12.435 + \
@@ -821,6 +818,10 @@ class ZhuEtal2017(Liquefaction):
             -0.0287  * np.sqrt(dist_coast[ind_coastal]) + \
             0.0666   * dist_river[ind_coastal] + \
             -0.0369  * dist_river[ind_coastal]*np.sqrt(dist_coast[ind_coastal])
+        # catch nan values
+        liq_susc_val[np.isnan(liq_susc_val)] = -99.
+        # x-term for logistic model = liq susc val + pgv term
+        x_logistic[ind_global] = liq_susc_val[ind_global] + 0.334*np.log(pgv_mag[ind_global])
         # x-term for logistic model = liq susc val + pgv term
         x_logistic[ind_coastal] = liq_susc_val[ind_coastal] + 0.301*np.log(pgv_mag[ind_coastal])
 

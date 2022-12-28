@@ -49,7 +49,7 @@ from src.pc_func import pc_util, pc_workflow
 from src.pc_func.pc_coeffs_single_int import pc_coeffs_single_int
 from src.pc_func.pc_coeffs_double_int import pc_coeffs_double_int
 from src.pc_func.pc_coeffs_triple_int import pc_coeffs_triple_int
-from src.util import set_logging, lhs, get_cdf_given_pts, check_and_get_abspath
+from src.util import set_logging, lhs, get_cdf_given_pts, check_and_get_abspath, remap_str
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2391,6 +2391,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Export gpkg file with mean fractiles
+    col_name_remap = {
+        'comp': 'compressive',
+        'tee': 'tee-joint',
+        'worst_case': '(worst_combination)',
+        'vessel': 'pressure_vessel',
+    }
     # export path
     spath = os.path.join(sdir,'analysis_summary.gpkg')
     if os.path.exists(spath):
@@ -2399,7 +2405,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     cases_in_df_frac = sorted(list(df_frac)) # also sort by alphabetical order
     # tracking what is in gpkg
     gpkg_contains = []
-    # for below or above ground, everything fits into one summary sheet (same number of rows):
+    
+    # for below ground, everything fits into one summary sheet (same number of rows):
     if infra_type == 'below_ground':
         # create a gpkg file to store mean fractiles
         if 'LON_MID' in df_locs:
@@ -2430,7 +2437,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             dv_str = dv_str.replace(' ','_')
             for col in df_frac[case].columns:
                 if 'mean_' in col:
-                    new_col_name = f'{case}-{dv_str}-{col}'
+                    # new_col_name = f'{case}-{dv_str}-{col}'
+                    new_col_name = f'{case}: {dv_str}'
+                    new_col_name = remap_str(new_col_name, col_name_remap)
+                    new_col_name = new_col_name.replace('_',' ')
                     gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
         gdf_frac_mean.to_file(spath, layer='mean_fractile', index=False, crs=4326)
@@ -2456,7 +2466,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             if not 'caprock_leakage' in workflow_order_list[case]['haz_list']:
                 for col in df_frac[case].columns:
                     if 'mean_' in col:
-                        new_col_name = f'{case}-{dv_str}-{col}'
+                        # new_col_name = f'{case}-{dv_str}-{col}'
+                        new_col_name = f'{case}: {dv_str}'
+                        new_col_name = remap_str(new_col_name, col_name_remap)
+                        new_col_name = new_col_name.replace('_',' ')
                         gdf_frac_mean['mean_fractile_wells'][new_col_name] = df_frac[case][col].values
         # for each case in df_frac, get all mean columns
         for i, case in enumerate(cases_in_df_frac):
@@ -2473,12 +2486,16 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     )
                 for col in df_frac[case].columns:
                     if 'mean_' in col:
-                        new_col_name = f'{case}-{dv_str}-{col}'
+                        # new_col_name = f'{case}-{dv_str}-{col}'
+                        new_col_name = f'{case}: {dv_str} - {col}'
+                        new_col_name = remap_str(new_col_name, col_name_remap)
+                        new_col_name = new_col_name.replace('_',' ')
                         gdf_frac_mean['mean_fractile_caprocks'][new_col_name] = df_frac[case][col].values
         # export
         for layer in gdf_frac_mean:
             gdf_frac_mean[layer].to_file(spath, layer=layer, index=False, crs=4326)
-            
+    
+    # for above ground, everything fits into one summary sheet (same number of rows):
     if infra_type == 'above_ground':
         # create a gpkg file to store mean fractiles
         gdf_frac_mean = GeoDataFrame(
@@ -2502,11 +2519,23 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 dv_str = df_workflow['DV'].iloc[case_num-1]
                 dv_str = dv_str.replace(' ','_')
                 for col in df_frac[case].columns:
-                    new_col_name = f'{case}-{dv_str}-{col}'
+                    # mean fractile
                     if 'mean_' in col:
+                        if 'elbow' in col or 'tee' in col:
+                            # new_col_name = f'{case}-{dv_str}-{col}'
+                            new_col_name = f'{case}: {dv_str} @ {col.replace("mean_","")}'
+                        else:
+                            new_col_name = f'{case}: {dv_str}'
+                        new_col_name = remap_str(new_col_name, col_name_remap)
+                        new_col_name = new_col_name.replace('_',' ')
                         gdf_frac_mean[new_col_name] = df_frac[case][col].values
-                    if 'worst_case' in col:
-                        gdf_frac_mean[new_col_name] = df_frac[case][col].values
+                    # worst case joint
+                    # if 'worst_case' in col:
+                    #     new_col_name = f'{case}-{dv_str}-{col}'
+                    #     new_col_name = f'{case}: {dv_str}'
+                    #     new_col_name = remap_str(new_col_name, col_name_remap)
+                    #     new_col_name = new_col_name.replace('_',' ')
+                    #     gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
         gdf_frac_mean.to_file(spath, layer='mean_fractile', index=False, crs=4326)
     gpkg_contains.append('mean fractiles from call cases')
@@ -2514,7 +2543,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # append other gpkg to gdf_frac_mean if they exist
     # 1) rupture metadata
     gdf_rupture_table = read_file(os.path.join(im_dir,'RUPTURE_METADATA.gpkg'))
-    gdf_rupture_table.to_file(spath, layer='ruptures', index=False, crs=4326)
+    gdf_rupture_table.to_file(spath, layer='rupture_traces', index=False, crs=4326)
     gpkg_contains.append('rupture scenarios close to sites')
     
     # 2) site data table with crossings only
@@ -2543,8 +2572,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         gdf_processed_cpt.to_file(spath, layer=f'processed_cpts', index=False, crs=4326)
         gpkg_contains.append('processed CPTs')
         # if freeface feature is given
-        if 'PathToFreefaceDir' in setup_config['UserSpecifiedGISandCPTData']['CPTParameters']:
-            freeface_fpath = setup_config['UserSpecifiedGISandCPTData']['CPTParameters']['PathToFreefaceDir']
+        if 'PathToFreefaceDir' in setup_config['UserSpecifiedData']['CPTParameters']:
+            freeface_fpath = setup_config['UserSpecifiedData']['CPTParameters']['PathToFreefaceDir']
             # check length of filepath: if ==0, then assume nothing was provided
             if len(freeface_fpath) == 0:
                 freeface_fpath = None

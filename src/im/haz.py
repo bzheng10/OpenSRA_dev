@@ -37,11 +37,23 @@ from shapely.geometry import LineString
 # from numba import njit
 
 # plotting modules
-# if importlib.util.find_spec('matplotlib') is not None:
-#     import matplotlib.pyplot as plt
-#     from matplotlib.collections import LineCollection
-# if importlib.util.find_spec('contextily') is not None:
-#     import contextily as ctx
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import LineCollection
+except ModuleNotFoundError:
+    # ModuleNotFoundError if not installed
+    pass
+except RuntimeError:
+    # RuntimeError if environment key for HOME is not found
+    pass
+try:
+    import contextily as ctx
+except ModuleNotFoundError:
+    # ModuleNotFoundError if not installed
+    pass
+except RuntimeError:
+    # RuntimeError if environment key for HOME is not found
+    pass
 
 # OpenSRA modules
 from src.util import from_dict_to_array

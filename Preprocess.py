@@ -116,19 +116,23 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     preprocess_lib_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed')
     preprocess_im_dir = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline')
     zip_fpath = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline.zip')
+    extracted_state_data = False
     # see if folder exists
     if not os.path.exists(preprocess_im_dir):
         # unzip to directory
         with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
             zip_ref.extractall(preprocess_lib_dir)
+        extracted_state_data = True
     else:
         # if empty
         if len(os.listdir(preprocess_im_dir)) == 0:
             # unzip to directory
             with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
                 zip_ref.extractall(preprocess_lib_dir)
-    logging.info(f'{counter}. Extracted preprocessed IMs for state network (only need to perform once)')
-    counter += 1
+            extracted_state_data = True
+    if extracted_state_data:
+        logging.info(f'{counter}. Extracted preprocessed IMs for state network (only performed once during first run after installation)')
+        counter += 1
     
     # -----------------------------------------------------------
     # read important info from setup_config file
@@ -148,6 +152,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     infra_ftype = setup_config['Infrastructure']['DataType']
     infra_fname = setup_config['Infrastructure']['SiteDataFile']
     infra_geom_fpath = None
+    flag_using_state_network = False
+    flag_using_region_network = False
     if infra_ftype == 'State_Network':
         # use internal preprocessed CSV file for state pipeline network
         if 'SUBSET' in infra_fname:
@@ -167,13 +173,34 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         )
         infra_geom_fpath = infra_fpath.replace('.csv','.gpkg')
         flag_using_state_network = True
+    elif infra_ftype == 'Region_Network':
+        # use internal preprocessed CSV file for state pipeline network
+        if 'Bay_Area' in infra_fname:
+            infra_fpath = os.path.join(
+                'Bay_Area_Pipeline_Network_Clipped_From_Statewide',
+                'Bay_Area_Pipeline_Network_Clipped_From_Statewide.gpkg'
+            )
+        elif 'Los_Angeles' in infra_fname:
+            infra_fpath = os.path.join(
+                'Los_Angeles_Pipeline_Network_Clipped_From_Statewide',
+                'Los_Angeles_Pipeline_Network_Clipped_From_Statewide.gpkg'
+            )
+        infra_fpath = os.path.join(
+            opensra_dir,
+            'lib','OtherData','Preprocessed',
+            infra_fpath
+        )
+        infra_fpath = os.path.abspath(infra_fpath) # get absolute path to avoid cross-platform pathing errors
+        infra_fname = infra_fpath# update fname with fpath
+        # update infra_ftype to shapefile for internal processing
+        infra_ftype = "Shapefile"
+        flag_using_region_network = True
     else:
         # check if infra_fname is already a valid filepath, if not then infer from input_dir
         infra_fpath = check_and_get_abspath(infra_fname, input_dir)
         # further search within fpath for shapefile
         if infra_ftype == 'Shapefile':
             infra_fpath = get_shp_file_from_dir(infra_fpath)
-        flag_using_state_network = False
     if 'SiteLocationParams' in setup_config['Infrastructure']:
         infra_loc_headers_in = setup_config['Infrastructure']['SiteLocationParams']
         if infra_type == 'below_ground':
@@ -277,7 +304,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # -----------------------------------------------------------
     # read input tables for random, fixed variables, and site data
     rvs_input, fixed_input, site_data, site_data_geom = \
-        read_input_tables(input_dir, processed_input_dir, flag_using_state_network, infra_type, infra_geom_fpath)
+        read_input_tables(
+            input_dir, processed_input_dir,
+            flag_using_state_network, flag_using_region_network,
+            infra_type, infra_geom_fpath
+    )
     if site_data.shape[0] == 0:
         logging.info(f'\n')
         logging.info(f'*****FATAL*****')
@@ -1094,7 +1125,7 @@ def import_param_dist_table(opensra_dir, infra_type='below_ground'):
 
 # -----------------------------------------------------------
 def read_input_tables(
-    input_dir, processed_input_dir, flag_using_state_network,
+    input_dir, processed_input_dir, flag_using_state_network, flag_using_region_network,
     infra_type, infra_geom_fpath=None
 ):
     """read input tables"""
@@ -1110,7 +1141,7 @@ def read_input_tables(
         "no": False
     }, inplace=True)
     # if using preprocessed state pipeline network, update column to pull for diameter
-    if flag_using_state_network:
+    if flag_using_state_network or flag_using_region_network:
         row_for_d_pipe = np.where(rvs_input.Name=='d_pipe')[0][0]
         if rvs_input.loc[row_for_d_pipe,'Source'] == 'Preferred':
             rvs_input.loc[row_for_d_pipe,'Source'] = 'From infrastructure table or enter value'

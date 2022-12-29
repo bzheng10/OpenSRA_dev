@@ -759,6 +759,8 @@ def get_pipe_crossing_fault_rup(
             segment_by_qfault[each][f'psi_dip'] = np.round(dip,decimals=1)
             segment_by_qfault[each][f'theta_rake'] = np.round(rake,decimals=1)
             segment_by_qfault[each][f'rake_azimuth'] = np.round(azimuth,decimals=1)
+            segment_by_qfault[each][f'crossing_x'] = crossing_coords[:,0]
+            segment_by_qfault[each][f'crossing_y'] = crossing_coords[:,1]
             segment_by_qfault[each][f'crossing_lon'] = crossing_coords_lon
             segment_by_qfault[each][f'crossing_lat'] = crossing_coords_lat
             segment_by_qfault[each][f'beta_crossing'] = beta_crossing
@@ -816,15 +818,19 @@ def get_pipe_crossing_fault_rup(
                 # for every segment crossed with deformation polygon, get the nearest hard points and compare to minimum anchorage length
                 for i in range(segment_by_qfault[each].shape[0]):
                     # current crossing
-                    curr_crossing = list(segment_by_qfault[each][f'crossing_coord_{each}'])[i]
+                    curr_crossing = [
+                        segment_by_qfault[each].crossing_x.iloc[i],
+                        segment_by_qfault[each].crossing_y.iloc[i]
+                    ]
+                    # curr_crossing = list(segment_by_qfault[each][f'crossing_coord_{each}'])[i]
                     # pts for current segment
                     curr_segment_start_utm = segment_crossed_start_utm[i]
                     curr_segment_end_utm = segment_crossed_end_utm[i]
                     # current segment index
-                    curr_segment_index = segment_by_qfault[each].SUB_SEGMENT_ID[i]-1
+                    curr_segment_index = segment_by_qfault[each].SUB_SEGMENT_ID.iloc[i]-1
                     
                     # pipeline ID
-                    curr_pipe_id = segment_by_qfault[each].OBJ_ID[i]
+                    curr_pipe_id = segment_by_qfault[each].OBJ_ID.iloc[i]
                     # get hard points along current pipeline
                     where_curr_pipe_id = np.where(pipe_id_crossed_unique==curr_pipe_id)[0][0]
                     curr_hard_points_ind = hard_points_ind[where_curr_pipe_id]

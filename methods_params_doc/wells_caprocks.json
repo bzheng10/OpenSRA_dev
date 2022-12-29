@@ -11,14 +11,69 @@
 					"ToDisplay": true,
 					"DefaultValue": "Thompson2021",
 					"Options" : {
-						"Thompson2021": {
-							"NameToDisplay": "Thompson (2021)",
-							"ToDisplay": true,
+						"PetersenEtal2011": {
+							"NameToDisplay": "Petersen et al. (2011)",
+							"ToDisplay": false,
+							"DisplayOrder": [],
+							"Return": {
+								"Description": "This method returns permanent ground deformation for surface fault rupture.",
+								"Params": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a source for magnitude from the \"Intensity Measure\" tab.",
+								"Params": ["mag"]
+							},
 							"Params": {
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "\tThis model has no additional input parameters",
+                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+                            }
+						},
+						"Thompson2021": {
+							"NameToDisplay": "Thompson (2021)",
+							"ToDisplay": true,
+							"DisplayOrder": [],
+							"Return": {
+								"Description": "This method returns permanent ground deformation for surface fault rupture.",
+								"Params": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a source for magnitude from the \"Intensity Measure\" tab.",
+								"Params": ["mag"]
+							},
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+                            }
+						},
+						"Hazus2020": {
+							"NameToDisplay": "Hazus (FEMA, 2020)",
+							"ToDisplay": false,
+							"DisplayOrder": [],
+							"Return": {
+								"Description": "This method returns permanent ground deformation for surface fault rupture.",
+								"Params": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a source for magnitude from the \"Intensity Measure\" tab.",
+								"Params": ["mag"]
+							},
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -28,25 +83,20 @@
 						"WellsCoppersmith1994": {
 							"NameToDisplay": "Wells and Coppersmith (1994)",
 							"ToDisplay": true,
+							"DisplayOrder": [],
+							"Return": {
+								"Description": "This method returns permanent ground deformation for surface fault rupture.",
+								"Params": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a source for magnitude from the \"Intensity Measure\" tab.",
+								"Params": ["mag"]
+							},
 							"Params": {
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "\tThis model has no additional input parameters",
-                                    "WidgetType": "QLabel",
-                                    "ToDisplay": true,
-                                    "DefaultValue": null
-                                }
-                            }
-						},
-						"Hazus2014": {
-							"NameToDisplay": "Hazus (FEMA, 2014)",
-							"ToDisplay": true,
-							"Params": {
-                                "N/A": {
-                                    "NameToDisplay": "None",
-                                    "VarType": null,
-                                    "DescToDisplay": "\tThis model has no additional input parameters",
+                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -60,7 +110,7 @@
     },
     "DamageMeasure": {
         "WellStrain": {
-			"NameToDisplay": "Fault Shear Induced Strain on Wells",
+			"NameToDisplay": "Shear Induced Well Strain on Wells",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -88,18 +138,18 @@
 								"casing_flow"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"fault shear induced strain\" for production casings and tubings.",
-								"ReturnParam": ["pipe_strain"]
+								"Description": "This method returns various combinations of fault-shear-induced strain for production casings and tubings.",
+								"Params": ["mode_1_uncemented_tubing", "mode_1_cemented_tubing", "mode_1_uncemented_casing", "mode_1_cemented_casing", "mode_2_uncemented_tubing", "mode_2_cemented_tubing", "mode_2_uncemented_casing", "mode_2_cemented_casing", "mode_4_uncemented_tubing", "mode_4_cemented_tubing", "mode_4_uncemented_casing", "mode_4_cemented_casing"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"permanent ground deformation [pgdef]\" from the \"Engineering Demand Parameter - Surface Fault Rupture\" tab.",
-								"UpstreamParam": ["pgdef"]
+								"Description": "This method requires a method for permanent ground deformation from the \"Engineering Demand Parameter - Surface Fault Rupture\" tab.",
+								"Params": ["pgdef"]
 							},
 							"Params": {
 								"phi_cmt": {
 									"NameToDisplay": "phi_cmt",
 									"VarType": "random",
-									"DescToDisplay": "\t[deg] friction angle of cement",
+									"DescToDisplay": "[deg] friction angle of cement",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -107,7 +157,7 @@
 								"ucs_cmt": {
 									"NameToDisplay": "ucs_cmt",
 									"VarType": "random",
-									"DescToDisplay": "\t[MPa] uniaxial compressive strength of cement",
+									"DescToDisplay": "[MPa] uniaxial compressive strength of cement",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -115,7 +165,7 @@
 								"theta": {
 									"NameToDisplay": "theta",
 									"VarType": "random",
-									"DescToDisplay": "\t[deg] well-fault crossing angle",
+									"DescToDisplay": "[deg] well-fault crossing angle",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -123,7 +173,7 @@
 								"w_fc": {
 									"NameToDisplay": "w_fc",
 									"VarType": "random",
-									"DescToDisplay": "\t[m] fault core width",
+									"DescToDisplay": "[m] fault core width",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -131,7 +181,7 @@
 								"w_dz": {
 									"NameToDisplay": "w_dz",
 									"VarType": "random",
-									"DescToDisplay": "\t[m] damage zone width",
+									"DescToDisplay": "[m] damage zone width",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -139,7 +189,7 @@
 								"z_crossing": {
 									"NameToDisplay": "z_crossing",
 									"VarType": "random",
-									"DescToDisplay": "\t[m] depth to well-fault crossing",
+									"DescToDisplay": "[m] depth to well-fault crossing",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -147,7 +197,7 @@
 								"e_rock": {
 									"NameToDisplay": "e_rock",
 									"VarType": "random",
-									"DescToDisplay": "\t[GPa] Young's modulus of rock",
+									"DescToDisplay": "[GPa] Young's modulus of rock",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -155,7 +205,7 @@
 								"z_top_of_cement": {
 									"NameToDisplay": "z_top_of_cement",
 									"VarType": "fixed",
-									"DescToDisplay": "\t[m] depth to top of cement in well",
+									"DescToDisplay": "[m] depth to top of cement in well",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -163,7 +213,7 @@
 								"d_production_boring": {
 									"NameToDisplay": "d_production_boring",
 									"VarType": "fixed",
-									"DescToDisplay": "\t[m] diameter of production boring",
+									"DescToDisplay": "[m] diameter of production boring",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -171,7 +221,7 @@
 								"d_production_casing": {
 									"NameToDisplay": "d_production_casing",
 									"VarType": "fixed",
-									"DescToDisplay": "\t[m] outer diameter of production casing",
+									"DescToDisplay": "[m] outer diameter of production casing",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -179,7 +229,7 @@
 								"d_tubing": {
 									"NameToDisplay": "d_tubing",
 									"VarType": "fixed",
-									"DescToDisplay": "\t[m] outer diameter of tubing",
+									"DescToDisplay": "[m] outer diameter of tubing",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -187,7 +237,7 @@
 								"casing_flow": {
 									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
-									"DescToDisplay": "\tflag for whether well is configured for casing flow: \"True\" or \"False\"",
+									"DescToDisplay": "flag for whether well is configured for casing flow: \"True\" or \"False\"",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -199,7 +249,7 @@
 			}
         },
         "WellMoment": {
-			"NameToDisplay": "Ground Shaking Induced Moment on Wells",
+			"NameToDisplay": "Shaking Induced Moment on Wells",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -221,18 +271,18 @@
 								"casing_flow"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"fault shear induced strain\" for conductor casings, surface casings, production casings, and tubings.",
-								"ReturnParam": ["pipe_strain"]
+								"Description": "This method returns various combinations of ground-shaking-induced moments for conductor casings, surface casings, production casings, and tubings.",
+								"Params": ["mode_1_conductor", "mode_1_surface", "mode_1_production", "mode_1_tubing", "mode_2_conductor", "mode_2_surface", "mode_2_production", "mode_2_tubing", "mode_4_conductor", "mode_4_surface", "mode_4_production", "mode_4_tubing"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"peak ground acceleration [pga]\" determined by the seismic source under the \"Intensity Measure\" tab.",
-								"UpstreamParam": ["pga"]
+								"Description": "This method requires a source for PGA from the \"Intensity Measure\" tab.",
+								"Params": ["pga"]
 							},
 							"Params": {
 								"height_wh": {
 									"NameToDisplay": "height_wh",
 									"VarType": "random",
-									"DescToDisplay": "\t[deg] wellhead height - used in all well modes",
+									"DescToDisplay": "[deg] wellhead height - used in all well modes",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -240,7 +290,7 @@
 								"mpl_wh": {
 									"NameToDisplay": "mpl_wh",
 									"VarType": "random",
-									"DescToDisplay": "\t[kg/m] wellhead mass per height (length) - used in all well modes",
+									"DescToDisplay": "[kg/m] wellhead mass per height (length) - used in all well modes",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -248,7 +298,7 @@
 								"phi_soil": {
 									"NameToDisplay": "phi_soil",
 									"VarType": "random",
-									"DescToDisplay": "\t[deg] soil friction angle - used only in modes 1 and 2",
+									"DescToDisplay": "[deg] soil friction angle - used only in modes 1 and 2",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -256,7 +306,7 @@
 								"d_production_casing": {
 									"NameToDisplay": "d_production_casing",
 									"VarType": "fixed",
-									"DescToDisplay": "\t[m] outer diameter of production casing",
+									"DescToDisplay": "[m] outer diameter of production casing",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -264,7 +314,7 @@
 								"d_tubing": {
 									"NameToDisplay": "d_tubing",
 									"VarType": "fixed",
-									"DescToDisplay": "\t[m] outer diameter of tubing",
+									"DescToDisplay": "[m] outer diameter of tubing",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -272,7 +322,7 @@
 								"casing_flow": {
 									"NameToDisplay": "steel_grade",
 									"VarType": "fixed",
-									"DescToDisplay": "\tflag for whether well is configured for casing flow: \"True\" or \"False\"",
+									"DescToDisplay": "flag for whether well is configured for casing flow: \"True\" or \"False\"",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -286,7 +336,7 @@
     },
     "DecisionVariable": {
         "ShearInducedWellRupture": {
-			"NameToDisplay": "Fault Shear Induced Rupture on Wells",
+			"NameToDisplay": "Shear Induced Rupture on Wells",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -302,18 +352,18 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of rupture [prob_rupture]\" for production casings and tubings.",
-								"ReturnParam": ["prob_rupture"]
+								"Description": "This method returns the critical strain at which 50% probability of rupture is expected to occur for production casings and tubings.",
+								"Params": ["strain_crit_rup_casing", "strain_crit_rup_tubing"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires a model from the \"Damage Measure - Well Strain\" tab, preferably the \"Sasaki et al. (2022)\" method.",
-								"UpstreamParam": []
+								"Description": "This method requires a method for the various combinations of production casings and tubings from the \"Damage Measure - Shear Induced Well Strain on Wells\" tab, preferably \"Sasaki et al. (2022)\".",
+								"Params": ["mode_1_uncemented_tubing", "mode_1_cemented_tubing", "mode_1_uncemented_casing", "mode_1_cemented_casing", "mode_2_uncemented_tubing", "mode_2_cemented_tubing", "mode_2_uncemented_casing", "mode_2_cemented_casing", "mode_4_uncemented_tubing", "mode_4_cemented_tubing", "mode_4_uncemented_casing", "mode_4_cemented_casing"]
 							},
 							"Params": {
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "\tThis model has no additional input parameters",
+                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -325,7 +375,7 @@
 			}
         },
         "ShakingInducedWellRupture": {
-			"NameToDisplay": "Ground Shaking Induced Rupture on Wells",
+			"NameToDisplay": "Shaking Induced Rupture on Wells",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -344,18 +394,18 @@
 								"casing_flow"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of rupture [prob_rupture]\" for conductor casings, surface casings, production casings, and tubings.",
-								"ReturnParam": ["prob_rupture"]
+								"Description": "This method returns the critical moment at which 50% probability of rupture is expected to occur for conductor casings, surface casings, production casings, and tubings.",
+								"Params": ["moment_crit_rup_conductor", "moment_crit_rup_surface", "moment_crit_rup_production", "moment_crit_rup_tubing"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires a model from the \"Damage Measure - Well Moment\" tab, preferably the \"Luu et al. (2022)\" method.",
-								"UpstreamParam": []
+								"Description": "This method requires a method for the various combinations of casings and tubings from the \"Damage Measure - Shaking Induced Moment on Wells\" tab, preferably \"Luu et al. (2022)\".",
+								"Params": ["mode_1_conductor", "mode_1_surface", "mode_1_production", "mode_1_tubing", "mode_2_conductor", "mode_2_surface", "mode_2_production", "mode_2_tubing", "mode_4_conductor", "mode_4_surface", "mode_4_production", "mode_4_tubing"]
 							},
 							"Params": {
 								"d_production_casing": {
 									"NameToDisplay": "d_production_casing",
 									"VarType": "fixed",
-									"DescToDisplay": "\t[m] outer diameter of production casing",
+									"DescToDisplay": "[m] outer diameter of production casing",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -363,15 +413,15 @@
 								"d_tubing": {
 									"NameToDisplay": "d_tubing",
 									"VarType": "fixed",
-									"DescToDisplay": "\t[m] outer diameter of tubing",
+									"DescToDisplay": "[m] outer diameter of tubing",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
 								"casing_flow": {
-									"NameToDisplay": "steel_grade",
+									"NameToDisplay": "casing_flow",
 									"VarType": "fixed",
-									"DescToDisplay": "\tflag for whether well is configured for casing flow: \"True\" or \"False\"",
+									"DescToDisplay": "flag for whether well is configured for casing flow: \"True\" or \"False\"",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -383,7 +433,7 @@
 			}
         },
         "CaprockLeakage": {
-			"NameToDisplay": "Fault Shear Indunced Leakage on Caprocks",
+			"NameToDisplay": "Shear Induced Leakage on Caprocks",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -399,18 +449,18 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of leakage [prob_leakage]\" for caprocks.",
-								"ReturnParam": ["prob_rupture"]
+								"Description": "This method returns directly the probability of leakage for caprocks.",
+								"Params": ["prob_leak"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires the seismic source from \"Intensity Measure\" tab and the path to the caprock shapefile in the \"Infrastructure\" tab.",
-								"UpstreamParam": []
+								"Description": "This method requires a source for fault traces/locations from the \"Intensity Measure\" tab and the path to the caprock shapefile in the \"Infrastructure\" tab.",
+								"Params": []
 							},
 							"Params": {
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "\tThis model has no additional input parameters",
+                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null

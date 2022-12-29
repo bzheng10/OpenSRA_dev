@@ -333,6 +333,7 @@ class BrayMacedo2019(Landslide):
         
         # rest of actions
         pgdef = np.exp(nonzero_ln_pgdef)/100 # also convert from cm to m
+        pgdef = np.maximum(pgdef,1e-5) # limit to 
         sigma_pgdef = np.ones(shape)*sigma_val
 
         # return
@@ -565,6 +566,7 @@ class Jibson2007(Landslide):
         
         # convert from cm to m
         pgdef = pgdef/100
+        pgdef = np.maximum(pgdef,1e-5) # limit deformation from being extremely small
         
         # prepare outputs
         output = {

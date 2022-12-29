@@ -15,12 +15,12 @@
 							"NameToDisplay": "Pantoli et al. (2022)",
 							"ToDisplay": true,
 							"Return": {
-								"Description": "Return: This method returns \"rotation [rot]\" for wellhead components due to PGA.",
-								"ReturnParam": ["rot"]
+								"Description": "This method returns various combinations of elbow and tee-joint rotations for wellhead components due to ground motions.",
+								"Params": ["rot_sys2_4E90_jointA_xdir_neg", "rot_sys2_4E90_jointA_xdir_pos", "rot_sys2_4E90_jointA_ydir_neg", "rot_sys2_4E90_jointA_ydir_pos", "rot_sys2_4TIP_jointA_xdir_neg", "rot_sys2_4TIP_jointA_xdir_pos", "rot_sys2_4TIP_jointA_ydir_neg", "rot_sys2_4TIP_jointA_ydir_pos", "rot_sys3_4E90_jointB_xdir_neg", "rot_sys3_4E90_jointB_xdir_pos", "rot_sys3_4E90_jointA_ydir_neg", "rot_sys3_4E90_jointA_ydir_pos", "rot_sys3_4TOP_jointA_xdir_pos", "rot_sys3_4TIP_jointB_xdir_neg", "rot_sys3_4TIP_jointB_xdir_pos", "rot_sys3_4TIP_jointA_ydir_neg", "rot_sys3_4TIP_jointA_ydir_pos", "rot_sys4_4E90_jointA_ydir_neg", "rot_sys4_4E90_jointA_ydir_pos", "rot_sys4_4TIP_jointA_ydir_neg", "rot_sys4_4TIP_jointA_ydir_pos", "rot_sys4_4TOP_jointC_ydir_pos"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"PGA [pga]\" from the \"Intensity Measure\" tab.",
-								"UpstreamParam": ["pga"]
+								"Description": "This method requires a source for PGA from the \"Intensity Measure\" tab.",
+								"Params": ["pga"]
 							},
                             "DisplayOrder": [
                                 "h_tree",
@@ -37,14 +37,14 @@
 									"NameToDisplay": "h_tree",
 									"VarType": "random",
 									"WidgetType": "QLabel",
-									"DescToDisplay": "\t[m] tree height, for all subsystem types",
+									"DescToDisplay": "[m] tree height, for all subsystem types",
 									"ToDisplay": true,
 									"DefaultValue": null
 								},
 								"l_p2": {
 									"NameToDisplay": "l_p2",
 									"VarType": "random",
-									"DescToDisplay": "\t[m] length of pipe segment S2, for subsystem types 2 and 3",
+									"DescToDisplay": "[m] length of pipe segment S2, for subsystem types 2 and 3",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -52,7 +52,7 @@
 								"l_p6_sys23": {
 									"NameToDisplay": "l_p6_sys23",
 									"VarType": "random",
-									"DescToDisplay": "\t[m] length of pipe segment S6, for subsystem types 2 and 3",
+									"DescToDisplay": "[m] length of pipe segment S6, for subsystem types 2 and 3",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -60,7 +60,7 @@
 								"l_p6_sys4": {
 									"NameToDisplay": "l_p6_sys4",
 									"VarType": "random",
-									"DescToDisplay": "\t[m] length of pipe segment S6, for all subsystem type 4",
+									"DescToDisplay": "[m] length of pipe segment S6, for all subsystem type 4",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -68,7 +68,7 @@
 								"w_valve": {
 									"NameToDisplay": "w_valve",
 									"VarType": "random",
-									"DescToDisplay": "\t[kN] valve weight, for subsystem type 4",
+									"DescToDisplay": "[kN] valve weight, for subsystem type 4",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -76,7 +76,7 @@
 								"sys_type": {
 									"NameToDisplay": "sys_type",
 									"VarType": "fixed",
-									"DescToDisplay": "\tsubsystem type: 2 for p2, 3 for p3, 4 for p4",
+									"DescToDisplay": "subsystem type: 2 for p2, 3 for p3, 4 for p4",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -84,7 +84,7 @@
 								"tee_flag": {
 									"NameToDisplay": "tee_flag",
 									"VarType": "fixed",
-									"DescToDisplay": "\tflag for tee-joints in subsystem: True/False",
+									"DescToDisplay": "flag for tee-joints in subsystem: True/False",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -92,7 +92,7 @@
 								"elbow_flag": {
 									"NameToDisplay": "elbow_flag",
 									"VarType": "fixed",
-									"DescToDisplay": "\tflag for elbows in subsystem: True/False",
+									"DescToDisplay": "flag for elbows in subsystem: True/False",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -126,26 +126,26 @@
                                 "elbow_flag"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"tensile strain [eps]\" for wellhead components due to rotation induced by PGA.",
-								"ReturnParam": ["eps"]
+								"Description": "This method returns various combinations of strains for elbows and tee-joints for wellhead components due to rotations induced by ground motions.",
+								"Params": ["4TIP_neg_lowOP_eps", "4TIP_pos_lowOP_eps", "4TIP_neg_highOP_eps", "4TIP_pos_highOP_eps", "4TOP_neg_lowOP_eps", "4TOP_pos_lowOP_eps", "4TOP_neg_highOP_eps", "4TOP_pos_highOP_eps", "4E90_neg_lowOP_eps", "4E90_pos_lowOP_eps", "4E90_neg_highOP_eps", "4E90_pos_highOP_eps"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"rotation [rot]\" from \"wellhead rotation\" under the \"Engineering Demand Parameter\" tab.",
-								"UpstreamParam": ["rot"]
+								"Description": "This method requires a method for the various combinations of elbow and tee-joint rotations from the \"Engineering Demand Parameter - Wellhead Rotation\" tab, preferably \"Pantoli et al. (2022)\".",
+								"Params": ["rot_sys2_4E90_jointA_xdir_neg", "rot_sys2_4E90_jointA_xdir_pos", "rot_sys2_4E90_jointA_ydir_neg", "rot_sys2_4E90_jointA_ydir_pos", "rot_sys2_4TIP_jointA_xdir_neg", "rot_sys2_4TIP_jointA_xdir_pos", "rot_sys2_4TIP_jointA_ydir_neg", "rot_sys2_4TIP_jointA_ydir_pos", "rot_sys3_4E90_jointB_xdir_neg", "rot_sys3_4E90_jointB_xdir_pos", "rot_sys3_4E90_jointA_ydir_neg", "rot_sys3_4E90_jointA_ydir_pos", "rot_sys3_4TOP_jointA_xdir_pos", "rot_sys3_4TIP_jointB_xdir_neg", "rot_sys3_4TIP_jointB_xdir_pos", "rot_sys3_4TIP_jointA_ydir_neg", "rot_sys3_4TIP_jointA_ydir_pos", "rot_sys4_4E90_jointA_ydir_neg", "rot_sys4_4E90_jointA_ydir_pos", "rot_sys4_4TIP_jointA_ydir_neg", "rot_sys4_4TIP_jointA_ydir_pos", "rot_sys4_4TOP_jointC_ydir_pos"]
 							},
 							"Params": {
 								"high_pressure_weight": {
 									"NameToDisplay": "high_pressure_weight",
                                     "VarType": "UserInput",
 									"WidgetType": "QLineEdit",
-									"DescToDisplay": "\tweight to apply to high pressure model; for low pressure model, weight = 1 - high_pressure_weight, default: 0.7",
+									"DescToDisplay": "weight to apply to high pressure model; for low pressure model, weight = 1 - high_pressure_weight, default: 0.7",
 									"ToDisplay": true,
 									"DefaultValue": 0.7
 								},
 								"sys_type": {
 									"NameToDisplay": "sys_type",
 									"VarType": "fixed",
-									"DescToDisplay": "\tsubsystem type: 2 for p2, 3 for p3, 4 for p4",
+									"DescToDisplay": "subsystem type: 2 for p2, 3 for p3, 4 for p4",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -153,7 +153,7 @@
 								"tee_flag": {
 									"NameToDisplay": "tee_flag",
 									"VarType": "fixed",
-									"DescToDisplay": "\tflag for tee-joints in subsystem: True/False",
+									"DescToDisplay": "flag for tee-joints in subsystem: True/False",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -161,7 +161,7 @@
 								"elbow_flag": {
 									"NameToDisplay": "elbow_flag",
 									"VarType": "fixed",
-									"DescToDisplay": "\tflag for elbows in subsystem: True/False",
+									"DescToDisplay": "flag for elbows in subsystem: True/False",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -194,18 +194,18 @@
 								"stretch_length_flag"
 							],
 							"Return": {
-								"Description": "Return: This method returns \"moment ratio [moment_ratio]\" for pressure vessels due to PGA.",
-								"ReturnParam": ["moment_ratio"]
+								"Description": "This method returns moment ratio for pressure vessels due to ground motions.",
+								"Params": ["moment_ratio"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"PGA [pga]\" from the \"Intensity Measure\" tab.",
-								"UpstreamParam": ["pga"]
+								"Description": "This method requires a source for PGA from the \"Intensity Measure\" tab.",
+								"Params": ["pga"]
 							},
 							"Params": {
 								"h_vessel": {
 									"NameToDisplay": "h_vessel",
 									"VarType": "random",
-									"DescToDisplay": "\t[m] height of pressure vessels",
+									"DescToDisplay": "[m] height of pressure vessels",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -213,7 +213,7 @@
 								"h_d_ratio_vessel": {
 									"NameToDisplay": "h_d_ratio_vessel",
 									"VarType": "random",
-									"DescToDisplay": "\theight-to-diameter ratio for pressure vessels",
+									"DescToDisplay": "height-to-diameter ratio for pressure vessels",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -221,7 +221,7 @@
 								"p_vessel": {
 									"NameToDisplay": "sys_type",
 									"VarType": "random",
-									"DescToDisplay": "\t[MPa] design pressure for pressure vessels",
+									"DescToDisplay": "[MPa] design pressure for pressure vessels",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -229,7 +229,7 @@
 								"d_anchor": {
 									"NameToDisplay": "sys_type",
 									"VarType": "random",
-									"DescToDisplay": "\t[mm] diameter for anchors",
+									"DescToDisplay": "[mm] diameter for anchors",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -237,7 +237,7 @@
 								"stretch_length_flag": {
 									"NameToDisplay": "stretch_length_flag",
 									"VarType": "fixed",
-									"DescToDisplay": "\tflag for presence of stretch length for anchors: True/False",
+									"DescToDisplay": "flag for presence of stretch length for anchors: True/False",
 									"WidgetType": "QLabel",
 									"ToDisplay": true,
 									"DefaultValue": null
@@ -267,18 +267,18 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of rupture [prob_rupture]\" in tension for wellhead components due to tensile strain.",
-								"ReturnParam": ["prob_rupture"]
+								"Description": "This method returns the critical strain at which 50% probability of rupture is expected to occur for the various combinations of elbow and tee-joints of wellhead components.",
+								"Params": ["eps_crit_rup_sys2_4E90_jointA_xdir_pos", "eps_crit_rup_sys2_4E90_jointA_xdir_neg", "eps_crit_rup_sys2_4E90_jointA_ydir_pos", "eps_crit_rup_sys2_4E90_jointA_ydir_neg", "eps_crit_rup_sys2_4TIP_jointA_xdir_pos", "eps_crit_rup_sys2_4TIP_jointA_xdir_neg", "eps_crit_rup_sys2_4TIP_jointA_ydir_pos", "eps_crit_rup_sys2_4TIP_jointA_ydir_neg", "eps_crit_rup_sys3_4E90_jointB_xdir_pos", "eps_crit_rup_sys3_4E90_jointB_xdir_neg", "eps_crit_rup_sys3_4E90_jointA_ydir_pos", "eps_crit_rup_sys3_4E90_jointA_ydir_neg", "eps_crit_rup_sys3_4TOP_jointA_xdir_pos", "eps_crit_rup_sys3_4TIP_jointB_xdir_pos", "eps_crit_rup_sys3_4TIP_jointB_xdir_neg", "eps_crit_rup_sys3_4TIP_jointA_ydir_pos", "eps_crit_rup_sys3_4TIP_jointA_ydir_neg", "eps_crit_rup_sys4_4E90_jointA_ydir_pos", "eps_crit_rup_sys4_4E90_jointA_ydir_neg", "eps_crit_rup_sys4_4TIP_jointA_ydir_pos", "eps_crit_rup_sys4_4TIP_jointA_ydir_neg", "eps_crit_rup_sys4_4TOP_jointC_ydir_pos"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"tensile strain [eps]\" from \"wellhead strain\" under the \"Damage Measure\" tab.",
-								"UpstreamParam": ["eps"]
+								"Description": "This method requires a method for the various combinations of strains for elbows and tee-joints from the \"Damage Measure - Wellhead Strain\" tab, preferably \"Pantoli et al. (2022)\".",
+								"Params": ["4TIP_neg_lowOP_eps", "4TIP_pos_lowOP_eps", "4TIP_neg_highOP_eps", "4TIP_pos_highOP_eps", "4TOP_neg_lowOP_eps", "4TOP_pos_lowOP_eps", "4TOP_neg_highOP_eps", "4TOP_pos_highOP_eps", "4E90_neg_lowOP_eps", "4E90_pos_lowOP_eps", "4E90_neg_highOP_eps", "4E90_pos_highOP_eps"]
 							},
 							"Params": {
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "\tThis model has no additional input parameters",
+                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -306,18 +306,18 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of leakage [prob_leakage]\" in tension for wellhead components due to tensile strain.",
-								"ReturnParam": ["prob_leakage"]
+								"Description": "This method returns the critical strain at which 50% probability of leakage is expected to occur for the various combinations of elbow and tee-joints of wellhead components.",
+								"Params": ["eps_crit_rup_sys2_4E90_jointA_xdir_pos", "eps_crit_rup_sys2_4E90_jointA_xdir_neg", "eps_crit_rup_sys2_4E90_jointA_ydir_pos", "eps_crit_rup_sys2_4E90_jointA_ydir_neg", "eps_crit_rup_sys2_4TIP_jointA_xdir_pos", "eps_crit_rup_sys2_4TIP_jointA_xdir_neg", "eps_crit_rup_sys2_4TIP_jointA_ydir_pos", "eps_crit_rup_sys2_4TIP_jointA_ydir_neg", "eps_crit_rup_sys3_4E90_jointB_xdir_pos", "eps_crit_rup_sys3_4E90_jointB_xdir_neg", "eps_crit_rup_sys3_4E90_jointA_ydir_pos", "eps_crit_rup_sys3_4E90_jointA_ydir_neg", "eps_crit_rup_sys3_4TOP_jointA_xdir_pos", "eps_crit_rup_sys3_4TIP_jointB_xdir_pos", "eps_crit_rup_sys3_4TIP_jointB_xdir_neg", "eps_crit_rup_sys3_4TIP_jointA_ydir_pos", "eps_crit_rup_sys3_4TIP_jointA_ydir_neg", "eps_crit_rup_sys4_4E90_jointA_ydir_pos", "eps_crit_rup_sys4_4E90_jointA_ydir_neg", "eps_crit_rup_sys4_4TIP_jointA_ydir_pos", "eps_crit_rup_sys4_4TIP_jointA_ydir_neg", "eps_crit_rup_sys4_4TOP_jointC_ydir_pos"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"tensile strain [eps]\" from \"wellhead strain\" under the \"Damage Measure\" tab.",
-								"UpstreamParam": ["eps"]
+								"Description": "This method requires a method for the various combinations of strains for elbows and tee-joints from the \"Damage Measure - Wellhead Strain\" tab, preferably \"Pantoli et al. (2022)\".",
+								"Params": ["4TIP_neg_lowOP_eps", "4TIP_pos_lowOP_eps", "4TIP_neg_highOP_eps", "4TIP_pos_highOP_eps", "4TOP_neg_lowOP_eps", "4TOP_pos_lowOP_eps", "4TOP_neg_highOP_eps", "4TOP_pos_highOP_eps", "4E90_neg_lowOP_eps", "4E90_pos_lowOP_eps", "4E90_neg_highOP_eps", "4E90_pos_highOP_eps"]
 							},
 							"Params": {
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "\tThis model has no additional input parameters",
+                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -345,208 +345,22 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "Return: This method returns \"probability of rupture [prob_rupture]\" in tension for pressure vessels due to induced moment from PGA.",
-								"ReturnParam": ["prob_rupture"]
+								"Description": "This method returns the critical moment ratio at which 50% probability of rupture is expected to occur for pressure vessels.",
+								"Params": ["moment_ratio_crit_rup"]
 							},
 							"UpstreamDependency": {
-								"Description": "Upstream Dependency: This method requires \"moment ratio [moment_ratio]\" from \"pressure vessel moment ratio\" under the \"Damage Measure\" tab.",
-								"UpstreamParam": ["moment_ratio"]
+								"Description": "This method requires a method for moment ratio from the \"Damage Measure - Pressure Vessel Moment Ratio\" tab, preferably \"Pantoli et al. (2022)\".",
+								"Params": ["moment_ratio"]
 							},
 							"Params": {
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "\tThis model has no additional input parameters",
+                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
                                 }
-							}
-						}
-					}
-				}
-			}
-        },
-        "RepairRate": {
-			"NameToDisplay": "Repair Rate",
-			"WidgetType": null,
-			"ToDisplay": false,
-			"Params": {
-				"Demand": {
-					"NameToDisplay": "Demands",
-					"WidgetType": "QWidget",
-					"ToDisplay": true,
-					"Params": {
-						"RepairRatePGV": {
-							"NameToDisplay": "Shaking Induced",
-							"WidgetType": "QCheckBox",
-							"ToDisplay": true,
-							"DefaultValue": false,
-							"Params": {}
-						},
-						"RepairRatePGD": {
-							"NameToDisplay": "Deformation Induced",
-							"WidgetType": "QCheckBox",
-							"ToDisplay": true,
-							"DefaultValue": false,
-							"Params": {}
-						}
-					}
-				},
-				"Method": {
-					"NameToDisplay": "Available Method(s)",
-					"WidgetType": "QComboBox",
-					"ToDisplay": true,
-					"DefaultValue": "ORourke2020",
-					"Options" : {
-						"ORourke2020": {
-							"NameToDisplay": "O'Rourke (2020)",
-							"ToDisplay": true,
-							"Params": {}
-						},
-						"ALA2001": {
-							"NameToDisplay": "ALA (2001)",
-							"ToDisplay": true,
-							"Params": {}
-						},
-						"Hazus2014": {
-							"NameToDisplay": "Hazus (FEMA, 2014)",
-							"ToDisplay": true,
-							"Params": {}
-						}
-					}
-				},
-				"ComponentProperties": {
-					"NameToDisplay": "Component Properties",
-					"WidgetType": "QWidget",
-					"ToDisplay": true,
-					"Params": {
-						"ComponentMaterial": {
-							"NameToDisplay": "Component Material",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"ComponentJointType": {
-							"NameToDisplay": "Component Joint Type",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"ComponentDiameter": {
-							"NameToDisplay": "Component Diameter (in), used in O'Rourke (2020) and ALA (2001)",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
-							}
-						},
-						"YearOfInstallation": {
-							"NameToDisplay": "Year of Installation, used in Hazus (FEMA, 2014)",
-							"WidgetType": "QComboBox",
-							"ToDisplay": true,
-							"DefaultValue": "Preferred",
-							"Options": {
-								"Preferred": {
-									"NameToDisplay": "Preferred",
-									"ToDisplay": true,
-									"Params": {}
-								},
-								"UserDefined": {
-									"NameToDisplay": "User Defined",
-									"ToDisplay": true,
-									"Params": {
-										"ColumnIDWithData": {
-											"NameToDisplay": "Column ID With Data",
-											"WidgetType": "QComboBox",
-											"ToDisplay": true,
-											"DefaultValue": null,
-                                            "Options": {
-                                                "ColumnHeaders": {
-                                                    "NameToDisplay": "Column Headers",
-                                                    "ToDisplay": true,
-                                                    "Params": {}
-                                                }
-                                            }
-										}
-									}
-								}
 							}
 						}
 					}

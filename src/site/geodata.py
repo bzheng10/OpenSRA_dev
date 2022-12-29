@@ -52,11 +52,23 @@ from rasterio.plot import show, adjust_band
 from numba import typeof
 
 # plotting modules
-# if importlib.util.find_spec('matplotlib') is not None:
-#     import matplotlib.pyplot as plt
-#     from matplotlib.collections import LineCollection
-# if importlib.util.find_spec('contextily') is not None:
-#     import contextily as ctx
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import LineCollection
+except ModuleNotFoundError:
+    # ModuleNotFoundError if not installed
+    pass
+except RuntimeError:
+    # RuntimeError if environment key for HOME is not found
+    pass
+try:
+    import contextily as ctx
+except ModuleNotFoundError:
+    # ModuleNotFoundError if not installed
+    pass
+except RuntimeError:
+    # RuntimeError if environment key for HOME is not found
+    pass
 
 # OpenSRA modules
 # from src.im import opensha as sha
@@ -442,7 +454,7 @@ class CSVData(GeoData):
             self._spath = self.fpath.replace('.csv','.gpkg') # file path
         else:
             self._spath = spath
-        self.data.to_file(self._spath, layer='data') # export operation
+        self.data.to_file(self._spath, layer='data', crs=self.crs) # export operation
         logging.info(f"Exported GeoDataFrame to:")
         logging.info(f"\t{self._spath}")
     
@@ -676,7 +688,7 @@ class ShapefileData(GeoData):
         if os.path.exists(self.fpath):
             self.data = read_file(self.fpath, crs=self.crs)
         else:
-            raise ValueError(f'Shapefile "{os.path.basename(fpath)}" does not exist')
+            raise ValueError(f'Shapefile "{os.path.basename(self.fpath)}" does not exist')
         # convert to epsg:4326 if not already in wgs84
         if self.data.crs != 4326:
             self.data.to_crs(4326, inplace=True)
@@ -1128,10 +1140,10 @@ class LocationData(ShapefileData):
             if self.fpath is None:
                 logging.info('Must provide "spath" to export file')
             else:
-                self._spath = self.fpath.replace(self.ftype,'.shp') # file path
+                self._spath = self.fpath.replace(self.ftype,'.gpkg') # file path
         else:
             self._spath = spath
-        self.data.to_file(self._spath) # export operation
+        self.data.to_file(self._spath, layer='data', crs=self.crs) # export operation
         logging.info(f"Exported GeoDataFrame to:")
         logging.info(f"\t{self._spath}")
         

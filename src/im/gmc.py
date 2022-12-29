@@ -35,11 +35,23 @@ from numba import njit, float64, int64, typeof
 from numba.types import Tuple
 
 # plotting modules
-# if importlib.util.find_spec('matplotlib') is not None:
-    # import matplotlib.pyplot as plt
-    # from matplotlib.collections import LineCollection
-# if importlib.util.find_spec('contextily') is not None:
-    # import contextily as ctx
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import LineCollection
+except ModuleNotFoundError:
+    # ModuleNotFoundError if not installed
+    pass
+except RuntimeError:
+    # RuntimeError if environment key for HOME is not found
+    pass
+try:
+    import contextily as ctx
+except ModuleNotFoundError:
+    # ModuleNotFoundError if not installed
+    pass
+except RuntimeError:
+    # RuntimeError if environment key for HOME is not found
+    pass
 
 # OpenSRA modules
 from src.util import get_basename_without_extension

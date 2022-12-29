@@ -21,19 +21,24 @@
     "Below Ground - Landslide": {
         "Examples": [
             {
+                "name": "Bay_Area_From_CSV_Level1_no_Landslide_Polygon_ShakeMap",
+                "description": "Placeholder\n",
+                "inputFile": "below_ground_landslide/bayarea_from_csv_level1_no_landslide_polygon_shakemap/Input/SetupConfig.json"
+            },
+            {
+                "name": "Bay_Area_Internal_Level1_no_Landslide_Polygon_UCERF",
+                "description": "Placeholder\n",
+                "inputFile": "below_ground_landslide/bayarea_internal_level1_no_landslide_polygon_ucerf/Input/SetupConfig.json"
+            },
+            {
+                "name": "Bay_Area_Internal_Level1_with_Landslide_Inventory_ShakeMap",
+                "description": "Placeholder\n",
+                "inputFile": "below_ground_landslide/bayarea_internal_level1_with_landslide_inventory_shakemap/Input/SetupConfig.json"
+            },
+            {
                 "name": "Level1_Balboa_Blvd_Landslide_with_Landslide_Inventory_ShakeMap",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_landslide/level1_balboa_blvd_landslide_with_landslide_inventory_shakemap/Input/SetupConfig.json"
-            },
-            {
-                "name": "Statewide-Subset_Level1_no_Landslide_Polygon_ShakeMap",
-                "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/statewide-subset_level1_no_landslide_polygon_shakemap/Input/SetupConfig.json"
-            },
-            {
-                "name": "Statewide-Subset_Level1_no_Landslide_Polygon_UCERF",
-                "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/statewide-subset_level1_no_landslide_polygon_ucerf/Input/SetupConfig.json"
             },
             {
                 "name": "Statewide-Subset_Level1_with_Landslide_Inventory_ShakeMap",
@@ -143,9 +148,14 @@
     "Below Ground - Surface Fault Rupture": {
         "Examples": [
             {
-                "name": "Statewide-Subset",
+                "name": "Bay_Area",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_surface_fault_rupture/statewide-subset/Input/SetupConfig.json"
+                "inputFile": "below_ground_surface_fault_rupture/bayarea/Input/SetupConfig.json"
+            },
+            {
+                "name": "Los_Angeles",
+                "description": "Placeholder\n",
+                "inputFile": "below_ground_surface_fault_rupture/losangeles/Input/SetupConfig.json"
             }
         ]
     },

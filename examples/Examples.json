@@ -50,19 +50,9 @@
     "Below Ground - Lateral Spread": {
         "Examples": [
             {
-                "name": "Level1_Balboa_Blvd_ShakeMap",
-                "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level1_balboa_blvd_shakemap/Input/SetupConfig.json"
-            },
-            {
                 "name": "Level1_Balboa_Blvd_UCERF",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level1_balboa_blvd_ucerf/Input/SetupConfig.json"
-            },
-            {
-                "name": "Level1_Bay_Area_ShakeMap",
-                "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap/Input/SetupConfig.json"
             },
             {
                 "name": "Level1_Bay_Area_ShakeMap_User_Specified_Data",

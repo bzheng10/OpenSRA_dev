@@ -1,0 +1,132 @@
+{
+    "General": {
+        "AnalysisID" : "TEST",
+		"Directory": {
+			"Working": ""
+		},
+        "OutputFileType": "csv"
+    },
+    "Infrastructure": {
+		"InfrastructureType": "below_ground",
+		"DataType": "Region_Network",
+        "SiteDataFile": "Bay_Area_Pipeline_Network_Clipped_From_Statewide",
+		"SiteLocationParams": {
+            "LatMid": "LAT_MID",
+            "LonMid": "LON_MID",
+            "LatBegin": "LAT_BEGIN",
+            "LonBegin": "LON_BEGIN",
+            "LatEnd": "LAT_END",
+            "LonEnd": "LON_END"
+		}
+    },
+    "IntensityMeasure": {
+        "SourceForIM": {
+            "ShakeMap": {
+                "Directory": "ShakeMaps",
+                "Events": [
+					"1971_SanFernando",
+					"1989_Loma Prieta",
+					"1989_Loma Prieta_to0p5g",
+                    "1994_Northridge"
+                ]
+			}
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "Liquefaction": {
+                "ToInclude": true,
+                "Method": {
+                    "Hazus2020": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "LateralSpread": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "Settlement": {
+                "ToInclude": true,
+                "Method": {
+                    "Hazus2020": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "Landslide": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "SurfaceFaultRupture": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "SettlementInducedPipeStrain": {
+                "ToInclude": true,
+                "Method": {
+					"HutabaratEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "PipeCompressiveRupture": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileRupture": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileLeakage": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "InputParameters": {
+		"RandomVariablesFileName": "rvs_input.csv",
+		"FixedVariablesFileName": "fixed_input.csv"
+    },
+	"UserSpecifiedData": {
+		"GISDatasets": {
+			"Directory": ""
+		},
+		"CPTParameters": {}
+	}
+}

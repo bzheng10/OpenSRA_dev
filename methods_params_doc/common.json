@@ -5,35 +5,15 @@
 				"NameToDisplay": "Component Locations",
 				"WidgetType": null,
 				"ToDisplay": true,
+				"DisplayOrder": [
+					"LonBegin",
+					"LatBegin",
+					"LonEnd",
+					"LatEnd"
+				],
 				"Params": {
 					"LatBegin": {
 						"NameToDisplay": "Start - Latitude",
-						"WidgetType": "QComboBox",
-						"ToDisplay": true,
-						"DefaultValue": null,
-						"Options": {
-							"ColumnHeaders": {
-								"NameToDisplay": "Column Headers",
-								"ToDisplay": true,
-								"Params": {}
-							}
-						}
-					},
-					"LatMid": {
-						"NameToDisplay": "Mid - Latitude",
-						"WidgetType": "QComboBox",
-						"ToDisplay": true,
-						"DefaultValue": null,
-						"Options": {
-							"ColumnHeaders": {
-								"NameToDisplay": "Column Headers",
-								"ToDisplay": true,
-								"Params": {}
-							}
-						}
-					},
-					"LatEnd": {
-						"NameToDisplay": "End - Latitude",
 						"WidgetType": "QComboBox",
 						"ToDisplay": true,
 						"DefaultValue": null,
@@ -58,8 +38,8 @@
 							}
 						}
 					},
-					"LonMid": {
-						"NameToDisplay": "Mid - Longitude",
+					"LatEnd": {
+						"NameToDisplay": "End - Latitude",
 						"WidgetType": "QComboBox",
 						"ToDisplay": true,
 						"DefaultValue": null,
@@ -75,6 +55,45 @@
 						"NameToDisplay": "End - Longitude",
 						"WidgetType": "QComboBox",
 						"ToDisplay": true,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					},
+					"LatMid": {
+						"NameToDisplay": "Mid - Latitude",
+						"WidgetType": "QComboBox",
+						"ToDisplay": false,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					},
+					"LonMid": {
+						"NameToDisplay": "Mid - Longitude",
+						"WidgetType": "QComboBox",
+						"ToDisplay": false,
+						"DefaultValue": null,
+						"Options": {
+							"ColumnHeaders": {
+								"NameToDisplay": "Column Headers",
+								"ToDisplay": true,
+								"Params": {}
+							}
+						}
+					},
+					"PipeID": {
+						"NameToDisplay": "Pipeline ID",
+						"WidgetType": "QComboBox",
+						"ToDisplay": false,
 						"DefaultValue": null,
 						"Options": {
 							"ColumnHeaders": {

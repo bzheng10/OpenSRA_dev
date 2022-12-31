@@ -780,19 +780,19 @@ def get_im_pred(
         gmc_site_data_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed','Statewide_and_Regional_Grids')
         cols_to_get = ['vs30','vs30source','z1p0','z2p5']
         
-        # create LocationData class to make use of nearest neighbor sampling schemes
+        # create PointData class to make use of nearest neighbor sampling schemes
         if 'LON_MID' in site_data:
-            _infra = geodata.LocationData(
+            _infra = geodata.PointData(
                 lon=site_data.LON_MID.values,
                 lat=site_data.LAT_MID.values,
             )
         elif 'LON' in site_data:
-            _infra = geodata.LocationData(
+            _infra = geodata.PointData(
                 lon=site_data.LON.values,
                 lat=site_data.LAT.values,
             )
         else:
-            _infra = geodata.LocationData(
+            _infra = geodata.PointData(
                 lon=site_data[infra_loc_header['lon_header']],
                 lat=site_data[infra_loc_header['lat_header']],
             )
@@ -829,7 +829,7 @@ def get_im_pred(
             # if there are locations within the boundary, then proceed to get data
             if len(_infra_curr_bound.loc_in_bound) > 0:
                 # get grid nodes from prepackaged site data files
-                _grid_nodes = geodata.LocationData(fpath=gmc_site_data_path)
+                _grid_nodes = geodata.PointData(fpath=gmc_site_data_path)
                 _infra_curr_bound.get_grid_nodes(_grid_nodes.data)
                 # find nearest grid and get values
                 _infra_curr_bound.get_nearest_grid_nodes()
@@ -976,9 +976,9 @@ def preprocess_infra_file(
             )
     else:
         if infra_fpath.endswith('shp') or infra_fpath.endswith('gpkg'):
-            infra = geodata.LocationData(fpath=infra_fpath)
+            infra = geodata.PointData(fpath=infra_fpath)
         elif infra_fpath.endswith('csv'):
-            infra = geodata.LocationData(
+            infra = geodata.PointData(
                 fpath=infra_fpath,
                 lon_header=infra_loc_header["lon_header"],
                 lat_header=infra_loc_header["lat_header"],
@@ -1322,12 +1322,12 @@ def get_param_dist_from_user_prov_table(
     if user_prov_gis_rvs.shape[0] > 0:
         # get coordinates
         if 'LON_MID' in site_data:
-            locs = geodata.LocationData(
+            locs = geodata.PointData(
                 lon=site_data.LON_MID.values,
                 lat=site_data.LAT_MID.values
             )
         elif 'LON' in site_data:
-            locs = geodata.LocationData(
+            locs = geodata.PointData(
                 lon=site_data.LON.values,
                 lat=site_data.LAT.values
             )
@@ -1485,12 +1485,12 @@ def get_param_dist_from_user_prov_table(
     if user_prov_gis_fixed.shape[0] > 0 and not locs in locals():
         # get coordinates
         if 'LON_MID' in site_data:
-            locs = geodata.LocationData(
+            locs = geodata.PointData(
                 lon=site_data.LON_MID.values,
                 lat=site_data.LAT_MID.values
             )
         elif 'LON' in site_data:
-            locs = geodata.LocationData(
+            locs = geodata.PointData(
                 lon=site_data.LON.values,
                 lat=site_data.LAT.values
             )
@@ -1776,12 +1776,12 @@ def get_pref_dist_for_params(
         
         # get coordinates
         if 'LON_MID' in site_data:
-            locs = geodata.LocationData(
+            locs = geodata.PointData(
                 lon=site_data.LON_MID.values,
                 lat=site_data.LAT_MID.values
             )
         elif 'LON' in site_data:
-            locs = geodata.LocationData(
+            locs = geodata.PointData(
                 lon=site_data.LON.values,
                 lat=site_data.LAT.values
             )
@@ -2237,8 +2237,8 @@ def preprocess_cpt_data(
         os.path.join(opensra_dir,'param_dist','below_ground.xlsx'),
         sheet_name='level3'
     )
-    # make use of sampling functions in LocationData class for sampling GIS files
-    cpt_locs = geodata.LocationData(
+    # make use of sampling functions in PointData class for sampling GIS files
+    cpt_locs = geodata.PointData(
         lon=cpt_meta_wgs84.Longitude.values,
         lat=cpt_meta_wgs84.Latitude.values,
     )
@@ -2435,7 +2435,7 @@ def preprocess_cpt_data(
     
     # -----------------------------------------------------------
     # for sampling at grid nodes
-    grid_locs = geodata.LocationData(
+    grid_locs = geodata.PointData(
         lon=nodes_lon_1d,
         lat=nodes_lat_1d,
     )

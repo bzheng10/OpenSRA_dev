@@ -40,7 +40,7 @@ warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 
 # OpenSRA modules
 # from src.site.geodata import NetworkData
-from src.site.geodata import LocationData
+from src.site.geodata import PointData
 from src.site.site_util import make_list_of_linestrings
 from src.util import get_basename_without_extension
 
@@ -446,7 +446,7 @@ def get_pipe_crossing_fault_rup(
                 crs=epsg_wgs84,
                 geometry=infra_site_data_geom,
             )
-        pipe_id_full = segment_gdf.OBJ_ID.values # complete list of pipe IDs
+        pipe_id_full = segment_gdf.LINE_ID.values # complete list of pipe IDs
         segment_id_full = segment_gdf.ID.values # complete list of segment IDs
         segment_index_full = np.asarray(segment_gdf.index) # complete list of segment indices
         
@@ -778,7 +778,7 @@ def get_pipe_crossing_fault_rup(
             else:
                 # ---
                 # get unique pipe ID
-                pipe_id_crossed_unique = np.unique(segment_by_qfault[each].OBJ_ID.values)
+                pipe_id_crossed_unique = np.unique(segment_by_qfault[each].LINE_ID.values)
                 # find hard points within unique pipelines with crossings
                 hard_points_ind = []
                 hard_points = []
@@ -830,7 +830,7 @@ def get_pipe_crossing_fault_rup(
                     curr_segment_index = segment_by_qfault[each].SUB_SEGMENT_ID.iloc[i]-1
                     
                     # pipeline ID
-                    curr_pipe_id = segment_by_qfault[each].OBJ_ID.iloc[i]
+                    curr_pipe_id = segment_by_qfault[each].LINE_ID.iloc[i]
                     # get hard points along current pipeline
                     where_curr_pipe_id = np.where(pipe_id_crossed_unique==curr_pipe_id)[0][0]
                     curr_hard_points_ind = hard_points_ind[where_curr_pipe_id]
@@ -1173,7 +1173,7 @@ def get_pipe_crossing_landslide_and_liq(
             crs=epsg_wgs84,
             geometry=infra_site_data_geom,
         )
-    pipe_id_full = segment_gdf.OBJ_ID.values # complete list of pipe IDs
+    pipe_id_full = segment_gdf.LINE_ID.values # complete list of pipe IDs
     segment_id_full = segment_gdf.ID.values # complete list of segment IDs
     segment_index_full = np.asarray(segment_gdf.index) # complete list of segment indices
     
@@ -1201,7 +1201,7 @@ def get_pipe_crossing_landslide_and_liq(
         # get subset of segments that crossed deformation polygon
         segment_crossed_gdf = segment_gdf.loc[crossed_segment_index].reset_index(drop=True)
         # get list of unique pipeline IDs from that crossed with deformation polygons
-        pipe_id_crossed_unique = np.unique(segment_crossed_gdf.OBJ_ID.values)
+        pipe_id_crossed_unique = np.unique(segment_crossed_gdf.LINE_ID.values)
     else:
         pipe_id_crossed_unique = np.unique(pipe_id_full)
     
@@ -1286,7 +1286,7 @@ def get_pipe_crossing_landslide_and_liq(
                     bound_coord_utm.append(list(each.geoms[0].coords))
             bound_coord_utm_flat = np.asarray(sum(bound_coord_utm, [])) # flatten into 1 array
             # sample elevations around deformation polygon boundaries from DEM raster
-            bound_coord_flat_df = LocationData(
+            bound_coord_flat_df = PointData(
                 lon=bound_coord_flat[:,0],
                 lat=bound_coord_flat[:,1],
                 crs=epsg_wgs84,
@@ -1632,7 +1632,7 @@ def get_pipe_crossing_landslide_and_liq(
                 curr_segment_index = crossing_summary_gdf_utm.SUB_SEGMENT_ID[i]-1
                 
                 # pipeline ID
-                curr_pipe_id = crossing_summary_gdf_utm.OBJ_ID[i]
+                curr_pipe_id = crossing_summary_gdf_utm.LINE_ID[i]
                 # get hard points along current pipeline
                 where_curr_pipe_id = np.where(pipe_id_crossed_unique==curr_pipe_id)[0][0]
                 curr_hard_points_ind = hard_points_ind[where_curr_pipe_id]

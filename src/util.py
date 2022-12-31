@@ -506,10 +506,11 @@ def set_logging(level, file=None, msg_format='s'):
 
     # setting log format for print
     handlerStream = logging.StreamHandler(sys.stdout)
-    if msg_format == 'd': # detailed
+    if msg_format == 'd' or msg_format == 'detailed': # detailed
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    elif msg_format == 's': # simple
-        formatter = logging.Formatter('%(message)s')
+    elif msg_format == 's' or msg_format == 'simple': # simple
+        # formatter = logging.Formatter('%(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(message)s',"%Y-%m-%d - %H:%M:%S")
     handlerStream.setFormatter(formatter)
     logger.addHandler(handlerStream)
     

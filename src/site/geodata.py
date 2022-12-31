@@ -157,7 +157,7 @@ class GeoData(object):
     ):
         """sample values from CSV files for columns to get and update GeoDataFrame table, must be GeoDataFrame"""        
         # import sample set
-        sample_set = LocationData(fpath=fpath).data
+        sample_set = PointData(fpath=fpath).data
         input_table = cls.sample_gdf(
             input_table=input_table.copy(), sample_set=sample_set, cols_to_get=cols_to_get, 
             append_header_str=append_header_str, interp_scheme=interp_scheme,
@@ -425,12 +425,14 @@ class CSVData(GeoData):
             )
         elif self._shape_type == 'line':
             # make columns of lat lon using default header names
-            self.data['LON_MID'] = self.data[self._lon_header].values
-            self.data['LAT_MID'] = self.data[self._lat_header].values
+            # self.data['LON_MID'] = self.data[self._lon_header].values
+            # self.data['LAT_MID'] = self.data[self._lat_header].values
             self.data['LON_BEGIN'] = self.data[self._lon_begin_header].values
             self.data['LAT_BEGIN'] = self.data[self._lat_begin_header].values
             self.data['LON_END'] = self.data[self._lon_end_header].values
             self.data['LAT_END'] = self.data[self._lat_end_header].values
+            self.data['LON_MID'] = (self.data['LON_BEGIN']+self.data['LON_END'])/2
+            self.data['LAT_MID'] = (self.data['LAT_BEGIN']+self.data['LAT_END'])/2
             # make GeoDataFrame
             self.data = GeoDataFrame(
                 self.data,
@@ -528,11 +530,15 @@ class DataFromArgs(CSVData):
         
         # other inputs
         # append dimensions if dim = 0
-        self._lon = self._check_and_expand_dim(lon)
-        self._lat = self._check_and_expand_dim(lat)
+        # self._lon = self._check_and_expand_dim(lon)
+        # self._lat = self._check_and_expand_dim(lat)
         self._lon_header = lon_header
         self._lat_header = lat_header
-        # if line, also get begin and end points
+        # if pooint, get locations
+        if self._shape_type == 'point':
+            self._lon = self._check_and_expand_dim(lon)
+            self._lat = self._check_and_expand_dim(lat)
+        # if line, get begin and end points then get midpoint
         if self._shape_type == 'line':
             # begin point
             if lon_begin is None:
@@ -556,6 +562,8 @@ class DataFromArgs(CSVData):
                 self._lat_end = self._check_and_expand_dim(lat_end)
             self._lon_end_header = lon_end_header
             self._lat_end_header = lat_end_header
+            self._lon = (self._lon_begin+self._lon_end)/2
+            self._lat = (self._lat_begin+self._lat_end)/2
         
         # create data table
         self._create_data_table()
@@ -708,8 +716,9 @@ class ShapefileData(GeoData):
         self.data.drop(np.where(self.data.geometry.isna())[0], inplace=True) # drop rows with no geometry
         # self.data = self.data.explode(ignore_index=True) # expand multi-objects
         self.data = self.data.explode(ignore_index=False, index_parts=True) # expand multi-objects
-        if not 'obj_id' in self.data:
-            self.data['obj_id'] = [pair[0]+1 for pair in self.data.index]
+        # make line ID given network
+        if not 'line_id' in self.data:
+            self.data['line_id'] = [pair[0]+1 for pair in self.data.index]
         # self.data['pipe_sub_id'] = [pair[1] for pair in self.data.index]
         self.data.reset_index(drop=True,inplace=True)
         if minimal_init is False:
@@ -729,8 +738,6 @@ class ShapefileData(GeoData):
                         )
         # self.data = self.data.explode(ignore_index=True) # expand again
         self.data = self.data.explode(ignore_index=False, index_parts=True) # expand again
-        if not 'obj_id' in self.data:
-            self.data['obj_id'] = [pair[0]+1 for pair in self.data.index]
         # self.data['pipe_sub_id'] = [pair[1] for pair in self.data.index]
         self.data.reset_index(drop=True,inplace=True)
         # additional operations just for prepackaged CA state boundary shapefile
@@ -1031,8 +1038,8 @@ class ShapefileData(GeoData):
 
 
 # -----------------------------------------------------------
-# class LocationData(GeoData):
-class LocationData(ShapefileData):
+# class PointData(GeoData):
+class PointData(ShapefileData):
     """[summary]
 
     Args:
@@ -1516,7 +1523,6 @@ class NetworkData(ShapefileData):
         logging.info(f"\t{self._spath}")
         
         
-    # def make_segment_table(self, attr_to_keep=['diam','owner']):
     def make_segment_table(self, attr_to_keep='all'):
         """converts list of geometries to table of individual segments with midpoints as geometry"""
         # put information into lists
@@ -1558,43 +1564,49 @@ class NetworkData(ShapefileData):
             # get other meta data from shapefile
             for key in dict_meta:
                 dict_meta[key]['val'] = self.data[dict_meta[key]['attr_id']].copy()
-            # initialize list for tracking sub segment ids
-            sub_seg_id = []
-            # loop through all objects
-            for i in range(self.data.shape[0]):
-                # get number of segments
-                num_seg = self.data.NUM_SEG[i] # always == 1
-                # get pipe id for tracking sub segment number
-                obj_id = self.data.obj_id[i]
-                # start sub segment id counter
-                if i == 0:
-                    obj_id_prev = obj_id # for tracking previous id
-                    sub_seg_id.append(np.arange(num_seg)+1)
-                else:
-                    if obj_id_prev == obj_id: # same pipe
-                        sub_seg_id.append(np.arange(num_seg)+1 + sub_seg_id[-1][-1])
-                    else:
+            # get sub segment IDs if this is not a column in the file
+            if not "SUB_SEGMENT_ID" in self.data:
+                # initialize list for tracking sub segment ids
+                sub_seg_id = []
+                # loop through all objects
+                for i in range(self.data.shape[0]):
+                    # get number of segments
+                    num_seg = self.data.NUM_SEG[i] # always == 1
+                    # get pipe id for tracking sub segment number
+                    line_id = self.data.line_id[i]
+                    # start sub segment id counter
+                    if i == 0:
+                        line_id_prev = line_id # for tracking previous id
                         sub_seg_id.append(np.arange(num_seg)+1)
-                # for tracking previous id
-                obj_id_prev = obj_id
+                    else:
+                        if line_id_prev == line_id: # same pipe
+                            sub_seg_id.append(np.arange(num_seg)+1 + sub_seg_id[-1][-1])
+                        else:
+                            sub_seg_id.append(np.arange(num_seg)+1)
+                    # for tracking previous id
+                    line_id_prev = line_id
         else:
             # initialize list for tracking sub segment ids
             sub_seg_id = []
             # loop through all objects
             for i in range(self.data.shape[0]):
-                # get number of segments
-                num_seg = self.data.NUM_SEG[i]
-                # get pipe id for tracking sub segment number
-                obj_id = self.data.obj_id[i]
-                # start sub segment id counter
-                if i == 0:
-                    obj_id_prev = obj_id # for tracking previous id
-                    sub_seg_id.append(np.arange(num_seg)+1)
-                else:
-                    if obj_id_prev == obj_id: # same pipe
-                        sub_seg_id.append(np.arange(num_seg)+1 + sub_seg_id[-1][-1])
-                    else:
+                # get sub segment IDs if this is not a column in the file
+                if not "SUB_SEGMENT_ID" in self.data:
+                    # get number of segments
+                    num_seg = self.data.NUM_SEG[i]
+                    # get pipe id for tracking sub segment number
+                    line_id = self.data.line_id[i]
+                    # start sub segment id counter
+                    if i == 0:
+                        line_id_prev = line_id # for tracking previous id
                         sub_seg_id.append(np.arange(num_seg)+1)
+                    else:
+                        if line_id_prev == line_id: # same pipe
+                            sub_seg_id.append(np.arange(num_seg)+1 + sub_seg_id[-1][-1])
+                        else:
+                            sub_seg_id.append(np.arange(num_seg)+1)
+                    # for tracking previous id
+                    line_id_prev = line_id
                 # get geometry
                 geom = self.data.geometry[i]
                 # get segment coordinates
@@ -1613,8 +1625,6 @@ class NetworkData(ShapefileData):
                 # get meta data from shapefile
                 for key in dict_meta:
                     dict_meta[key]['val'] += [self.data[dict_meta[key]['attr_id']][i]]*num_seg
-                # for tracking previous id
-                obj_id_prev = obj_id
         # form DataFrame
         # self.segment_table = pd.DataFrame.from_dict(dict_loc)
         df_temp = pd.DataFrame.from_dict(dict_loc)
@@ -1631,8 +1641,10 @@ class NetworkData(ShapefileData):
         # ],axis=1)
         self.segment_table['ID'] = np.arange(self.segment_table.shape[0])+1
         self.segment_table = self.segment_table[['ID']+list(self.segment_table.columns.drop('ID').drop('geometry'))+['geometry']]
-        # add sub segment ID
-        self.segment_table['SUB_SEGMENT_ID'] = np.hstack(sub_seg_id)
+        # get sub segment IDs if this is not a column in the file
+        if not "SUB_SEGMENT_ID" in self.data:
+            # add sub segment ID
+            self.segment_table['SUB_SEGMENT_ID'] = np.hstack(sub_seg_id)
         self.segment_table.drop('NUM_SEG',axis=1,inplace=True)
         # reorganize and put geometry last
         self.segment_table = self.segment_table[list(self.segment_table.columns.drop('geometry'))+['geometry']]
@@ -1914,8 +1926,8 @@ class RasterData(GeoData):
 # class test(GeoData):
 #     def __init__(self, fpath,lon_header='LON_MID',lat_header='LON_MID'):
 #         if fpath.endswith('csv'):
-#             self.__class__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__class__)
-#             self.__dict__ = copy.deepcopy(LocationData(fpath,lon_header=lon_header,lat_header=lat_header).__dict__)
+#             self.__class__ = copy.deepcopy(PointData(fpath,lon_header=lon_header,lat_header=lat_header).__class__)
+#             self.__dict__ = copy.deepcopy(PointData(fpath,lon_header=lon_header,lat_header=lat_header).__dict__)
 #         elif fpath.endswith('shp'):
 #             self.__class__ = copy.deepcopy(ShapefileData(fpath).__class__)
 #             self.__dict__ = copy.deepcopy(ShapefileData(fpath).__dict__)

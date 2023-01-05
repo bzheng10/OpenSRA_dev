@@ -128,7 +128,7 @@
 			"PathToCPTSummaryCSV": "../../../additional_data/GIS_Data/BalboaBlvdCPTs/Summary.csv",
 			"PathToCPTDataFolder": "../../../additional_data/GIS_Data/BalboaBlvdCPTs/CPTs",
 			"PathToFreefaceDir": "../../../additional_data/GIS_Data/free_face_feature",
-			"ColumnInCPTSummaryWithGWTable": "Mean GWT",
+			"ColumnInCPTSummaryWithGWTable": "Mean GWT NR",
 			"WeightRobertson09": 0.5,
 			"WeightZhang04": 0.5
         }

@@ -2,17 +2,17 @@
     "Above Ground Components": {
         "Examples": [
             {
-                "name": "ShakeMap_GIS_Input",
+                "name": "ShakeMap GIS Input",
                 "description": "Placeholder\n",
                 "inputFile": "above_ground/shakemap_gis_input/Input/SetupConfig.json"
             },
             {
-                "name": "UCERF_CSV_Input",
+                "name": "UCERF CSV Input",
                 "description": "Placeholder\n",
                 "inputFile": "above_ground/ucerf_csv_input/Input/SetupConfig.json"
             },
             {
-                "name": "UCERF_with_Filters_CSV_Input",
+                "name": "UCERF with Filters CSV Input",
                 "description": "Placeholder\n",
                 "inputFile": "above_ground/ucerf_with_filters_csv_input/Input/SetupConfig.json"
             }
@@ -21,119 +21,124 @@
     "Below Ground - Landslide": {
         "Examples": [
             {
-                "name": "Level1_Balboa_Blvd_Landslide_with_Landslide_Inventory_ShakeMap",
+                "name": "Level1 BalboaBlvd with Inventory ShakeMap (Fails in Preprocess)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/level1_balboa_blvd_landslide_with_landslide_inventory_shakemap/Input/SetupConfig.json"
+                "inputFile": "below_ground_landslide/level1_balboablvd_with_inventory_shakemap_(fails_in_preprocess)/Input/SetupConfig.json"
             },
             {
-                "name": "Level1_Bay_Area_From_CSV_no_Landslide_Polygon_ShakeMap",
+                "name": "Level1 BayArea no Polygon UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/level1_bayarea_from_csv_no_landslide_polygon_shakemap/Input/SetupConfig.json"
+                "inputFile": "below_ground_landslide/level1_bayarea_no_polygon_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "Level1_Bay_Area_no_Landslide_Polygon_UCERF",
+                "name": "Level1 BayArea with Inventory ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/level1_bayarea_no_landslide_polygon_ucerf/Input/SetupConfig.json"
+                "inputFile": "below_ground_landslide/level1_bayarea_with_inventory_shakemap/Input/SetupConfig.json"
             },
             {
-                "name": "Level1_Bay_Area_with_Landslide_Inventory_ShakeMap",
+                "name": "Level1 BayArea with Inventory UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/level1_bayarea_with_landslide_inventory_shakemap/Input/SetupConfig.json"
-            },
-            {
-                "name": "Level1_Bay_Area_with_Landslide_Polygon_UCERF",
-                "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/level1_bayarea_with_landslide_polygon_ucerf/Input/SetupConfig.json"
+                "inputFile": "below_ground_landslide/level1_bayarea_with_inventory_ucerf/Input/SetupConfig.json"
             }
         ]
     },
     "Below Ground - Lateral Spread": {
         "Examples": [
             {
-                "name": "Level1_Balboa_Blvd_UCERF",
+                "name": "Level1 BalboaBlvd UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level1_balboa_blvd_ucerf/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level1_balboablvd_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "Level1_Bay_Area_ShakeMap_User_Specified_Data",
+                "name": "Level1 BayArea ShakeMap 1989LomaPrieta-ScaledTo0p5g",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap_user_specified_data/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap_1989lomaprieta-scaledto0p5g/Input/SetupConfig.json"
             },
             {
-                "name": "Level1_Bay_Area_UCERF",
+                "name": "Level1 BayArea ShakeMap 1989LomaPrieta User-Specified Data",
+                "description": "Placeholder\n",
+                "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap_1989lomaprieta_user-specified_data/Input/SetupConfig.json"
+            },
+            {
+                "name": "Level1 BayArea ShakeMap 2014SouthNapa",
+                "description": "Placeholder\n",
+                "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap_2014southnapa/Input/SetupConfig.json"
+            },
+            {
+                "name": "Level1 BayArea UCERF",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level1_bayarea_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "Level2_Balboa_Blvd_ShakeMap_Northridge",
+                "name": "Level2 Balboa Blvd ShakeMap 1971SanFernando",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_shakemap_northridge/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_shakemap_1971sanfernando/Input/SetupConfig.json"
             },
             {
-                "name": "Level2_Balboa_Blvd_ShakeMap_SanFernando",
+                "name": "Level2 Balboa Blvd ShakeMap 1994Northridge",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_shakemap_sanfernando/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_shakemap_1994northridge/Input/SetupConfig.json"
             },
             {
-                "name": "Level2_Balboa_Blvd_UCERF",
+                "name": "Level2 Balboa Blvd UCERF",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "Level3_CPT_Alameda_UCERF_(Will_Fail_in_Preprocess)",
+                "name": "Level3 CPT Alameda UCERF (Fails in Preprocess)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level3_cpt_alameda_ucerf (will fail in preprocess)/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level3_cpt_alameda_ucerf_(fails_in_preprocess)/Input/SetupConfig.json"
             },
             {
-                "name": "Level3_CPT_Balboa_Blvd_ShakeMap_Northridge",
+                "name": "Level3 CPT BalboaBlvd ShakeMap 1971SanFernando",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level3_cpt_balboa_blvd_shakemap_northridge/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level3_cpt_balboablvd_shakemap_1971sanfernando/Input/SetupConfig.json"
             },
             {
-                "name": "Level3_CPT_Balboa_Blvd_ShakeMap_SanFernando",
+                "name": "Level3 CPT BalboaBlvd ShakeMap 1994Northridge",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level3_cpt_balboa_blvd_shakemap_sanfernando/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level3_cpt_balboablvd_shakemap_1994northridge/Input/SetupConfig.json"
             },
             {
-                "name": "Level3_CPT_Balboa_Blvd_UCERF",
+                "name": "Level3 CPT BalboaBlvd UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level3_cpt_balboa_blvd_ucerf/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level3_cpt_balboablvd_ucerf/Input/SetupConfig.json"
             }
         ]
     },
     "Below Ground - Liquefaction Induced Settlement": {
         "Examples": [
             {
-                "name": "Level1_Bay_Area_ShakeMap",
+                "name": "Level1 BayArea ShakeMap",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_settlement/level1_bayarea_shakemap/Input/SetupConfig.json"
             },
             {
-                "name": "Level1_Bay_Area_UCERF",
+                "name": "Level1 BayArea UCERF",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_settlement/level1_bayarea_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "Level3_CPT_Balboa_Blvd_ShakeMap_(Will_Fail_in_Preprocess)",
+                "name": "Level3 CPT BalboaBlvd ShakeMap (Fails in Preprocess)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement/level3_cpt_balboa_blvd_shakemap (will fail in preprocess)/Input/SetupConfig.json"
+                "inputFile": "below_ground_settlement/level3_cpt_balboablvd_shakemap_(fails_in_preprocess)/Input/SetupConfig.json"
             },
             {
-                "name": "Level3_CPT_Balboa_Blvd_UCERF_(Will_Fail_in_Preprocess)",
+                "name": "Level3 CPT BalboaBlvd UCERF (Fails in Preprocess)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement/level3_cpt_balboa_blvd_ucerf (will fail in preprocess)/Input/SetupConfig.json"
+                "inputFile": "below_ground_settlement/level3_cpt_balboablvd_ucerf_(fails_in_preprocess)/Input/SetupConfig.json"
             }
         ]
     },
     "Below Ground - Surface Fault Rupture": {
         "Examples": [
             {
-                "name": "Bay_Area",
+                "name": "BayArea",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_surface_fault_rupture/bayarea/Input/SetupConfig.json"
             },
             {
-                "name": "Los_Angeles",
+                "name": "LosAngeles",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_surface_fault_rupture/losangeles/Input/SetupConfig.json"
             }
@@ -142,12 +147,12 @@
     "Wells and Caprocks": {
         "Examples": [
             {
-                "name": "UCERF_CSV_Input",
+                "name": "UCERF CSV Input",
                 "description": "Placeholder\n",
                 "inputFile": "wells_caprocks/ucerf_csv_input/Input/SetupConfig.json"
             },
             {
-                "name": "Userdef_Rupture_GIS_Input",
+                "name": "Userdef Rupture GIS Input",
                 "description": "Placeholder\n",
                 "inputFile": "wells_caprocks/userdef_rupture_gis_input/Input/SetupConfig.json"
             }

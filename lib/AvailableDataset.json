@@ -252,7 +252,7 @@
 				"Set1": {
 					"FileType": "Raster",
 					"Source": "Source to be entered",
-					"Path": "lib/Datasets/CA_DEM_30m_WGS84_meter/CA_DEM_30m_WGS84_meter.tif",
+					"Path": "lib/Datasets/CA_DEM_90m_WGS84_meter/CA_DEM_90m_WGS84_meter.tif",
 					"UnitForData": null,
 					"TargetUnit": null,
 					"ConversionToOutputUnit": null,

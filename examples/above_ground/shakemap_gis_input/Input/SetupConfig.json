@@ -8,7 +8,7 @@
     "Infrastructure": {
 		"InfrastructureType": "above_ground",
 		"DataType": "Shapefile",
-        "SiteDataFile": "above_ground_info/site_data.gpkg",
+        "SiteDataFile": "../../../additional_data/GIS_Data/Above_Ground_Example_Site/site_data.gpkg",
 		"SiteLocationParams": {
             "Lat": "LAT",
             "Lon": "LON"
@@ -17,7 +17,7 @@
     "IntensityMeasure": {
         "SourceForIM": {
             "ShakeMap": {
-                "Directory": "ShakeMaps",
+                "Directory": "../../../additional_data/ShakeMaps",
                 "Events": [
                     "1989_Loma Prieta_10x"
                 ]
@@ -98,8 +98,8 @@
         "OtherParameters": {}
     },
     "InputParameters": {
-		"RandomVariablesFileName": "./rvs_input.csv",
-		"FixedVariablesFileName": "./fixed_input.csv"
+		"RandomVariablesFileName": "rvs_input.csv",
+		"FixedVariablesFileName": "fixed_input.csv"
     },
 	"UserSpecifiedData": {
 		"GISDatasets": {

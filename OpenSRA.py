@@ -241,7 +241,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 for i,event_ind in enumerate(unique_event_index_with_crossing):
                     # get current event id
                     if running_cpt_based_procedure:
-                        curr_event_id = unique_event_id_with_crossing[event_ind]
+                        curr_event_id = unique_event_id_with_crossing[i]
                     elif running_fault_rupture_below_ground:
                         curr_event_id = site_data.event_id.values[np.where(site_data.event_ind==event_ind)[0][0]]
                     # get rows relative to site_data for segments with crossings for current event
@@ -2365,12 +2365,21 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             os.remove(spath)
         with open(spath,'a') as writer:
             for key,val in dict_for_df_export.items():
-                locals()[key].to_csv(
-                    writer,
-                    index=val['index'],
-                    header=val['header'],
-                    lineterminator='\n'
-                )
+                try:
+                    locals()[key].to_csv(
+                        writer,
+                        index=val['index'],
+                        header=val['header'],
+                        lineterminator='\n'
+                    )
+                except TypeError:
+                    # catch backward compatibility with pandas for lineterminator
+                    locals()[key].to_csv(
+                        writer,
+                        index=val['index'],
+                        header=val['header'],
+                        line_terminator='\n'
+                    )
                 for _ in range(rows_pad_btw_table):
                     writer.write("\n")
         # site location tab

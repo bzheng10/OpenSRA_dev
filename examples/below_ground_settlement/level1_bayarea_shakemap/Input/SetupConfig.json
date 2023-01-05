@@ -22,12 +22,13 @@
     "IntensityMeasure": {
         "SourceForIM": {
             "ShakeMap": {
-                "Directory": "ShakeMaps",
+                "Directory": "../../../additional_data/ShakeMaps",
                 "Events": [
 					"1971_SanFernando",
 					"1989_Loma Prieta",
 					"1989_Loma Prieta_to0p5g",
-                    "1994_Northridge"
+                    "1994_Northridge",
+					"2014_South Napa"
                 ]
 			}
         }

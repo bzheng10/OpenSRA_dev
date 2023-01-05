@@ -67,7 +67,7 @@ def check_and_get_abspath(fpath, fdir=None):
     otherwise, infer from given dir, and check validity again
     """
     # check path validity
-    if os.path.exists(fpath):
+    if os.path.exists(fpath) or os.path.exists(os.path.abspath(fpath)):
         return os.path.abspath(fpath)
     else:
         fpath = os.path.join(fdir,fpath)

@@ -243,18 +243,20 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # -----------------------------------------------------------
     # Intensity Measure
     im_source = list(setup_config['IntensityMeasure']['SourceForIM'])[0]
+    sm_dir = None
+    sm_events = None
+    rup_fpath = None
     if im_source == 'ShakeMap':
         sm_dir = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Directory']
         # check if user-input sm_dir is valid directory, if not then infer from input_dir
         sm_dir = check_and_get_abspath(sm_dir, input_dir)
         sm_events = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events']
-        rup_fpath = None
     elif im_source == 'UserDefinedRupture':
         rup_fpath = setup_config['IntensityMeasure']['SourceForIM']['UserDefinedRupture']['FaultFile']
         # check if user-input sm_dir is valid directory, if not then infer from input_dir
         rup_fpath = check_and_get_abspath(rup_fpath, input_dir)
     elif im_source == 'UCERF':
-        rup_fpath = None
+        pass
     else:
         raise NotImplementedError("To be added into preprocess...")
     # get filters if present

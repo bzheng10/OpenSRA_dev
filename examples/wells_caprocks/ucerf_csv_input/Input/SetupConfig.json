@@ -9,13 +9,13 @@
     "Infrastructure": {
 		"InfrastructureType": "wells_caprocks",
 		"DataType": "CSV",
-        "SiteDataFile": "site_data.csv",
+        "SiteDataFile": "../../../additional_data/GIS_Data/wells_caprocks_files/example_site/site_data.csv",
 		"SiteLocationParams": {
             "Lat": "LAT",
             "Lon": "LON"
 		},
-		"WellTraceDir": "well_traces",
-		"PathToCaprockShapefile": "caprock_shapefile"
+		"WellTraceDir": "../../../additional_data/GIS_Data/wells_caprocks_files/well_traces",
+		"PathToCaprockShapefile": "../../../additional_data/GIS_Data/wells_caprocks_files/caprock_shapefile"
     },
     "IntensityMeasure": {
         "SourceForIM": {

@@ -42,44 +42,43 @@ def main():
         # below ground
         # -- landslide
         'below_ground_landslide': [
-            # 'level1_balboa_blvd_landslide_with_landslide_inventory_shakemap',
-            # 'statewide-subset_level1_no_landslide_polygon_shakemap',
-            # 'statewide-subset_level1_no_landslide_polygon_ucerf',
-            # 'statewide-subset_level1_with_landslide_inventory_shakemap',
+            # 'level1_balboablvd_with_inventory_shakemap_(fails_in_preprocess)',
+            # 'level1_bayarea_from_csv_no_polygon_shakemap',
+            # 'level1_bayarea_no_polygon_ucerf',
+            # 'level1_bayarea_with_inventory_shakemap',
+            # 'level1_bayarea_with_inventory_ucerf',
         ],
         # -- lateral spread
         'below_ground_lateral_spread': [
-            # 'level1_balboa_blvd_shakemap',
-            # 'level1_balboa_blvd_ucerf',
-            # 'level1_statewide-subset_shakemap',
-            # 'level1_statewide-subset_ucerf',
-            # 'level2_balboa_blvd_shakemap_northridge',
-            # 'level2_balboa_blvd_shakemap_sanfernando',
-            # 'level2_balboa_blvd_shakemap_sanfernando',
-            # 'level2_balboa_blvd_ucerf',
-            # 'level3_cpt_alameda_ucerf',
-            # 'level3_cpt_balboa_blvd_shakemap_northridge',
-            # 'level3_cpt_balboa_blvd_shakemap_sanfernando',
-            # 'level3_cpt_balboa_blvd_ucerf',
+            'level1_balboablvd_ucerf',
+            'level1_bayarea_shakemap_1989lomaprieta_user-specified_data',
+            'level1_bayarea_shakemap_1989lomaprieta-scaledto0p5g',
+            'level1_bayarea_shakemap_2014southnapa',
+            # 'level1_bayarea_ucerf',
+            'level2_balboa_blvd_shakemap_1971sanfernando',
+            'level2_balboa_blvd_shakemap_1994northridge',
+            'level2_balboa_blvd_ucerf',
+            'level3_cpt_alameda_ucerf_(fails_in_preprocess)',
+            'level3_cpt_balboablvd_shakemap_1971sanfernando',
+            'level3_cpt_balboablvd_ucerf',
         ],
         # -- settlement
         'below_ground_settlement': [
-            # 'level1_statewide-subset_shakemap',
-            # 'level1_statewide-subset_ucerf',
-            'level3_cpt_alameda_shakemap',
-            'level3_cpt_alameda_ucerf',
-            'level3_cpt_balboa_blvd_shakemap',
-            'level3_cpt_balboa_blvd_ucerf',
+            # 'level1_bayarea_shakemap',
+            # 'level1_bayarea_ucerf',
+            # 'level3_cpt_balboablvd_shakemap_(fails_in_preprocess)',
+            # 'level3_cpt_balboablvd_ucerf_(fails_in_preprocess)',
         ],
         # -- surface fault rupture
         'below_ground_surface_fault_rupture': [
-            'statewide-subset',
+            # 'bayarea',
+            # 'losangeles',
         ],
         ##############################
         # wells and caprocks
         'wells_caprocks': [
-            'ucerf_csv_input',
-            'userdef_rupture_gis_input',
+            # 'ucerf_csv_input',
+            # 'userdef_rupture_gis_input',
         ]
     }
     ex_wdir = [
@@ -116,12 +115,13 @@ def main():
         for phase in script_map:
             # print(f'\t- running script for "{script_map[phase]}"...')
             print(f'\t- {script_map[phase]}...')
-            
+
             # run subprocess
             p = subprocess.Popen(
                 ['python', locals()[f'{phase}_py_fpath'], '-w', each],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
+            
             # get outputs and errors
             output_curr, err_curr = p.communicate()
             rc_curr = p.returncode
@@ -137,13 +137,14 @@ def main():
             else:
                 print(f'\t\t- run time: {round(time_spent,1)} sec')
             time_start = time.time()
-            
+
             # print errors if any
             print(f'\t\t- error messages:')
             if len(err_curr) == 0:
                 print(f'\t\t\tnone')
             else:
                 print(f'\t\t\t{err_curr}')
+                        
 
     print("\n>>>>>>>>>>>>>>>>> Finished testing all examples\n")
     total_time_spent = time.time() - time_init

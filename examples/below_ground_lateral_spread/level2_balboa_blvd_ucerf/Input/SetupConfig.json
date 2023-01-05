@@ -9,7 +9,7 @@
     "Infrastructure": {
 		"InfrastructureType": "below_ground",
 		"DataType": "Shapefile",
-        "SiteDataFile": "gis_data/Clipped_State_Network_Balboa",
+        "SiteDataFile": "../../../additional_data/GIS_Data/Clipped_State_Network_Balboa/",
 		"SiteLocationParams": {
             "LatMid": "LAT_MID",
             "LonMid": "LON_MID",

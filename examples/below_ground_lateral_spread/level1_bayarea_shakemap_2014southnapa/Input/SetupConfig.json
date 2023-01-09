@@ -22,7 +22,7 @@
     "IntensityMeasure": {
         "SourceForIM": {
             "ShakeMap": {
-                "Directory": "../../../additional_data/ShakeMaps",
+                "Directory": "../../../other_data/ShakeMaps",
                 "Events": [
                     "2014_South Napa"
                 ]
@@ -122,7 +122,7 @@
     },
 	"UserSpecifiedData": {
 		"GISDatasets": {
-			"Directory": "../../../additional_data/GIS_Data"
+			"Directory": "../../../other_data/GIS_Data"
 		},
 		"CPTParameters": {}
 	}

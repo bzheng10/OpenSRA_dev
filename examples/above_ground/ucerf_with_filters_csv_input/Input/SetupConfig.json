@@ -8,7 +8,7 @@
     "Infrastructure": {
 		"InfrastructureType": "above_ground",
 		"DataType": "CSV",
-        "SiteDataFile": "../../../additional_data/GIS_Data/Above_Ground_Example_Site/site_data.csv",
+        "SiteDataFile": "../../../other_data/GIS_Data/Above_Ground_Example_Site/site_data.csv",
 		"SiteLocationParams": {
             "Lat": "LAT",
             "Lon": "LON"

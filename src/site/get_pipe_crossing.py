@@ -395,11 +395,11 @@ def get_anchorage_length_full_system_landslide_or_liq(
 
 # ---
 def get_pipe_crossing_fault_rup(
-    opensra_dir,
     processed_input_dir,
     im_dir,
     infra_site_data,
     avail_data_summary,
+    opensra_dataset_dir,
     reduced_ucerf_fpath,
     fault_disp_model='PetersenEtal2011',
     im_source='UCERF',
@@ -521,7 +521,7 @@ def get_pipe_crossing_fault_rup(
             # string for fault reference in available dataset json
             qfault_str = f'qfault_{each}'
             # get qfault file path
-            qfault_fpath = os.path.join(opensra_dir,
+            qfault_fpath = os.path.join(opensra_dataset_dir,
                 avail_data_summary['Parameters'][qfault_str]['Datasets']['Set1']['Path']
             )
             qfault_crs = avail_data_summary['Parameters'][qfault_str]['Datasets']['Set1']['CRS']
@@ -1113,10 +1113,10 @@ def get_pipe_crossing_fault_rup(
 
 # ---
 def get_pipe_crossing_landslide_and_liq(
-    opensra_dir,
     path_to_def_shp,
     infra_site_data,
     avail_data_summary,
+    opensra_dataset_dir,
     infra_site_data_geom=None,
     export_dir=None,
     def_type='landslide',
@@ -1296,7 +1296,7 @@ def get_pipe_crossing_landslide_and_liq(
                 # sample DEM at grid nodes
                 param = 'dem'
                 dem_file_metadata = avail_data_summary['Parameters'][param]
-                dem_raster_fpath = os.path.join(opensra_dir,dem_file_metadata['Datasets']['Set1']['Path'])
+                dem_raster_fpath = os.path.join(opensra_dataset_dir,dem_file_metadata['Datasets']['Set1']['Path'])
                 dem_raster_crs = dem_file_metadata['Datasets']['Set1']['CRS']
             if not os.path.exists(dem_raster_fpath):
                 raise ValueError("Path to DEM raster does not exist. Check pipe crossing function")

@@ -65,7 +65,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     )
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    logging.info('---------------')s
+    logging.info('---------------')
     logging.info('******** Start of OpenSRA Analysis ********')
     logging.info('---------------')
     counter = 1 # counter for stages in analysis

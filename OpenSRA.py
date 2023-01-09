@@ -385,7 +385,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     null_arr_nsite_by_ninput = np.zeros((n_site,num_epi_input_samples))
     ones_arr_nsite_by_ninput = np.ones((n_site,num_epi_input_samples))
     twos_arr_nsite_by_ninput = ones_arr_nsite_by_ninput.copy() * 2
-    str_arr_nsite_by_ninput = np.empty((n_site,num_epi_input_samples),dtype='<U20')
+    str_arr_nsite_by_ninput = np.empty((n_site,num_epi_input_samples),dtype='<U40')
     ones_arr_nfractile_sample = np.ones(num_epi_fractile_samples)
     logging.info(f'{counter}. Initialized analysis metrics')
     counter += 1

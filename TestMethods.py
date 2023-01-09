@@ -26,29 +26,29 @@ def main(detailed_verbose):
         },
         'EDP': {
             'liquefaction': {
-                'ZhuEtal2015',
-                'ZhuEtal2017',
-                'Hazus2020',
-                'Hazus2020_with_ZhuEtal2017',
+                # 'ZhuEtal2015',
+                # 'ZhuEtal2017',
+                # 'Hazus2020',
+                # 'Hazus2020_with_ZhuEtal2017',
             },
             'landslide': {
-                'Jibson2007',
-                'BrayMacedo2019'
+                # 'Jibson2007',
+                # 'BrayMacedo2019'
             },
             'lateral_spread': {
-                'Hazus2020',
-                'YoudEtal2002'
+                # 'Hazus2020',
+                # 'YoudEtal2002'
             },
             'settlement': {
-                'Hazus2020'
+                # 'Hazus2020'
             },
             'surface_fault_rupture': {
-                'Thompson2021',
-                'Hazus2020',
-                'WellsCoppersmith1994'
+                # 'Thompson2021',
+                # 'Hazus2020',
+                # 'WellsCoppersmith1994'
             },
             'wellhead_rotation': {
-                'PantoliEtal2022',
+                # 'PantoliEtal2022',
             }
         },
         'DM': {
@@ -74,16 +74,16 @@ def main(detailed_verbose):
                 'HutabaratEtal2022_SSTens',
             },
             'well_strain': {
-                'SasakiEtal2022',
+                # 'SasakiEtal2022',
             },
             'well_moment': {
-                'LuuEtal2022',
+                # 'LuuEtal2022',
             },
             'wellhead_strain': {
-                'PantoliEtal2022',
+                # 'PantoliEtal2022',
             },
             'vessel_moment_ratio': {
-                'PantoliEtal2022',
+                # 'PantoliEtal2022',
             }
         },
         'DV': {

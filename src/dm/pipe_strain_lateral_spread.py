@@ -425,7 +425,7 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
             sigma_mu_eps_pipe_comp[cond] = sigma_mu_eps_pipe_comp_curr
             
         # 6) Hutabarat normal:
-        cond = primary_mech == 'Normal'
+        cond = primary_mech == 'HutabaratNormal'
         if True in cond:
             output = HutabaratEtal2022_Normal._model(
                 pgdef[cond], # upstream PBEE RV
@@ -440,7 +440,7 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
             sigma_mu_eps_pipe_tens[cond] = output['eps_pipe']['sigma_mu']
         
         # 7) Hutabarat strike-slip tension:
-        cond = primary_mech == 'SSTens'
+        cond = primary_mech == 'HutabaratSSTens'
         if True in cond:
             output = HutabaratEtal2022_SSTens._model(
                 pgdef[cond], # upstream PBEE RV
@@ -455,7 +455,7 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
             sigma_mu_eps_pipe_tens[cond] = output['eps_pipe']['sigma_mu']
         
         # 8) Hutabarat strike-slip compression:
-        cond = primary_mech == 'SSComp'
+        cond = primary_mech == 'HutabaratSSComp'
         if True in cond:
             output = HutabaratEtal2022_SSComp._model(
                 pgdef[cond], # upstream PBEE RV

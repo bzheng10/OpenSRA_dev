@@ -8,8 +8,8 @@
     },
     "Infrastructure": {
 		"InfrastructureType": "below_ground",
-		"DataType": "State_Network",
-        "SiteDataFile": "CA_Natural_Gas_Pipeline_SUBSET",
+		"DataType": "Region_Network",
+        "SiteDataFile": "Bay_Area_Pipeline_Network_Clipped_From_Statewide",
 		"SiteLocationParams": {
             "LatMid": "LAT_MID",
             "LonMid": "LON_MID",

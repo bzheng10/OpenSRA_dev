@@ -1828,7 +1828,7 @@ def get_pref_dist_for_params(
                         missing_val='water'
                     )
                     param_dist_table[store_name] = locs.data[store_name].values
-                    param_dist_table[store_name] = param_dist_table[store_name].astype('<U30')
+                    param_dist_table[store_name] = param_dist_table[store_name].astype('<U20')
                     # load strength params from Bain et al. (2022)
                     default_geo_prop_fpath = os.path.join(
                         opensra_dataset_dir,

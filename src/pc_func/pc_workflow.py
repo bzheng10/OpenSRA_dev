@@ -523,9 +523,6 @@ def process_methods_for_mean_and_sigma_of_mu(
                 'dist_type': store_dist_type[param]
             }
             
-        if method == 'BainEtal2022_and_HutabaratEtal2022':
-            print(1)
-            
         # print(f'\t2a---2c. time: {time.time()-time_start} seconds')
         # time_start = time.time()
             

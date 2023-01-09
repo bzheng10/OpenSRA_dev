@@ -75,6 +75,7 @@ examples/Examples_backup.json
 **/superseded
 **/hidden
 **/hidden/
+./**/hidden
 # src/.ipynb_checkpoints
 # src/__pycache__
 **/temp

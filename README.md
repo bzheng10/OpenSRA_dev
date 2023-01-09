@@ -60,6 +60,9 @@ From "pip"
 pip install numba_stats openquake.engine tables
 ```
 
+## Additional prepackaged datasets for OpenSRA
+OpenSRA uses a number of prepackaged datasets that are not stored on GitHub due to file size. Please contact Barry Zheng for download link to datasets.
+
 ## User's Guide
 To run OpenSRA in the command prompt:
 

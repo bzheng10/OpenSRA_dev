@@ -283,7 +283,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         avail_data_summary_fpath = os.path.join(opensra_dataset_dir,'AvailableDataset.json')
         with open(avail_data_summary_fpath,'r') as f:
             avail_data_summary = json.load(f)
-        logging.info(f'{counter}. Loaded JSON file with information of pre-packaged datasets (below-ground only)')
+        logging.info(f'{counter}. Loaded JSON file with information of prepackaged datasets (below-ground only)')
         counter += 1
     
     # -----------------------------------------------------------

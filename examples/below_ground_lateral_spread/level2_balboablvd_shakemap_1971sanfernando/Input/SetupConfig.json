@@ -8,8 +8,8 @@
     },
     "Infrastructure": {
 		"InfrastructureType": "below_ground",
-		"DataType": "Region_Network",
-        "SiteDataFile": "Bay_Area_Pipeline_Network_Clipped_From_Statewide",
+		"DataType": "Shapefile",
+        "SiteDataFile": "../../../other_data/GIS_Data/Clipped_State_Network_Balboa/",
 		"SiteLocationParams": {
             "LatMid": "LAT_MID",
             "LonMid": "LON_MID",
@@ -24,7 +24,7 @@
             "ShakeMap": {
                 "Directory": "../../../other_data/ShakeMaps",
                 "Events": [
-                    "2014_South Napa"
+					"1971_SanFernando"
                 ]
 			}
         }
@@ -34,7 +34,7 @@
             "Liquefaction": {
                 "ToInclude": true,
                 "Method": {
-                    "ZhuEtal2017": {
+                    "Hazus2020": {
 						"ModelWeight": 1
 					}
 				},
@@ -122,7 +122,7 @@
     },
 	"UserSpecifiedData": {
 		"GISDatasets": {
-			"Directory": "../../../other_data/GIS_Data"
+			"Directory": ""
 		},
 		"CPTParameters": {}
 	}

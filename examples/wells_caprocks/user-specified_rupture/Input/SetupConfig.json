@@ -7,73 +7,53 @@
         "OutputFileType": "csv"
     },
     "Infrastructure": {
-		"InfrastructureType": "below_ground",
-		"DataType": "Region_Network",
-        "SiteDataFile": "Bay_Area_Pipeline_Network_Clipped_From_Statewide",
+		"InfrastructureType": "wells_caprocks",
+		"DataType": "CSV",
+        "SiteDataFile": "../../../other_data/GIS_Data/wells_caprocks_files/wells_info/wells_summary.csv",
 		"SiteLocationParams": {
-            "LatMid": "LAT_MID",
-            "LonMid": "LON_MID",
-            "LatBegin": "LAT_BEGIN",
-            "LonBegin": "LON_BEGIN",
-            "LatEnd": "LAT_END",
-            "LonEnd": "LON_END"
-		}
+            "Lat": "LAT",
+            "Lon": "LON"
+		},
+		"WellTraceDir": "../../../other_data/GIS_Data/wells_caprocks_files/wells_info/well_traces",
+		"PathToCaprockShapefile": "../../../other_data/GIS_Data/wells_caprocks_files/caprock_shp"
     },
     "IntensityMeasure": {
         "SourceForIM": {
-            "ShakeMap": {
-                "Directory": "../../../other_data/ShakeMaps",
-                "Events": [
-                    "2014_South Napa"
-                ]
+            "UserDefinedRupture": {
+                "FaultFile": "../../../other_data/GIS_Data/virtual_fault.csv"
 			}
         }
     },
     "EngineeringDemandParameter": {
         "Type": {
-            "Liquefaction": {
-                "ToInclude": true,
-                "Method": {
-                    "ZhuEtal2017": {
-						"ModelWeight": 1
-					}
-				},
-                "OtherParameters": {}
-            },
-            "LateralSpread": {
-                "ToInclude": true,
-                "Method": {
-                    "Hazus2020": {
-						"ModelWeight": 1
-					}
-				},
-                "OtherParameters": {}
-            },
-            "Settlement": {
-                "ToInclude": false,
-                "Method": {},
-                "OtherParameters": {}
-            },
-            "Landslide": {
-                "ToInclude": false,
-                "Method": {},
-                "OtherParameters": {}
-            },
             "SurfaceFaultRupture": {
-                "ToInclude": false,
-                "Method": {},
+                "ToInclude": true,
+                "Method": {
+                    "Thompson2021": {
+						"ModelWeight": 1
+					}
+				},
                 "OtherParameters": {}
             }
-        },
+		},
         "EpistemicUncertainty": {},
         "OtherParameters": {}
     },
     "DamageMeasure": {
         "Type": {
-            "LateralSpreadInducedPipeStrain": {
+            "WellStrain": {
                 "ToInclude": true,
                 "Method": {
-					"BainEtal2022_and_HutabaratEtal2022": {
+                    "SasakiEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "WellMoment": {
+                "ToInclude": true,
+                "Method": {
+					"LuuEtal2022": {
 						"ModelWeight": 1
 					}
 				},
@@ -85,28 +65,28 @@
     },
     "DecisionVariable": {
         "Type": {
-            "PipeCompressiveRupture": {
+            "ShearInducedWellRupture": {
                 "ToInclude": true,
                 "Method": {
-					"BainEtal2022": {
+					"SasakiEtal2022": {
 						"ModelWeight": 1
 					}
 				},
                 "OtherParameters": {}
             },
-            "PipeTensileRupture": {
+            "ShakingInducedWellRupture": {
                 "ToInclude": true,
                 "Method": {
-					"BainEtal2022": {
+					"LuuEtal2022": {
 						"ModelWeight": 1
 					}
 				},
                 "OtherParameters": {}
             },
-            "PipeTensileLeakage": {
+            "CaprockLeakage": {
                 "ToInclude": true,
                 "Method": {
-					"BainEtal2022": {
+					"ZhangEtal2022": {
 						"ModelWeight": 1
 					}
 				},
@@ -122,7 +102,7 @@
     },
 	"UserSpecifiedData": {
 		"GISDatasets": {
-			"Directory": "../../../other_data/GIS_Data"
+			"Directory": ""
 		},
 		"CPTParameters": {}
 	}

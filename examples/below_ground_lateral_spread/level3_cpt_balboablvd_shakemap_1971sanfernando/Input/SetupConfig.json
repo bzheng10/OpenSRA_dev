@@ -9,7 +9,7 @@
     "Infrastructure": {
 		"InfrastructureType": "below_ground",
 		"DataType": "Shapefile",
-        "SiteDataFile": "../../../additional_data/GIS_Data/Clipped_State_Network_Balboa/",
+        "SiteDataFile": "../../../other_data/GIS_Data/Clipped_State_Network_Balboa/",
 		"SiteLocationParams": {
             "LatMid": "LAT_MID",
             "LonMid": "LON_MID",
@@ -22,7 +22,7 @@
     "IntensityMeasure": {
         "SourceForIM": {
             "ShakeMap": {
-                "Directory": "../../../additional_data/ShakeMaps",
+                "Directory": "../../../other_data/ShakeMaps",
                 "Events": [
 					"1971_SanFernando"
                 ]
@@ -125,9 +125,9 @@
 			"Directory": ""
 		},
         "CPTParameters": {
-			"PathToCPTSummaryCSV": "../../../additional_data/GIS_Data/BalboaBlvdCPTs/Summary.csv",
-			"PathToCPTDataFolder": "../../../additional_data/GIS_Data/BalboaBlvdCPTs/CPTs",
-			"PathToFreefaceDir": "../../../additional_data/GIS_Data/free_face_feature",
+			"PathToCPTSummaryCSV": "../../../other_data/GIS_Data/BalboaBlvdCPTs/Summary.csv",
+			"PathToCPTDataFolder": "../../../other_data/GIS_Data/BalboaBlvdCPTs/CPTs",
+			"PathToFreefaceDir": "../../../other_data/GIS_Data/free_face_feature",
 			"ColumnInCPTSummaryWithGWTable": "Mean GWT SF",
 			"WeightRobertson09": 0.5,
 			"WeightZhang04": 0.5

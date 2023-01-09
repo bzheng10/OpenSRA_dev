@@ -1,0 +1,109 @@
+{
+    "General": {
+        "AnalysisID" : "TEST",
+		"Directory": {
+			"Working": ""
+		},
+        "OutputFileType": "csv"
+    },
+    "Infrastructure": {
+		"InfrastructureType": "wells_caprocks",
+		"DataType": "Shapefile",
+        "SiteDataFile": "../../../additional_data/GIS_Data/wells_caprocks_files/example_site/site_data.gpkg",
+		"SiteLocationParams": {
+            "Lat": "LAT",
+            "Lon": "LON"
+		},
+		"WellTraceDir": "../../../additional_data/GIS_Data/wells_caprocks_files/well_traces",
+		"PathToCaprockShapefile": "../../../additional_data/GIS_Data/wells_caprocks_files/caprock_shapefile"
+    },
+    "IntensityMeasure": {
+        "SourceForIM": {
+            "UserDefinedRupture": {
+                "FaultFile": "../../../additional_data/GIS_Data/virtual_fault.csv"
+			}
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "SurfaceFaultRupture": {
+                "ToInclude": true,
+                "Method": {
+                    "Thompson2021": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+		},
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "WellStrain": {
+                "ToInclude": true,
+                "Method": {
+                    "SasakiEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "WellMoment": {
+                "ToInclude": true,
+                "Method": {
+					"LuuEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "ShearInducedWellRupture": {
+                "ToInclude": true,
+                "Method": {
+					"SasakiEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "ShakingInducedWellRupture": {
+                "ToInclude": true,
+                "Method": {
+					"LuuEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "CaprockLeakage": {
+                "ToInclude": true,
+                "Method": {
+					"ZhangEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "InputParameters": {
+		"RandomVariablesFileName": "rvs_input.csv",
+		"FixedVariablesFileName": "fixed_input.csv"
+    },
+	"UserSpecifiedData": {
+		"GISDatasets": {
+			"Directory": ""
+		},
+		"CPTParameters": {}
+	}
+}

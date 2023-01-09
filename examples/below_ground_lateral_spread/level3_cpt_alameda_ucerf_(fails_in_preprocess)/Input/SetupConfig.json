@@ -122,9 +122,9 @@
 		},
         "CPTParameters": {
             "ColumnInCPTSummaryWithGWTable": "Mean GWT",
-            "PathToCPTDataFolder": "../../../other_data/GIS_Data/cpts_alameda/CPTs",
-            "PathToCPTSummaryCSV": "../../../other_data/GIS_Data/cpts_alameda/Summary.csv",
-            "PathToFreefaceDir": "../../../other_data/GIS_Data/free_face_feature",
+            "PathToCPTDataFolder": "../../../additional_data/GIS_Data/cpts_alameda/CPTs",
+            "PathToCPTSummaryCSV": "../../../additional_data/GIS_Data/cpts_alameda/Summary.csv",
+            "PathToFreefaceDir": "../../../additional_data/GIS_Data/free_face_feature",
             "WeightRobertson09": 0.25,
             "WeightZhang04": 0.75
         }

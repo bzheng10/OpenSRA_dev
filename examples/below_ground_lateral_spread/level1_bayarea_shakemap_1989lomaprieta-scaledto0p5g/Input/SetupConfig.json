@@ -22,7 +22,7 @@
     "IntensityMeasure": {
         "SourceForIM": {
             "ShakeMap": {
-                "Directory": "../../../other_data/ShakeMaps",
+                "Directory": "../../../additional_data/ShakeMaps",
                 "Events": [
                     "1989_Loma Prieta_to0p5g"
                 ]
@@ -122,7 +122,7 @@
     },
 	"UserSpecifiedData": {
 		"GISDatasets": {
-			"Directory": "../../../other_data/GIS_Data"
+			"Directory": "../../../additional_data/GIS_Data"
 		},
 		"CPTParameters": {}
 	}

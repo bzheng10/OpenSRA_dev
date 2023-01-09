@@ -29,11 +29,6 @@ OpenSRA_backup_221115.py
 
 # src level
 src/PreProcess_Combine_RRPGV_RRPGD.py
-src/preprocess.py
-src/model.py
-src/io.py
-src/site/displacement_crossings_landslides_anchors.py
-src/im/sha_dup.py
 
 # all subdirectories
 **/.ipynb_checkpoints
@@ -72,7 +67,6 @@ examples/Examples_backup.json
 
 # others
 **/superseded
-**/hidden
 # src/.ipynb_checkpoints
 # src/__pycache__
 **/temp

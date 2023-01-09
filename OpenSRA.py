@@ -63,12 +63,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         level=logging_level,
         msg_format=logging_message_detail
     )
+    logging.info('\n---------------')
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    logging.info('---------------')
-    logging.info('******** Start of OpenSRA Analysis ********')
-    logging.info('---------------')
-    counter = 1 # counter for stages in analysis
+    logging.info('******** OpenSRA Analysis********\n')
+    counter = 1 # counter for stages of processing
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Define primary directories - these should be created during Preprocess
@@ -85,19 +84,9 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         sys.exit()
     logging.info(f'{counter}. Identified primary directories')
     counter += 1
-    logging.info('\tWorking directory given:')
-    logging.info(f'\t\t- {work_dir}')
-    logging.info('\tInput directory implied:')
-    logging.info(f'\t\t- {input_dir}')
-    logging.info('\tProcessed input directory for export of processed information:')
-    logging.info(f'\t\t- {processed_input_dir}')
-    logging.info('\tIntensity measure directory:')
-    logging.info(f'\t\t- {im_dir}')
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Import site data
-    logging.info(f'{counter}. Loading site data file...')
-    counter += 1
     # check for files with crossing
     if 'site_data_PROCESSED_CROSSING_ONLY.csv' in os.listdir(processed_input_dir):
         site_data = pd.read_csv(os.path.join(processed_input_dir,'site_data_PROCESSED_CROSSING_ONLY.csv'))
@@ -106,12 +95,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     else:
         site_data = pd.read_csv(os.path.join(processed_input_dir,'site_data_PROCESSED.csv'))
         flag_crossing_file_exists = False
-    logging.info(f'... DONE - Loaded site data file')
+    logging.info(f'{counter}. Loaded site data file')
+    counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Load Seismic Events
-    logging.info(f'{counter}. Loading seismic event files (e.g., rupture scenarios, ground motions)')
-    counter += 1
     # Import IM distributions
     im_import = {}
     for each in ['pga','pgv']:
@@ -139,7 +127,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     n_site_ind_arr = np.arange(n_site)
     null_arr_nsite = np.zeros(n_site)
     ones_arr_nsite = np.ones(n_site)
-    logging.info(f'... DONE - Loaded seismic event files')
+    logging.info(f'{counter}. Loaded seismic event files')
+    counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Load setup configuration file
@@ -185,7 +174,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 cpt_pgdef_dist.event_id = cpt_pgdef_dist.event_id.astype(int)
                 break
         processed_cpt_metadata = pd.read_csv(os.path.join(processed_cpt_base_dir,'cpt_data_PROCESSED.csv'))
-        logging.info(f'{counter}. Flagged OpenSRA to run CPT procedure and loaded preprocessed CPT files')
+        logging.info(f'{counter}. Flagged to run CPT procedure - also loaded in preprocessed CPT files')
         counter += 1
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -314,8 +303,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             segment_index_repeat_in_full = np.asarray([])
             segment_ids_crossed_single = segment_ids_crossed.copy()
             segment_index_single_in_full = segment_index_crossed.copy()
-        logging.info(f'{counter}. Identified indices between full instrastructure inventory and subset of inventory with crossings')
-        counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Get list of input params
@@ -330,7 +317,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             cat_params[cat] = list(np.unique(np.hstack(cat_params[cat])))
         all_params += cat_params[cat]
     all_params = list(set(all_params))
-    logging.info(f'{counter}. Loaded required parameters for analysis')
+    logging.info(f'{counter}. Loaded required parameters')
     counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -392,15 +379,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Get samples for input parameters
-    logging.info(f'{counter}. Performing sampling of input parameters that are not event-dependent...')
-    counter += 1
     n_params = len(input_dist)
     param_names = list(input_dist)
     input_samples = \
         pc_workflow.get_samples_for_params(input_dist, num_epi_input_samples, n_site)
-    
-    # Additional sampling of inputs with more complex/dependent conditions
-    logging.info(f'\t Performing additional procedures for other input parameters with more complex/dependent conditions...')
     # for angles that are continuous rotationally (e.g., -181 = 179) but is capped by limits in models
     if infra_type == 'wells_caprocks':
         if 'theta' in input_samples:
@@ -412,7 +394,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             cond = input_samples['theta']>90
             if True in cond:
                 input_samples['theta'][cond] = np.abs(90-input_samples['theta'][cond])
-            logging.info(f'\t\t- added "theta" to input samples for {infra_type} analysis')
     # for beta_crossing in below ground
     if infra_type == 'below_ground':
         if 'beta_crossing' in input_samples:
@@ -424,7 +405,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             cond = input_samples['beta_crossing']>180
             if True in cond:
                 input_samples['beta_crossing'][cond] = np.abs(180-input_samples['beta_crossing'][cond])
-            logging.info(f'\t\t- added "beta_crossing" to input samples for {infra_type} analysis')
         if 'theta_rake' in input_samples:
             # target range = -180 to 180 degrees, but
             # distribution limits are extended to -360 and 360
@@ -436,9 +416,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             if True in cond:
                 # e.g., 185 -> -175
                 input_samples['theta_rake'][cond] = input_samples['theta_rake'][cond]-360
-            logging.info(f'\t\t- added "theta_rake" to input samples for {infra_type} analysis')
-                
-    # get liquefaction susceptibility categories if obtained from regional geologic maps
     # for liq susc cat
     if 'liquefaction' in workflow['EDP'] and \
         'Hazus2020' in workflow['EDP']['liquefaction'] and \
@@ -463,8 +440,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 ),
                 'dist_type': 'fixed'
             }
-            logging.info(f'\t\t- added "liq_susc" to input samples for {infra_type} analysis')
 
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # generate additional inputs if crossing algorithm is performed
     # initialize params for storing additional sampling
     addl_input_dist = {}
@@ -892,9 +869,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             if transition_weight_factor is not None:
                 input_samples['transition_weight_factor'] = transition_weight_factor
                 crossing_params_intermediate.append('transition_weight_factor')
-            logging.info(f'\t\t- added "primary_mech" to input samples for {infra_type} analysis')
-            logging.info(f'\t\t- added "transition_weight_factor" to input samples for {infra_type} analysis')
-    logging.info(f'... DONE - Finished sampling input parameters that are not event-dependent')
+    logging.info(f'{counter}. Sampled input parameters')
+    counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Setup and run PC
@@ -936,12 +912,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     #----------------------
     
     # event to run
-    logging.info('---------------------------')
-    logging.info(f'{counter}. Starting risk analysis using Polynomial Chaos...')
-    counter += 1
     time_loop_init = time.time()
     time_loop = time.time()
-    logging.info(f'\t>>>>> number of events: {len(event_ids_to_run)}')
+    logging.info('\t---------------------------')
+    logging.info('\t>>>>> Starting PC workflow...')
+    logging.info(f'\t>>>>> - number of events: {len(event_ids_to_run)}')
     event_counter = 0
     for ind, event_id in enumerate(event_ids_to_run):
     # for event_ind in range(1):
@@ -1966,10 +1941,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     #----------------------
     total_time = time.time()-time_loop_init
     if total_time > 60:
-        logging.info(f'\t>>>>> DONE - finished all {rupture_table.shape[0]} events: {np.round(total_time/60,decimals=1)} min')
+        logging.info(f'\t>>>>> finished all {rupture_table.shape[0]} events: {np.round(total_time/60,decimals=1)} min')
     else:
-        logging.info(f'\t>>>>> DONE - finished all {rupture_table.shape[0]} events: {np.round(total_time,decimals=1)} sec')
-        # logging.info(f'\t---------------------------')
+        logging.info(f'\t>>>>> finished all {rupture_table.shape[0]} events: {np.round(total_time,decimals=1)} sec')
+        logging.info(f'\t---------------------------')
     time_loop = time.time()
     #----------------------
     
@@ -2168,8 +2143,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             # set anything below 1e-10 to 0
             df_frac[curr_case_str][df_frac[curr_case_str]<1e-10] = 0
     
-    logging.info(f'... DONE - Finished risk analysis')
-    logging.info('---------------------------')
+    logging.info(f'{counter}. Performed risk analysis using PC')
+    counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Generate summary table of analysis for export
@@ -2185,8 +2160,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # Additional processing for above ground components
     site_ind = np.arange(n_site)
     if infra_type == 'above_ground':
-        logging.info(f'{counter}. Performing additional postprocessing for above ground components...')
-        counter += 1
         all_pc_case = list(df_frac)
         rot_type = {
             'elbow': ['4E90'],
@@ -2244,7 +2217,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     df_frac[pc_case+'_worst_case'][out_str_comp] = np.transpose(worst_case_vals)
                     # append column with joint with highest prob of failure
                     df_frac[pc_case+'_worst_case'][f'{comp}_worst_case_joint'] = worst_case_joint
-        logging.info(f'... DONE - Finished performing additional postprocessing for above ground components')
+        logging.info(f'{counter}. Performed additional processing for above ground components')
+        counter += 1
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # create a table for PBEE notations:
@@ -2334,8 +2308,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Export summary file
-    logging.info(f'{counter}. Preparing result tables to export...')
-    counter += 1
     # results directory
     sdir = os.path.join(work_dir,'Results')
     # clean prev outputs
@@ -2422,13 +2394,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 df_frac[case+'_combined'].to_csv(os.path.join(sdir,f'{case}_{dv_str}_combined.csv'))
             if case+'_worst_case' in df_frac:
                 df_frac[case+'_worst_case'].to_csv(os.path.join(sdir,f'{case}_{dv_str}_worst_case.csv'))
-    logging.info(f'... Exported result tables to directory:')
+    logging.info(f'{counter}. Exported result tables to directory:')
     logging.info(f'\t{sdir}')
+    counter += 1
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Export gpkg file with mean fractiles
-    logging.info(f'{counter}. Preparing a summary geopackage with primary results...')
-    counter += 1
     col_name_remap = {
         'comp': 'compressive',
         'tee': 'tee-joint',
@@ -2634,12 +2605,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     logging.info(f'The summary geopackage contains the following:')
     for each in gpkg_contains:
         logging.info(f'\t- {each}')
+    counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # End of analysis
-    logging.info('---------------')
-    logging.info('******** End of OpenSRA Analysis ********')
-    logging.info('---------------')
+    # Exit Program
+    logging.info('\n******** OpenSRA Analysis********')
+    logging.info('---------------\n')
     
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Proc main

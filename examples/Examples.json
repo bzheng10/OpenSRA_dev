@@ -21,24 +21,24 @@
     "Below Ground - Landslide": {
         "Examples": [
             {
-                "name": "Level1 BalboaBlvd with CA Inventory Shakemaps (Fails in Preprocess)",
+                "name": "Level1 BalboaBlvd with Inventory ShakeMap (Fails in Preprocess)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/level1_balboablvd_with_ca_inventory_shakemaps_(fails_in_preprocess)/Input/SetupConfig.json"
+                "inputFile": "below_ground_landslide/level1_balboablvd_with_inventory_shakemap_(fails_in_preprocess)/Input/SetupConfig.json"
             },
             {
-                "name": "Level1 BayArea no Deformation Polygon UCERF",
+                "name": "Level1 BayArea no Polygon UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/level1_bayarea_no_deformation_polygon_ucerf/Input/SetupConfig.json"
+                "inputFile": "below_ground_landslide/level1_bayarea_no_polygon_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "Level1 BayArea with CA Inventory Shakemaps",
+                "name": "Level1 BayArea with Inventory ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/level1_bayarea_with_ca_inventory_shakemaps/Input/SetupConfig.json"
+                "inputFile": "below_ground_landslide/level1_bayarea_with_inventory_shakemap/Input/SetupConfig.json"
             },
             {
-                "name": "Level1 BayArea with CA Inventory UCERF",
+                "name": "Level1 BayArea with Inventory UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/level1_bayarea_with_ca_inventory_ucerf/Input/SetupConfig.json"
+                "inputFile": "below_ground_landslide/level1_bayarea_with_inventory_ucerf/Input/SetupConfig.json"
             }
         ]
     },
@@ -55,9 +55,9 @@
                 "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap_1989lomaprieta-scaledto0p5g/Input/SetupConfig.json"
             },
             {
-                "name": "Level1 BayArea ShakeMap 1989LomaPrieta User-Specified Maps",
+                "name": "Level1 BayArea ShakeMap 1989LomaPrieta User-Specified Data",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap_1989lomaprieta_user-specified_maps/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap_1989lomaprieta_user-specified_data/Input/SetupConfig.json"
             },
             {
                 "name": "Level1 BayArea ShakeMap 2014SouthNapa",
@@ -70,19 +70,19 @@
                 "inputFile": "below_ground_lateral_spread/level1_bayarea_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "Level2 BalboaBlvd ShakeMap 1971SanFernando",
+                "name": "Level2 Balboa Blvd ShakeMap 1971SanFernando",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level2_balboablvd_shakemap_1971sanfernando/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_shakemap_1971sanfernando/Input/SetupConfig.json"
             },
             {
-                "name": "Level2 BalboaBlvd ShakeMap 1994Northridge",
+                "name": "Level2 Balboa Blvd ShakeMap 1994Northridge",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level2_balboablvd_shakemap_1994northridge/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_shakemap_1994northridge/Input/SetupConfig.json"
             },
             {
-                "name": "Level2 BalboaBlvd UCERF",
+                "name": "Level2 Balboa Blvd UCERF",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level2_balboablvd_ucerf/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level2_balboa_blvd_ucerf/Input/SetupConfig.json"
             },
             {
                 "name": "Level3 CPT Alameda UCERF (Fails in Preprocess)",
@@ -109,9 +109,9 @@
     "Below Ground - Liquefaction Induced Settlement": {
         "Examples": [
             {
-                "name": "Level1 BayArea Shakemaps",
+                "name": "Level1 BayArea ShakeMap",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement/level1_bayarea_shakemaps/Input/SetupConfig.json"
+                "inputFile": "below_ground_settlement/level1_bayarea_shakemap/Input/SetupConfig.json"
             },
             {
                 "name": "Level1 BayArea UCERF",
@@ -119,9 +119,9 @@
                 "inputFile": "below_ground_settlement/level1_bayarea_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "Level3 CPT BalboaBlvd Shakemaps (Fails in Preprocess)",
+                "name": "Level3 CPT BalboaBlvd ShakeMap (Fails in Preprocess)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement/level3_cpt_balboablvd_shakemaps_(fails_in_preprocess)/Input/SetupConfig.json"
+                "inputFile": "below_ground_settlement/level3_cpt_balboablvd_shakemap_(fails_in_preprocess)/Input/SetupConfig.json"
             },
             {
                 "name": "Level3 CPT BalboaBlvd UCERF (Fails in Preprocess)",
@@ -147,14 +147,14 @@
     "Wells and Caprocks": {
         "Examples": [
             {
-                "name": "UCERF",
+                "name": "UCERF CSV Input",
                 "description": "Placeholder\n",
-                "inputFile": "wells_caprocks/ucerf/Input/SetupConfig.json"
+                "inputFile": "wells_caprocks/ucerf_csv_input/Input/SetupConfig.json"
             },
             {
-                "name": "User-Specified Rupture",
+                "name": "Userdef Rupture GIS Input",
                 "description": "Placeholder\n",
-                "inputFile": "wells_caprocks/user-specified_rupture/Input/SetupConfig.json"
+                "inputFile": "wells_caprocks/userdef_rupture_gis_input/Input/SetupConfig.json"
             }
         ]
     }

@@ -65,12 +65,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         level=logging_level,
         msg_format=logging_message_detail
     )
+    logging.info('\n---------------')
     
     # -----------------------------------------------------------
     # start of preprocess
-    logging.info('---------------')
-    logging.info('******** Start of preprocessing for OpenSRA ********')
-    logging.info('---------------')
+    logging.info('Start of preprocessing for OpenSRA')
     config = {} # dictionary to store configuration params
     counter = 1 # counter for stages of processing   
     
@@ -99,7 +98,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         if not os.path.isdir(im_dir):
             os.mkdir(im_dir)
     logging.info(f'{counter}. Check and create file directories')
-    counter += 1
     logging.info('\tPerforming preprocessing of methods and input variables for OpenSRA')
     logging.info('\t\tOpenSRA backend directory')
     logging.info(f'\t\t\t- {opensra_dir}')
@@ -111,6 +109,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     logging.info(f'\t\t\t- {processed_input_dir}')
     logging.info('\t\tIntensity measure directory:')
     logging.info(f'\t\t\t- {im_dir}')
+    counter += 1
     
     # ---------------------
     # first decompress precomputed statewide IMs (only done once)
@@ -271,31 +270,22 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # -----------------------------------------------------------
     # load json with available datasets, below-ground only for now
     avail_data_summary = None # initialize
-    opensra_dataset_dir = os.path.join(opensra_dir,'lib','Datasets')
     if infra_type == 'below_ground':
-        # default path for development env
-        if 'OpenSRAData' in setup_config['General']['Directory']:
-            if len(setup_config['General']['Directory']['OpenSRAData']) > 0:
-                opensra_dataset_dir = setup_config['General']['Directory']['OpenSRAData']
-        # check if dataset dir is valid path, if not raise error
-        if not os.path.exists(opensra_dataset_dir):
-            raise ValueError(f"Path to OpenSRA pre-package datasets does not exist: {opensra_dataset_dir}")
-        avail_data_summary_fpath = os.path.join(opensra_dataset_dir,'AvailableDataset.json')
+        avail_data_summary_fpath = os.path.join(opensra_dir,'lib','AvailableDataset.json')
         with open(avail_data_summary_fpath,'r') as f:
             avail_data_summary = json.load(f)
-        logging.info(f'{counter}. Loaded JSON file with information of pre-packaged datasets (below-ground only)')
+        logging.info(f'{counter}. Loaded JSON file with pre-packaged information of pre-packaged datasets (below-ground only)')
         counter += 1
     
     # -----------------------------------------------------------
     # preprocess infrastructure file
-    logging.info(f'{counter}. Processing infrastructure file...')
-    counter += 1
     preprocess_infra_file(
         infra_type, infra_fpath, infra_loc_header,
         processed_input_dir, flag_using_state_network, l_max=0.1,
     )
-    logging.info(f'... DONE - Processed infrastructure file and exported site data table to directoy:')
+    logging.info(f'{counter}. Processed infrastructure file and exported site data table to directoy:')
     logging.info(f'\t{processed_input_dir}')
+    counter += 1
     
     # -----------------------------------------------------------
     # get workflow for PC
@@ -309,7 +299,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # import preferred input distributions
     pref_param_dist, pref_param_fixed = \
         import_param_dist_table(opensra_dir, infra_type=infra_type)
-    logging.info(f'{counter}. Loaded backend tables with preferred variable distributions/values from the following spreadsheet')
+    logging.info(f'{counter}. Read preferred distributions for variables')
     logging.info(f"\t{os.path.join('param_dist',f'{infra_type}.xlsx')}")
     counter += 1
     
@@ -333,7 +323,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         # sys.exit()
         raise ValueError("FATAL: The number of components/segments is zero!")
     else:
-        logging.info(f'{counter}. Loaded input tables for random, fixed variables, and infrastructure data in input directory')
+        logging.info(f'{counter}. Read input tables for random, fixed variables, and infrastructure data in input directory')
         counter += 1
     
     ##--------------------------
@@ -360,23 +350,22 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     'UCERF3_reduced_senario_dM0.5_v2.shp'
                 )
                 # run get pipe crossing function
-                logging.info(f'{counter}. Performing pipeline crossing algorithm for {hazard}...')
-                counter += 1
                 # site_data = 
                 site_data, rupture_table_from_crossing, col_headers_to_append, event_ids_to_keep = \
                     get_pipe_crossing_fault_rup(
+                        opensra_dir=opensra_dir,
                         processed_input_dir=processed_input_dir,
                         im_dir=im_dir,
                         infra_site_data=site_data.copy(),
                         avail_data_summary=avail_data_summary,
-                        opensra_dataset_dir=opensra_dataset_dir,
                         reduced_ucerf_fpath=reduced_ucerf_fpath,
                         fault_disp_model=fault_disp_model,
                         im_source=im_source,
                         infra_site_data_geom=site_data_geom,
                     )
                 performed_crossing = True
-                logging.info(f'... DONE - Obtained pipeline crossing for {hazard}')
+                logging.info(f'{counter}. Obtained pipeline crossing for {hazard}')
+                counter += 1
                 
             # liq and landslide share the same function for pipe crossing
             else:
@@ -391,15 +380,14 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     if 'CPTBased' in workflow['EDP']['liquefaction']:
                         running_cpt_based_procedure = True
                         # pass info into function to read and process CPTs and generated deformation polygons
-                        # logging.info('\n---------------------------')
-                        logging.info(f'{counter}. Running CPT preprocessing script to generate deformation polygons...')
-                        counter += 1
+                        logging.info('\n---------------------------')
+                        logging.info('>>>>> Running CPT preprocessing script to generate deformation polygons...')
                         spath_def_poly, freeface_fpath = preprocess_cpt_data(
                             # predetermined setup configuration parameters
                             setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
                             rvs_input, fixed_input, workflow,
                             # OpenSRA internal files
-                            avail_data_summary, opensra_dataset_dir,
+                            avail_data_summary,
                             # for all IM sources
                             im_source, im_filters,
                             # for ShakeMaps
@@ -409,8 +397,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             # misc.
                             display_after_n_event=display_after_n_event
                         )
-                        logging.info('... DONE - Processed CPTs')
-                        # logging.info('---------------------------\n')
+                        logging.info('>>>>> done with CPT preprocessing')
+                        logging.info('---------------------------\n')
                         spath_def_poly = spath_def_poly[0]
                         def_shp_crs = 4326
                     else:
@@ -429,7 +417,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         if def_poly_source == 'CA_LandslideInventory_WGS84':
                             file_metadata = avail_data_summary['Parameters']['ca_landslide_inventory']
                             def_shp_crs = file_metadata['Datasets']['Set1']['CRS']
-                            spath_def_poly = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
+                            spath_def_poly = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                         else:
                             # check if def_poly_source is a valid path
                             fdir = check_and_get_abspath(def_poly_source, user_prov_gis_dir)
@@ -444,13 +432,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         def_shp_crs = None
                     freeface_fpath = None
                 # run get pipe crossing function
-                logging.info(f'{counter}. Performing pipeline crossing algorithm for {hazard}...')
-                counter += 1
                 site_data = get_pipe_crossing_landslide_and_liq(
+                    opensra_dir=opensra_dir,
                     path_to_def_shp=spath_def_poly,
                     infra_site_data=site_data.copy(),
                     avail_data_summary=avail_data_summary,
-                    opensra_dataset_dir=opensra_dataset_dir,
                     infra_site_data_geom=site_data_geom,
                     export_dir=processed_input_dir,
                     def_type=hazard,
@@ -478,14 +464,15 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     raise ValueError(f"FATAL: No crossings identified using CPT generated deformation polygons for {hazard}!")
                     # sys.exit()
                 else:
-                    logging.info(f'... DONE - Obtained pipeline crossing for {hazard}')
+                    logging.info(f'{counter}. Obtained pipeline crossing for {hazard}')
+                    counter += 1
     
     # -----------------------------------------------------------
     # rvs and fixed params split by preferred and user provided
     pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, \
     pref_fixed, user_prov_table_fixed, user_prov_gis_fixed = \
         separate_params_by_source(rvs_input, fixed_input)
-    logging.info(f'{counter}. Separated random and fixed parameters by source (i.e., Preferred vs user-specified)')
+    logging.info(f'{counter}. Separated random and fixed parameters by source')
     counter += 1
     
     # -----------------------------------------------------------
@@ -521,7 +508,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             infra_type=infra_type
         )
     level_to_run = param_dist_table['level_to_run'][0]
-    logging.info(f'{counter}. Determined level of analysis to run (currently only varies for below-ground infrastructure)')
+    logging.info(f'{counter}. Determined level of analysis to run')
     logging.info(f'\t- level to run: {level_to_run}')
     counter += 1
 
@@ -552,10 +539,9 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     # -----------------------------------------------------------
     # get rest of distribution metrics from preferred datasets
-    logging.info(f'{counter}. Retrieving missing distribution metrics from preferred distributions...')
-    counter += 1
     param_dist_table, param_dist_meta, params_with_missing_dist_metric = \
         get_pref_dist_for_params(
+            opensra_dir,
             params_with_missing_dist_metric,
             site_data,
             param_dist_table,
@@ -565,7 +551,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             pref_param_fixed,
             workflow,
             avail_data_summary,
-            opensra_dataset_dir,
             level_to_run,
             flag_using_state_network,
             # running_cpt_based_procedure,
@@ -574,14 +559,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             export_path_dist_json=os.path.join(processed_input_dir,'param_dist_meta.json'),
             infra_type=infra_type
         )
-    logging.info(f'... DONE - Retrieved missing distribution metrics from preferred distributions')
+    logging.info(f'{counter}. Retrieved missing distribution metrics from preferred distributions')
+    counter += 1
     
     # -----------------------------------------------------------
     # get IM predictions
-    logging.info(f'{counter}. Getting ground motion (i.e., IM) predictions from {im_source}...')
-    counter += 1
     if im_source == "ShakeMap":
-        logging.info(f'********')
+        logging.info(f'\n.....')
         get_im_pred(
             im_source, im_dir, site_data, infra_loc_header, im_filters,
             # for ShakeMaps
@@ -591,7 +575,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             # rupture_table=rupture_table_from_crossing,
             # col_headers_to_append=col_headers_to_append,
         )
-        logging.info(f'********')
+        logging.info(f'.....\n')
     elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
         # running UCERF and using statewide pipeline, skip IM calc and use precomputed files
         # last statement to catch debugging/testing examples, which uses a subset of the statewide segments
@@ -655,7 +639,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         shutil.copy(src=src_path,dst=dst_path)
                 logging.info(f'\t\t-{dst_path}')
         else:
-            logging.info(f'********')
+            logging.info(f'\n.....')
             get_im_pred(
                 im_source, im_dir, site_data, infra_loc_header, im_filters,
                 # for user-defined and UCERF ruptures
@@ -665,7 +649,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 event_ids_to_keep=event_ids_to_keep,
                 # rupture_table=rupture_table
             )
-            logging.info(f'********')
+            logging.info(f'.....\n')
     # merge rupture metadata from crossing (if exists) to that from IM
     if rupture_table_from_crossing is not None:
         # load rupture table with IM stage
@@ -711,15 +695,14 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             crs=4326, geometry=geoms
         )
         rupture_table_from_im_gdf.to_file(save_name_shp,index=False,layer='data')
-    logging.info(f'... DONE - Obtained IM predictions from {im_source} and stored to:')
+    logging.info(f'{counter}. Obtained IM predictions from {im_source} and stored to:')
     logging.info(f"\t{im_dir}")
+    counter += 1
     
     # -----------------------------------------------------------
     # get well and caprock crossings - may move to another location in Preprocess, but must be after getIM
     # well_crossing_ordered_by_faults = None           
     if infra_type == 'wells_caprocks':
-        logging.info(f'{counter}. Getting well crossings for fault rupture...')
-        counter += 1
         # get well crossings
         # check if path is already a valid filepath, if not then infer from input_dir
         well_trace_dir = setup_config['Infrastructure']['WellTraceDir']
@@ -731,12 +714,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             col_with_well_trace_file_names='file_name',
             well_trace_dir=well_trace_dir,
         )
-        logging.info(f'... DONE - Obtained well crossings for fault rupture')
+        logging.info(f'{counter}. Obtained well crossings for fault rupture')
+        counter += 1
         
         # get caprock crossings
         if 'CaprockLeakage' in setup_config['DecisionVariable']['Type']:
-            logging.info(f'{counter}. Getting caprock crossings for fault rupture...')
-            counter += 1
             # check if path is already a valid filepath, if not then infer from input_dir
             caprock_fdir = setup_config['Infrastructure']['PathToCaprockShapefile']
             caprock_fdir = check_and_get_abspath(caprock_fdir, input_dir)
@@ -749,13 +731,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 im_dir=im_dir,
                 processed_input_dir=processed_input_dir
             )
-            logging.info(f'... DONE - Obtained caprock crossings for fault rupture')
+        logging.info(f'{counter}. Obtained caprock crossings for fault rupture')
+        counter += 1
     
     # -----------------------------------------------------------
     # end of preprocess
-    logging.info('---------------')
-    logging.info('******** End of preprocessing for OpenSRA ********')
-    logging.info('---------------')
+    logging.info('... End of preprocessing for OpenSRA')
 
 
 # -----------------------------------------------------------
@@ -1749,6 +1730,7 @@ def get_level_to_run(
 
 # -----------------------------------------------------------
 def get_pref_dist_for_params(
+    opensra_dir,
     params_with_missing_dist_metric,
     site_data,
     param_dist_table,
@@ -1758,7 +1740,6 @@ def get_pref_dist_for_params(
     pref_param_fixed,
     workflow,
     avail_data_summary,
-    opensra_dataset_dir,
     level_to_run,
     flag_using_state_network,
     # running_cpt_based_procedure,
@@ -1817,7 +1798,8 @@ def get_pref_dist_for_params(
                     file_key = 'level1_geo_unit_wills15'
                     file_metadata = avail_data_summary['Parameters'][file_key]
                     store_name = file_metadata['ColumnNameToStoreAs']
-                    geo_unit_fpath = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
+                    geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
+                    geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                     geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
                     locs.data = locs.sample_shapefile(
                         input_table=locs.data,
@@ -1831,7 +1813,7 @@ def get_pref_dist_for_params(
                     param_dist_table[store_name] = param_dist_table[store_name].astype('<U20')
                     # load strength params from Bain et al. (2022)
                     default_geo_prop_fpath = os.path.join(
-                        opensra_dataset_dir,
+                        opensra_dir,
                         avail_data_summary['Parameters']['phi_soil']['Datasets']['Set1']['Path']
                     )
                     default_geo_prop = pd.read_csv(default_geo_prop_fpath)
@@ -1897,7 +1879,7 @@ def get_pref_dist_for_params(
                     file_key = f'level2_geo_unit_{each}'
                     file_metadata = avail_data_summary['Parameters'][file_key]
                     store_name = file_metadata['ColumnNameToStoreAs']
-                    geo_unit_fpath = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
+                    geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                     geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
                     src_name = file_metadata['Datasets']['Set1']['Source']
                     locs.data = locs.sample_shapefile(
@@ -2017,7 +1999,7 @@ def get_pref_dist_for_params(
                                     pass
                                 # path for GIS file
                                 file_metadata = avail_data_summary['Parameters'][param]
-                                gis_fpath = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
+                                gis_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
                                 gis_crs = file_metadata['Datasets']['Set1']['CRS']
                                 locs.data = locs.sample_raster(
                                     input_table=locs.data,
@@ -2137,7 +2119,7 @@ def preprocess_cpt_data(
     setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
     rvs_input, fixed_input, workflow,
     # OpenSRA internal files
-    avail_data_summary, opensra_dataset_dir,
+    avail_data_summary,
     # for all IM sources
     im_source, im_filters,
     # for ShakeMaps
@@ -2195,7 +2177,7 @@ def preprocess_cpt_data(
         logging.info(f'\t- {processed_cpt_im_dir}')
     
     # -----------------------------------------------------------
-    logging.info(f'********')
+    logging.info(f'\n.....')
     # get ground motion predictions to use for CPT analysis
     if im_source == "ShakeMap":
         get_im_pred(
@@ -2212,7 +2194,7 @@ def preprocess_cpt_data(
             processed_input_dir=processed_input_dir,
             rup_fpath=rup_fpath,
         )
-    logging.info(f'********')
+    logging.info(f'.....\n')
     
     # -----------------------------------------------------------
     # read IM distributions for CPTs
@@ -2305,7 +2287,7 @@ def preprocess_cpt_data(
             cpt_meta_wgs84[store_name] = cpt_meta_wgs84[col_with_gw_depth].values
         elif param == 'slope':
             # 2) sample mean from map
-            pref_gis_fpath = os.path.join(opensra_dataset_dir,param_metadata['Datasets']['Set1']['Path'])
+            pref_gis_fpath = os.path.join(opensra_dir,param_metadata['Datasets']['Set1']['Path'])
             pref_gis_crs = param_metadata['Datasets']['Set1']['CRS']
             cpt_meta_wgs84[store_name] = cpt_locs.sample_raster(
                 input_table=cpt_locs.data.copy(),
@@ -2464,7 +2446,7 @@ def preprocess_cpt_data(
     aspect_file_metadata = avail_data_summary['Parameters'][param]
     aspect_store_name = aspect_file_metadata['ColumnNameToStoreAs']
     aspect_gis_fpath = os.path.join(
-        opensra_dataset_dir,
+        opensra_dir,
         aspect_file_metadata['Datasets']['Set1']['Path']
     )
     aspect_gis_crs = aspect_file_metadata['Datasets']['Set1']['CRS']

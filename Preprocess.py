@@ -271,8 +271,16 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # -----------------------------------------------------------
     # load json with available datasets, below-ground only for now
     avail_data_summary = None # initialize
+    opensra_dataset_dir = os.path.join(opensra_dir,'lib','Datasets')
     if infra_type == 'below_ground':
-        avail_data_summary_fpath = os.path.join(opensra_dir,'lib','AvailableDataset.json')
+        # default path for development env
+        if 'OpenSRAData' in setup_config['General']['Directory']:
+            if len(setup_config['General']['Directory']['OpenSRAData']) > 0:
+                opensra_dataset_dir = setup_config['General']['Directory']['OpenSRAData']
+        # check if dataset dir is valid path, if not raise error
+        if not os.path.exists(opensra_dataset_dir):
+            raise ValueError(f"Path to OpenSRA pre-package datasets does not exist: {opensra_dataset_dir}")
+        avail_data_summary_fpath = os.path.join(opensra_dataset_dir,'AvailableDataset.json')
         with open(avail_data_summary_fpath,'r') as f:
             avail_data_summary = json.load(f)
         logging.info(f'{counter}. Loaded JSON file with information of pre-packaged datasets (below-ground only)')
@@ -357,11 +365,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 # site_data = 
                 site_data, rupture_table_from_crossing, col_headers_to_append, event_ids_to_keep = \
                     get_pipe_crossing_fault_rup(
-                        opensra_dir=opensra_dir,
                         processed_input_dir=processed_input_dir,
                         im_dir=im_dir,
                         infra_site_data=site_data.copy(),
                         avail_data_summary=avail_data_summary,
+                        opensra_dataset_dir=opensra_dataset_dir,
                         reduced_ucerf_fpath=reduced_ucerf_fpath,
                         fault_disp_model=fault_disp_model,
                         im_source=im_source,
@@ -391,7 +399,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
                             rvs_input, fixed_input, workflow,
                             # OpenSRA internal files
-                            avail_data_summary,
+                            avail_data_summary, opensra_dataset_dir,
                             # for all IM sources
                             im_source, im_filters,
                             # for ShakeMaps
@@ -421,7 +429,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         if def_poly_source == 'CA_LandslideInventory_WGS84':
                             file_metadata = avail_data_summary['Parameters']['ca_landslide_inventory']
                             def_shp_crs = file_metadata['Datasets']['Set1']['CRS']
-                            spath_def_poly = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
+                            spath_def_poly = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
                         else:
                             # check if def_poly_source is a valid path
                             fdir = check_and_get_abspath(def_poly_source, user_prov_gis_dir)
@@ -439,10 +447,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 logging.info(f'{counter}. Performing pipeline crossing algorithm for {hazard}...')
                 counter += 1
                 site_data = get_pipe_crossing_landslide_and_liq(
-                    opensra_dir=opensra_dir,
                     path_to_def_shp=spath_def_poly,
                     infra_site_data=site_data.copy(),
                     avail_data_summary=avail_data_summary,
+                    opensra_dataset_dir=opensra_dataset_dir,
                     infra_site_data_geom=site_data_geom,
                     export_dir=processed_input_dir,
                     def_type=hazard,
@@ -548,7 +556,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     counter += 1
     param_dist_table, param_dist_meta, params_with_missing_dist_metric = \
         get_pref_dist_for_params(
-            opensra_dir,
             params_with_missing_dist_metric,
             site_data,
             param_dist_table,
@@ -558,6 +565,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             pref_param_fixed,
             workflow,
             avail_data_summary,
+            opensra_dataset_dir,
             level_to_run,
             flag_using_state_network,
             # running_cpt_based_procedure,
@@ -1741,7 +1749,6 @@ def get_level_to_run(
 
 # -----------------------------------------------------------
 def get_pref_dist_for_params(
-    opensra_dir,
     params_with_missing_dist_metric,
     site_data,
     param_dist_table,
@@ -1751,6 +1758,7 @@ def get_pref_dist_for_params(
     pref_param_fixed,
     workflow,
     avail_data_summary,
+    opensra_dataset_dir,
     level_to_run,
     flag_using_state_network,
     # running_cpt_based_procedure,
@@ -1809,8 +1817,7 @@ def get_pref_dist_for_params(
                     file_key = 'level1_geo_unit_wills15'
                     file_metadata = avail_data_summary['Parameters'][file_key]
                     store_name = file_metadata['ColumnNameToStoreAs']
-                    geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
-                    geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
+                    geo_unit_fpath = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
                     geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
                     locs.data = locs.sample_shapefile(
                         input_table=locs.data,
@@ -1824,7 +1831,7 @@ def get_pref_dist_for_params(
                     param_dist_table[store_name] = param_dist_table[store_name].astype('<U20')
                     # load strength params from Bain et al. (2022)
                     default_geo_prop_fpath = os.path.join(
-                        opensra_dir,
+                        opensra_dataset_dir,
                         avail_data_summary['Parameters']['phi_soil']['Datasets']['Set1']['Path']
                     )
                     default_geo_prop = pd.read_csv(default_geo_prop_fpath)
@@ -1890,7 +1897,7 @@ def get_pref_dist_for_params(
                     file_key = f'level2_geo_unit_{each}'
                     file_metadata = avail_data_summary['Parameters'][file_key]
                     store_name = file_metadata['ColumnNameToStoreAs']
-                    geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
+                    geo_unit_fpath = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
                     geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
                     src_name = file_metadata['Datasets']['Set1']['Source']
                     locs.data = locs.sample_shapefile(
@@ -2010,7 +2017,7 @@ def get_pref_dist_for_params(
                                     pass
                                 # path for GIS file
                                 file_metadata = avail_data_summary['Parameters'][param]
-                                gis_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
+                                gis_fpath = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
                                 gis_crs = file_metadata['Datasets']['Set1']['CRS']
                                 locs.data = locs.sample_raster(
                                     input_table=locs.data,
@@ -2130,7 +2137,7 @@ def preprocess_cpt_data(
     setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
     rvs_input, fixed_input, workflow,
     # OpenSRA internal files
-    avail_data_summary,
+    avail_data_summary, opensra_dataset_dir,
     # for all IM sources
     im_source, im_filters,
     # for ShakeMaps
@@ -2298,7 +2305,7 @@ def preprocess_cpt_data(
             cpt_meta_wgs84[store_name] = cpt_meta_wgs84[col_with_gw_depth].values
         elif param == 'slope':
             # 2) sample mean from map
-            pref_gis_fpath = os.path.join(opensra_dir,param_metadata['Datasets']['Set1']['Path'])
+            pref_gis_fpath = os.path.join(opensra_dataset_dir,param_metadata['Datasets']['Set1']['Path'])
             pref_gis_crs = param_metadata['Datasets']['Set1']['CRS']
             cpt_meta_wgs84[store_name] = cpt_locs.sample_raster(
                 input_table=cpt_locs.data.copy(),
@@ -2457,7 +2464,7 @@ def preprocess_cpt_data(
     aspect_file_metadata = avail_data_summary['Parameters'][param]
     aspect_store_name = aspect_file_metadata['ColumnNameToStoreAs']
     aspect_gis_fpath = os.path.join(
-        opensra_dir,
+        opensra_dataset_dir,
         aspect_file_metadata['Datasets']['Set1']['Path']
     )
     aspect_gis_crs = aspect_file_metadata['Datasets']['Set1']['CRS']

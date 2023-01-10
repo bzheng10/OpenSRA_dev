@@ -119,18 +119,20 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     zip_fpath = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline.zip')
     extracted_state_data = False
     # see if folder exists
-    if not os.path.exists(preprocess_im_dir):
-        # unzip to directory
-        with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
-            zip_ref.extractall(preprocess_lib_dir)
-        extracted_state_data = True
-    else:
+    if os.path.exists(preprocess_im_dir):
         # if empty
         if len(os.listdir(preprocess_im_dir)) == 0:
             # unzip to directory
             with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
-                zip_ref.extractall(preprocess_lib_dir)
+                zip_ref.extractall(preprocess_im_dir)
             extracted_state_data = True
+    else:
+        # make folder
+        os.mkdir(preprocess_im_dir)
+        # unzip to directory
+        with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
+            zip_ref.extractall(preprocess_im_dir)
+        extracted_state_data = True
     if extracted_state_data:
         logging.info(f'{counter}. Extracted preprocessed IMs for state network (only performed once during first run after installation)')
         counter += 1
@@ -154,6 +156,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     infra_fname = setup_config['Infrastructure']['SiteDataFile']
     infra_geom_fpath = None
     flag_using_state_network = False
+    flag_using_state_full_set = False
     flag_using_region_network = False
     if infra_ftype == 'State_Network':
         # use internal preprocessed CSV file for state pipeline network
@@ -167,6 +170,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 'CA_Natural_Gas_Pipeline_Segments_WGS84',
                 'CA_Natural_Gas_Pipeline_Segments_WGS84_Under100m.csv'
             )
+            flag_using_state_full_set = True
         infra_fpath = os.path.join(
             opensra_dir,
             'lib','OtherData','Preprocessed',
@@ -460,9 +464,9 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 # if can't find crossing, end preprocessing
                 if site_data is None:
                     raise ValueError(f"FATAL: No crossings identified using specified deformation polygons!")
-                    # sys.exit()
                 # continue
-                performed_crossing = True
+                if spath_def_poly is not None:
+                    performed_crossing = True
                 if site_data.shape[0] == 0:
                     logging.info('\n')
                     logging.info(f'*****FATAL*****')
@@ -595,13 +599,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
         # running UCERF and using statewide pipeline, skip IM calc and use precomputed files
         # last statement to catch debugging/testing examples, which uses a subset of the statewide segments
-        if im_source == 'UCERF' and flag_using_state_network and infra_fname == 'CA_Natural_Gas_Pipeline':
+        if im_source == 'UCERF' and flag_using_state_network and flag_using_state_full_set:
             # if rupture_table is created previously, which contains events to keep
-            # directory with precomputed IM files
-            dir_with_precomp_im = os.path.join(
-                opensra_dir,
-                'lib','OtherData','Preprocessed','Precomputed_IMs_for_Statewide_Pipeline',
-            )
             if performed_crossing:
                 # for each IM file, keep only keep segment IDs with crossings
                 site_ids_to_keep = site_data.ID.values
@@ -610,7 +609,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 site_inds_to_keep = site_inds_to_keep.astype(int)
             if event_ids_to_keep is not None:
                 # load rupture table with IM stage
-                rupture_table_im_fpath = os.path.join(dir_with_precomp_im,'RUPTURE_METADATA.csv')
+                rupture_table_im_fpath = os.path.join(preprocess_im_dir,'RUPTURE_METADATA.csv')
                 rupture_table_from_im = pd.read_csv(rupture_table_im_fpath)
                 rupture_table_from_im.event_id = rupture_table_from_im.event_id.values.astype(int)
                 event_inds_to_keep = np.asarray([
@@ -619,15 +618,17 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 ])
             logging.info(f'\t-Copy/paste precomputed IMs to destination:')
             # copy each item in directory
-            for each in os.listdir(dir_with_precomp_im):
-                src_path = os.path.join(dir_with_precomp_im,each)
+            for each in os.listdir(preprocess_im_dir):
+                src_path = os.path.join(preprocess_im_dir,each)
                 dst_path = os.path.join(im_dir,each)
                 if os.path.isdir(src_path):
+                    if not os.path.exists(dst_path):
+                        os.mkdir(dst_path)
                     if performed_crossing:
                         for f in os.listdir(src_path):
                             # get and read sparse data
-                            curr_fpath = os.path.join(src_path,f)
-                            data = sparse.load_npz(curr_fpath).toarray()
+                            curr_src_path = os.path.join(src_path,f)
+                            data = sparse.load_npz(curr_src_path).toarray()
                             # get subset of datafile with sites to keep
                             data_with_sites_to_keep = data[:,site_inds_to_keep]
                             if event_ids_to_keep is not None:

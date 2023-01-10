@@ -584,15 +584,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 else:
                     # get default values
                     primary_mech = str_arr_nsite_by_ninput.copy()
-                    primary_mech[:] = 'SSComp'
+                    primary_mech[:] = 'HutabaratSSComp'
                     # for weighting between mechanisms in transition zone
                     transition_weight_factor = ones_arr_nsite_by_ninput.copy()
                     
             elif 'settlement' in workflow['EDP']:
-                # if running CPTs, then deformation polygons are produced and true beta_crossings exist
-                # if running_cpt_based_procedure:
-                #     pass
-                # else:
                 # get default values
                 primary_mech = str_arr_nsite_by_ninput.copy()
                 primary_mech[:] = 'Normal' # always normal

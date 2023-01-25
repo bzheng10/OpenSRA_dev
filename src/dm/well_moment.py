@@ -380,36 +380,6 @@ class LuuEtal2022(WellMoment):
         super().__init__()
     
     
-    # @classmethod
-    # def get_req_rv_and_fix_params(cls, kwargs):
-    #     """uses soil_type to determine what model parameters to use"""
-    #     # get well modes
-    #     # mode = kwargs.get('mode')
-    #     # get inputs
-    #     d_production_casing = kwargs.get('d_production_casing',None)
-    #     d_tubing = kwargs.get('d_tubing',None)
-    #     casing_flow = kwargs.get('casing_flow',None)
-    #     # get well modes
-    #     mode = cls.get_well_mode(d_production_casing, d_tubing, casing_flow)
-    #     # modes present
-    #     modes = [num for num in [1, 2, 4] if num in mode]
-    #     # loop through modes, then tubing/casing, then cementation condition
-    #     req_rvs_by_level = []
-    #     req_fixed_by_level = []
-    #     # make list of coefficients to get track
-    #     coeffs = [f"b{i}" for i in range(10)]
-    #     # 
-    #     for num in modes:
-    #         case = f'mode_{num}'
-    #         req_rvs_by_level += [
-    #             param for param in cls._MODEL_FORM['func'][case].__code__.co_varnames
-    #             if not param in coeffs
-    #         ]
-    #     req_rvs_by_level = sorted(list(set(req_rvs_by_level)))
-    #     req_fixed_by_level = cls._REQ_MODEL_FIXED_FOR_LEVEL
-    #     return req_rvs_by_level, req_fixed_by_level
-    
-    
     @staticmethod
     def get_well_mode(
         d_production_casing,
@@ -487,11 +457,6 @@ class LuuEtal2022(WellMoment):
             num: mode==num
             for num in modes
         }
-        # find indices for cases where casings are present
-        # ind_part_present = {}
-        # for part in ['conductor', 'surface', 'production']:
-        #     ind_part_present[part] = np.where(locals()[f'{part}_flag']==True)[0]
-            # print(part, np.where(locals()[f'{part}_flag']!=True)[0])
         
         # loop through modes, then tubing/casing, then cementation condition
         for num in modes:
@@ -533,25 +498,6 @@ class LuuEtal2022(WellMoment):
                     locals()[f'sigma_moment_{part}'][ind_mode[num]] = cls._MODEL_FORM['sigma'][coeff_case]
                     # get sigma_mu
                     locals()[f'sigma_mu_moment_{part}'][ind_mode[num]] = cls._MODEL_FORM['sigma_mu'][coeff_case]
-                
-                # # always run tubing
-                # # model coeffs
-                # coeff_case = f'mode_{num}_tubing'
-                # ind_joint = list(set_ind_1)
-                # # run calc using lambda function
-                # moment_tubing[ind_joint] = cls._MODEL_FORM['func'][model_case](
-                #     # mean coefficients
-                #     **cls._get_mean_coeff_for_lambda_func(
-                #         cls._MODEL_FORM_DETAIL[coeff_case],
-                #         cls._MODEL_FORM['func'][model_case]
-                #     ),
-                #     # inputs
-                #     **cls._get_kwargs_for_lambda_func(
-                #         locals(),
-                #         cls._MODEL_FORM['func'][model_case],
-                #         inds=ind_joint
-                #     )
-                # )
 
         # prepare outputs
         output = {
@@ -583,14 +529,6 @@ class LuuEtal2022(WellMoment):
                 'dist_type': 'lognormal',
                 'unit': 'N-m'
             },
-            # 'moment_conductor': moment_conductor,
-            # 'moment_surface': moment_surface,
-            # 'moment_production': moment_production,
-            # 'moment_tubing': moment_tubing,
-            # 'sigma_moment_conductor': sigma_moment_conductor,
-            # 'sigma_moment_surface': sigma_moment_surface,
-            # 'sigma_moment_production': sigma_moment_production,
-            # 'sigma_moment_tubing': sigma_moment_tubing,
         }
         # get intermediate values if requested
         if return_inter_params:

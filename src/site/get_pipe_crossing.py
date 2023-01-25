@@ -278,8 +278,7 @@ def split_geom_into_halves_without_high_low_points(
     slip_dir, # deg, relative to North (i.e., azimuth)
 ):
     """
-    splits a deformation polygon into scarp (head), body, and toe based on cutoff ratios,
-    also splits polygon into upper and lower halves if requested
+    splits a deformation polygon into upper and lower halves
     """
     # get geometry centroid for rotation
     centroid = list(geom.centroid.coords)[0]
@@ -321,9 +320,43 @@ def split_geom_into_halves_without_high_low_points(
     # revert rotation
     upper = rotate(geom=upper_rotate, angle=-slip_dir, origin=centroid)
     lower = rotate(geom=lower_rotate, angle=-slip_dir, origin=centroid)
-    
+
     # return
     return upper, lower
+    
+
+# ---
+def get_def_length(
+    geom, # shapely geometry, in UTM (meters)
+    slip_dir, # deg, relative to North (i.e., azimuth)
+):
+    """
+    splits a deformation polygon into upper and lower halves
+    """
+    # get geometry centroid for rotation
+    centroid = list(geom.centroid.coords)[0]
+    
+    # rotate such that slip direction is pointing up
+    geom_rotate = rotate(geom=geom, angle=slip_dir, origin=centroid)
+    
+    # get extent of rotated geometry
+    extent_rotate = geom_rotate.bounds
+    xleft = extent_rotate[0]
+    ybottom = extent_rotate[1]
+    xright = extent_rotate[2]
+    ytop = extent_rotate[3]
+    
+    # make line along direction of slipage and through centroid
+    vertical_line_through_centroid = LineString([
+        [centroid[0],ybottom],
+        [centroid[0],ytop]
+    ])
+    
+    # get intersection between line from above and polygon, then get length
+    def_length = vertical_line_through_centroid.intersection(geom_rotate).length
+    
+    # return
+    return def_length
 
 
 @njit(
@@ -1310,6 +1343,7 @@ def get_pipe_crossing_landslide_and_liq(
             bound_coord_flat_df.data['x'] = bound_coord_utm_flat[:,0] # add utm x
             bound_coord_flat_df.data['y'] = bound_coord_utm_flat[:,1] # add utm y
 
+            
     # ---
     # get slip direction (azimuth, relative to North) for deformation polygons
     if poly_exist:
@@ -1392,6 +1426,21 @@ def get_pipe_crossing_landslide_and_liq(
                 toe_list.append(toe_i)
                 upper_list.append(upper_i)
                 lower_list.append(lower_i)
+        
+    # ---
+    # get deformation length for deformation polygons
+    if poly_exist:
+        # for lateral spread and settlement
+        if def_type == 'lateral_spread' or def_type == 'settlement':
+            def_length_list = []
+            for i in range(def_poly_crossed_unique_gdf_utm.shape[0]):
+                def_length_list.append(
+                    get_def_length(
+                        geom=def_poly_crossed_unique_gdf_utm.geometry[i],
+                        slip_dir=def_poly_crossed_unique_gdf_utm['slip_dir'][i]
+                    )
+                )
+            def_poly_crossed_unique_gdf_utm['def_length'] = def_length_list
 
     # ---
     if poly_exist:
@@ -1609,12 +1658,12 @@ def get_pipe_crossing_landslide_and_liq(
         
     # ---
     # get anchorage lengths
-    # initialize
-    anchorage_length = []
     length_tol = 1e-1 # m
     if poly_exist:
         # if crossing exists, continue, else set anchorage_length to null array
         if len(crossed_poly_index) > 0:
+            # initialize
+            anchorage_length = []
             # for every segment crossed with deformation polygon, get the nearest hard points and compare to minimum anchorage length
             for i in range(crossing_summary_gdf_utm.shape[0]):
                 # current deformation geometry crossed
@@ -1722,6 +1771,28 @@ def get_pipe_crossing_landslide_and_liq(
     # round and append to dataframe
     anchorage_length = np.round(anchorage_length,decimals=1)
     crossing_summary_gdf_utm['l_anchor'] = np.maximum(anchorage_length,1e-2) # limit to 1 cm
+
+    # ---
+    # calculate deformation length for (liquefaction only)
+    if def_type == 'lateral_spread' or def_type == 'settlement':
+        if poly_exist:
+            # if crossing exists, continue, else set def_length to null array
+            if len(crossed_poly_index) > 0:
+                # initialize
+                def_length = []
+                for i in range(crossing_summary_gdf_utm.shape[0]):
+                    # current deformation geometry crossed
+                    curr_def_poly_index = crossing_summary_gdf_utm.def_poly_index_crossed[i]
+                    def_length.append(
+                        def_poly_crossed_gdf_utm['def_length'][
+                            np.where(def_poly_crossed_gdf_utm.FID==curr_def_poly_index)[0][0]])
+            else:
+                def_length = np.asarray([])
+        else:
+            def_length = np.ones(crossing_summary_gdf_utm.shape[0])*100 # default to 100 m
+        # round and append to dataframe
+        def_length = np.round(def_length,decimals=1)
+        crossing_summary_gdf_utm['def_length'] = np.maximum(def_length,1e-2) # limit to 1 cm
     
     # ---
     # convert crossing_summary_gdf_utm back to lat lon
@@ -1731,7 +1802,7 @@ def get_pipe_crossing_landslide_and_liq(
     
     # ---
     # probability of crossing
-    if path_to_def_shp is not None:
+    if poly_exist:
         crossing_summary_gdf[f'prob_crossing'] = 1
     else:
         crossing_summary_gdf[f'prob_crossing'] = 0.25
@@ -1800,6 +1871,7 @@ def get_pipe_crossing_landslide_and_liq(
     
     # sort by ID column
     crossing_summary_gdf.sort_values('ID',inplace=True)
+    crossing_summary_gdf.reset_index(drop=True,inplace=True)
     
     # ---
     # export crossing summary table

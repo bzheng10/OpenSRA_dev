@@ -8,13 +8,14 @@ import time
 
 # scientific processing modules
 import numpy as np
-from pandas import DataFrame
+from pandas import DataFrame, read_csv
 
 # precompile
 # from numba_stats import norm
 from numba import njit, float64
 
 # OpenSRA modules and functionsx
+from src.base_class import GenericModel
 from src.util import lhs
 from src.pc_func.pc_util import res_to_samples, hermite_prob
 
@@ -89,6 +90,33 @@ def clean_up_input_params(input_dict):
     return input_dict
 
 
+def prepare_generic_model(genmod_attribtes):
+    """creates instance of generic model using attributes"""
+    # get spreadsheet with model form definitions
+    genmod_model_form = read_csv(genmod_attribtes['PathToModelInfo'])
+    # make clean instance of generic model
+    genmod = GenericModel()
+    # set upstream dependency
+    genmod.define_upstream_pbee_info(
+        cat=genmod_attribtes['UpstreamCategory'],
+        var_list=genmod_attribtes['UpstreamParams']
+    )
+    # set return info
+    genmod.define_return_pbee_info(
+        cat=genmod_attribtes['ReturnCategory'],
+        var_list=genmod_attribtes['ReturnParams']
+    )
+    # add model terms
+    for i in range(genmod_model_form.shape[0]):
+        genmod.add_model_term(**genmod_model_form.loc[i].to_dict())
+    # gather missing inputs
+    genmod._gather_all_inputs()
+    # make model
+    genmod.construct_model_form()
+    # return
+    return genmod
+
+
 def prepare_methods(workflow, n_site):
     """given workflow, construction dictionary with instances of methods"""
     # set up dictionary for methods and additional parameters loaded through setup_config
@@ -106,13 +134,15 @@ def prepare_methods(workflow, n_site):
         mods_dict[cat.lower()] = {}
         # loop through hazards
         for haz in workflow[cat]:
+            # initialize dictionary
             mods_dict[cat.lower()][haz] = {
                 'module': importlib.import_module(f'src.{cat.lower()}.{haz}'),
                 'method': {},
                 'weight': [],
+                'contains_genmod': False # initialize flag for generic model
             }
             # reload for development
-            importlib.reload(mods_dict[cat.lower()][haz]['module'])
+            # importlib.reload(mods_dict[cat.lower()][haz]['module'])
             # loop through methods
             upstream_cat = []
             mods_dict[cat.lower()][haz]['upstream_params_by_method'] = {}
@@ -140,7 +170,13 @@ def prepare_methods(workflow, n_site):
             else:
                 for model in workflow[cat][haz]:
                     # get instance
-                    mods_dict[cat.lower()][haz]['method'][model] = copy.deepcopy(getattr(mods_dict[cat.lower()][haz]['module'], model))()
+                    if model == 'GenericModel':
+                        mods_dict[cat.lower()][haz]['method'][model] = \
+                            copy.deepcopy(prepare_generic_model(workflow[cat][haz][model]))
+                        mods_dict[cat.lower()][haz]['contains_genmod'] = True # update to True
+                    else:
+                        mods_dict[cat.lower()][haz]['method'][model] = \
+                            copy.deepcopy(getattr(mods_dict[cat.lower()][haz]['module'], model))()
                     # set up analysis
                     mods_dict[cat.lower()][haz]['method'][model].set_analysis_size(n_site=n_site)
                     # get all upstream parameters
@@ -163,8 +199,21 @@ def prepare_methods(workflow, n_site):
                         mods_dict[cat.lower()][haz]['weight'].append(1)
                     else:
                         items = list(workflow[cat][haz][model])
+                        # list of attributes to skip (mostly for generic model)
+                        model_att_to_skip = [
+                            # should always exist
+                            "ModelWeight",
+                            # rest are for generic model
+                            "UpstreamCategory",
+                            "UpstreamParams",
+                            "ReturnCategory",
+                            "ReturnParams",
+                            "Aleatory",
+                            "Epistemic",
+                            "PathToModelInfo"
+                        ]
                         for item in items:
-                            if item != 'ModelWeight':
+                            if not item in model_att_to_skip:
                                 additional_params[item] = workflow[cat][haz][model][item]
                     # get weights
                     if workflow[cat][haz][model] is None:
@@ -405,7 +454,9 @@ def get_samples_for_params(dist, n_sample, n_site):
 
 def process_methods_for_mean_and_sigma_of_mu(
     haz_dict, upstream_params, internal_params, input_samples=None, 
-    n_sample=1, n_site=1, use_input_mean=False, input_dist=None):
+    n_sample=1, n_site=1, use_input_mean=False, input_dist=None,
+    level_to_run=3 # needed for generic models
+):
     """preprocess methods to get mean of mu, sigma of mu, and sigma for inputs"""
     
     # time_start = time.time()
@@ -416,6 +467,7 @@ def process_methods_for_mean_and_sigma_of_mu(
     # number of methods for hazard
     methods = haz_dict['method']
     weights = haz_dict['weight']
+    contains_genmod = haz_dict['contains_genmod']
     n_methods = len(methods)
     
     # if using only mean of inputs for analysis
@@ -445,11 +497,22 @@ def process_methods_for_mean_and_sigma_of_mu(
         return_params = list(methods[method].return_pbee_dist['params'])
         
         # run analysis
-        out = methods[method]._model(
-            **upstream_params_for_method,
-            **internal_params,
-            **input_samples
-        )
+        if contains_genmod:
+            kwargs = {
+                **upstream_params_for_method,
+                **internal_params,
+                **input_samples
+            }
+            out = methods[method]._model(
+                kwargs,
+                level_to_run=level_to_run
+            )
+        else:
+            out = methods[method]._model(
+                **upstream_params_for_method,
+                **internal_params,
+                **input_samples
+            )
         
         # if method == 'SasakiEtal2022' and 'strain_casing' in haz_dict['return_params']:
         #     if True in np.isnan(out['strain_casing']['mean']) or True in np.isnan(out['strain_tubing']['mean']):
@@ -502,7 +565,8 @@ def process_methods_for_mean_and_sigma_of_mu(
                     store_rvs[param][ind_lognormal,:] = np.log(out[param]['mean'][ind_lognormal,:])
            
             # get mean of mu
-            track_rvs_mean[param] = store_rvs[param].mean(axis=1)
+            track_rvs_mean[param] = np.ma.masked_invalid(store_rvs[param]).mean(axis=1)
+            # track_rvs_mean[param] = store_rvs[param].mean(axis=1)
             
             # get average sigma over domain
             store_sigma[param] = np.sqrt(np.mean(store_sigma[param]**2,axis=1))
@@ -512,7 +576,9 @@ def process_methods_for_mean_and_sigma_of_mu(
         
             # after getting mean of mu, get epistemic uncertainty
             track_rvs_mean_reshape = np.tile(track_rvs_mean[param].copy(),(n_sample,1)).T
-            var_of_mu_input_vector_down = np.mean((store_rvs[param]-track_rvs_mean_reshape)**2,axis=1)
+            var_of_mu_input_vector_down = \
+                np.ma.masked_invalid((store_rvs[param]-track_rvs_mean_reshape)**2).mean(axis=1)
+            # var_of_mu_input_vector_down = np.mean((store_rvs[param]-track_rvs_mean_reshape)**2,axis=1)
             store_sigma_mu[param] = np.sqrt(store_sigma_mu[param]**2 + var_of_mu_input_vector_down)
         
             # store for post-processing and checks
@@ -581,7 +647,9 @@ def process_methods_for_mean_and_sigma_of_mu(
 def process_methods_for_mean_and_sigma_of_mu_for_liq(
     haz_dict, upstream_params, internal_params, input_samples=None,
     n_sample=1, n_site=1, get_liq_susc=True, use_input_mean=False, input_dist=None,
-    get_mean_over_samples=False):
+    get_mean_over_samples=False,
+    level_to_run=3 # needed for generic models
+):
     """preprocess methods to get mean of mu, sigma of mu, and sigma for inputs"""
     
     # dictionary for storing results from each method
@@ -590,6 +658,7 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
     # number of methods for hazard
     methods = haz_dict['method']
     weights = haz_dict['weight']
+    contains_genmod = haz_dict['contains_genmod']
     n_methods = len(methods)
     
     # if using only mean of inputs for analysis
@@ -621,11 +690,22 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
         return_params = list(methods[method].return_pbee_dist['params'])
                 
         # run analysis
-        out = methods[method]._model(
-            **upstream_params_for_method,
-            **internal_params,
-            **input_samples
-        )
+        if contains_genmod:
+            kwargs = {
+                **upstream_params_for_method,
+                **internal_params,
+                **input_samples
+            }
+            out = methods[method]._model(
+                kwargs,
+                level_to_run=level_to_run
+            )
+        else:
+            out = methods[method]._model(
+                **upstream_params_for_method,
+                **internal_params,
+                **input_samples
+            )
         
         # print(f'\taa. time: {time.time()-time_start1} seconds')
         # time_start1 = time.time()
@@ -666,14 +746,17 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
                 store_rvs[param] = ones_arr*store_rvs[param]
 
             # get mean of mu
-            track_rvs_mean[param] = store_rvs[param].mean(axis=1)
+            track_rvs_mean[param] = np.ma.masked_invalid(store_rvs[param]).mean(axis=1)
+            # track_rvs_mean[param] = store_rvs[param].mean(axis=1)
         
             # get average base sigma_mu over domain
             store_sigma_mu[param] = np.sqrt(np.mean(store_sigma_mu[param]**2,axis=1))
     
             # after getting mean, run loop again to get epistemic uncertainty
             track_rvs_mean_reshape = np.tile(track_rvs_mean[param].copy(),(n_sample,1)).T
-            var_of_mu_input_vector_down = np.mean((store_rvs[param]-track_rvs_mean_reshape)**2,axis=1)
+            var_of_mu_input_vector_down = \
+                np.ma.masked_invalid((store_rvs[param]-track_rvs_mean_reshape)**2).mean(axis=1)
+            # var_of_mu_input_vector_down = np.mean((store_rvs[param]-track_rvs_mean_reshape)**2,axis=1)
             sigma_of_mu_vector_method_down = np.sqrt(store_sigma_mu[param]**2 + var_of_mu_input_vector_down)
 
             # if tracking mean over samples
@@ -744,7 +827,8 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
         for count,method in enumerate(methods):
             if liq_susc_val[method] is not None:
                 if get_mean_over_samples:
-                    liq_susc_val_mean += np.mean(liq_susc_val[method],axis=1)
+                    liq_susc_val_mean += np.ma.masked_invalid(liq_susc_val[method]).mean(axis=1)
+                    # liq_susc_val_mean += np.mean(liq_susc_val[method],axis=1)
                 else:
                     liq_susc_val_mean += liq_susc_val[method]
         
@@ -767,7 +851,8 @@ def get_fractiles(pc_samples, fractiles=[5,16,50,84,95], n_sig_fig=None):
     """get fractiles and mean"""
     frac_return = np.vstack([
         np.percentile(pc_samples*100,fractiles,axis=0),
-        np.mean(pc_samples*100,axis=0)
+        np.nanmean(pc_samples*100,axis=0)
+        # np.mean(pc_samples*100,axis=0)
     ]).T
     # convert back to decimals
     frac_return = frac_return/100

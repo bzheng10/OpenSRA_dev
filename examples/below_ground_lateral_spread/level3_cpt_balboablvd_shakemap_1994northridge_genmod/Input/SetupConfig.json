@@ -1,0 +1,148 @@
+{
+    "General": {
+        "AnalysisID" : "TEST",
+		"Directory": {
+			"Working": ""
+		},
+        "OutputFileType": "csv"
+    },
+    "Infrastructure": {
+		"InfrastructureType": "below_ground",
+		"DataType": "Shapefile",
+        "SiteDataFile": "../../../other_data/GIS_Data/Clipped_State_Network_Balboa/",
+		"SiteLocationParams": {
+            "LatMid": "LAT_MID",
+            "LonMid": "LON_MID",
+            "LatBegin": "LAT_BEGIN",
+            "LonBegin": "LON_BEGIN",
+            "LatEnd": "LAT_END",
+            "LonEnd": "LON_END"
+		}
+    },
+    "IntensityMeasure": {
+        "SourceForIM": {
+            "ShakeMap": {
+                "Directory": "../../../other_data/ShakeMaps",
+                "Events": [
+                    "1994_Northridge"
+                ]
+			}
+        }
+    },
+    "EngineeringDemandParameter": {
+        "Type": {
+            "Liquefaction": {
+                "ToInclude": true,
+                "Method": {
+                    "CPTBased": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "LateralSpread": {
+                "ToInclude": true,
+                "Method": {
+                    "CPTBased": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "Settlement": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "Landslide": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            },
+            "SurfaceFaultRupture": {
+                "ToInclude": false,
+                "Method": {},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DamageMeasure": {
+        "Type": {
+            "LateralSpreadInducedPipeStrain": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022_and_HutabaratEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "DecisionVariable": {
+        "Type": {
+            "PipeCompressiveRupture": {
+                "ToInclude": true,
+                "Method": {
+					"BainEtal2022": {
+						"ModelWeight": 1
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileRupture": {
+                "ToInclude": true,
+                "Method": {
+					"GenericModel": {
+						"ModelWeight": 1,
+						"UpstreamCategory": "DM",	
+						"UpstreamParams": [],
+						"ReturnParams": ["eps_tens_crit_rup"],
+						"Aleatory": 0.3,
+						"Epistemic": 0.25,
+						"PathToModelInfo": "genmod_input_DV_PipeTensileRupture.csv"
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileLeakage": {
+                "ToInclude": true,
+                "Method": {
+					"GenericModel": {
+						"ModelWeight": 1,
+						"UpstreamCategory": "DM",	
+						"UpstreamParams": [],
+						"ReturnParams": ["eps_tens_crit_leak"],
+						"Aleatory": 0.3,
+						"Epistemic": 0.25,
+						"PathToModelInfo": "genmod_input_DV_PipeTensileLeakage.csv"
+					}
+				},
+                "OtherParameters": {}
+            }
+        },
+        "EpistemicUncertainty": {},
+        "OtherParameters": {}
+    },
+    "InputParameters": {
+		"RandomVariablesFileName": "rvs_input.csv",
+		"FixedVariablesFileName": "fixed_input.csv"
+    },
+	"UserSpecifiedData": {
+		"GISDatasets": {
+			"Directory": ""
+		},
+        "CPTParameters": {
+			"PathToCPTSummaryCSV": "../../../other_data/GIS_Data/BalboaBlvdCPTs/Summary.csv",
+			"PathToCPTDataFolder": "../../../other_data/GIS_Data/BalboaBlvdCPTs/CPTs",
+			"PathToFreefaceDir": "../../../other_data/GIS_Data/free_face_feature",
+			"ColumnInCPTSummaryWithGWTable": "Mean GWT NR",
+			"WeightRobertson09": 0.5,
+			"WeightZhang04": 0.5
+        }
+	}
+}

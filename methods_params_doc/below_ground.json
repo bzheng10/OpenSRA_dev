@@ -1432,7 +1432,7 @@
 								"steel_grade"
 							],
 							"Return": {
-								"Description": "This method returns the critical strain at which 50% probability of compression-induced rupture is expected to occur pipeline segments.",
+								"Description": "This method returns the critical strain at which 50% probability of compression-induced rupture is expected to occur for pipeline segments.",
 								"Params": ["eps_comp_crit_rup"]
 							},
 							"UpstreamDependency": {
@@ -1503,7 +1503,7 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "This method returns the critical strain at which 50% probability of tension-induced rupture is expected to occur pipeline segments.",
+								"Description": "This method returns the critical strain at which 50% probability of tension-induced rupture is expected to occur for pipeline segments.",
 								"Params": ["eps_tens_crit_rup"]
 							},
 							"UpstreamDependency": {
@@ -1542,7 +1542,7 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "This method returns the critical strain at which 50% probability of tension-induced leakage is expected to occur pipeline segments.",
+								"Description": "This method returns the critical strain at which 50% probability of tension-induced leakage is expected to occur for pipeline segments.",
 								"Params": ["eps_tens_crit_leak"]
 							},
 							"UpstreamDependency": {
@@ -1558,6 +1558,22 @@
                                     "ToDisplay": true,
                                     "DefaultValue": null
                                 }
+							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "This method returns the critical value at which 50% probability of tension-induced leakage is expected to occur for pipeline segments.",
+								"Params": ["eps_tens_crit_leak"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a method for tensile pipe strain from any of the pipe strain subtabs under \"Damage Measure\".",
+								"Params": []
+							},
+							"Params": {
 							}
 						}
 					}

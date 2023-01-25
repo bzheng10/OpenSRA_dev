@@ -43,9 +43,9 @@ class BaseModel(object):
     """Model template"""
 
     # class definitions
-    _NAME = None  # Name of the model
-    _ABBREV = None            # Abbreviated name of the model
-    _REF = None                    # Reference for the model
+    _NAME = ''  # Name of the model
+    _ABBREV = ''            # Abbreviated name of the model
+    _REF = ''                    # Reference for the model
     # _RETURN_PBEE_META = {
     #     'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
     #     'type': 'landslide',       # Type of model (e.g., liquefaction, landslide, pipe strain)
@@ -56,41 +56,17 @@ class BaseModel(object):
     _RETURN_PBEE_DIST = {                            # Distribution information
         "desc": 'returned PBEE upstream random variables:',
         'params': {
-            # 'pgdef': {
-            #     'desc': 'permanent ground deformation',
-            #     'unit': 'm',
-            #     # 'mean': None,
-            #     # 'aleatory': None,
-            #     # 'epistemic': {
-            #     #     'coeff': None, # base uncertainty, based on coeffcients
-            #     #     'input': None, # sigma_mu uncertainty from input parameters
-            #     #     'total': None # SRSS of coeff and input sigma_mu uncertainty
-            #     # },
-            #     # 'dist_type': 'lognormal',
-            # }
         }
     }
-    # _INPUT_PBEE_META = {
-    #     'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-    #     'variable': 'pga'        # Input variable for PBEE category, e.g., pgdef, eps_p
-    # }
     _INPUT_PBEE_DIST = {
         "desc": 'PBEE upstream random variables:', # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, eps_p
         'params': {
-            # 'pga': {
-            #     'desc': 'peak ground acceleration (g)',
-            #     'unit': 'g',
-            #     # 'mean': None,
-            #     # 'aleatory': None,
-            #     # 'epistemic': None,
-            #     # 'dist_type': 'lognormal'
-            # }
         }
     }
-    _MODEL_INPUT_INFRA = {'desc': None, 'params': None}
-    _MODEL_INPUT_GEO = {'desc': None, 'params': None}
-    _MODEL_INPUT_OTHER = {'desc': None, 'params': None}
-    _MODEL_INPUT_FIXED = {'desc': None, 'params': None}
+    _MODEL_INPUT_INFRA = {'desc': '', 'params': {}}
+    _MODEL_INPUT_GEO = {'desc': '', 'params': {}}
+    _MODEL_INPUT_OTHER = {'desc': '', 'params': {}}
+    _MODEL_INPUT_FIXED = {'desc': '', 'params': {}}
     # random inputs with means, sigmas, and distributions (normal or lognormal)
     _INPUT_DIST_VARY_WITH_LEVEL = False
     _N_LEVEL = 1
@@ -197,7 +173,8 @@ class BaseModel(object):
     
 
     @classmethod
-    def get_req_rv_and_fix_params(cls, kwargs):
+    # def get_req_rv_and_fix_params(cls, kwargs):
+    def get_req_rv_and_fix_params(cls):
         """get required rv and fixed params"""
         req_rvs_by_level = {}
         req_fixed_by_level = {}
@@ -515,42 +492,42 @@ class BaseModel(object):
 
     
     # get inputs
-    def set_inputs(self, kwargs):
-        """Checks kwargs for input parameters and stores in class"""
-        # get general params
-        if self.req_pbee_rv in kwargs:
-            self._inputs['n_site'] = kwargs.get('n_site')
-        else:
-            return ValueError(f'missing "{n_site}" in inputs; must provide it to proceed')
-        if self.req_pbee_rv in kwargs:
-            self._inputs[self.req_pbee_rv] = kwargs.get(self.req_pbee_rv)
-        else:
-            return ValueError(f'missing "{self.req_pbee_rv}" in inputs; must provide it to proceed')
-        # self._inputs['n_sample'] = kwargs.get('n_sample')
-        # self._inputs['n_event'] = kwargs.get('n_event')
-        # get required inputs
-        missing_inputs = []
-        for param in self.model_input_rv:
-            self._inputs[param] = kwargs.get(param, None)
-            if not param in kwargs:
-                missing_inputs.append(param) # add to list of missing inputs to report
-                self.sample_rv(param)
-        if len(missing_inputs) > 0:
-            logging.info(f'missing "{", ".join(missing_inputs)}" in inputs; will sample from default distribution')
-        # store missing inputs
-        self._missing_inputs = missing_inputs
+    # def set_inputs(self, kwargs):
+    #     """Checks kwargs for input parameters and stores in class"""
+    #     # get general params
+    #     if self.req_pbee_rv in kwargs:
+    #         self._inputs['n_site'] = kwargs.get('n_site')
+    #     else:
+    #         return ValueError(f'missing "{n_site}" in inputs; must provide it to proceed')
+    #     if self.req_pbee_rv in kwargs:
+    #         self._inputs[self.req_pbee_rv] = kwargs.get(self.req_pbee_rv)
+    #     else:
+    #         return ValueError(f'missing "{self.req_pbee_rv}" in inputs; must provide it to proceed')
+    #     # self._inputs['n_sample'] = kwargs.get('n_sample')
+    #     # self._inputs['n_event'] = kwargs.get('n_event')
+    #     # get required inputs
+    #     missing_inputs = []
+    #     for param in self.model_input_rv:
+    #         self._inputs[param] = kwargs.get(param, None)
+    #         if not param in kwargs:
+    #             missing_inputs.append(param) # add to list of missing inputs to report
+    #             self.sample_rv(param)
+    #     if len(missing_inputs) > 0:
+    #         logging.info(f'missing "{", ".join(missing_inputs)}" in inputs; will sample from default distribution')
+    #     # store missing inputs
+    #     self._missing_inputs = missing_inputs
             
-            # if param in kwargs:
-            # try:
-                # self._inputs[param] = kwargs.get(param)
-            # else:
-            # except ValueError:
-                # raise MissingParameterError(f'Missing "{param}" in inputs; will sample from distribution')
+    #         # if param in kwargs:
+    #         # try:
+    #             # self._inputs[param] = kwargs.get(param)
+    #         # else:
+    #         # except ValueError:
+    #             # raise MissingParameterError(f'Missing "{param}" in inputs; will sample from distribution')
 
-                # raise ValueError(f"Missing model input: {param}; cannot proceed with method.")
-        # get optional inputs
-        # for param in self.INPUT['OPTIONAL']:
-        #     self._inputs[param] = kwargs.get(param, self.INPUT['OPTIONAL'][param])
+    #             # raise ValueError(f"Missing model input: {param}; cannot proceed with method.")
+    #     # get optional inputs
+    #     # for param in self.INPUT['OPTIONAL']:
+    #     #     self._inputs[param] = kwargs.get(param, self.INPUT['OPTIONAL'][param])
 
 
     def sample_rv(self, param):
@@ -821,105 +798,129 @@ class GenericModel(BaseModel):
     """
 
     # class definitions
-    _NAME = 'GenericModel_2022'  # Name of the model
-    _ABBREV = 'GM22'            # Abbreviated name of the model
-    _MODEL_PBEE_CAT = None        # Return category in PBEE framework, e.g., IM, EDP, DM
-    _MODEL_RETURN_RV = None        # Return variable for PBEE category, e.g., pgdef, pipe_strain
-    _MODEL_TYPE = None               # Type of model (e.g., liquefaction, landslide)
-    _MODEL_DIST = {          # Distribution information for model
-        'type': 'normal',
-        'aleatory': 1,
-        'sigma': 0,
+    _NAME = 'GenericModel'  # Name of the model
+    _ABBREV = 'GenMod'            # Abbreviated name of the model
+    REF = "".join([                     # Reference for the model
+    ])
+    _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': '',        # Return category in PBEE framework, e.g., IM, EDP, DM
+        "desc": 'returned PBEE upstream random variables:',
+        'params': {
+        }
     }
-    _REQ_PBEE_CAT = None     # Upstream PBEE variable required by model, e.g, IM, EDP, DM
-    _REQ_PBEE_RV = None     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
-    _MODEL_INPUT_RV = {} # random inputs with means, sigmas, and distributions (normal or lognormal)
+    _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': '',        # Return category in PBEE framework, e.g., IM, EDP, DM
+        "desc": 'PBEE upstream random variables:',
+        'params': {
+        }
+    }
+    _INPUT_DIST_VARY_WITH_LEVEL = True
+    _N_LEVEL = 3
+    _MODEL_INPUT_INFRA = {
+        "desc": 'Infrastructure random variables:',
+        'params': {
+        }
+    }
+    _MODEL_INPUT_GEO = {
+        "desc": 'Geotechnical/geologic random variables:',
+        'params': {
+        }
+    }
+    _MODEL_INPUT_OTHER = {
+        "desc": 'Geotechnical/geologic random variables:',
+        'params': {
+        }
+    }
+    _MODEL_INPUT_FIXED = {
+        'desc': 'Fixed input variables:',
+        'params': {
+        }
+    }
+    _REQ_MODEL_RV_FOR_LEVEL = {
+        'level1': [],
+        'level2': [],
+        'level3': [],
+    }
+    _REQ_MODEL_FIXED_FOR_LEVEL = {
+        'level1': [],
+        'level2': [],
+        'level3': [],
+    }
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {
         'level1': {},
         'level2': {},
-        'level3': {}
+        'level3': {},
     }
-    # _FIXED = {}
-    # _OUTPUT = []
+    _MODEL_INPUT_RV = {}
+    _MODEL_FORM = {
+        'func': {
+            'level1': {},
+            'level2': {},
+            'level3': {},
+        },
+        'sigma': {
+            'level1': {},
+            'level2': {},
+            'level3': {},
+        },
+        'sigma_mu': {
+            'level1': {},
+            'level2': {},
+            'level3': {},
+        },
+        'func_string': {},
+        'string': {}
+    }
+    
 
     # instantiation
     def __init__(self):
-        super().__init__()    
-    
-    # get inputs
-    def set_inputs(self, kwargs):
-        """Checks kwargs for input parameters and stores in class"""
-        # get general params
-        if self.req_pbee_rv in kwargs:
-            self._inputs['n_site'] = kwargs.get('n_site')
-        else:
-            return ValueError(f'missing "{n_site}" in inputs; must provide it to proceed')
-        if self.req_pbee_rv in kwargs:
-            self._inputs[self.req_pbee_rv] = kwargs.get(self.req_pbee_rv)
-        else:
-            return ValueError(f'missing "{self.req_pbee_rv}" in inputs; must provide it to proceed')
-        # self._inputs['n_sample'] = kwargs.get('n_sample')
-        # self._inputs['n_event'] = kwargs.get('n_event')
-        # get required inputs
-        missing_inputs = []
-        for param in self.model_input_rv:
-            self._inputs[param] = kwargs.get(param, None)
-            if not param in kwargs:
-                missing_inputs.append(param) # add to list of missing inputs to report
-                self.sample_rv(param)
-        if len(missing_inputs) > 0:
-            logging.info(f'missing "{", ".join(missing_inputs)}" in inputs; will sample from default distribution')
-        # store missing inputs
-        self._missing_inputs = missing_inputs
-            
-            # if param in kwargs:
-            # try:
-                # self._inputs[param] = kwargs.get(param)
-            # else:
-            # except ValueError:
-                # raise MissingParameterError(f'Missing "{param}" in inputs; will sample from distribution')
-
-                # raise ValueError(f"Missing model input: {param}; cannot proceed with method.")
-        # get optional inputs
-        # for param in self.INPUT['OPTIONAL']:
-        #     self._inputs[param] = kwargs.get(param, self.INPUT['OPTIONAL'][param])
+        super().__init__()
     
     
-    def define_upstream_pbee_info(self, req_pbee_cat, req_pbee_rv):
-        self.req_pbee_cat = req_pbee_cat
-        self.req_pbee_rv = req_pbee_rv
-        
-    def define_return_pbee_info(self, model_pbee_cat, model_type, model_return_rv):
-        self.model_pbee_cat = model_pbee_cat
-        self.model_type = model_type
-        self.model_return_rv = model_return_rv
-        
-    def define_model_dist(self, dist_type='lognormal', aleatory=1, epistemic=0):
-        self.model_dist = {
-            'type': dist_type,
-            'aleatory': aleatory,
-            'epistemic': epistemic,
+    def define_upstream_pbee_info(self, cat, var_list, desc='', unit=''):
+        """
+        categories: im, edp, dm
+        var_list: list of random or fixed variables available from upstream models (e.g., pga from IM)
+        """
+        self.input_pbee_dist['category'] = cat.upper()
+        self.input_pbee_dist['params'] = {
+            key: {'desc': desc, 'unit': unit,}
+            for key in var_list
         }
-
-    def add_model_rv(self, rv_label,
-                     mean=None, sigma=None, cov=None, 
-                     dist_min=-np.inf, dist_max=np.inf,
-                     dist_type='normal', unit=None):
-        """"Add to or overwrite a dictionary of random variables"""
-        if cov is None and sigma is None:
-            return ValueError('Must provide either "cov" or "sigma"')
-        self.model_input_rv[rv_label] = {
-            'mean': mean,
-            'sigma': sigma,
-            'cov': cov,
-            'min': dist_min,
-            'max': dist_max,
-            'dist': dist_type
+        
+    def define_return_pbee_info(
+        self, cat, var_list,
+        dist_type='lognormal', aleatory=0.01, epistemic=0.0,
+        min_val=1e-10, # avoid summing of -INF mean values for lognormally distributed returns
+        desc='', unit='' # does not affect calculation
+    ):
+        """
+        categories: edp, dm, dv
+        var_list: list of random or fixed variables available from upstream models (e.g., pgdef for EDP)
+        note: only supports one return variable
+        """
+        self.return_pbee_dist['category'] = cat.upper()
+        if len(var_list) > 1:
+            print('Generic model only supports return of one parameter - only one will be processed.')
+        self.return_pbee_dist['params'] = {
+            var_list[0]: {
+                'desc': desc,
+                'unit': unit,
+                'dist_type': dist_type,
+                'aleatory': aleatory,
+                'epistemic': epistemic,
+                'min_val': min_val, # only used if lognormally distributed,
+            }
         }
 
     # add model term
     def add_model_term(self, level=1, coeff_mean=1, coeff_sigma=0, rv_label=None, apply_ln=False, power=1):
         """Add terms to model form; for coefficient, set rv_label to 'None' or 'coeff'"""
+        # check if upstream dependency is created, if not return error
+        # if len(self.input_pbee_dist['params']) == 0:
+        #     raise ValueError("First run instance.define_upstream_pbee_info to define upstream dependency")
         # make term label
         if rv_label is None or isinstance(rv_label, float):
             term_id = 'term0'
@@ -948,24 +949,37 @@ class GenericModel(BaseModel):
                 'power': power
             }
         }
-    
-    
-
+        # add rv to required rv for level if it is not None
+        if rv_label is not None:
+            # exclude upstream params
+            if not rv_label in self.input_pbee_dist['params']:
+                # add to list for current level to 3 (e.g., if level=2, add rv to levels 2 and 3)
+                for l in range(level,4):
+                    if not rv_label in self.req_model_rv_for_level[f'level{l}']:
+                        self.req_model_rv_for_level[f'level{l}'].append(rv_label)
+                        # append to model_input_other for internal tracking
+                        if not rv_label in self.model_input_other['params']:
+                            self.model_input_other['params'][rv_label] = ''
+        
     # make string of model form
     def construct_model_form(self):
         """Constructs strings of model form"""
         self.model_form = {}
-        list_of_rvs = []
+        list_of_vars = []
         lambda_arg_string = 'lambda' # for creating argument string
-        lambda_func_string = ':' # for creating argument string
         # return string
-        if self.model_return_rv is None:
-            output_string = None
+        if len(self.return_pbee_dist['params']) == 0:
+            raise ValueError('Generic model must contain a return variable')
         else:
-            if self.model_dist['type'] == 'lognormal':
-                output_string = f'ln({self.model_return_rv}) ='
+            return_param = list(self.return_pbee_dist['params'])[0]
+            return_dist_type = self.return_pbee_dist['params'][return_param]['dist_type']
+            if return_dist_type == 'lognormal':
+                output_string = f'ln({list(self.return_pbee_dist["params"])[0]}) ='
+            elif return_dist_type == 'normal':
+                output_string = f'{list(self.return_pbee_dist["params"])[0]} ='
             else:
-                output_string = f'{self.model_return_rv} ='
+                raise NotImplementedError('Generic model only supports (log)normal distribution for return variable')
+        intro_str_for_disp = output_string
         term_counter = 0
         # make string for every level
         for level in self.model_form_detail:
@@ -973,59 +987,130 @@ class GenericModel(BaseModel):
             # preset for LEVEL1; string gets appended for subsequent levels
             if level == 'level1':
                 model_string_for_level = output_string
+                eval_string_for_level = ''
+            else:
+                # remove exp() before padding more terms
+                if return_dist_type == 'lognormal':
+                    eval_string_for_level = eval_string_for_level[:-1] # drops right parenthesis in np.exp()
+                    eval_string_for_level = eval_string_for_level.replace('np.exp(','') # drops np.exp(
             level_info = self.model_form_detail[level] # level info
             # for every term in level
             for term in level_info:
                 term_info = level_info[term]
                 coeff_str = term.replace('term','c') # coefficient string
-                # coeff_val_str = str(term_info['coeff']['mean'])
+                coeff_val = term_info['coeff']['mean']
                 if term_info['var']['label'] is None:
-                    term_string = coeff_str # no additional string from RV
-                    # lambda_func_string += f" {term_info['coeff']['mean']}" # for creating model
+                    term_string = coeff_str # no additional string from variable
+                    eval_term_string = str(coeff_val)
                 else:
-                    if term_info['var']['label'] not in list_of_rvs:
-                        list_of_rvs.append(term_info['var']['label'])
+                    if term_info['var']['label'] not in list_of_vars:
+                        list_of_vars.append(term_info['var']['label'])
                         # add RV to arguments
-                        if len(list_of_rvs) == 1:
+                        if len(list_of_vars) == 1:
                             lambda_arg_string += f" {term_info['var']['label']}"
                         else:
                             lambda_arg_string += f", {term_info['var']['label']}"
                     # create term for function
                     if term_info['var']['apply_ln']:
                         rv_str = f"ln({(term_info['var']['label'])})" # add ln label
+                        eval_rv_str = f"np.log({(term_info['var']['label'])})" # add ln label
                     else:
                         rv_str = term_info['var']['label']
+                        eval_rv_str = term_info['var']['label']
                     if term_info['var']['power'] > 1:
-                        rv_str = f"({rv_str})**{term_info['var']['power']}" # add power term
-                    term_string = f"{coeff_str}*{rv_str}" # no additional string from RV
+                        rv_str = f"({rv_str})^{term_info['var']['power']}" # add power term
+                        eval_rv_str = f"({eval_rv_str})**{term_info['var']['power']}" # add power term
+                    term_string = f"{coeff_str}*{rv_str}"
+                    eval_term_string = f"{coeff_val}*{eval_rv_str}"
                 # append to model string
                 if term_counter == 0:
-                    model_string_for_level += f" {term_string}"
-                    lambda_func_string += f" {term_string.replace(coeff_str,str(term_info['coeff']['mean']))}"
+                    connect_str = ' '
                 else:
-                    model_string_for_level += f" + {term_string}"
-                    lambda_func_string += f" + {term_string.replace(coeff_str,str(term_info['coeff']['mean']))}"
-                # lambda_func_string = model_string_for_level.replace(term_string, str(term_info['coeff']['mean']))
+                    connect_str = ' + '
+                model_string_for_level += f"{connect_str}{term_string}"
+                eval_string_for_level += f"{connect_str}{eval_term_string}"
                 term_counter += 1
+            intro_str_for_lambda = lambda_arg_string + ': '
             # store model string under dictionary for current level
             self.model_form[level]['string'] = model_string_for_level
-            # self.model_form[level]['func'] = eval(model_string_for_level.replace(output_string, lambda_arg_string+' :'))
-            self.model_form[level]['func_string'] = lambda_arg_string + lambda_func_string
-            self.model_form[level]['func'] = eval(lambda_arg_string + lambda_func_string)
-    
-    # update calculation method
-    def perform_calc(self):
-        """Performs calculations"""
-        pass
-        # pull inputs locally
-        # n_sample = self._inputs['n_sample']
-        # n_site = self._inputs['n_site']
+            # apply exp() if return param is lognormal
+            if return_dist_type == 'lognormal':
+                eval_string_for_level = f"np.exp({eval_string_for_level})"
+            self.model_form[level]['func_string'] = intro_str_for_lambda + eval_string_for_level
+            self.model_form[level]['func'] = eval(self.model_form[level]['func_string'])
 
-
-
-    # generic model
-    # @staticmethod
-    # # @jit
-    # # @jit(nopython=True)
-    # def _model():
-    #     pass
+    # run model
+    def _model(self,
+        kwargs, # dictionary containing list of input parameters and their values
+        level_to_run=1, # level of analysis to run
+        return_inter_params=False, # to get intermediate params
+    ):
+        """Model"""
+        # level string
+        level_str = f'level{level_to_run}'
+        # get return param info
+        return_param = list(self.return_pbee_dist['params'])[0]
+        return_param_info = self.return_pbee_dist['params'][return_param]
+        # gather upstream and user-specified inputs
+        input_list = \
+            list(self.input_pbee_dist['params']) + \
+            list(self.req_model_rv_for_level[level_str])
+        # check and gather inputs from kwargs
+        inputs_to_use = {}
+        missing_param_list = []
+        for param in input_list:
+            if param in kwargs:
+                inputs_to_use[param] = np.asarray(kwargs[param])
+            else:
+                missing_param_list.append(param)
+        if len(missing_param_list) > 0:
+            raise ValueError(
+                f"Missing the following params: {', '.join(missing_param_list)};"+\
+                "use instance.add_model_term to add input variables"
+            )
+        # get dimension of problem
+        if len(self.input_pbee_dist['params']) > 0:
+            param_to_check_for_dim = list(self.input_pbee_dist['params'])[0]
+        else:
+            # check if there are any input params
+            if len(self._missing_inputs_all) > 0:
+                param_to_check_for_dim = list(self._missing_inputs_all)[0]
+            else:
+                param_to_check_for_dim = None
+        if param_to_check_for_dim is None:
+            ndim = 0
+        else:
+            ndim = np.ndim(inputs_to_use[param_to_check_for_dim])
+        if ndim == 0:
+            shape = None
+        else:
+            shape = inputs_to_use[param_to_check_for_dim].shape        
+        # get lambda function for level to run
+        func_to_use = self.model_form[level_str]['func']
+        # run analysis
+        val = func_to_use(**inputs_to_use)
+        # set lower limit of value if lognormally distributed to avoid summing with -INF
+        if return_param_info['dist_type'] == 'lognormal':
+            val = np.maximum(val, return_param_info['min_val'])
+        # prepare outputs
+        if shape is None:
+            return_aleatory = return_param_info['aleatory']
+            return_epistemic = return_param_info['epistemic']
+        else:
+            return_aleatory = np.ones(shape)*return_param_info['aleatory']
+            return_epistemic = np.ones(shape)*return_param_info['epistemic']
+        output = {
+            return_param: {
+                'mean': val,
+                'sigma': return_aleatory,
+                'sigma_mu': return_epistemic,
+                'dist_type': return_param_info['dist_type'],
+                'unit': return_param_info['unit']
+            }
+        }
+        # get intermediate values if requested
+        if return_inter_params:
+            pass
+        # return
+        return output
+        

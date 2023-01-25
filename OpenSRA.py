@@ -367,6 +367,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # get level to run
     if 'level_to_run' in input_table.columns:
         level_to_run = input_table.level_to_run[0]
+    else:
+        level_to_run = 3
     input_dist = pc_workflow.clean_up_input_params(input_dist)
     logging.info(f'{counter}. Loaded input parameter distributions')
     counter += 1
@@ -1320,7 +1322,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             internal_params=step0_internal_params,
                             input_samples=step0_input_samples, 
                             n_sample=num_epi_input_samples,
-                            n_site=n_site_curr_event
+                            n_site=n_site_curr_event,
+                            level_to_run=level_to_run,
                         )
                         # get other metrics
                         mean_of_mu[curr_case_str][step0_str] = {param_for_domain: step0_results[param_for_domain]['mean_of_mu']}
@@ -1434,7 +1437,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                         input_samples=liq_input_samples, 
                                         n_sample=num_epi_input_samples,
                                         n_site=n_site_curr_event,
-                                        get_liq_susc=False
+                                        get_liq_susc=False,
+                                        level_to_run=level_to_run,
                                     )
                                     if not 'liq_susc' in input_samples:
                                         liq_susc = np.tile(input_dist['liq_susc']['value'],(num_epi_input_samples,1)).T
@@ -1446,7 +1450,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                         input_samples=liq_input_samples, 
                                         n_sample=num_epi_input_samples,
                                         n_site=n_site_curr_event,
-                                        get_liq_susc=True
+                                        get_liq_susc=True,
+                                        level_to_run=level_to_run,
                                     )
                                 # rerun with with upstream param * factor for getting slope using forward Euler
                                 liq_upstream_params_forward = liq_upstream_params.copy()
@@ -1463,7 +1468,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                         input_samples=liq_input_samples, 
                                         n_sample=num_epi_input_samples,
                                         n_site=n_site_curr_event,
-                                        get_liq_susc=False
+                                        get_liq_susc=False,
+                                        level_to_run=level_to_run,
                                     )
                                     if not 'liq_susc' in input_samples:
                                         liq_susc_forward = np.tile(
@@ -1478,7 +1484,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                         input_samples=liq_input_samples, 
                                         n_sample=num_epi_input_samples,
                                         n_site=n_site_curr_event,
-                                        get_liq_susc=True
+                                        get_liq_susc=True,
+                                        level_to_run=level_to_run,
                                     )
                             
                             ###########################################
@@ -1555,6 +1562,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                 input_samples=curr_input_samples, 
                                 n_sample=num_epi_input_samples,
                                 n_site=n_site_to_use,
+                                level_to_run=level_to_run,
                             )
                             
                             #----------------------
@@ -1626,6 +1634,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                     input_samples=curr_input_samples, 
                                     n_sample=num_epi_input_samples,
                                     n_site=n_site_to_use,
+                                    level_to_run=level_to_run,
                                 )
                                 
                                 #----------------------
@@ -1756,7 +1765,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         internal_params=last_internal_params,
                         input_samples=last_input_samples, 
                         n_sample=num_epi_input_samples,
-                        n_site=n_site_to_use
+                        n_site=n_site_to_use,
+                        level_to_run=level_to_run,
                     )
                     # track nonzero sites for step0
                     nonzero_ind_from_out = []

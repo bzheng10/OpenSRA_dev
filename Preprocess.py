@@ -303,7 +303,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     # -----------------------------------------------------------
     # get workflow for PC
-    workflow, workflow_fpath = make_workflow(setup_config, processed_input_dir, to_export=True)
+    workflow, workflow_fpath = make_workflow(setup_config, input_dir, processed_input_dir, to_export=True)
     logging.info(f'{counter}. Created workflow and exported to:')
     logging.info(f'\t{workflow_fpath}')
     logging.info(f'\n{json.dumps(workflow, indent=4)}\n')
@@ -1017,7 +1017,7 @@ def preprocess_infra_file(
 
 
 # -----------------------------------------------------------
-def make_workflow(setup_config, processed_input_dir, to_export=True):
+def make_workflow(setup_config, input_dir, processed_input_dir, to_export=True):
     """makes workflow to be used for PC"""
     # now make workflow
     workflow = {}
@@ -1057,6 +1057,19 @@ def make_workflow(setup_config, processed_input_dir, to_export=True):
         'well_rupture_shaking': "ShakingInducedWellRupture",
         'caprock_leakage': "CaprockLeakage",
     }
+    # list of attributes to get if available
+    model_att_to_get = [
+        # should always exist
+        "ModelWeight",
+        # rest are for generic model
+        "UpstreamCategory",
+        "UpstreamParams",
+        "ReturnCategory",
+        "ReturnParams",
+        "Aleatory",
+        "Epistemic",
+        "PathToModelInfo",
+    ]
     for category in cat_map:
         workflow[category] = {}
         haz_list = setup_config[cat_map[category]]['Type']
@@ -1064,11 +1077,18 @@ def make_workflow(setup_config, processed_input_dir, to_export=True):
             if haz_map[hazard] in haz_list and haz_list[haz_map[hazard]]['ToInclude']:
                 workflow[category][hazard] = {}
                 method_list = haz_list[haz_map[hazard]]['Method']
-                # for getting model weights
+                # for getting model input attributes
                 for method in method_list:
-                    workflow[category][hazard][method] = {
-                        'ModelWeight': method_list[method]['ModelWeight']
-                    }
+                    workflow[category][hazard][method] = {}
+                    for att in model_att_to_get:
+                        if att in method_list[method]:
+                            if att == "PathToModelInfo": 
+                                workflow[category][hazard][method][att] = \
+                                    check_and_get_abspath(method_list[method][att], input_dir)
+                            else:
+                                workflow[category][hazard][method][att] = method_list[method][att]
+                    # append current category to attribute list
+                    workflow[category][hazard][method]['ReturnCategory'] = category
     # export workflow
     if to_export:
         workflow_fpath = os.path.join(processed_input_dir,'workflow.json')
@@ -1782,6 +1802,8 @@ def get_pref_dist_for_params(
         #     ]
         # else:
         crossing_params = ['l_anchor','beta_crossing','psi_dip','theta_rake']
+        if level_to_run == 3:
+            crossing_params.append('def_length')
         
         # if running_cpt_based_procedure:
         #     pref_params_to_add = ['beta_crossing','psi_dip','theta_rake','gw_depth','slope']
@@ -2241,7 +2263,8 @@ def preprocess_cpt_data(
     # use mean of IM intensity for all CPTs
     for each in ['pga','pgv']:
         cpt_im_import[each]['mean_table'] = \
-            cpt_im_import[each]['mean_table'].mean(axis=1)
+            np.ma.masked_invalid(cpt_im_import[each]['mean_table']).mean(axis=1)
+            # cpt_im_import[each]['mean_table'].mean(axis=1)
         cpt_im_import[each]['sigma_table'] = \
             np.mean(cpt_im_import[each]['sigma_table']**2,axis=1)**(0.5)
         cpt_im_import[each]['sigma_mu_table'] = \
@@ -2497,6 +2520,9 @@ def preprocess_cpt_data(
     if 'lateral_spread' in workflow['EDP']:
         if 'WeightZhang04' in cpt_setup_params:
             weight_z04 = cpt_setup_params['WeightZhang04']
+    depth_scale_method = 'Nonlinear (Bain and Bray, 2022)'
+    if 'DepthScalingMethod' in cpt_setup_params:
+        depth_scale_method = cpt_setup_params['DepthScalingMethod']
     # get free-face feature if provided
     freeface_fpath = None
     if 'lateral_spread' in workflow['EDP']:
@@ -2622,6 +2648,13 @@ def preprocess_cpt_data(
             # if above gw_depth or below z_cutoff, also set to 4
             z_repeat = z.repeat(num_epi_input_samples).reshape((-1, num_epi_input_samples))
             dz_repeat = dz.repeat(num_epi_input_samples).reshape((-1, num_epi_input_samples))
+            # depth scale factor
+            if depth_scale_method == 'None (ScaleFactor=1)':
+                z_sf = np.ones(z_repeat.shape)
+            elif depth_scale_method == 'Linear (Zhang et al., 2004)':
+                z_sf = 1 - z_repeat/15
+            elif depth_scale_method == 'Nonlinear (Bain and Bray, 2022)':
+                z_sf = 1 - np.sinh(z_repeat/13.615)**2.5
             # reshape groundwater depth
             gw_depth_repeat = cpt_input_samples['gw_depth'][i].repeat(n_depth).reshape((-1, num_epi_input_samples))
             # get relative density
@@ -2655,7 +2688,7 @@ def preprocess_cpt_data(
                     # get slope in percents
                     slope_percent = np.arctan(np.radians(cpt_input_samples['slope'][i]))*100
                     # get lateral spread index
-                    ldi = np.sum(gamma_max/100*dz_repeat*(1-(1/15)*z_repeat),axis=0)
+                    ldi = np.sum(gamma_max/100*dz_repeat*z_sf,axis=0)
                     # if total liquefiable layer thickness < 0.3 meter, set LDI to 0
                     ldi[liq_thick<0.3] = 0
                     # get lateral spread displacement by ground slope, m
@@ -2689,7 +2722,7 @@ def preprocess_cpt_data(
                     # get volumetric strain
                     eps_vol = process_cpt_spt.get_cpt_based_vol_strain(fs_liq.copy(), dr.copy(), weight_z04)
                     # get settlement, m
-                    pgdef['settlement'][i] = np.sum(eps_vol/100*dz_repeat*(1-(1/15)*z_repeat),axis=0)
+                    pgdef['settlement'][i] = np.sum(eps_vol/100*dz_repeat*z_sf,axis=0)
                     # if total liquefiable layer thickness < 0.3 meter, set deformation to 0
                     pgdef['settlement'][i][liq_thick<0.3] = 0
             
@@ -2720,7 +2753,7 @@ def preprocess_cpt_data(
                     # get slope in percents
                     slope_percent = np.arctan(np.radians(cpt_input_samples['slope'][i]))*100
                     # get lateral spread index
-                    ldi = np.sum(gamma_max/100*dz_repeat*(1-(1/15)*z_repeat),axis=0)
+                    ldi = np.sum(gamma_max/100*dz_repeat*z_sf,axis=0)
                     # if total liquefiable layer thickness < 0.3 meter, set LDI to 0
                     ldi[liq_thick<0.3] = 0
                     # get lateral spread displacement by ground slope, m
@@ -2748,7 +2781,7 @@ def preprocess_cpt_data(
                     # get volumetric strain
                     eps_vol = process_cpt_spt.get_cpt_based_vol_strain(fs_liq_forward.copy(), dr.copy(), weight_z04)
                     # get settlement, m
-                    pgdef_forward['settlement'][i] = np.sum(eps_vol/100*dz_repeat*(1-(1/15)*z_repeat),axis=0)
+                    pgdef_forward['settlement'][i] = np.sum(eps_vol/100*dz_repeat*z_sf,axis=0)
                     # if total liquefiable layer thickness < 0.3 meter, set deformation to 0
                     pgdef_forward['settlement'][i][liq_thick<0.3] = 0
         
@@ -2762,13 +2795,15 @@ def preprocess_cpt_data(
             if weight_scheme == 'average':
                 # average deformation on node - current PGA
                 mean_pgdef_per_node = [
-                    pgdef[each][ind,:].mean(axis=0)
+                    np.ma.masked_invalid(pgdef[each][ind,:]).mean(axis=0)
+                    # pgdef[each][ind,:].mean(axis=0)
                     if len(ind)>0 else np.zeros(num_epi_input_samples)
                     for i,ind in enumerate(cpts_per_node)
                 ]
                 # average deformation on node - target PGA
                 mean_pgdef_forward_per_node = [
-                    pgdef_forward[each][ind,:].mean(axis=0)
+                    np.ma.masked_invalid(pgdef_forward[each][ind,:]).mean(axis=0)
+                    # pgdef_forward[each][ind,:].mean(axis=0)
                     if len(ind)>0 else np.zeros(num_epi_input_samples)
                     for i,ind in enumerate(cpts_per_node)
                 ]
@@ -2791,8 +2826,12 @@ def preprocess_cpt_data(
             #             mean_pgdef_i = mean_pgdef_i / sum_inv_sqrt_dist
             #         mean_pgdef_per_node.append(mean_pgdef_i)
             # get mean LD over all samples
-            mean_pgdef_per_node_over_samples[each] = np.mean(mean_pgdef_per_node,axis=1)
-            mean_pgdef_forward_per_node_over_samples[each] = np.mean(mean_pgdef_forward_per_node,axis=1)
+            mean_pgdef_per_node_over_samples[each] = \
+                np.ma.masked_invalid(mean_pgdef_per_node).mean(axis=1)
+            # mean_pgdef_per_node_over_samples[each] = np.mean(mean_pgdef_per_node,axis=1)
+            mean_pgdef_forward_per_node_over_samples[each] = \
+                np.ma.masked_invalid(mean_pgdef_forward_per_node).mean(axis=1)
+            # mean_pgdef_forward_per_node_over_samples[each] = np.mean(mean_pgdef_forward_per_node,axis=1)
             
         # collect all controlling cases for lateral spread and find most governing (most frequent)
         if 'lateral_spread' in haz_to_run:
@@ -2862,9 +2901,11 @@ def preprocess_cpt_data(
                     lateral_spread_control_case_by_event.append('')
             else:
                 # 2) average aspect for points within hull
-                avg_aspect = preproc_hull.aspect.mean()
+                avg_aspect = np.nanmean(preproc_hull.aspect)
+                # avg_aspect = preproc_hull.aspect.mean()
                 # 3) average deformation for points within hull
-                avg_pgdef = preproc_hull.pgdef_m.mean()
+                avg_pgdef = np.nanmean(preproc_hull.pgdef_m)
+                # avg_pgdef = preproc_hull.pgdef_m.mean()
                 # 4) convex hull polygon
                 poly = preproc_hull.unary_union.convex_hull
                 poly_hull = poly.buffer(buffer_size)
@@ -2886,8 +2927,10 @@ def preprocess_cpt_data(
                 amu_intersect_node = amu[each][intersect_node].copy()
                 bmu_intersect_node = bmu[each][intersect_node].copy()
                 where_bmu_nonzero = np.where(bmu_intersect_node>-10)[0]
-                amu_by_event.append(np.mean(amu_intersect_node[where_bmu_nonzero]))
-                bmu_by_event.append(np.mean(bmu_intersect_node[where_bmu_nonzero]))
+                amu_by_event.append(np.ma.masked_invalid(amu_intersect_node[where_bmu_nonzero]).mean())
+                # amu_by_event.append(np.mean(amu_intersect_node[where_bmu_nonzero]))
+                bmu_by_event.append(np.ma.masked_invalid(bmu_intersect_node[where_bmu_nonzero]).mean())
+                # bmu_by_event.append(np.mean(bmu_intersect_node[where_bmu_nonzero]))
                 # find controlling lateral spread case 
                 if each == 'lateral_spread':
                     all_lateraL_spread_control_cases = [

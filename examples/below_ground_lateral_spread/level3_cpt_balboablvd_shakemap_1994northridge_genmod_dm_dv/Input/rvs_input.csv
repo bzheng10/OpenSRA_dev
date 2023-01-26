@@ -1,0 +1,19 @@
+Name,Description,From Model,Source,Distribution Type,Mean or Median,Sigma,CoV,Distribution Min,Distribution Max
+d_pipe,pipe diameter,,From infrastructure table or enter value,normal,DIAMETER,0,,,
+t_pipe,pipe wall thickness,,From infrastructure table or enter value,normal,WallThick,0,,,
+sigma_y,,,From infrastructure table or enter value,normal,SMYS,,,,
+n_param,,,From infrastructure table or enter value,normal,n_Ramberg,,,,
+r_param,,,From infrastructure table or enter value,normal,r_Ramberg,,,,
+alpha_backfill,adhesion factor for clay,,From infrastructure table or enter value,normal,Adhesion,0.1,,0.5,1
+s_u_backfill,undrained shear strength,,From infrastructure table or enter value,lognormal,ShearStren,,25,0.1,
+gamma_backfill,total unit weight of backfill soil,,From infrastructure table or enter value,lognormal,19,,5,16,21.5
+h_pipe,soil cover to centerline of pipeline,,From infrastructure table or enter value,lognormal,Depth,,10,0.6,6
+phi_backfill,backfill friction angle,,From infrastructure table or enter value,lognormal,Phi,,9,30,50
+delta_backfill,sand/pipe interface friction angle ratio,,From infrastructure table or enter value,normal,Interface,0.1,,0.5,1
+op_press,pipe internal operating pressure,,From infrastructure table or enter value,lognormal,Pressure,,10,0,13800
+l_anchor,,,Preferred,,,,,,
+beta_crossing,,,Preferred,,,,,,
+psi_dip,,,Preferred,,,,,,
+slope,,,Preferred,,,,,,
+gw_depth,,,From infrastructure table or enter value,lognormal,Mean GWT NR,0.05,,3,15
+def_length,,,Preferred,,,,,,

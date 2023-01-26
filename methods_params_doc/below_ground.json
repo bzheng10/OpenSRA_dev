@@ -1481,6 +1481,22 @@
 									"DefaultValue": null
 								}
 							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "This method returns the critical value at which 50% probability of compression-induced rupture is expected to occur for pipeline segments.",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -1519,6 +1535,22 @@
                                     "ToDisplay": true,
                                     "DefaultValue": null
                                 }
+							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "This method returns the critical value at which 50% probability of tension-induced rupture is expected to occur for pipeline segments.",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
 							}
 						}
 					}
@@ -1567,10 +1599,10 @@
 							],
 							"Return": {
 								"Description": "This method returns the critical value at which 50% probability of tension-induced leakage is expected to occur for pipeline segments.",
-								"Params": ["eps_tens_crit_leak"]
+								"Params": []
 							},
 							"UpstreamDependency": {
-								"Description": "This method requires a method for tensile pipe strain from any of the pipe strain subtabs under \"Damage Measure\".",
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
 								"Params": []
 							},
 							"Params": {

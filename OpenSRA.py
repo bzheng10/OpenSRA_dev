@@ -427,6 +427,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             if True in cond:
                 input_samples['beta_crossing'][cond] = np.abs(180-input_samples['beta_crossing'][cond])
             logging.info(f'\t\t- added "beta_crossing" to input samples for {infra_type} analysis')
+        else:
+            input_samples['beta_crossing'] = 0*ones_arr_nsite_by_ninput # dummy - not used but to carry on with analysis
         if 'theta_rake' in input_samples:
             # target range = -180 to 180 degrees, but
             # distribution limits are extended to -360 and 360
@@ -439,6 +441,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 # e.g., 185 -> -175
                 input_samples['theta_rake'][cond] = input_samples['theta_rake'][cond]-360
             logging.info(f'\t\t- added "theta_rake" to input samples for {infra_type} analysis')
+        else:
+            input_samples['theta_rake'] = 0*ones_arr_nsite_by_ninput # dummy - not used but to carry on with analysis
                 
     # get liquefaction susceptibility categories if obtained from regional geologic maps
     # for liq susc cat
@@ -1400,6 +1404,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             rows_to_keep_rel_to_nonzero_step0[curr_step_str] = \
                                 rows_to_keep_rel_to_nonzero_step0[prev_step_str].copy()
                             sites_to_keep[curr_step_str] = sites_to_keep[prev_step_str].copy()
+                            # by analysis approach, CPT-based runs will start with nonzere values
+                            has_nonzero_mean = True
                         # if running_cpt_based_procedure is False:
                         else:
                             # special case for "lateral spread" and "settlement", which require "liquefaction" to be first assessed.
@@ -1865,10 +1871,15 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                         str_to_check = 'comp'
                                     elif 'tens' in param_i:
                                         str_to_check = 'tens'
-                                    for each in params_for_step:
-                                        if str_to_check in each:
-                                            param_to_use = each
-                                            break
+                                    else:
+                                        str_to_check = None
+                                    if str_to_check is None:
+                                        param_to_use = params_for_step[0] # use first param                                        
+                                    else:
+                                        for each in params_for_step:
+                                            if str_to_check in each:
+                                                param_to_use = each
+                                                break
                                 else:
                                     if len(params_for_step) == len(curr_haz_param) and len(curr_haz_param) > 1:
                                         param_to_use = params_for_step[i]
@@ -2062,14 +2073,21 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             df_frac[curr_case_str] = pd.DataFrame(None)
             for i,param_i in enumerate(last_haz_param):
                 if infra_type == 'below_ground':
+                    comp_dir = None
                     for each in ['comp','tens']:
                         if each in param_i:
                             comp_dir = each
                             break
-                    for each in second_to_last_haz_param:
-                        if comp_dir in each:
-                            param_to_use = each
-                            break
+                    if comp_dir is None:
+                        for each in second_to_last_haz_param:
+                            if each in param_i:
+                                param_to_use = each
+                                break
+                    else:
+                        for each in second_to_last_haz_param:
+                            if comp_dir in each:
+                                param_to_use = each
+                                break
                 else:
                     if len(second_to_last_haz_param) > 1:
                         param_to_use = second_to_last_haz_param[i]

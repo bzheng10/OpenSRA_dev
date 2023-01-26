@@ -1158,11 +1158,15 @@ def get_pipe_crossing_landslide_and_liq(
     flag_using_cpt_based_methods=False,
     def_shp_crs=None,
     freeface_fpath=None,
+    # if 'im' (e.g., ground motions), then deformation zone does not matter;
+    # if 'edp' (e.g., deformation), flag all locations within zone (nonzero absolute deformation)
+    # if 'dm' (e.g., strain), flag only crossings with boundaries (relative deformation)
+    demand='dm',
 ):
     """
-    function to determine crossing
+    function to determine crossing with liquefaction and landslide induced deformation zones
     note: 1) a [pipe]line is composed  a series of segments
-          2) def_type = 'lateral_spread', 'settlement', 'landslide', 'surface_fault_rupture'
+          2) def_type = 'lateral_spread', 'settlement', 'landslide'
     """
     
     # ---
@@ -1186,6 +1190,10 @@ def get_pipe_crossing_landslide_and_liq(
         def_poly_gdf = read_file(path_to_def_shp,crs=def_shp_crs)
         if def_poly_gdf.crs != 4326:
             def_poly_gdf.to_crs(4326, inplace=True)
+            
+    # if demand == 'im', treat as poly_exist == False (e.g., deformation zone does not matter)
+    if demand == 'im':
+        poly_exist = False
 
     # ---
     # convert site data DataFrame to GeoDataFrame
@@ -1213,11 +1221,22 @@ def get_pipe_crossing_landslide_and_liq(
     # ---
     # get crossings between segments and deformation polygons
     if poly_exist:
-        crossed_poly_index, crossed_segment_index = segment_gdf.sindex.query_bulk(
-            # geometry=list(def_poly_gdf.geometry.boundary),
-            geometry=def_poly_gdf.geometry.boundary,
-            predicate='intersects'
-        )
+        # if 'edp' (e.g., deformation), flag all locations within zone (nonzero absolute deformation)
+        # --> check intersection with entire deformation body
+        if demand == 'edp':
+            crossed_poly_index, crossed_segment_index = segment_gdf.sindex.query_bulk(
+                # geometry=list(def_poly_gdf.geometry.boundary),
+                geometry=def_poly_gdf.geometry,
+                predicate='intersects'
+            )
+        # if 'dm' (e.g., strain), flag only crossings with boundaries (relative deformation)
+        # --> check intersection with boundary to deformation zone
+        elif demand == 'dm':
+            crossed_poly_index, crossed_segment_index = segment_gdf.sindex.query_bulk(
+                # geometry=list(def_poly_gdf.geometry.boundary),
+                geometry=def_poly_gdf.geometry.boundary,
+                predicate='intersects'
+            )
         if len(crossed_poly_index) == 0:
             logging.info('\n')
             logging.info(f'*****FATAL*****')
@@ -1383,13 +1402,6 @@ def get_pipe_crossing_landslide_and_liq(
             # append to dataframe
             def_poly_crossed_unique_gdf_utm['slip_dir'] = slip_dir
         # get unit slip in dx and dy, to be used for crossing angles later
-        # slip_vect_dx = []
-        # slip_vect_dy = []
-        # for i,each in enumerate(def_poly_crossed_unique_gdf_utm.geometry.boundary):
-        # for i in range(def_poly_crossed_unique_gdf_utm.shape[0]):
-        #     dx, dy = get_dx_dy_for_vector_along_azimuth(def_poly_crossed_unique_gdf_utm.slip_dir[i])
-        #     slip_vect_dx.append(dx)
-        #     slip_vect_dy.append(dy)
         slip_vect_dx, slip_vect_dy = \
             get_dx_dy_for_vector_along_azimuth(def_poly_crossed_unique_gdf_utm.slip_dir.values)
         def_poly_crossed_unique_gdf_utm['slip_vect_dx'] = slip_vect_dx
@@ -1478,6 +1490,13 @@ def get_pipe_crossing_landslide_and_liq(
             if isinstance(crossing_i,MultiPoint):
                 n_crossings_list.append(len(list(crossing_i.geoms)))
             elif isinstance(crossing_i,Point):
+                n_crossings_list.append(1)
+            elif isinstance(crossing_i,LineString): # only happens if demand == 'edp'
+                # set crossing to be mid point of segment
+                crossing_i = Point(
+                    segment_crossed_gdf_utm.LON_MID[i],
+                    segment_crossed_gdf_utm.LAT_MID[i]
+                )
                 n_crossings_list.append(1)
             crossings_list.append(crossing_i)
         # create geodataframe of crossings
@@ -1616,31 +1635,35 @@ def get_pipe_crossing_landslide_and_liq(
             direct = []
             d_length = 0.01 # m, 1 cm
             for i in range(len(crossing_coords)):
-                crossing_coords_i = crossing_coords[i]
-                # first try segment endpoint
-                # if point falls in deformation polygon, then direction towards polygon is in the direction towards the endpoint
-                node2 = crossing_summary_segment_end_utm[i]
-                vect = node2 - crossing_coords_i
-                vect_norm = vect/np.sqrt(np.dot(vect,vect))
-                pt = Point(crossing_coords_i + vect_norm*d_length)
-                if def_type == 'landslide':
-                    geom_list_to_use = section_geom_list
-                elif def_type == 'lateral_spread' or def_type == 'settlement':
-                    geom_list_to_use = half_geom_list
-                else:
-                    raise ValueError('check def type')
-                if geom_list_to_use[i].contains(pt):
-                    direct.append(1)
-                else:
-                    # sanity check with startpoint
-                    node2 = crossing_summary_segment_begin_utm[i]
+                if demand == 'dm':
+                    crossing_coords_i = crossing_coords[i]
+                    # first try segment endpoint
+                    # if point falls in deformation polygon, then direction towards polygon is in the direction towards the endpoint
+                    node2 = crossing_summary_segment_end_utm[i]
                     vect = node2 - crossing_coords_i
                     vect_norm = vect/np.sqrt(np.dot(vect,vect))
                     pt = Point(crossing_coords_i + vect_norm*d_length)
-                    if geom_list_to_use[i].contains(pt):
-                        direct.append(-1)
+                    if def_type == 'landslide':
+                        geom_list_to_use = section_geom_list
+                    elif def_type == 'lateral_spread' or def_type == 'settlement':
+                        geom_list_to_use = half_geom_list
                     else:
-                        raise ValueError("Directionality check for vector from crossing towards deformation polygon failed.")
+                        raise ValueError('check def type')
+                    if geom_list_to_use[i].contains(pt):
+                        direct.append(1)
+                    else:
+                        # sanity check with startpoint
+                        node2 = crossing_summary_segment_begin_utm[i]
+                        vect = node2 - crossing_coords_i
+                        vect_norm = vect/np.sqrt(np.dot(vect,vect))
+                        pt = Point(crossing_coords_i + vect_norm*d_length)
+                        if geom_list_to_use[i].contains(pt):
+                            direct.append(-1)
+                        else:
+                            raise ValueError("Directionality check for vector from crossing towards deformation polygon failed.")
+                else:
+                    # does not matter for non-DM methods (i.e., strains)
+                    direct.append(1)
             reverse_dir = np.asarray(direct)<0
             # get crossing angle as the angle between the slip vector and the vector from the crossing pointing into the deformation polygon
             pt2_vector_for_crossing = crossing_summary_segment_end_utm.copy()
@@ -1839,11 +1862,9 @@ def get_pipe_crossing_landslide_and_liq(
                 'dist_type',
                 'amu',
                 'bmu',
-                # 'lh_ratio'
             ]
             if def_type == 'lateral_spread':
                 columns_to_get.append('ls_cond')
-                # columns_to_get.append('lh_ratio')
             # set empty columns
             for col in columns_to_get:
                 crossing_summary_gdf[col] = None
@@ -1858,12 +1879,6 @@ def get_pipe_crossing_landslide_and_liq(
         raise ValueError(f'For surface fault rupture, use the "get_pipe_crossing_fault_rup" function')
     else:
         raise ValueError(f'The hazard "{def_type}" is not a hazard under this study')
-
-    #################
-    # add a new row to induce repeating crossings
-    # crossing_summary_gdf.loc[crossing_summary_gdf.shape[0]] = crossing_summary_gdf.loc[crossing_summary_gdf.shape[0]-1]
-    # crossing_summary_gdf.loc[crossing_summary_gdf.shape[0]-1,'l_anchor'] = crossing_summary_gdf.loc[crossing_summary_gdf.shape[0]-1,'l_anchor'] * 2
-    #################
     
     # convert columns to numerics
     for col in crossing_summary_gdf:

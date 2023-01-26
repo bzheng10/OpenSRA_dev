@@ -90,21 +90,32 @@ def clean_up_input_params(input_dict):
     return input_dict
 
 
-def prepare_generic_model(genmod_attribtes):
+def prepare_generic_model(genmod_attributes):
     """creates instance of generic model using attributes"""
     # get spreadsheet with model form definitions
-    genmod_model_form = read_csv(genmod_attribtes['PathToModelInfo'])
+    genmod_model_form = read_csv(genmod_attributes['PathToModelInfo'])
     # make clean instance of generic model
     genmod = GenericModel()
     # set upstream dependency
     genmod.define_upstream_pbee_info(
-        cat=genmod_attribtes['UpstreamCategory'],
-        var_list=genmod_attribtes['UpstreamParams']
+        cat=genmod_attributes['UpstreamCategory'].upper(), # always upper case
+        var_list=genmod_attributes['UpstreamParams']
     )
+    # get return model dist params
+    add_dist_attrs = {}
+    att_to_get = {
+        'DistType': 'dist_type',
+        'Aleatory': 'aleatory',
+        'Epistemic': 'epistemic',
+    }
+    for att in att_to_get:
+        if genmod_attributes[att] is not None:
+            add_dist_attrs[att_to_get[att]] = genmod_attributes[att]
     # set return info
     genmod.define_return_pbee_info(
-        cat=genmod_attribtes['ReturnCategory'],
-        var_list=genmod_attribtes['ReturnParams']
+        cat=genmod_attributes['ReturnCategory'].upper(), # always upper case
+        var_list=genmod_attributes['ReturnParams'],
+        **add_dist_attrs,
     )
     # add model terms
     for i in range(genmod_model_form.shape[0]):

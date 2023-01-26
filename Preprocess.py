@@ -450,6 +450,16 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 # run get pipe crossing function
                 logging.info(f'{counter}. Performing pipeline crossing algorithm for {hazard}...')
                 counter += 1
+                # check type of demand for crossing
+                # if 'im' (e.g., ground motions), then deformation zone does not matter;
+                # if 'edp' (e.g., deformation), flag all locations within zone (nonzero absolute deformation)
+                # if 'dm' (e.g., strain), flag only crossings with boundaries (relative deformation)
+                if 'DM' in workflow:
+                    demand = 'dm'
+                elif 'EDP' in workflow:
+                    demand = 'edp'
+                else:
+                    demand = 'im'
                 site_data = get_pipe_crossing_landslide_and_liq(
                     path_to_def_shp=spath_def_poly,
                     infra_site_data=site_data.copy(),
@@ -459,7 +469,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     export_dir=processed_input_dir,
                     def_type=hazard,
                     def_shp_crs=def_shp_crs,
-                    freeface_fpath=freeface_fpath
+                    freeface_fpath=freeface_fpath,
+                    demand=demand
                 )
                 # if can't find crossing, end preprocessing
                 if site_data is None:
@@ -1066,6 +1077,7 @@ def make_workflow(setup_config, input_dir, processed_input_dir, to_export=True):
         "UpstreamParams",
         "ReturnCategory",
         "ReturnParams",
+        "DistType",
         "Aleatory",
         "Epistemic",
         "PathToModelInfo",
@@ -1089,6 +1101,9 @@ def make_workflow(setup_config, input_dir, processed_input_dir, to_export=True):
                                 workflow[category][hazard][method][att] = method_list[method][att]
                     # append current category to attribute list
                     workflow[category][hazard][method]['ReturnCategory'] = category
+        # if current category is empty, drop it
+        if len(workflow[category]) == 0:
+            workflow.pop(category)
     # export workflow
     if to_export:
         workflow_fpath = os.path.join(processed_input_dir,'workflow.json')

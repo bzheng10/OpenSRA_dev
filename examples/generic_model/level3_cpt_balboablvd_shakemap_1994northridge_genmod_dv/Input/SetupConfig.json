@@ -104,7 +104,7 @@
 						"ReturnParams": ["eps_tens_crit_rup"],
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
-						"PathToModelInfo": "genmod_input_DV_PipeTensileRupture.csv"
+						"PathToModelInfo": "genmod_DV_PipeTensileRupture.csv"
 					}
 				},
                 "OtherParameters": {}
@@ -119,7 +119,7 @@
 						"ReturnParams": ["eps_tens_crit_leak"],
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
-						"PathToModelInfo": "genmod_input_DV_PipeTensileLeakage.csv"
+						"PathToModelInfo": "genmod_DV_PipeTensileLeakage.csv"
 					}
 				},
                 "OtherParameters": {}

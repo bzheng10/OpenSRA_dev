@@ -57,7 +57,7 @@
 						"DistType": "lognormal",
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
-						"PathToModelInfo": "genmod_input_EDP_Landslide.csv"
+						"PathToModelInfo": "genmod_EDP_Landslide.csv"
 					}
 				},
                 "OtherParameters": {}
@@ -95,7 +95,7 @@
 						"DistType": "lognormal",
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
-						"PathToModelInfo": "genmod_input_DV_PipeCompRupture.csv"
+						"PathToModelInfo": "genmod_DV_PipeCompRupture.csv"
 					}
 				},
                 "OtherParameters": {}

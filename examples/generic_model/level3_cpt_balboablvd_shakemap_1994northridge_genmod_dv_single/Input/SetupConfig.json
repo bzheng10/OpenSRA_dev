@@ -84,7 +84,7 @@
 						"DistType": "normal",
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
-						"PathToModelInfo": "genmod_input_DV_PipeCompRupture.csv"
+						"PathToModelInfo": "genmod_DV_PipeCompRupture.csv"
 					}
 				},
                 "OtherParameters": {}

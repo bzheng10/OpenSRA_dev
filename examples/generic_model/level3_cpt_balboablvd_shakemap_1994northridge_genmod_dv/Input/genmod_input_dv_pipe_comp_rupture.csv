@@ -1,6 +1,0 @@
-level,coeff_mean,coeff_sigma,rv_label,apply_ln,power
-1,4,,,FALSE,
-2,0.001,,d_pipe,TRUE,1
-2,-0.002,,d_pipe,TRUE,2
-3,0.001,,sigma_y,FALSE,1
-3,-0.002,,sigma_y,FALSE,2

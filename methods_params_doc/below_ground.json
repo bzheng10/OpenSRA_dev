@@ -258,6 +258,22 @@
                                     "DefaultValue": null
                                 }
 							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -399,6 +415,22 @@
 									"DefaultValue": null
 								}
 							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -471,6 +503,22 @@
                                     "ToDisplay": true,
                                     "DefaultValue": null
                                 }
+							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
 							}
 						}
 					}
@@ -609,6 +657,22 @@
 									"DefaultValue": null
 								}
 							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
                 }
@@ -716,6 +780,22 @@
                                     "DefaultValue": null
                                 }
                             }
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -905,6 +985,22 @@
 									"DefaultValue": null
 								}
 							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -1070,6 +1166,22 @@
 									"ToDisplay": true,
 									"DefaultValue": null
 								}
+							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
 							}
 						}
 					}
@@ -1237,6 +1349,22 @@
 									"DefaultValue": null
 								}
 							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -1403,6 +1531,22 @@
 									"DefaultValue": null
 								}
 							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -1488,7 +1632,7 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "This method returns the critical value at which 50% probability of compression-induced rupture is expected to occur for pipeline segments.",
+								"Description": "",
 								"Params": []
 							},
 							"UpstreamDependency": {
@@ -1543,7 +1687,7 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "This method returns the critical value at which 50% probability of tension-induced rupture is expected to occur for pipeline segments.",
+								"Description": "",
 								"Params": []
 							},
 							"UpstreamDependency": {
@@ -1598,7 +1742,7 @@
 							"DisplayOrder": [
 							],
 							"Return": {
-								"Description": "This method returns the critical value at which 50% probability of tension-induced leakage is expected to occur for pipeline segments.",
+								"Description": "",
 								"Params": []
 							},
 							"UpstreamDependency": {

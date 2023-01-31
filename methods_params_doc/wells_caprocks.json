@@ -102,6 +102,22 @@
                                     "DefaultValue": null
                                 }
                             }
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -243,6 +259,22 @@
 									"DefaultValue": null
 								}
 							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -328,6 +360,22 @@
 									"DefaultValue": null
 								}
 							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -368,6 +416,22 @@
                                     "ToDisplay": true,
                                     "DefaultValue": null
                                 }
+							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
 							}
 						}
 					}
@@ -427,6 +491,22 @@
 									"DefaultValue": null
 								}
 							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+							}
 						}
 					}
 				}
@@ -465,6 +545,22 @@
                                     "ToDisplay": true,
                                     "DefaultValue": null
                                 }
+							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": []
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
 							}
 						}
 					}

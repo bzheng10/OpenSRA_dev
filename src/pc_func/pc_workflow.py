@@ -133,6 +133,7 @@ def prepare_methods(workflow, n_site):
     # set up dictionary for methods and additional parameters loaded through setup_config
     mods_dict = {}
     additional_params = {}
+    n_cats = len(workflow)
     # order from DV to DM to EDP to IM
     cats_in_workflow_ordered = []
     for cat in ['DV','DM','EDP','IM']:
@@ -219,6 +220,7 @@ def prepare_methods(workflow, n_site):
                             "UpstreamParams",
                             "ReturnCategory",
                             "ReturnParams",
+                            "DistType",
                             "Aleatory",
                             "Epistemic",
                             "PathToModelInfo"
@@ -244,13 +246,17 @@ def prepare_methods(workflow, n_site):
                     if upstream_cat[0] == 'IM' and (
                         haz != 'settlement' and haz != 'lateral_spread'
                     ):
-                        if 'pga' in mods_dict[cat.lower()][haz]['upstream_params'] or \
-                        'pgv' in mods_dict[cat.lower()][haz]['upstream_params']:
-                            print(f'\t- {cat.lower()}.{haz} depends on {upstream_cat[0].lower()}')
+                        if n_cats == 1:
+                            print(f'Only one PBEE category ({list(workflow)[0]}) in analysis; include dependency on IM by default')
                             mods_dict[cat.lower()][haz]['upstream_category'] = upstream_cat[0]
                         else:
-                            print(f'\t- {cat.lower()}.{haz} does not depend pga or pgv, do not include IM dependency')
-                            mods_dict[cat.lower()][haz]['upstream_category'] = None
+                            if 'pga' in mods_dict[cat.lower()][haz]['upstream_params'] or \
+                            'pgv' in mods_dict[cat.lower()][haz]['upstream_params']:
+                                print(f'\t- {cat.lower()}.{haz} depends on {upstream_cat[0].lower()}')
+                                mods_dict[cat.lower()][haz]['upstream_category'] = upstream_cat[0]
+                            else:
+                                print(f'\t- {cat.lower()}.{haz} does not depend pga or pgv, do not include IM dependency')
+                                mods_dict[cat.lower()][haz]['upstream_category'] = None
                     else:
                         if upstream_cat[0] is not None:
                             print(f'\t- {cat.lower()}.{haz} depends on {upstream_cat[0].lower()}')

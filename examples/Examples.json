@@ -144,6 +144,35 @@
             }
         ]
     },
+    "Using Generic Models": {
+        "Examples": [
+            {
+                "name": "Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DM",
+                "description": "Placeholder\n",
+                "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dm/Input/SetupConfig.json"
+            },
+            {
+                "name": "Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DM DV",
+                "description": "Placeholder\n",
+                "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dm_dv/Input/SetupConfig.json"
+            },
+            {
+                "name": "Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DV",
+                "description": "Placeholder\n",
+                "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dv/Input/SetupConfig.json"
+            },
+            {
+                "name": "Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DV SingleIntegral",
+                "description": "Placeholder\n",
+                "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dv_single/Input/SetupConfig.json"
+            },
+            {
+                "name": "Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in EDP DV",
+                "description": "Placeholder\n",
+                "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_edp_dv/Input/SetupConfig.json"
+            }
+        ]
+    },
     "Wells and Caprocks": {
         "Examples": [
             {

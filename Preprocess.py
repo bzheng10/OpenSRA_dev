@@ -45,7 +45,7 @@ warnings.simplefilter(action='ignore', category=ShapelyDeprecationWarning)
 # OpenSRA modules
 from src.edp import process_cpt_spt
 from src.im import haz
-from src.pc_func.pc_workflow import get_samples_for_params
+from src.pc_func.pc_workflow import get_samples_for_params, prepare_generic_model
 from src.site import geodata
 from src.site.get_pipe_crossing import get_pipe_crossing_landslide_and_liq, get_pipe_crossing_fault_rup
 from src.site.get_well_crossing import get_well_crossing
@@ -427,7 +427,9 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     hazard = 'landslide'
                     # get deformation polygon to use; if "statewide", then assign probability of crossing of 0.25 to all components
                     landslide_setup_meta = setup_config['EngineeringDemandParameter']['Type']['Landslide']['OtherParameters']
-                    use_def_poly = landslide_setup_meta['UseDeformationGeometry']
+                    use_def_poly = False
+                    if 'UseDeformationGeometry' in landslide_setup_meta:
+                        use_def_poly = landslide_setup_meta['UseDeformationGeometry']
                     if use_def_poly:
                         def_poly_source = landslide_setup_meta['SourceForDeformationGeometry']
                         if def_poly_source == 'CA_LandslideInventory_WGS84':
@@ -1136,8 +1138,11 @@ def get_rvs_and_fix_by_level(workflow, infra_fixed={}):
                 _file = importlib.import_module('.'.join(['src',category.lower(),haz_type.lower()]))
                 # for each method
                 for method in curr_haz_type:
-                    # create instance
-                    _inst = copy.deepcopy(getattr(_file, method)())
+                    # get instance
+                    if method == 'GenericModel':
+                        _inst = copy.deepcopy(prepare_generic_model(workflow[category][haz_type][method]))
+                    else:
+                        _inst = copy.deepcopy(getattr(_file, method)())
                     # get all RVs for method
                     all_rvs += _inst._missing_inputs_rvs
                     rvs_by_level, fix_by_level = _inst.get_req_rv_and_fix_params(infra_fixed)
@@ -1771,7 +1776,9 @@ def get_level_to_run(
     if category in workflow and hazard in workflow[category]:        
         # get deformation polygon to use; if "statewide", then assign probability of 0.25 to all components instead
         landslide_setup_meta = setup_config['EngineeringDemandParameter']['Type']['Landslide']['OtherParameters']
-        use_def_poly = landslide_setup_meta['UseDeformationGeometry']
+        use_def_poly = False
+        if 'UseDeformationGeometry' in landslide_setup_meta:
+            use_def_poly = landslide_setup_meta['UseDeformationGeometry']
         if use_def_poly is False:
             level_to_run = min(min(level_to_run),min_level_with_no_def_poly) # level if no deformation polygon is to be used
     
@@ -1808,6 +1815,7 @@ def get_pref_dist_for_params(
     
     # initialize
     met_list = ['dist_type','mean','sigma','low','high']
+    crossing_params = []
     if 'EDP' in workflow:
         # if 'surface_fault_rupture' in workflow['EDP']:
         #     crossing_params = [
@@ -1816,7 +1824,7 @@ def get_pref_dist_for_params(
         #         'beta_crossing_secondary','psi_dip_secondary','theta_rake_secondary',
         #     ]
         # else:
-        crossing_params = ['l_anchor','beta_crossing','psi_dip','theta_rake']
+        crossing_params = crossing_params + ['l_anchor','beta_crossing','psi_dip','theta_rake']
         if level_to_run == 3:
             crossing_params.append('def_length')
         

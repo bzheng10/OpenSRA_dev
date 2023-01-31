@@ -17,6 +17,7 @@ infra_map = {
     'below_ground_settlement': "Below Ground - Liquefaction Induced Settlement",
     'below_ground_surface_fault_rupture': "Below Ground - Surface Fault Rupture",
     'wells_caprocks': "Wells and Caprocks",
+    'generic_model': "Using Generic Models",
 }
 words_to_upper = ['cpt','ucerf','csv','gis']
 words_to_skip = ['with','no','in','from']
@@ -28,6 +29,13 @@ words_to_map = {
     'balboablvd': 'BalboaBlvd',
     'user-specified': 'User-Specified',
     'ca': 'CA',
+    'genmod': 'GenericModel in',
+    'single': 'SingleIntegral',
+    
+    'im': 'IM',
+    'edp': 'EDP',
+    'dm': 'DM',
+    'dv': 'DV',
     
     '1971sanfernando': '1971SanFernando',
     '1989lomaprieta': '1989LomaPrieta',

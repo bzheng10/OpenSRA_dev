@@ -173,8 +173,8 @@ class BaseModel(object):
     
 
     @classmethod
-    # def get_req_rv_and_fix_params(cls, kwargs):
-    def get_req_rv_and_fix_params(cls):
+    def get_req_rv_and_fix_params(cls, kwargs):
+    # def get_req_rv_and_fix_params(cls):
         """get required rv and fixed params"""
         req_rvs_by_level = {}
         req_fixed_by_level = {}

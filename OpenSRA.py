@@ -189,10 +189,46 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         counter += 1
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Check if running surface fault rupture for below ground, requires special processing
-    running_fault_rupture_below_ground = False
-    if 'surface_fault_rupture' in workflow['EDP'] and infra_type == 'below_ground':
-        running_fault_rupture_below_ground = True
+    # get various flags
+    # check infrastructure type to run
+    running_below_ground = False
+    running_wells_caprocks = False
+    running_above_ground = False
+    if infra_type == 'below_ground':
+        running_below_ground = True
+    elif infra_type == 'wells_caprocks':
+        running_wells_caprocks = True
+    elif infra_type == 'above_ground':
+        running_above_ground = True
+        
+    # check PBEE categories
+    has_edp = False
+    has_dm = False
+    has_dv = False
+    if 'EDP' in workflow:
+        has_edp = True
+    if 'DM' in workflow:
+        has_dm = True
+    if 'DV' in workflow:
+        has_dv = True
+    
+    # Check geohazard to run
+    running_below_ground_fault_rupture = False
+    running_below_ground_landslide = False
+    running_below_ground_liquefaction = False
+    running_below_ground_lateral_spread = False
+    running_below_ground_settlement = False
+    if running_below_ground and has_edp:
+        if 'surface_fault_rupture' in workflow['EDP']:
+            running_below_ground_fault_rupture = True
+        if 'landslide' in workflow['EDP']:
+            running_below_ground_landslide = True
+        if 'liquefaction' in workflow['EDP']:
+            running_below_ground_liquefaction = True
+        if 'lateral_spread' in workflow['EDP']:
+            running_below_ground_lateral_spread = True
+        if 'settlement' in workflow['EDP']:
+            running_below_ground_settlement = True
         
     # Check if running caprocks for wells_caprocks, requires special processing
     running_caprock = False
@@ -211,7 +247,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     flag_event_dependent_crossing = False
     if running_cpt_based_procedure:
         flag_event_dependent_crossing = True
-    if running_fault_rupture_below_ground:
+    if running_below_ground_fault_rupture:
         flag_event_dependent_crossing = True
     # if crossing file exists
     if flag_crossing_file_exists:
@@ -219,7 +255,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         prob_crossing = site_data.prob_crossing.values
         # if prob crossing == 1, then using deformation polygons and multiple crossings per segment is possible
         # if prob crossing == 0.25, then no geometry was used and only 1 crossing per segment
-        if prob_crossing[0] == 1 or running_fault_rupture_below_ground:
+        if prob_crossing[0] == 1 or running_below_ground_fault_rupture:
             flag_possible_repeated_crossings = True
         # get segment IDs
         segment_ids_full = site_data_full.ID.values
@@ -239,21 +275,21 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 # different ref column for event index for CPT vs fault rupture
                 if running_cpt_based_procedure:
                     event_ind_col = 'def_poly_index_crossed'
-                elif running_fault_rupture_below_ground:
+                elif running_below_ground_fault_rupture:
                     event_ind_col = 'event_ind'
                 # for CPT-informed deformation polygons, polygon ID is the event ID
                 # check to see if multiple crossings per segment for the same polygon ID
                 unique_event_index_with_crossing = np.unique(site_data[event_ind_col].values)
                 if running_cpt_based_procedure:
                     unique_event_id_with_crossing = cpt_pgdef_dist.event_id.loc[unique_event_index_with_crossing].values
-                elif running_fault_rupture_below_ground:
+                elif running_below_ground_fault_rupture:
                     unique_event_id_with_crossing = np.unique(site_data.event_id.values)
                 # for each unique event, see if there are repeating crossings
                 for i,event_ind in enumerate(unique_event_index_with_crossing):
                     # get current event id
                     if running_cpt_based_procedure:
                         curr_event_id = unique_event_id_with_crossing[i]
-                    elif running_fault_rupture_below_ground:
+                    elif running_below_ground_fault_rupture:
                         curr_event_id = site_data.event_id.values[np.where(site_data.event_ind==event_ind)[0][0]]
                     # get rows relative to site_data for segments with crossings for current event
                     rows_to_run_by_event_id[curr_event_id] = np.where(site_data[event_ind_col]==event_ind)[0]
@@ -404,7 +440,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # Additional sampling of inputs with more complex/dependent conditions
     logging.info(f'\t Performing additional procedures for other input parameters with more complex/dependent conditions...')
     # for angles that are continuous rotationally (e.g., -181 = 179) but is capped by limits in models
-    if infra_type == 'wells_caprocks':
+    if running_wells_caprocks:
         if 'theta' in input_samples:
             # target range = 0 to 90 degrees, but
             # distribution limits are extended to -90 and 180 to allow - and >90 values
@@ -416,7 +452,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 input_samples['theta'][cond] = np.abs(90-input_samples['theta'][cond])
             logging.info(f'\t\t- added "theta" to input samples for {infra_type} analysis')
     # for beta_crossing in below ground
-    if infra_type == 'below_ground':
+    if running_below_ground:
         if 'beta_crossing' in input_samples:
             # target range = 0 to 180 degrees, but
             # distribution limits are extended to -180 and 360 to allow - and >180 values
@@ -446,30 +482,31 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 
     # get liquefaction susceptibility categories if obtained from regional geologic maps
     # for liq susc cat
-    if 'liquefaction' in workflow['EDP'] and \
-        'Hazus2020' in workflow['EDP']['liquefaction'] and \
-        not 'liq_susc' in input_dist:
-        if 'gw_depth' in input_samples:
-            input_samples['liq_susc'] = get_regional_liq_susc(
-                input_table.GeologicUnit_Witter2006.copy(),
-                input_table.GeologicUnit_BedrossianEtal2012.copy(),
-                input_samples['gw_depth'],
-                default='none'
-            )
-            gw_depth_mean = input_dist['gw_depth']['mean'].copy()
-            if input_dist['gw_depth']['dist_type'] == 'lognormal':
-                gw_depth_mean = np.exp(gw_depth_mean)
-            input_dist['liq_susc'] = {
-                'value': get_regional_liq_susc(
+    if has_edp:
+        if running_below_ground_liquefaction and \
+            'Hazus2020' in workflow['EDP']['liquefaction'] and \
+            not 'liq_susc' in input_dist:
+            if 'gw_depth' in input_samples:
+                input_samples['liq_susc'] = get_regional_liq_susc(
                     input_table.GeologicUnit_Witter2006.copy(),
                     input_table.GeologicUnit_BedrossianEtal2012.copy(),
-                    gw_depth_mean,
-                    get_mean=True,
+                    input_samples['gw_depth'],
                     default='none'
-                ),
-                'dist_type': 'fixed'
-            }
-            logging.info(f'\t\t- added "liq_susc" to input samples for {infra_type} analysis')
+                )
+                gw_depth_mean = input_dist['gw_depth']['mean'].copy()
+                if input_dist['gw_depth']['dist_type'] == 'lognormal':
+                    gw_depth_mean = np.exp(gw_depth_mean)
+                input_dist['liq_susc'] = {
+                    'value': get_regional_liq_susc(
+                        input_table.GeologicUnit_Witter2006.copy(),
+                        input_table.GeologicUnit_BedrossianEtal2012.copy(),
+                        gw_depth_mean,
+                        get_mean=True,
+                        default='none'
+                    ),
+                    'dist_type': 'fixed'
+                }
+                logging.info(f'\t\t- added "liq_susc" to input samples for {infra_type} analysis')
 
     # generate additional inputs if crossing algorithm is performed
     # initialize params for storing additional sampling
@@ -477,9 +514,9 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     crossing_params_intermediate = []
     if flag_crossing_file_exists:
         # if below ground, then perform additional sampling using crossing angles
-        if infra_type == 'below_ground':
+        if running_below_ground:
             transition_weight_factor = None
-            if 'lateral_spread' in workflow['EDP']:
+            if running_below_ground_lateral_spread:
                 # if running CPTs, then deformation polygons are produced and true beta_crossings exist
                 if running_cpt_based_procedure:
                     # get additional crossing params
@@ -594,14 +631,14 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     # for weighting between mechanisms in transition zone
                     transition_weight_factor = ones_arr_nsite_by_ninput.copy()
                     
-            elif 'settlement' in workflow['EDP']:
+            elif running_below_ground_settlement:
                 # get default values
                 primary_mech = str_arr_nsite_by_ninput.copy()
                 primary_mech[:] = 'Normal' # always normal
                 # for weighting between mechanisms in transition zone - does not apply to settlement
                 transition_weight_factor = ones_arr_nsite_by_ninput.copy()
             
-            elif 'landslide' in workflow['EDP']:
+            elif running_below_ground_landslide:
                 # if with possible crossings, then deformation polygons was used to determine crossings.
                 if flag_possible_repeated_crossings:
                     # get additional crossing params
@@ -762,7 +799,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     # for weighting between mechanisms in transition zone
                     transition_weight_factor = ones_arr_nsite_by_ninput.copy()
                     
-            elif 'surface_fault_rupture' in workflow['EDP']:
+            elif running_below_ground_fault_rupture:
                 # get crossing and fault angle samples
                 beta_crossing_samples = input_samples['beta_crossing']
                 theta_rake_samples = input_samples['theta_rake']
@@ -971,7 +1008,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         
         ###########################################
         # run if CPT-based
-        if running_cpt_based_procedure or running_fault_rupture_below_ground:
+        if running_cpt_based_procedure or running_below_ground_fault_rupture:
             # also get the segments crossing deformation polygon developed for current event
             sites_to_run_curr_event = rows_to_run_by_event_id[event_id]
             # find sites with nonzero PGA
@@ -1030,7 +1067,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     rup_info[key] = rupture_table[key][event_ind]
         
         # get additional rupture params for fault rupture specifically
-        if 'surface_fault_rupture' in workflow['EDP'] and infra_type == 'below_ground':
+        if running_below_ground_fault_rupture:
             # also get 'norm_dist' and 'prob_disp_sf' from site_data if available
             for col in ['norm_dist']:
                 if col in site_data:
@@ -1039,7 +1076,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             (-1, num_epi_input_samples))
                             
         # get list of sites with no well crossing
-        if infra_type == 'wells_caprocks':
+        if running_wells_caprocks:
             sites_with_crossing = rup_info['well_ind_crossed'].copy()
             if sites_with_no_crossing is None:
                 for key in list(rup_info):
@@ -1054,13 +1091,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         #----------------------
         
         # if crossing algorithm is performed in preprocessing OR if wells
-        if flag_crossing_file_exists or infra_type == 'wells_caprocks':
+        if flag_crossing_file_exists or running_wells_caprocks:
             # initialize params for storing additional sampling
             addl_input_dist = {}
             null_arr_nsite_nonzero = np.zeros(n_site_curr_event)
             ones_arr_nsite_nonzero = np.ones(n_site_curr_event)
             # if wells and caprocks, then perform additional sampling using fault depths and crossing angles
-            if infra_type == 'wells_caprocks':
+            if running_wells_caprocks:
                 crossing_params = [
                     'theta', # fault angle (deg)
                     'z_crossing', # fault depth (m)
@@ -1510,22 +1547,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                     curr_input_samples[param] = input_samples_nsite_nonzero[param][rows_inputs].copy()
                                     curr_param_external.append(param)
                                     curr_param_internal.remove(param)
-                                # if param in input_dist_nsite_nonzero:
-                                #     if param == 'liq_susc' and param in input_samples_nsite_nonzero:
-                                #         curr_input_dist[param] = {}
-                                #         for met in list(input_dist_nsite_nonzero[param]):
-                                #             if met == 'dist_type':
-                                #                 curr_input_dist[param][met] = input_dist_nsite_nonzero[param][met]
-                                #             else:
-                                #                 curr_input_dist[param][met] = input_dist_nsite_nonzero[param][met][rows_inputs].copy()
-                                #     else:
-                                #         if not param in crossing_params_intermediate:
-                                #             curr_input_dist[param] = {}
-                                #             for met in list(input_dist_nsite_nonzero[param]):
-                                #                 if met == 'dist_type':
-                                #                     curr_input_dist[param][met] = input_dist_nsite_nonzero[param][met]
-                                #                 else:
-                                #                     curr_input_dist[param][met] = input_dist_nsite_nonzero[param][met][rows_inputs].copy()
                             # pull upstream params for full analysis
                             curr_upstream_params = {}
                             for param in curr_haz_dict['upstream_params']:
@@ -1732,8 +1753,18 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 prev_step_str = f'step_{last_step-1}'
                 prev_cat = workflow_i['cat_list'][last_step-1].lower()
                 prev_haz = workflow_i['haz_list'][last_step-1]
-                # only run if there are sites with nonzero means
+                # flag to run last step
+                run_last_step = False
                 if has_nonzero_mean:
+                    run_last_step = True
+                else:
+                    if pbee_dim[curr_case_str] == 2:
+                        run_last_step = True
+                        curr_cat = last_cat
+                        curr_hat = last_haz
+                        curr_haz_param = last_haz_param
+                # only run if there are sites with nonzero means
+                if run_last_step:
                     # get n_site to use
                     n_site_to_use = len(rows_to_keep_rel_to_nonzero_step0[prev_step_str])
                     # get inputs for last step
@@ -1800,8 +1831,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
 
                 ###########################################
                 # set up for and run PC
-                # only run if there are sites with nonzero means
-                if has_nonzero_mean is False:
+                # only run if last step is run
+                if run_last_step is False:
                     # for each return parameter
                     for i, param_i in enumerate(last_haz_param):
                         # aggregate pc coefficients
@@ -1866,7 +1897,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             else:
                                 step_str = f'step_{step}'
                                 params_for_step = list(mean_of_mu[curr_case_str][step_str])
-                                if infra_type == 'below_ground' and step == pbee_dim[curr_case_str]-2:
+                                if running_below_ground and step == pbee_dim[curr_case_str]-2:
                                     if 'comp' in param_i:
                                         str_to_check = 'comp'
                                     elif 'tens' in param_i:
@@ -2047,7 +2078,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             second_to_last_last_step = pbee_dim[curr_case_str]-2
             second_to_last_last_cat = workflow_i['cat_list'][second_to_last_last_step].lower()
             second_to_last_last_haz = workflow_i['haz_list'][second_to_last_last_step]
-            second_to_last_haz_param = methods_dict[second_to_last_last_cat][second_to_last_last_haz]['return_params']
+            if len(methods_dict) == 1:
+                second_to_last_haz_param = {'pga': {}}
+            else:
+                second_to_last_haz_param = methods_dict[second_to_last_last_cat][second_to_last_last_haz]['return_params']
             # final step
             last_step = pbee_dim[curr_case_str]-1
             last_cat = workflow_i['cat_list'][last_step].lower()
@@ -2072,7 +2106,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             # get fractiles
             df_frac[curr_case_str] = pd.DataFrame(None)
             for i,param_i in enumerate(last_haz_param):
-                if infra_type == 'below_ground':
+                if running_below_ground:
                     comp_dir = None
                     for each in ['comp','tens']:
                         if each in param_i:
@@ -2142,7 +2176,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             # frac_repeat_curr_segment = df_frac[curr_case_str].loc[rows].reset_index(drop=True)
                             frac_repeat_curr_segment = df_frac[curr_case_str].loc[df_frac_index[rows_with_repeat_seg]].reset_index(drop=True)
                             # if fault rupture and below ground sum up between repeatin (primary and secondary)
-                            if running_fault_rupture_below_ground:
+                            if running_below_ground_fault_rupture:
                                 frac_full.loc[ind_in_full_for_segment_id] = frac_repeat_curr_segment.values.sum(axis=0)
                             # else find worst case
                             else:
@@ -2175,11 +2209,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             #----------------------
 
             # update index for fractile dataframe
-            if infra_type == 'below_ground':
+            if running_below_ground:
                 tag = 'segment'
-            elif infra_type == 'wells_caprocks':
+            elif running_wells_caprocks:
                 tag = 'well'
-            elif infra_type == 'above_ground':
+            elif running_above_ground:
                 tag = 'component'
             else:
                 tag = 'site'
@@ -2208,7 +2242,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Additional processing for above ground components
     site_ind = np.arange(n_site)
-    if infra_type == 'above_ground':
+    if running_above_ground:
         logging.info(f'{counter}. Performing additional postprocessing for above ground components...')
         counter += 1
         all_pc_case = list(df_frac)
@@ -2469,7 +2503,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     gpkg_contains = []
     
     # for below ground, everything fits into one summary sheet (same number of rows):
-    if infra_type == 'below_ground':
+    if running_below_ground:
         # create a gpkg file to store mean fractiles
         if 'LON_MID' in df_locs:
             gdf_frac_mean = GeoDataFrame(
@@ -2508,7 +2542,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         gdf_frac_mean.to_file(spath, layer='mean_fractile', index=False, crs=4326)
         
     # for wells and caprocks - one sheet for wells, one sheet for caprocks if exists
-    if infra_type == 'wells_caprocks':
+    if running_wells_caprocks:
         gdf_frac_mean = {}
         # first get mean fractile summary for wells
         gdf_frac_mean['mean_fractile_wells'] = GeoDataFrame(
@@ -2558,7 +2592,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             gdf_frac_mean[layer].to_file(spath, layer=layer, index=False, crs=4326)
     
     # for above ground, everything fits into one summary sheet (same number of rows):
-    if infra_type == 'above_ground':
+    if running_above_ground:
         # create a gpkg file to store mean fractiles
         gdf_frac_mean = GeoDataFrame(
             None,
@@ -2621,7 +2655,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             gpkg_contains.append('deformation polygons with crossings')
     
     # 3) qfaults if running below_ground and surface_fault_rupture
-    if running_fault_rupture_below_ground:
+    if running_below_ground_fault_rupture:
         for each in ['primary','secondary']:
             gdf_qfault_primary = read_file(os.path.join(im_dir,'qfaults_crossed.gpkg'),layer=each)
             gdf_qfault_primary.to_file(spath, layer=f'qfault_crossed_{each}', index=False, crs=4326)

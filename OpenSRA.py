@@ -416,7 +416,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # Forward Euler differentiation
     forward_euler_multiplier = 1.01
     # Number of Epistemic samples for inputs
-    num_epi_input_samples = 50
+    num_epi_input_samples = 1000
     # Number of Epistemic samples for fractiles
     num_epi_fractile_samples = 1000
     # Make some arrays to be used later

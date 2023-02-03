@@ -273,6 +273,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "EngineeringDemandParameter",
+								"ReturnHazard": "Liquefaction"
 							}
 						}
 					}
@@ -430,6 +432,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "EngineeringDemandParameter",
+								"ReturnHazard": "LateralSpread"
 							}
 						}
 					}
@@ -519,6 +523,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "EngineeringDemandParameter",
+								"ReturnHazard": "Settlement"
 							}
 						}
 					}
@@ -672,6 +678,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "EngineeringDemandParameter",
+								"ReturnHazard": "Landslide"
 							}
 						}
 					}
@@ -795,6 +803,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "EngineeringDemandParameter",
+								"ReturnHazard": "SurfaceFaultRupture"
 							}
 						}
 					}
@@ -1000,6 +1010,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DamageMeasure",
+								"ReturnHazard": "LateralSpreadInducedPipeStrain"
 							}
 						}
 					}
@@ -1182,6 +1194,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DamageMeasure",
+								"ReturnHazard": "SettlementInducedPipeStrain"
 							}
 						}
 					}
@@ -1364,6 +1378,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DamageMeasure",
+								"ReturnHazard": "LandslideInducedPipeStrain"
 							}
 						}
 					}
@@ -1371,7 +1387,7 @@
 			}
         },
         "SurfaceFaultRuptureInducedPipeStrain": {
-			"NameToDisplay": "Surface Fault Rupture Induced Pipe Strain",
+			"NameToDisplay": "Fault Rupture Induced Pipe Strain",
 			"WidgetType": null,
 			"ToDisplay": true,
 			"Params": {
@@ -1546,6 +1562,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DamageMeasure",
+								"ReturnHazard": "SurfaceFaultRuptureInducedPipeStrain"
 							}
 						}
 					}
@@ -1640,6 +1658,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DecisionVariable",
+								"ReturnHazard": "PipeCompressiveRupture"
 							}
 						}
 					}
@@ -1695,6 +1715,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DecisionVariable",
+								"ReturnHazard": "PipeTensileRupture"
 							}
 						}
 					}
@@ -1750,6 +1772,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DecisionVariable",
+								"ReturnHazard": "PipeTensileLeakage"
 							}
 						}
 					}

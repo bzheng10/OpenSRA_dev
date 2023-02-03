@@ -2191,7 +2191,7 @@ def preprocess_cpt_data(
     # for user-defined ruptures
     rup_fpath=None,
     # for sampling and Forward Euler differentiation for PC
-    num_epi_input_samples=50, forward_euler_multiplier=1.01,
+    num_epi_input_samples=1000, forward_euler_multiplier=1.01,
     # misc.
     display_after_n_event=100
 ):

@@ -113,6 +113,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "EngineeringDemandParameter",
+								"ReturnHazard": "WellheadRotation"
 							}
 						}
 					}
@@ -198,6 +200,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DamageMeasure",
+								"ReturnHazard": "WellheadStrain"
 							}
 						}
 					}
@@ -290,6 +294,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DamageMeasure",
+								"ReturnHazard": "VesselMomentRatio"
 							}
 						}
 					}
@@ -347,6 +353,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DecisionVariable",
+								"ReturnHazard": "WellheadRupture"
 							}
 						}
 					}
@@ -402,6 +410,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DecisionVariable",
+								"ReturnHazard": "WellheadLeakage"
 							}
 						}
 					}
@@ -457,6 +467,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DecisionVariable",
+								"ReturnHazard": "VesselRupture"
 							}
 						}
 					}

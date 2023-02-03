@@ -117,6 +117,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "EngineeringDemandParameter",
+								"ReturnHazard": "SurfaceFaultRupture"
 							}
 						}
 					}
@@ -274,6 +276,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DamageMeasure",
+								"ReturnHazard": "WellStrain"
 							}
 						}
 					}
@@ -375,6 +379,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DamageMeasure",
+								"ReturnHazard": "WellMoment"
 							}
 						}
 					}
@@ -432,6 +438,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DecisionVariable",
+								"ReturnHazard": "ShearInducedWellRupture"
 							}
 						}
 					}
@@ -506,6 +514,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DecisionVariable",
+								"ReturnHazard": "ShakingInducedWellRupture"
 							}
 						}
 					}
@@ -561,6 +571,8 @@
 								"Params": []
 							},
 							"Params": {
+								"ReturnCategory": "DecisionVariable",
+								"ReturnHazard": "CaprockLeakage"
 							}
 						}
 					}

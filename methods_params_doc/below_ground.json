@@ -273,8 +273,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "EngineeringDemandParameter",
-								"ReturnHazard": "Liquefaction"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "EngineeringDemandParameter"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "Liquefaction"
+								}
 							}
 						}
 					}
@@ -432,8 +446,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "EngineeringDemandParameter",
-								"ReturnHazard": "LateralSpread"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "EngineeringDemandParameter"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "LateralSpread"
+								}
 							}
 						}
 					}
@@ -523,8 +551,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "EngineeringDemandParameter",
-								"ReturnHazard": "Settlement"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "EngineeringDemandParameter"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "Settlement"
+								}
 							}
 						}
 					}
@@ -678,8 +720,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "EngineeringDemandParameter",
-								"ReturnHazard": "Landslide"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "EngineeringDemandParameter"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "Landslide"
+								}
 							}
 						}
 					}
@@ -803,8 +859,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "EngineeringDemandParameter",
-								"ReturnHazard": "SurfaceFaultRupture"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "EngineeringDemandParameter"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "SurfaceFaultRupture"
+								}
 							}
 						}
 					}
@@ -1010,8 +1080,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DamageMeasure",
-								"ReturnHazard": "LateralSpreadInducedPipeStrain"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DamageMeasure"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "LateralSpreadInducedPipeStrain"
+								}
 							}
 						}
 					}
@@ -1194,8 +1278,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DamageMeasure",
-								"ReturnHazard": "SettlementInducedPipeStrain"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DamageMeasure"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "SettlementInducedPipeStrain"
+								}
 							}
 						}
 					}
@@ -1378,8 +1476,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DamageMeasure",
-								"ReturnHazard": "LandslideInducedPipeStrain"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DamageMeasure"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "LandslideInducedPipeStrain"
+								}
 							}
 						}
 					}
@@ -1562,8 +1674,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DamageMeasure",
-								"ReturnHazard": "SurfaceFaultRuptureInducedPipeStrain"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DamageMeasure"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "SurfaceFaultRuptureInducedPipeStrain"
+								}
 							}
 						}
 					}
@@ -1658,8 +1784,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DecisionVariable",
-								"ReturnHazard": "PipeCompressiveRupture"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DecisionVariable"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "PipeCompressiveRupture"
+								}
 							}
 						}
 					}
@@ -1715,8 +1855,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DecisionVariable",
-								"ReturnHazard": "PipeTensileRupture"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DecisionVariable"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "PipeTensileRupture"
+								}
 							}
 						}
 					}
@@ -1772,8 +1926,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DecisionVariable",
-								"ReturnHazard": "PipeTensileLeakage"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DecisionVariable"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "PipeTensileLeakage"
+								}
 							}
 						}
 					}

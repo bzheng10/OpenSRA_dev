@@ -113,8 +113,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "EngineeringDemandParameter",
-								"ReturnHazard": "WellheadRotation"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "EngineeringDemandParameter"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "WellheadRotation"
+								}
 							}
 						}
 					}
@@ -200,8 +214,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DamageMeasure",
-								"ReturnHazard": "WellheadStrain"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DamageMeasure"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "WellheadStrain"
+								}
 							}
 						}
 					}
@@ -294,8 +322,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DamageMeasure",
-								"ReturnHazard": "VesselMomentRatio"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DamageMeasure"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "VesselMomentRatio"
+								}
 							}
 						}
 					}
@@ -353,8 +395,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DecisionVariable",
-								"ReturnHazard": "WellheadRupture"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DecisionVariable"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "WellheadRupture"
+								}
 							}
 						}
 					}
@@ -410,8 +466,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DecisionVariable",
-								"ReturnHazard": "WellheadLeakage"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DecisionVariable"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "WellheadLeakage"
+								}
 							}
 						}
 					}
@@ -467,8 +537,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DecisionVariable",
-								"ReturnHazard": "VesselRupture"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DecisionVariable"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "VesselRupture"
+								}
 							}
 						}
 					}

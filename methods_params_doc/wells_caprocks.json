@@ -117,8 +117,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "EngineeringDemandParameter",
-								"ReturnHazard": "SurfaceFaultRupture"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "EngineeringDemandParameter"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "SurfaceFaultRupture"
+								}
 							}
 						}
 					}
@@ -276,8 +290,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DamageMeasure",
-								"ReturnHazard": "WellStrain"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DamageMeasure"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "WellStrain"
+								}
 							}
 						}
 					}
@@ -379,8 +407,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DamageMeasure",
-								"ReturnHazard": "WellMoment"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DamageMeasure"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "WellMoment"
+								}
 							}
 						}
 					}
@@ -438,8 +480,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DecisionVariable",
-								"ReturnHazard": "ShearInducedWellRupture"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DecisionVariable"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "ShearInducedWellRupture"
+								}
 							}
 						}
 					}
@@ -514,8 +570,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DecisionVariable",
-								"ReturnHazard": "ShakingInducedWellRupture"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DecisionVariable"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "ShakingInducedWellRupture"
+								}
 							}
 						}
 					}
@@ -571,8 +641,22 @@
 								"Params": []
 							},
 							"Params": {
-								"ReturnCategory": "DecisionVariable",
-								"ReturnHazard": "CaprockLeakage"
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DecisionVariable"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "CaprockLeakage"
+								}
 							}
 						}
 					}

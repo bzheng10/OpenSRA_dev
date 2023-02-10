@@ -442,7 +442,7 @@ def get_pipe_crossing_fault_rup(
     function to determine crossing for fault rupture
     """
     
-    # if PetersenEtal2011 == 'Thompson2021' or PetersenEtal2011 == 'WellsCoppersmith1994':
+    # if fault_disp_model == 'Thompson2021' or fault_disp_model == 'WellsCoppersmith1994':
         # raise ValueError('Missing implementation for pipe crossing with UCERF for "Thompson2021" and "WellsCoppersmith1994"')
     
     if not im_source == 'UCERF':

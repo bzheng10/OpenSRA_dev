@@ -1,2 +1,2 @@
-level,coeff_mean,coeff_sigma,rv_label,apply_ln,power
-1,5.00E-01,,pga,TRUE,1
+Variable Label,Level,Coefficient,Apply Ln,Power
+pga,1,5.00E-01,TRUE,1

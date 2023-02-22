@@ -416,7 +416,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # Forward Euler differentiation
     forward_euler_multiplier = 1.01
     # Number of Epistemic samples for inputs
-    num_epi_input_samples = 1000
+    if flag_possible_repeated_crossings:
+        num_epi_input_samples = 1000
+    else:
+        num_epi_input_samples = 100
     # Number of Epistemic samples for fractiles
     num_epi_fractile_samples = 1000
     # Make some arrays to be used later
@@ -1887,6 +1890,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                     sigma_of_mu[curr_case_str][init_step_str][param_to_use][rows_to_use_pc[init_step_str]]
                                 pc_kwargs[f'sigma{pc_letter_for_step[0]}'] = \
                                     sigma[curr_case_str][init_step_str][param_to_use][rows_to_use_pc[init_step_str]]
+                                # make sure sigmas are > 0 to avoid dividing by 0
+                                pc_kwargs[f'sigma{pc_letter_for_step[0]}'] = np.maximum(pc_kwargs[f'sigma{pc_letter_for_step[0]}'],1e-4)
                             if step == pbee_dim[curr_case_str]-1:
                                 pc_kwargs[f'mu{pc_letter_for_step[step]}'] = \
                                     mean_of_mu[curr_case_str][last_step_str][param_i][rows_to_use_pc[last_step_str]]
@@ -1924,6 +1929,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                     sigma_of_mu[curr_case_str][step_str][param_to_use][rows_to_use_pc[step_str]]
                                 pc_kwargs[f'sigma{pc_letter_for_step[step]}'] = \
                                     sigma[curr_case_str][step_str][param_to_use][rows_to_use_pc[step_str]]
+                            # make sure sigmas are > 0 to avoid dividing by 0
+                            pc_kwargs[f'sigma{pc_letter_for_step[step]}'] = np.maximum(pc_kwargs[f'sigma{pc_letter_for_step[step]}'],1e-4)
                         # run function to get pc coefficients
                         # 1 integral
                         if pbee_dim[curr_case_str] == 2:
@@ -2539,13 +2546,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     new_col_name = new_col_name.replace('_',' ')
                     gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='mean_fractile', index=False, crs=4326)
+        gdf_frac_mean.to_file(spath, layer='mean_annual_rate_of_failure', index=False, crs=4326)
         
     # for wells and caprocks - one sheet for wells, one sheet for caprocks if exists
     if running_wells_caprocks:
         gdf_frac_mean = {}
         # first get mean fractile summary for wells
-        gdf_frac_mean['mean_fractile_wells'] = GeoDataFrame(
+        gdf_frac_mean['mean_annual_rate_of_failure_for_wells'] = GeoDataFrame(
             None,
             crs=4326,
             geometry=points_from_xy(
@@ -2553,7 +2560,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 y=df_locs.LAT.values,
             )
         )
-        gdf_frac_mean['mean_fractile_wells']['WellID'] = index
+        gdf_frac_mean['mean_annual_rate_of_failure_for_wells']['WellID'] = index
         # for each case in df_frac, get all mean columns
         for i, case in enumerate(cases_in_df_frac):
             case_num = int(case[-1])
@@ -2566,7 +2573,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         new_col_name = f'{case}: {dv_str}'
                         new_col_name = remap_str(new_col_name, col_name_remap)
                         new_col_name = new_col_name.replace('_',' ')
-                        gdf_frac_mean['mean_fractile_wells'][new_col_name] = df_frac[case][col].values
+                        gdf_frac_mean['mean_annual_rate_of_failure_for_wells'][new_col_name] = df_frac[case][col].values
         # for each case in df_frac, get all mean columns
         for i, case in enumerate(cases_in_df_frac):
             if 'caprock' in workflow_order_list[case]['haz_list']:
@@ -2574,8 +2581,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 dv_str = df_workflow['DV'].iloc[case_num-1]
                 dv_str = dv_str.replace(' ','_')
                 # next get mean fractile summary for caprocks
-                if not 'mean_fractile_caprocks' in gdf_frac_mean:
-                    gdf_frac_mean['mean_fractile_caprocks'] = GeoDataFrame(
+                if not 'mean_annual_rate_of_failure_for_caprocks' in gdf_frac_mean:
+                    gdf_frac_mean['mean_annual_rate_of_failure_for_caprocks'] = GeoDataFrame(
                         None,
                         crs=4326,
                         geometry=caprock_crossing.geometry.values
@@ -2586,7 +2593,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         new_col_name = f'{case}: {dv_str} - {col}'
                         new_col_name = remap_str(new_col_name, col_name_remap)
                         new_col_name = new_col_name.replace('_',' ')
-                        gdf_frac_mean['mean_fractile_caprocks'][new_col_name] = df_frac[case][col].values
+                        gdf_frac_mean['mean_annual_rate_of_failure_for_caprocks'][new_col_name] = df_frac[case][col].values
         # export
         for layer in gdf_frac_mean:
             gdf_frac_mean[layer].to_file(spath, layer=layer, index=False, crs=4326)
@@ -2633,7 +2640,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     #     new_col_name = new_col_name.replace('_',' ')
                     #     gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='mean_fractile', index=False, crs=4326)
+        gdf_frac_mean.to_file(spath, layer='mean_annual_rate_of_failure', index=False, crs=4326)
     gpkg_contains.append('mean fractiles from call cases')
     
     # append other gpkg to gdf_frac_mean if they exist

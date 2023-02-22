@@ -20,6 +20,8 @@ import numpy as np
 # from numpy import tan, radians, where
 # from numba import jit
 # from numba import njit
+# import warnings
+# warnings.filterwarnings("ignore", category=RuntimeWarning) 
 
 # OpenSRA modules and classes
 from src.base_class import BaseModel
@@ -1566,7 +1568,9 @@ class HutabaratEtal2022_SSComp(_PipeStrainBase):
         b2 = 0.34262 + (-0.10918*d_pipe) + 0.00197*l_anchor+ 0.0027*f_beta_crossing
         
         # calculate pipe strain
-        metric_inside_atanh = (np.log(pgdef) - b0) / b1
+        metric_inside_atanh = np.ones(pgdef.shape)*1e-10
+        cond = pgdef>0
+        metric_inside_atanh[cond] = (np.log(pgdef[cond]) - b0[cond]) / b1[cond]
         # limit atanh between -5 and 5
         atanh_metric = np.ones(pgdef.shape)*5
         cond = np.logical_and(metric_inside_atanh>-1,metric_inside_atanh<1)

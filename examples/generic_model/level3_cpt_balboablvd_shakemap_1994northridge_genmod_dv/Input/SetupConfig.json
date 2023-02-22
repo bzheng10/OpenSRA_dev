@@ -71,12 +71,8 @@
     "DamageMeasure": {
         "Type": {
             "LateralSpreadInducedPipeStrain": {
-                "ToInclude": true,
-                "Method": {
-					"BainEtal2022_and_HutabaratEtal2022": {
-						"ModelWeight": 1
-					}
-				},
+                "ToInclude": false,
+                "Method": {},
                 "OtherParameters": {}
             }
         },
@@ -88,38 +84,15 @@
             "PipeCompressiveRupture": {
                 "ToInclude": true,
                 "Method": {
-					"BainEtal2022": {
-						"ModelWeight": 1
-					}
-				},
-                "OtherParameters": {}
-            },
-            "PipeTensileRupture": {
-                "ToInclude": true,
-                "Method": {
 					"GenericModel": {
 						"ModelWeight": 1,
-						"UpstreamCategory": "DM",	
-						"UpstreamParams": [],
-						"ReturnParams": ["eps_tens_crit_rup"],
+						"UpstreamCategory": "EDP",	
+						"UpstreamParams": "",
+						"ReturnParams": "pgdef_crit_rup",
+						"DistType": "lognormal",
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
-						"PathToModelInfo": "genmod_DV_PipeTensileRupture.csv"
-					}
-				},
-                "OtherParameters": {}
-            },
-            "PipeTensileLeakage": {
-                "ToInclude": true,
-                "Method": {
-					"GenericModel": {
-						"ModelWeight": 1,
-						"UpstreamCategory": "DM",	
-						"UpstreamParams": [],
-						"ReturnParams": ["eps_tens_crit_leak"],
-						"Aleatory": 0.3,
-						"Epistemic": 0.25,
-						"PathToModelInfo": "genmod_DV_PipeTensileLeakage.csv"
+						"PathToModelInfo": "genmod_DV_PipeCompressiveRupture.csv"
 					}
 				},
                 "OtherParameters": {}

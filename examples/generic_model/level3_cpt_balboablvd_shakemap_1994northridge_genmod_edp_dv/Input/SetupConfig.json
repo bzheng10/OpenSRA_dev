@@ -52,8 +52,8 @@
 					"GenericModel": {
 						"ModelWeight": 1,
 						"UpstreamCategory": "IM",	
-						"UpstreamParams": ["pga"],
-						"ReturnParams": ["pgdef"],
+						"UpstreamParams": "pga",
+						"ReturnParams": "pgdef",
 						"DistType": "lognormal",
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
@@ -90,12 +90,12 @@
 					"GenericModel": {
 						"ModelWeight": 1,
 						"UpstreamCategory": "EDP",	
-						"UpstreamParams": [],
-						"ReturnParams": ["pgdef_crit_rup"],
+						"UpstreamParams": "",
+						"ReturnParams": "pgdef_crit_rup",
 						"DistType": "lognormal",
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
-						"PathToModelInfo": "genmod_DV_PipeCompRupture.csv"
+						"PathToModelInfo": "genmod_DV_PipeCompressiveRupture.csv"
 					}
 				},
                 "OtherParameters": {}

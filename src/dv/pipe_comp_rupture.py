@@ -170,7 +170,7 @@ class BainEtal2022(PipeCompressiveRupture):
         d_pipe, t_pipe, sigma_y, op_press, # infrastructure
         steel_grade, # fixed/toggles
         return_inter_params=False # to get intermediate params
-        ):
+    ):
         """Model"""
         # model coefficients
         # c0 =  1.709     # constant

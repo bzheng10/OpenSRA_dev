@@ -892,7 +892,7 @@ class GenericModel(BaseModel):
         
     def define_return_pbee_info(
         self, cat, var_list,
-        dist_type='lognormal', aleatory=0.01, epistemic=0.0,
+        dist_type='lognormal', aleatory=1e-4, epistemic=0.0,
         min_val=1e-10, # avoid summing of -INF mean values for lognormally distributed returns
         desc='', unit='' # does not affect calculation
     ):

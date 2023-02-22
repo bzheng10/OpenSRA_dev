@@ -783,6 +783,8 @@ class ZhuEtal2017(Liquefaction):
         # distance cutoff for model
         # model_transition = 20 # km
         
+        # hard PGA
+        
         # initialize arrays
         x_logistic = np.empty(pgv.shape)
         prob_liq = np.empty(pgv.shape)
@@ -835,8 +837,8 @@ class ZhuEtal2017(Liquefaction):
         prob_liq[pga_mag<0.1] = 1e-3
         # for vs30 > 620 m/s, set prob to 0
         prob_liq[vs30>620] = 1e-3
-        # for precip > 1700 mm, set prob to 0
-        prob_liq[precip>1700] = 1e-3
+        # set cap of precip to 1700 mm
+        prob_liq[precip>1700] = 1700
 
         # calculate sigma_mu
         sigma_mu = (np.exp(0.25)-1) * prob_liq

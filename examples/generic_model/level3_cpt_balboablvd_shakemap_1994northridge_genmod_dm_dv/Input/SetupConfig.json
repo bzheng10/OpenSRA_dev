@@ -76,8 +76,8 @@
 					"GenericModel": {
 						"ModelWeight": 1,
 						"UpstreamCategory": "EDP",	
-						"UpstreamParams": ["pgdef"],
-						"ReturnParams": ["eps_comp"],
+						"UpstreamParams": "pgdef",
+						"ReturnParams": "eps_comp",
 						"DistType": "lognormal",
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
@@ -98,12 +98,28 @@
 					"GenericModel": {
 						"ModelWeight": 1,
 						"UpstreamCategory": "DM",	
-						"UpstreamParams": [],
-						"ReturnParams": ["eps_comp_crit_rup"],
+						"UpstreamParams": "",
+						"ReturnParams": "eps_comp_crit_rup",
 						"DistType": "lognormal",
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
-						"PathToModelInfo": "genmod_DV_PipeCompRupture.csv"
+						"PathToModelInfo": "genmod_DV_PipeCompressiveRupture.csv"
+					}
+				},
+                "OtherParameters": {}
+            },
+            "PipeTensileRupture": {
+                "ToInclude": true,
+                "Method": {
+					"GenericModel": {
+						"ModelWeight": 1,
+						"UpstreamCategory": "EDP",	
+						"UpstreamParams": "",
+						"ReturnParams": "pgdef_crit_rup",
+						"DistType": "lognormal",
+						"Aleatory": 0.3,
+						"Epistemic": 0.25,
+						"PathToModelInfo": "genmod_DV_PipeTensileRupture.csv"
 					}
 				},
                 "OtherParameters": {}

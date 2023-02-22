@@ -261,7 +261,7 @@ class BainEtal2022_and_HutabaratEtal2022(LateralSpreadInducedPipeStrain):
         #####
         
         # for PGD less than 5 cm or 0.05 m, set to 0
-        pgdef[pgdef<0.05] == 0
+        pgdef[pgdef<0.05] = 0
         
         # initialize output variables
         eps_pipe_comp = np.ones(pgdef.shape)*1e-5

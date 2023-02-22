@@ -94,12 +94,25 @@ def prepare_generic_model(genmod_attributes):
     """creates instance of generic model using attributes"""
     # get spreadsheet with model form definitions
     genmod_model_form = read_csv(genmod_attributes['PathToModelInfo'])
+    header_map = {
+        'Variable': 'rv_label',
+        'Level': 'level',
+        'Coefficient': 'coeff_mean',
+        'Apply Ln': 'apply_ln',
+        'Power': 'power',
+    }
+    genmod_model_form.rename(columns=header_map,inplace=True) # rename column headers to be compatible with GenericModel
     # make clean instance of generic model
     genmod = GenericModel()
     # set upstream dependency
+    upstream_var_str = genmod_attributes['UpstreamParams'].replace(" ","") # remove all spaces
+    if len(upstream_var_str) == 0:
+        upstream_var_list = []
+    else:
+        upstream_var_list = upstream_var_str.split(",") # split by commas
     genmod.define_upstream_pbee_info(
         cat=genmod_attributes['UpstreamCategory'].upper(), # always upper case
-        var_list=genmod_attributes['UpstreamParams']
+        var_list=upstream_var_list
     )
     # get return model dist params
     add_dist_attrs = {}
@@ -108,13 +121,25 @@ def prepare_generic_model(genmod_attributes):
         'Aleatory': 'aleatory',
         'Epistemic': 'epistemic',
     }
+    # min_ale_val = 1e-4 # handles aleatory variability == 0
+    # for att in att_to_get:
+    #     if genmod_attributes[att] is not None:
+    #         val = genmod_attributes[att]
+    #         if att == "Aleatory" and val == 0:
+    #             val = min_ale_val
+    #         add_dist_attrs[att_to_get[att]] = val
     for att in att_to_get:
         if genmod_attributes[att] is not None:
             add_dist_attrs[att_to_get[att]] = genmod_attributes[att]
     # set return info
+    return_var_str = genmod_attributes['ReturnParams'].replace(" ","") # remove all spaces
+    if len(return_var_str) == 0:
+        return_var_list = []
+    else:
+        return_var_list = return_var_str.split(",") # split by commas
     genmod.define_return_pbee_info(
         cat=genmod_attributes['ReturnCategory'].upper(), # always upper case
-        var_list=genmod_attributes['ReturnParams'],
+        var_list=return_var_list,
         **add_dist_attrs,
     )
     # add model terms

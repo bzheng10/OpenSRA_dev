@@ -79,12 +79,12 @@
 					"GenericModel": {
 						"ModelWeight": 1,
 						"UpstreamCategory": "IM",	
-						"UpstreamParams": [],
-						"ReturnParams": ["pga_crit_rup"],
+						"UpstreamParams": "",
+						"ReturnParams": "pga_crit_rup",
 						"DistType": "normal",
 						"Aleatory": 0.3,
 						"Epistemic": 0.25,
-						"PathToModelInfo": "genmod_DV_PipeCompRupture.csv"
+						"PathToModelInfo": "genmod_DV_PipeCompressiveRupture.csv"
 					}
 				},
                 "OtherParameters": {}

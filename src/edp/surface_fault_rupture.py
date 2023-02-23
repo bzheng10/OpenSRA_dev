@@ -140,7 +140,7 @@ class PetersenEtal2011(SurfaceFaultRupture):
         # - displacement scale factor
         ln_pgdef = ln_pgdef * prob_surf_rup * f_r * f_ds # applied to ln(d)
         
-        # convert to meters and limit to 1e-5 m to avoid ln(0)
+        # convert to meters and limit to 1e-5 m to avoid ln(0) during PC
         pgdef = np.maximum(np.exp(ln_pgdef)/100, 1e-5) # m
 
         # prepare outputs

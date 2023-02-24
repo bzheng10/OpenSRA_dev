@@ -6,6 +6,7 @@ ex_folders = []
 for each in os.listdir('examples'):
     if os.path.isdir(os.path.join('examples',each)) and \
         each != 'superseded' and \
+        each != 'below_ground_surface_fault_rupture' and \
         each != 'other_data':
             ex_folders.append(each)
 

@@ -517,7 +517,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     crossing_params_intermediate = []
     if flag_crossing_file_exists:
         # if below ground, then perform additional sampling using crossing angles
-        if running_below_ground:
+        if running_below_ground and has_dm:
             transition_weight_factor = None
             if running_below_ground_lateral_spread:
                 # if running CPTs, then deformation polygons are produced and true beta_crossings exist

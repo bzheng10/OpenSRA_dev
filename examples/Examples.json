@@ -130,20 +130,6 @@
             }
         ]
     },
-    "Below Ground - Surface Fault Rupture": {
-        "Examples": [
-            {
-                "name": "BayArea",
-                "description": "Placeholder\n",
-                "inputFile": "below_ground_surface_fault_rupture/bayarea/Input/SetupConfig.json"
-            },
-            {
-                "name": "LosAngeles",
-                "description": "Placeholder\n",
-                "inputFile": "below_ground_surface_fault_rupture/losangeles/Input/SetupConfig.json"
-            }
-        ]
-    },
     "Using Generic Models": {
         "Examples": [
             {

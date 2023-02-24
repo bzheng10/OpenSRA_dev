@@ -359,9 +359,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     raise ValueError('Surface fault rupture currently set up for QFault hazard zones from LCI, which interacts with UCERF3')
                 # additional logic inputs
                 fault_disp_model = list(workflow['EDP']['surface_fault_rupture'])[0]
-                reduced_ucerf_fpath = os.path.join(opensra_dir,
-                    'lib','UCERF3','ReducedEvents_Abrahamson2022','Mean UCERF3 FM3.1',
-                    'UCERF3_reduced_senario_dM0.5_v2.shp'
+                # reduced_ucerf_fpath = os.path.join(opensra_dir,
+                #     'lib','UCERF3','ReducedEvents_Abrahamson2022','Mean UCERF3 FM3.1',
+                #     'UCERF3_reduced_senario_dM0.5_v2.shp'
+                # )
+                preproc_ucerf3_for_qfault_dir = os.path.join(
+                    opensra_dir,'lib','LCI_Qfault_UCERF3_preprocess'
                 )
                 # run get pipe crossing function
                 logging.info(f'{counter}. Performing pipeline crossing algorithm for {hazard}...')
@@ -374,7 +377,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         infra_site_data=site_data.copy(),
                         avail_data_summary=avail_data_summary,
                         opensra_dataset_dir=opensra_dataset_dir,
-                        reduced_ucerf_fpath=reduced_ucerf_fpath,
+                        preproc_ucerf3_for_qfault_dir=preproc_ucerf3_for_qfault_dir,
                         fault_disp_model=fault_disp_model,
                         im_source=im_source,
                         infra_site_data_geom=site_data_geom,
@@ -1204,11 +1207,12 @@ def read_input_tables(
     }, inplace=True)
     # if using preprocessed state pipeline network, update column to pull for diameter
     if flag_using_state_network or flag_using_region_network:
-        row_for_d_pipe = np.where(rvs_input.Name=='d_pipe')[0][0]
-        if rvs_input.loc[row_for_d_pipe,'Source'] == 'Preferred':
-            rvs_input.loc[row_for_d_pipe,'Source'] = 'From infrastructure table or enter value'
-            rvs_input.loc[row_for_d_pipe,'Mean or Median'] = 'DIAMETER'
-            rvs_input.loc[row_for_d_pipe,'Distribution Type'] = 'Normal'
+        if 'd_pipe' in rvs_input.Name:
+            row_for_d_pipe = np.where(rvs_input.Name=='d_pipe')[0][0]
+            if rvs_input.loc[row_for_d_pipe,'Source'] == 'Preferred':
+                rvs_input.loc[row_for_d_pipe,'Source'] = 'From infrastructure table or enter value'
+                rvs_input.loc[row_for_d_pipe,'Mean or Median'] = 'DIAMETER'
+                rvs_input.loc[row_for_d_pipe,'Distribution Type'] = 'Normal'
     # preload infrastructure geometry if it exists, otherwise create it
     if infra_geom_fpath is not None:
         site_data_geom = read_file(infra_geom_fpath).geometry

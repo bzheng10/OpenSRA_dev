@@ -44,6 +44,7 @@ from shapely.geometry import Polygon
 # from numba_stats import norm as nb_norm
 
 # OpenSRA modules and functions
+from src import numba_cache_config
 from src.site.site_util import make_list_of_linestrings, get_regional_liq_susc
 from src.pc_func import pc_util, pc_workflow
 from src.pc_func.pc_coeffs_single_int import pc_coeffs_single_int

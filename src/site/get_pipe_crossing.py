@@ -667,7 +667,7 @@ def get_pipe_crossing_fault_rup(
             # this section is used to get normalized distance for the Petersen method
             # initialize lists to store various items
             scenario_crossed_list = [] # scenario considered as crossed
-            scenario_id_crossed_list = [] # scenario considered as crossed
+            scenario_id_crossed_list = [] # scenario ID considered as crossed
             norm_dist_list = [] # tracking normalized distance from endpoint
             prob_crossing_list = [] # probability of crossing
             

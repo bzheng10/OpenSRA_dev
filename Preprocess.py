@@ -43,6 +43,7 @@ from pyproj import Transformer
 warnings.simplefilter(action='ignore', category=ShapelyDeprecationWarning)
 
 # OpenSRA modules
+from src import numba_cache_config
 from src.edp import process_cpt_spt
 from src.im import haz
 from src.pc_func.pc_workflow import get_samples_for_params, prepare_generic_model
@@ -196,7 +197,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             infra_fpath
         )
         infra_fpath = os.path.abspath(infra_fpath) # get absolute path to avoid cross-platform pathing errors
-        infra_fname = infra_fpath# update fname with fpath
+        infra_fname = infra_fpath # update fname with fpath
         # update infra_ftype to shapefile for internal processing
         infra_ftype = "Shapefile"
         flag_using_region_network = True

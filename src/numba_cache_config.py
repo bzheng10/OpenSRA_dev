@@ -1,10 +1,8 @@
 import os
 
 # get local app data directory path
-curr_path = os.path.abspath(__file__)
-src_dir = os.path.dirname(curr_path)
-opensra_dir = os.path.dirname(src_dir)
-# local_app_data_dir = os.environ['LOCALAPPDATA']
-# set cache dir
-cache_dir = os.path.join(opensra_dir, '__nbcache__')
+local_app_data_dir = os.environ['LOCALAPPDATA']
+
+# add env variable
+cache_dir = os.path.join(local_app_data_dir, 'numba_cache')
 os.environ["NUMBA_CACHE_DIR"] = cache_dir

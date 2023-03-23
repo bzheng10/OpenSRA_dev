@@ -42,7 +42,7 @@ warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 # from src.site.geodata import NetworkData
 from src.site.geodata import PointData
 from src.site.site_util import make_list_of_linestrings
-from src.util import get_basename_without_extension
+from src.util import get_basename_without_extension, get_idx_of_list_a_in_b
 
 
 # ---
@@ -449,6 +449,11 @@ def get_pipe_crossing_fault_rup(
         raise ValueError('Surface fault rupture currently set up for QFault hazard zones from LCI, which interacts with UCERF3')
         
     else:
+        # setup info
+        logging.info(f'\t- To run fault rupture crossing algorithm:')
+        logging.info(f'\t\t- fault displacement model: {fault_disp_model}')
+        logging.info(f'\t\t- seismic source: {im_source}')
+        
         # ---
         # create transformers for transforming coordinates
         epsg_wgs84 = 4326
@@ -457,20 +462,22 @@ def get_pipe_crossing_fault_rup(
         transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84)
 
         # read preprocessed UCERF3 rupture and section files
-        rupture_table_fpath = os.path.join(preproc_ucerf3_for_qfault_dir,'ruptures_in_fault_hazard.h5')
-        section_table_fpath = os.path.join(preproc_ucerf3_for_qfault_dir,'sections_in_fault_hazard.h5')
-        section_trace_fpath = os.path.join(preproc_ucerf3_for_qfault_dir,'section_trace.shp')
-        rupture_table = pd.read_hdf(rupture_table_fpath,key='table')
-        section_table = pd.read_hdf(section_table_fpath,key='table')
-        section_trace = gpd.read_file(section_trace_fpath)
-        section_table = GeoDataFrame(
-            section_table,
-            crs=epsg_wgs84,
-            geometry=section_trace.geometry
-        )
-        section_table_utm = section_table.to_crs(epsg_utm_zone10) # convert to UTM (m)
-        section_trace = None # clear
-
+        if im_source == 'UCERF':
+            rupture_table_fpath = os.path.join(preproc_ucerf3_for_qfault_dir,'ruptures_in_fault_hazard.h5')
+            section_table_fpath = os.path.join(preproc_ucerf3_for_qfault_dir,'sections_in_fault_hazard.h5')
+            section_trace_fpath = os.path.join(preproc_ucerf3_for_qfault_dir,'section_trace.shp')
+            rupture_table = pd.read_hdf(rupture_table_fpath,key='table')
+            section_table = pd.read_hdf(section_table_fpath,key='table')
+            section_trace = read_file(section_trace_fpath)
+            section_table = GeoDataFrame(
+                section_table,
+                crs=epsg_wgs84,
+                geometry=section_trace.geometry
+            )
+            section_table_utm = section_table.to_crs(epsg_utm_zone10) # convert to UTM (m)
+            section_trace = None # clear
+            logging.info(f'\t- Loaded {im_source} rupture and section data')
+        
         # ---
         # convert site data DataFrame to GeoDataFrame
         if infra_site_data_geom is None:
@@ -529,38 +536,46 @@ def get_pipe_crossing_fault_rup(
         # headers for primary and secondary
         header_map = {
             'primary': {
+                'SectionID': 'TraceNo_1',
                 'DipDir': 'DipDirec_1',
                 'AveDip': 'AveDip_1',
                 'AveRake': 'AveRake_1',
                 'ParentSect': 'parentSe_1',
             },
             'secondary': {
+                'SectionID': 'TraceNo_1',
                 'DipDir': 'DipDirec_2',
                 'AveDip': 'AveDip_12',
                 'AveRake': 'AveRake_12',
                 'ParentSect': 'parentSe_3',
             }
         }
-        
+
         # ---
         # storing indices of segment and qfault crossed
         segment_by_qfault = {}
         # segment_crossed_by_rupture = {}
-        segment_id_crossed_by_rupture = {}
+        # segment_id_crossed_by_rupture = {}
         prob_crossing_by_rupture = {}
         norm_dist_by_rupture = {}
         # export qfault
         gdf_qfault_crossed_export = {}
+        # sections crossed
+        section_id_crossed = {}
+        # unique ruptures crossed
+        unique_rupture_id_crossed = {}
+        unique_rupture_ind_crossed = {}
 
         # for each fault displacement hazard shapefile
         for each in['primary','secondary']:
+            logging.info(f'\t- For {each} hazard:')
+            
             # ---
             # initialize for storage
-            # segment_crossed_by_rupture[each] = {}
-            segment_id_crossed_by_rupture[each] = {}
+            # segment_id_crossed_by_rupture[each] = {}
             prob_crossing_by_rupture[each] = {}
             norm_dist_by_rupture[each] = {}
-            
+
             # ---
             # string for fault reference in available dataset json
             qfault_str = f'qfault_{each}'
@@ -575,7 +590,7 @@ def get_pipe_crossing_fault_rup(
             # get crossing between segments and qfault
             qfault_crossed, segment_crossed = gdf_segment_utm.sindex.query_bulk(
                 gdf_qfault_utm.geometry,predicate='intersects')
-            
+
             # remove repeating segment cases - there are repeating sections in the qfault inventory
             qfault_crossed_list = list(qfault_crossed)
             segment_crossed_list = list(segment_crossed)
@@ -585,7 +600,9 @@ def get_pipe_crossing_fault_rup(
                 if not seg in segment_crossed:
                     segment_crossed.append(seg)
                     qfault_crossed.append(qfault_crossed_list[i])
-
+            # unique q-faults crossed
+            unique_qfault_crossed = np.unique(qfault_crossed)
+            
             # ------------------------------------
             # this section is used to get beta crossings
             # get list intersections for getting beta crossing
@@ -606,12 +623,14 @@ def get_pipe_crossing_fault_rup(
                     print(type(intersections[i]))
                     raise ValueError('Invalid type for intersections')
             crossing_coords = np.asarray(crossing_coords)
-            
+            logging.info(f'\t\t- Obtained crossing locations...')
+
             # ---
             # get subset of qfaults and segments with crossings
             gdf_qfault_crossed = gdf_qfault_utm.loc[qfault_crossed].copy()
+            gdf_unique_qfault_crossed = gdf_qfault_utm.loc[unique_qfault_crossed].copy()
             segment_by_qfault[each] = gdf_segment_utm.loc[segment_crossed].copy()
-            
+
             # get fault angles
             strike = gdf_qfault_crossed[header_map[each]['DipDir']].values - 90
             dip = gdf_qfault_crossed[header_map[each]['AveDip']].values
@@ -620,7 +639,7 @@ def get_pipe_crossing_fault_rup(
             azimuth = get_rake_azimuth(strike,dip,rake)
             # get unit slip in dx and dy, to be used for crossing angles later
             slip_vect_dx_dy_norm = np.transpose(get_dx_dy_for_vector_along_azimuth(azimuth))
-            
+
             # ---
             # get start and end points for segments crossed
             crossing_start = segment_full_begin_utm[segment_crossed]
@@ -661,20 +680,20 @@ def get_pipe_crossing_fault_rup(
                 vect2_pt2_in_meters=crossing_coords+slip_vect_dx_dy_norm,
             )
             # round and append to dataframe
-            beta_crossing = np.round(beta_crossing,decimals=1)            
+            beta_crossing = np.round(beta_crossing,decimals=1)
+            logging.info(f'\t\t- Obtained crossing beta for Bain et al. (2022) strain models...')
             
             # ------------------------------------
             # this section is used to get normalized distance for the Petersen method
             # initialize lists to store various items
             scenario_crossed_list = [] # scenario considered as crossed
-            scenario_id_crossed_list = [] # scenario ID considered as crossed
+            scenario_id_crossed_list = [] # scenario considered as crossed
             norm_dist_list = [] # tracking normalized distance from endpoint
             prob_crossing_list = [] # probability of crossing
-            
+
             # -- used for Petersen et al. (2011) only
             if not fault_disp_model == 'PetersenEtal2011':
-                # for other fault rupture models (e.g., Wells & Coppersmith), set distance metrics to null
-                # every crossing pair of segment and fault
+                # for other fault rupture models (e.g., Wells & Coppersmith), set distance metrics to null (not used)     # every crossing pair of segment and fault
                 for i in range(len(qfault_crossed)):
                     scenario_crossed_list.append([])
                     scenario_id_crossed_list.append([])
@@ -682,9 +701,11 @@ def get_pipe_crossing_fault_rup(
                     prob_crossing_list.append([])
                 
             else:
-                # get unique parent IDs with crossings
-                unique_parent_id_crossed = np.unique(
-                    gdf_qfault_crossed[header_map[each]['ParentSect']].values)
+                # get unique section IDs with crossings
+                unique_section_id_crossed = np.unique(
+                    gdf_qfault_crossed[header_map[each]['SectionID']].values)
+                section_id_crossed[each] = unique_section_id_crossed
+                
                 # get segment start and end arrays
                 segment_crossed_start = np.vstack([
                     segment_by_qfault[each].x1.values,
@@ -702,102 +723,83 @@ def get_pipe_crossing_fault_rup(
                 prob_crossing = norm_seg_len*np.abs(np.sin(np.radians(crossing_theta)))
                 prob_crossing = np.round(prob_crossing,decimals=4)
                 
-                # get fault scenarios from reduced UCERF for unique parent IDs crossed
-                rows_with_parent_ids_in_norm_scenario = {
-                    parent_id: np.where(rupture_table_utm.ParentID.values==parent_id)[0]
-                    for parent_id in unique_parent_id_crossed
+                # get rows in UCERF section table for unique section IDs crossed
+                rows_with_section_ids_in_ucerf_section_table = {
+                    section_id: np.where(section_table_utm.SectionID.values==section_id)[0][0]
+                    for section_id in unique_section_id_crossed
                 }
+                # get rupture IDs associated with unique section IDs crossed
+                rupture_list_for_unique_section_id_crossed = {
+                    section_id: section_table_utm.loc[
+                        rows_with_section_ids_in_ucerf_section_table[section_id]
+                    ].RuptureIDForSection
+                    for section_id in unique_section_id_crossed
+                }
+                # get norm dist (multiplied by 1000) associated with unique section IDs crossed
+                norm_dist_x1000_for_unique_section_id_crossed = {
+                    section_id: section_table_utm.loc[
+                        rows_with_section_ids_in_ucerf_section_table[section_id]
+                    ].NormDistInRupX1000
+                    for section_id in unique_section_id_crossed
+                }
+                # get unique list of rupture IDs crossed
+                unique_rupture_id_crossed[each] = np.unique(np.hstack([
+                    rupture_list_for_unique_section_id_crossed[each]
+                    for each in rupture_list_for_unique_section_id_crossed
+                ]))
+                # rows with unique rupture IDs
+                unique_rupture_ind_crossed[each] = get_idx_of_list_a_in_b(rupture_table.EventID.values,unique_rupture_id_crossed[each])
+                unique_rupture_id_crossed_map = pd.DataFrame(
+                    unique_rupture_ind_crossed[each],
+                    index=unique_rupture_id_crossed[each],
+                )
+                # get subset of rupture table with crossed ruptures only
+                unique_rupture_table_crossed = rupture_table.loc[unique_rupture_ind_crossed[each]].copy()
                 
                 # every crossing pair of segment and fault
-                for i in range(len(qfault_crossed)):
-                    # get the geometry of the segment
-                    segment_crossed_i = segment_by_qfault[each].iloc[i].copy().geometry
-                    # segment ID
-                    segment_id_crossed_i = segment_by_qfault[each].ID.iloc[i]
-                    # parentID crossed
-                    parent_id_crossed_i = gdf_qfault_crossed.iloc[i][header_map[each]['ParentSect']]
-                    # get scenarios from Norm for parent ID crossed
-                    rows_for_parent_id_crossed_i = rows_with_parent_ids_in_norm_scenario[parent_id_crossed_i]
-                    # get subset of scenarios
-                    gdf_norm_scenario_utm_crossed_i = rupture_table_utm.iloc[rows_for_parent_id_crossed_i].copy()
-                    # initialize lists to track for current segment with UCERF scenarios
-                    scenario_crossed_seg_i = []
-                    scenario_id_crossed_seg_i = []
-                    norm_dist_seg_i = []
-                    prob_crossing_seg_i = []
-                    # for each scenario
-                    for j in range(gdf_norm_scenario_utm_crossed_i.shape[0]):
-                        # fault index
-                        fault_ind_j = gdf_norm_scenario_utm_crossed_i.index.values[j]
-                        # get fault trace geometry
-                        fault_trace_j = gdf_norm_scenario_utm_crossed_i.geometry.iloc[j]
-                        # convert string of coordinates into list
-                        fault_trace_j_arr = np.asarray(fault_trace_j.coords)
-                        fault_trace_j_length = fault_trace_j.length # length in meters
-                        nearest_pt_j = np.asarray(list(nearest_points(segment_crossed_i,fault_trace_j))[1].coords[0])
-                        
-                        # see if nearest point is the end points of fault
-                        if (nearest_pt_j[0] == fault_trace_j_arr[0][0] and \
-                            nearest_pt_j[1] == fault_trace_j_arr[0][1]) or \
-                            (nearest_pt_j[0] == fault_trace_j_arr[-1][0] and \
-                            nearest_pt_j[1] == fault_trace_j_arr[-1][1]):
-                            pass
-                        else:
-                            # if False, consider scenario as crossed for current segment i
-                            scenario_crossed_seg_i.append(gdf_norm_scenario_utm_crossed_i.index[j])
-                            scenario_id_crossed_seg_i.append(gdf_norm_scenario_utm_crossed_i.EventID.iloc[j])
-                            # to get distance from each end of the fault trace
-                            # -- note that due to round off errors, nearest point does not actually fall on line
-                            # -- and so cannot split fault trace for nearest point to get the individual sections.
-                            # -- instead, create buffers from each end of fault and crop fault trace outside of buffer.
-                            # -- then find length of fault trace segments remaining
-                            # 1) get direct dist from endpoints on fault trace to nearest point
-                            dir_dist_start = (
-                                (fault_trace_j_arr[0][0]-nearest_pt_j[0])**2 + \
-                                (fault_trace_j_arr[0][1]-nearest_pt_j[1])**2
-                            )**0.5
-                            dir_dist_end = (
-                                (fault_trace_j_arr[-1][0]-nearest_pt_j[0])**2 + \
-                                (fault_trace_j_arr[-1][1]-nearest_pt_j[1])**2
-                            )**0.5
-                            # 2) from each end of the fault trace, create a buffer
-                            fault_start_buffer = Point(fault_trace_j_arr[0]).buffer(dir_dist_start)
-                            fault_end_buffer = Point(fault_trace_j_arr[-1]).buffer(dir_dist_end)
-                            # 3) crop fault trace by buffers at each end
-                            fault_trace_j_from_start = fault_trace_j.intersection(fault_start_buffer)
-                            fault_trace_j_from_end = fault_trace_j.intersection(fault_end_buffer)
-                            # 4) get short of two trace sections and normalize by total length
-                            norm_dist_seg_i.append(
-                                np.round(
-                                    min(fault_trace_j_from_start.length,fault_trace_j_from_end.length)/fault_trace_j_length,
-                                    decimals=4
-                                )
-                            )
-                            # all UCERF scenarios will have same prob crossing determined from qfault
-                            prob_crossing_seg_i.append(prob_crossing[i])
-                            # also append to dictionary that tracks segment crossed ordered by rupture
-                            if not fault_ind_j in segment_id_crossed_by_rupture[each]:
-                                # segment_crossed_by_rupture[each][fault_ind_j] = [segment_crossed[i]]
-                                segment_id_crossed_by_rupture[each][fault_ind_j] = [segment_id_crossed_i]
-                                prob_crossing_by_rupture[each][fault_ind_j] = [prob_crossing[i]]
-                                norm_dist_by_rupture[each][fault_ind_j] = [norm_dist_seg_i[-1]]
-                            else:
-                                # segment_crossed_by_rupture[each][fault_ind_j].append(segment_crossed[i])
-                                segment_id_crossed_by_rupture[each][fault_ind_j].append(segment_id_crossed_i)
-                                prob_crossing_by_rupture[each][fault_ind_j].append(prob_crossing[i])
-                                norm_dist_by_rupture[each][fault_ind_j].append(norm_dist_seg_i[-1])
+                # for i in range(len(unique_qfault_crossed)):
+                for i, unique_qfault_crossed_i in enumerate(unique_qfault_crossed):        
+                    # UCERF section ID crossed
+                    section_id_crossed_i = gdf_unique_qfault_crossed.iloc[i][header_map[each]['SectionID']]        
+                    # metadata for section crossed
+                    row_in_section_table_for_section_id_crossed_i = np.where(section_table.SectionID==section_id_crossed_i)[0][0]
+                    metadata_section_id_crossed_i = section_table.loc[row_in_section_table_for_section_id_crossed_i]
                     
-                    # append to overall list
-                    scenario_crossed_list.append(scenario_crossed_seg_i)
-                    scenario_id_crossed_list.append(scenario_id_crossed_seg_i)
-                    norm_dist_list.append(norm_dist_seg_i)
-                    prob_crossing_list.append(prob_crossing_seg_i)
-            
+                    # get scenarios from UCERF for section ID crossed
+                    rupture_list_for_section_id_crossed_i = rupture_list_for_unique_section_id_crossed[section_id_crossed_i]
+                    # rows in rupture table for list of scenarios above
+                    rows_rupture_table_for_rupture_list = unique_rupture_id_crossed_map.loc[rupture_list_for_section_id_crossed_i].values.flatten()
+                    # get subset of scenarios
+                    rupture_table_for_scenario_id_crossed_i = rupture_table.iloc[rows_rupture_table_for_rupture_list].copy()
+                    # number of ruptures for current section
+                    len_rupture_list = len(rupture_list_for_section_id_crossed_i)
+                    
+                    # unique_qfault_crossed
+                    ind_in_qfault_crossed_list_for_i =np.where(qfault_crossed==unique_qfault_crossed_i)[0]
+                    segments_crossed_for_i = [segment_crossed[j] for j in ind_in_qfault_crossed_list_for_i]
+                    n_segment_for_i = len(segments_crossed_for_i)
+                    
+                    # for current segment, get
+                    # rows/indices in rupture table with crossed rupture scenarios
+                    scenario_crossed_seg_i = list(unique_rupture_id_crossed_map.loc[rupture_list_for_section_id_crossed_i].values.flatten())
+                    scenario_id_crossed_seg_i = rupture_list_for_section_id_crossed_i # rupture IDs crossed by current segment
+                    norm_dist_seg_i = list(np.asarray(metadata_section_id_crossed_i.NormDistInRupX1000)/1000) # normalized distance from endpoint
+                    prob_crossing_seg_i = [prob_crossing[ind_in_qfault_crossed_list_for_i[0]]]*len_rupture_list # probability of crossing
+                    
+                    # append to list and repeat over list of repeating segments
+                    for j in range(n_segment_for_i):
+                        scenario_crossed_list.append(scenario_crossed_seg_i)
+                        scenario_id_crossed_list.append(scenario_id_crossed_seg_i)
+                        norm_dist_list.append(norm_dist_seg_i)
+                        prob_crossing_list.append(prob_crossing_seg_i)
+                        
+            logging.info(f'\t\t- Obtained crossing probability and normalized distances...')
+                        
             # convert crossing_coords to lat lon
             crossing_coords_lat, crossing_coords_lon = transformer_utmzone10_to_wgs84.transform(
                 crossing_coords[:,0],crossing_coords[:,1]
             )
-            
+
             # append to dataframe
             segment_by_qfault[each][f'qfault_crossed'] = qfault_crossed
             segment_by_qfault[each][f'psi_dip'] = np.round(dip,decimals=1)
@@ -935,12 +937,15 @@ def get_pipe_crossing_fault_rup(
             # add to dataframe
             # segment_by_qfault[each][f'l_anchor_{each}'] = anchorage_length
             segment_by_qfault[each]['l_anchor'] = anchorage_length
+            logging.info(f'\t\t- Obtained anchorage length for Bain et al. (2022) strain models...')
             
             # append column to denote if haz zone is primary or secondary
             segment_by_qfault[each]['qfault_type'] = each
             
             # store qfault
             gdf_qfault_crossed_export[each] = gdf_qfault_crossed.to_crs(epsg_wgs84).copy().reset_index()
+            
+        logging.info(f'\t...DONE - finished both hazards')
         
         # ---
         # clean up segment crossing summary before export
@@ -953,31 +958,7 @@ def get_pipe_crossing_fault_rup(
                 if len(scen)>0:
                     inds_to_keep.append(inds[i])
             segment_by_qfault[each] = segment_by_qfault[each].loc[inds_to_keep]
-        ########################
-        # # 2) join dataframes of segment crossed table for primary and secondary
-        # common_headers = list(set(list(segment_by_qfault['primary'].columns)).intersection(set(list(segment_by_qfault['secondary'].columns))))
-        # all_segments_crossed = segment_by_qfault['primary'].merge(segment_by_qfault['secondary'], on=common_headers)
-        # # drop geometry to make use of pd's concat function
-        # seg_crossed_geoms = all_segments_crossed.geometry # keep a copy to make shapefile later
-        # seg_crossed_geoms_crs = all_segments_crossed.crs
-        # all_segments_crossed = pd.DataFrame(all_segments_crossed.drop('geometry',axis=1))
-        # all_segments_crossed = pd.concat([
-        #     all_segments_crossed,
-        #     segment_by_qfault['primary'].drop('geometry',axis=1),
-        #     segment_by_qfault['secondary'].drop('geometry',axis=1)
-        # ])
-        # # all_segments_crossed = all_segments_crossed.sort_values('ID').reset_index(drop=True)
-        # # merge anchorlage length column
-        # anchorage_length_merge = all_segments_crossed.l_anchor_primary.values
-        # anchorage_length_merge[np.isnan(anchorage_length_merge)] = \
-        #     all_segments_crossed.l_anchor_secondary.values[np.isnan(anchorage_length_merge)]
-        # anchorage_length_merge = np.round(anchorage_length_merge,decimals=1)
-        # all_segments_crossed['l_anchor'] = np.maximum(anchorage_length_merge,1e-2) # limit to 1 cm
-        # # reset index and sort by ID column
-        # all_segments_crossed.reset_index(drop=True,inplace=True)
-        # all_segments_crossed.sort_values('ID',inplace=True)
-        # # to flag crossing angles to get distribution later
-        # all_segments_crossed['beta_crossing'] = 'sampling_dependent'
+            
         ###########################################
         # 2) join dataframes of segment crossed table for primary and secondary
         all_segments_crossed = pd.concat([
@@ -992,79 +973,66 @@ def get_pipe_crossing_fault_rup(
         # sort by ID column and reset index
         all_segments_crossed.sort_values('ID',inplace=True)
         all_segments_crossed.reset_index(drop=True,inplace=True)
-        
-        # expand lists by repeating event IDs crossed
-        all_segments_crossed_expand = pd.DataFrame(None,columns=all_segments_crossed.columns)
-        prob_crossing_expand = []
-        event_ind_expand = []
-        event_id_expand = []
-        norm_dist_expand = []
-        geoms_expand = []
-        for i in range(all_segments_crossed.shape[0]):
-            n_event_crossed_for_seg_i = len(all_segments_crossed.event_id_crossed.values[i])
-            for j in range(n_event_crossed_for_seg_i):
-                prob_crossing_expand.append(all_segments_crossed.prob_crossing.iloc[i][j])
-                event_ind_expand.append(all_segments_crossed.event_ind_crossed.iloc[i][j])
-                event_id_expand.append(all_segments_crossed.event_id_crossed.iloc[i][j])
-                norm_dist_expand.append(all_segments_crossed.norm_dist.iloc[i][j])
-                geoms_expand.append(seg_crossed_geoms[i])
-                all_segments_crossed_expand.loc[all_segments_crossed_expand.shape[0]] = \
-                    all_segments_crossed.loc[i].values
-        # append lists
-        all_segments_crossed_expand.drop(columns=[
-            'prob_crossing','event_ind_crossed','event_id_crossed','norm_dist'
-        ],inplace=True)
-        all_segments_crossed_expand['prob_crossing'] = prob_crossing_expand
-        all_segments_crossed_expand['event_ind'] = event_ind_expand
-        all_segments_crossed_expand['event_id'] = event_id_expand
-        all_segments_crossed_expand['norm_dist'] = norm_dist_expand
-        
+        # update column names
+        all_segments_crossed.rename({'event_ind_crossed':'event_ind','event_id_crossed':'event_id'},axis=1,inplace=True)
+
+        segment_id_crossed_by_rupture = {'primary':{},'secondary':{}}
+        segment_ind_crossed_by_rupture = {'primary':{},'secondary':{}}
+        prob_crossing_by_rupture = {'primary':{},'secondary':{}}
+        norm_dist_by_rupture = {'primary':{},'secondary':{}}
+
+        for each in ['primary','secondary']:
+            # get following attributes as dictionaries
+            event_id_crossed = segment_by_qfault[each].event_id_crossed.to_dict()
+            event_ind_crossed = segment_by_qfault[each].event_ind_crossed.to_dict()
+            prob_crossing_crossed = segment_by_qfault[each].prob_crossing.to_dict()
+            norm_dist_crossed = segment_by_qfault[each].norm_dist.to_dict()
+            # get dictionaries of segment_id_crossed, prob_crossing, and norm_dist ordered by ruptures
+            for curr_seg in event_id_crossed:
+                curr_event_id_list = event_id_crossed[curr_seg]
+                curr_event_ind_list = event_ind_crossed[curr_seg]
+                curr_prob_crossing_list = prob_crossing_crossed[curr_seg]
+                curr_norm_dist_list = norm_dist_crossed[curr_seg]
+                for i, event_id in enumerate(curr_event_id_list):
+                    segment_id_crossed_by_rupture[each].setdefault(event_id, []).append(curr_seg)
+                    segment_ind_crossed_by_rupture[each].setdefault(event_id, []).append(curr_seg)
+                    prob_crossing_by_rupture[each].setdefault(event_id, []).append(curr_prob_crossing_list[i])
+                    norm_dist_by_rupture[each].setdefault(event_id, []).append(curr_norm_dist_list[i])
+        logging.info(f'\t- Joined results from primary and secondary hazards...')
+
         # ---
         # clean up rupture table before export
-        # map crossing logic results from segment based to rupture based
-        each = 'primary'
         scenarios_with_crossing_for_haz = np.unique(np.hstack([
-            # np.hstack(segment_by_qfault[each][f'scenario_crossed_{each}'].values)
-            np.hstack(segment_by_qfault[each][f'event_ind_crossed'].values)
+            unique_rupture_id_crossed[each]
             for each in ['primary','secondary']
         ])).astype(int)
-        # sort lists under segment_crossed_by_rupture
-        # get list of segment index crossed by rupture after reseting segment table
-        # segment_crossed_by_rupture = {}
-        # for each in ['primary','secondary']:
-        #     segment_crossed_by_rupture[each] = {}
-        #     # for scen_ind in list(segment_crossed_by_rupture[each]):
-        #         # segment_crossed_by_rupture[each][scen_ind] = sorted(segment_crossed_by_rupture[each][scen_ind])
-        #     for scen_ind in list(segment_id_crossed_by_rupture[each]):
-        #         seg_ind_list = []
-        #         for seg_id in segment_id_crossed_by_rupture[each][scen_ind]:
-        #             seg_ind_list.append(np.where(all_segments_crossed.ID==seg_id)[0][0])
-        #         segment_crossed_by_rupture[each][scen_ind] = seg_ind_list
-        #         # segment_crossed_by_rupture[each][scen_ind] = sorted(segment_crossed_by_rupture[each][scen_ind])
+        scenarios_ind_with_crossing_for_haz = get_idx_of_list_a_in_b(
+            rupture_table.EventID.values,scenarios_with_crossing_for_haz
+        )
+        n_scens = len(scenarios_ind_with_crossing_for_haz)
+
         # get subset of rupture table with crossings only
-        rupture_table_crossing_only = rupture_table.loc[scenarios_with_crossing_for_haz].copy()
+        rupture_table_crossing_only = rupture_table.loc[scenarios_ind_with_crossing_for_haz].copy()
         # append items to rupture table with crossings only
         col_headers_to_append = []
         for each in ['primary','secondary']:
-            # segments_crossed_curr_haz = []
-            segments_id_crossed_curr_haz = []
-            prob_crossing_curr_haz = []
-            norm_dist_curr_haz = []
-            for ind in scenarios_with_crossing_for_haz:
-                if ind in segment_id_crossed_by_rupture[each]:
-                    # segments_crossed_curr_haz.append(segment_crossed_by_rupture[each][ind])
-                    segments_id_crossed_curr_haz.append(segment_id_crossed_by_rupture[each][ind])
-                    prob_crossing_curr_haz.append(prob_crossing_by_rupture[each][ind])
-                    norm_dist_curr_haz.append(norm_dist_by_rupture[each][ind])
+            # rupture_table_crossing_only[f'seg_ind_crossed_{each}'] = None
+            rupture_table_crossing_only[f'seg_id_crossed_{each}'] = None
+            rupture_table_crossing_only[f'prob_crossing_for_seg_{each}'] = None
+            rupture_table_crossing_only[f'norm_dist_for_seg_{each}'] = None
+            
+            for i in range(n_scens):
+                scen_id = scenarios_with_crossing_for_haz[i]
+                scen_ind = scenarios_ind_with_crossing_for_haz[i]
+                if scen_id in segment_id_crossed_by_rupture[each]:
+                    rupture_table_crossing_only.at[scen_ind,f'seg_id_crossed_{each}'] = segment_id_crossed_by_rupture[each][scen_id]
+                    rupture_table_crossing_only.at[scen_ind,f'prob_crossing_for_seg_{each}'] = prob_crossing_by_rupture[each][scen_id]
+                    rupture_table_crossing_only.at[scen_ind,f'norm_dist_for_seg_{each}'] = norm_dist_by_rupture[each][scen_id]
                 else:
-                    # segments_crossed_curr_haz.append([])
-                    segments_id_crossed_curr_haz.append([])
-                    prob_crossing_curr_haz.append([])
-                    norm_dist_curr_haz.append([])
-            # rupture_table_crossing_only[f'seg_ind_crossed_{each}'] = segments_crossed_curr_haz
-            rupture_table_crossing_only[f'seg_id_crossed_{each}'] = segments_id_crossed_curr_haz
-            rupture_table_crossing_only[f'prob_crossing_for_seg_{each}'] = prob_crossing_curr_haz
-            rupture_table_crossing_only[f'norm_dist_for_seg_{each}'] = norm_dist_curr_haz
+                    rupture_table_crossing_only.at[scen_ind,f'seg_id_crossed_{each}'] = []
+                    rupture_table_crossing_only.at[scen_ind,f'prob_crossing_for_seg_{each}'] = []
+                    rupture_table_crossing_only.at[scen_ind,f'norm_dist_for_seg_{each}'] = []
+                    
             # get columns created from this function
             col_headers_to_append.append([
                 # f'seg_ind_crossed_{each}',
@@ -1073,6 +1041,7 @@ def get_pipe_crossing_fault_rup(
                 f'norm_dist_for_seg_{each}',
             ])
         col_headers_to_append = np.asarray(col_headers_to_append).flatten()
+        
         # get concatenated list between primary and secondary
         segments_crossed_merge = []
         segments_id_crossed_merge = []
@@ -1099,60 +1068,138 @@ def get_pipe_crossing_fault_rup(
         rupture_table_crossing_only['seg_id_crossed'] = segments_id_crossed_merge
         rupture_table_crossing_only['prob_crossing'] = prob_crossing_merge
         rupture_table_crossing_only['norm_dist'] = norm_dist_merge
-        col_headers_to_append = np.hstack([
-            col_headers_to_append,
-            # ['seg_ind_crossed', 'seg_id_crossed', 'prob_crossing', 'norm_dist']
-            ['seg_id_crossed', 'prob_crossing', 'norm_dist']
-        ])
+        # drop haz specific columns
+        for col in col_headers_to_append:
+            rupture_table_crossing_only.drop(col,axis=1,inplace=True)
+        # col_headers_to_append = np.hstack([
+        #     col_headers_to_append,
+        #     # ['seg_ind_crossed', 'seg_id_crossed', 'prob_crossing', 'norm_dist']
+        #     ['seg_id_crossed', 'prob_crossing', 'norm_dist']
+        # ])
+        col_headers_to_append = ['seg_id_crossed', 'prob_crossing', 'norm_dist']
         rupture_table_crossing_only.reset_index(drop=True,inplace=True)
         event_ids_to_keep = np.unique(rupture_table_crossing_only.EventID.values)
-        
+        logging.info(f'\t- Obtained subset of rupture scenarios with crossings...')
+
         # ---
         # convert columns to numerics
-        for col in all_segments_crossed_expand:
-            all_segments_crossed_expand[col] = pd.to_numeric(all_segments_crossed_expand[col],errors='ignore')
+        for col in all_segments_crossed:
+            all_segments_crossed[col] = pd.to_numeric(all_segments_crossed[col],errors='ignore')
         
         # ---
         # export
+        count = 0
+        logging.info(f'\t- Exporting the following items...')
         # segment table
+        count += 1
+        logging.info(f'\t\t- {count}. Segment table to {processed_input_dir}:')
+        all_segments_crossed_export = all_segments_crossed.copy()
+        all_segments_crossed_export['prob_crossing'] = None
+        all_segments_crossed_export['event_ind'] = None
+        all_segments_crossed_export['event_id'] = None
+        all_segments_crossed_export['norm_dist'] = None
+        for col in ['prob_crossing','event_id','event_ind','norm_dist']:
+            all_segments_crossed[col].to_csv(os.path.join(processed_input_dir,f'{col}.csv'),index=False,header=False)
+            logging.info(f'\t\t\t- {col}.csv')
         # all_segments_crossed.to_csv(
-        all_segments_crossed_expand.to_csv(
+        all_segments_crossed_export.to_csv(
             os.path.join(processed_input_dir,'site_data_PROCESSED_CROSSING_ONLY.csv'),
             index=False
         )
-        # rupture table
-        rupture_table_crossing_only.drop('geometry',axis=1).to_csv(
-            os.path.join(im_dir,'RUPTURE_METADATA_from_crossing_logic.csv'),
-            index=False
-        )
+        logging.info(f'\t\t\t- site_data_PROCESSED_CROSSING_ONLY.csv')
+        
         # shapefile of segment table in case of empty geodataframe
         # recreate gdf to export to shapefile
-        # all_segments_crossed_gdf = GeoDataFrame(
-        all_segments_crossed_expand_gdf = GeoDataFrame(
-            all_segments_crossed_expand,
+        all_segments_crossed_gdf = GeoDataFrame(
+            all_segments_crossed_export,
             crs=seg_crossed_geoms_crs,
-            # geometry=seg_crossed_geoms
-            geometry=geoms_expand
+            geometry=seg_crossed_geoms
         )
-        all_segments_crossed_expand_gdf = all_segments_crossed_expand_gdf.to_crs(epsg_wgs84)
-        all_segments_crossed_expand_gdf.to_file(
+        all_segments_crossed_gdf = all_segments_crossed_gdf.to_crs(epsg_wgs84)
+        all_segments_crossed_gdf.to_file(
             os.path.join(processed_input_dir,'site_data_PROCESSED_CROSSING_ONLY.csv').replace(
                 '.csv','.gpkg'
             ), layer='data', index=False
         )
-        # all_segments_crossed_gdf = all_segments_crossed_gdf.to_crs(epsg_wgs84)
+        logging.info(f'\t\t\t- site_data_PROCESSED_CROSSING_ONLY.gpkg')
+
+        # rupture table
+        count += 1
+        logging.info(f'\t\t- {count}. Rupture table to {im_dir}:')
+        rupture_table_crossing_only_export = rupture_table_crossing_only.copy()
+        for col in col_headers_to_append:
+            if col in rupture_table_crossing_only:
+                rupture_table_crossing_only[col].to_csv(
+                    os.path.join(im_dir,f'{col}.csv'),index=False,header=False
+                )
+                logging.info(f'\t\t\t- {col}.csv')
+                # rupture_table_crossing_only_export.drop(col,axis=1,inplace=True)
+                rupture_table_crossing_only_export[col] = None
+        rupture_table_crossing_only_export.to_csv(
+            os.path.join(im_dir,'RUPTURE_METADATA_from_crossing_logic.csv'),
+            index=False
+        )
+        logging.info(f'\t\t\t- RUPTURE_METADATA_from_crossing_logic.csv')
+
+        # section table
+        count += 1
+        logging.info(f'\t\t- {count}. Section table to {im_dir}:')
+        section_id_crossed_all = np.unique(np.hstack([section_id_crossed['primary'],section_id_crossed['secondary']]))
+        rows_for_all_sections_crossed = get_idx_of_list_a_in_b(section_table.SectionID.values,section_id_crossed_all)
+        section_table_export = section_table.loc[rows_for_all_sections_crossed].copy()
+        for each in ['primary','secondary']:
+            crossing_curr_haz = []
+            for scen_id in section_table_export.index:
+                if scen_id in section_id_crossed[each]:
+                    crossing_curr_haz.append(True)
+                else:
+                    crossing_curr_haz.append(False)
+            section_table_export[f'crosses_{each}'] = crossing_curr_haz
+        section_table_export.drop('geometry',axis=1).to_csv(
+            os.path.join(im_dir,'SECTION_METADATA_from_crossing_logic.csv'),
+            index=False
+        )
+        section_table_export.geometry.to_file(
+            os.path.join(im_dir,'SECTION_METADATA_from_crossing_logic.gpkg'),
+        )
+        logging.info(f'\t\t\t- SECTION_METADATA_from_crossing_logic.csv')
+        logging.info(f'\t\t\t- SECTION_METADATA_from_crossing_logic.gpkg')
         
         # store qfault crossed
+        count += 1
+        logging.info(f'\t\t- {count}. Q-fault hazard zones with crossing to {im_dir}:')
         for each in ['primary','secondary']:
             gdf_qfault_crossed_export[each].to_crs(epsg_wgs84).to_file(
                 os.path.join(im_dir,'qfaults_crossed.csv').replace(
                     '.csv','.gpkg'
                 ), layer=each, index=False
             )
+        logging.info(f'\t\t\t- qfaults_crossed.gpkg')
+            
+        # make rupture table for OpenSRA and skip IM section
+        count += 1
+        logging.info(f'\t\t- {count}. Rupture metadata data for risk run to {im_dir}:')
+        rup_meta_map = {
+            'EventID':'event_id',
+            'Magnitude':'magnitude',
+            'AnnualRate':'annual_rate',
+            'Rake':'rake',
+        }
+        rupture_meta_for_opensra = pd.DataFrame(None,)
+        for col in rup_meta_map:
+            if col in rupture_table_crossing_only:
+                rupture_meta_for_opensra[rup_meta_map[col]] = rupture_table_crossing_only[col].values
+        for col in col_headers_to_append:
+            rupture_meta_for_opensra[col] = None
+        rupture_meta_for_opensra.to_csv(
+            os.path.join(im_dir,'RUPTURE_METADATA.csv'),
+            index=False
+        )
+        logging.info(f'\t\t\t- RUPTURE_METADATA.csv')
         
         # ---
         # return
-        return all_segments_crossed_expand_gdf, rupture_table_crossing_only, col_headers_to_append, event_ids_to_keep
+        return all_segments_crossed_gdf, rupture_table_crossing_only, col_headers_to_append, event_ids_to_keep
         
 
 # ---

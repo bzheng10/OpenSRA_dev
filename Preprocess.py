@@ -599,138 +599,141 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     # -----------------------------------------------------------
     # get IM predictions
-    logging.info(f'{counter}. Getting ground motion (i.e., IM) predictions from {im_source}...')
-    counter += 1
-    if im_source == "ShakeMap":
-        logging.info(f'********')
-        get_im_pred(
-            im_source, im_dir, site_data, infra_loc_header, im_filters,
-            # for ShakeMaps
-            sm_dir=sm_dir,
-            sm_events=sm_events,
-            event_ids_to_keep=event_ids_to_keep,
-            # rupture_table=rupture_table_from_crossing,
-            # col_headers_to_append=col_headers_to_append,
-        )
-        logging.info(f'********')
-    elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
-        # running UCERF and using statewide pipeline, skip IM calc and use precomputed files
-        # last statement to catch debugging/testing examples, which uses a subset of the statewide segments
-        if im_source == 'UCERF' and flag_using_state_network and flag_using_state_full_set:
-            # if rupture_table is created previously, which contains events to keep
-            if performed_crossing:
-                # for each IM file, keep only keep segment IDs with crossings
-                site_ids_to_keep = site_data.ID.values
-                # always 1 less for index for preprocessed state network 
-                site_inds_to_keep = site_ids_to_keep - 1
-                site_inds_to_keep = site_inds_to_keep.astype(int)
-            if event_ids_to_keep is not None:
-                # load rupture table with IM stage
-                rupture_table_im_fpath = os.path.join(preprocess_im_dir,'RUPTURE_METADATA.csv')
-                rupture_table_from_im = pd.read_csv(rupture_table_im_fpath)
-                rupture_table_from_im.event_id = rupture_table_from_im.event_id.values.astype(int)
-                event_inds_to_keep = np.asarray([
-                    np.where(rupture_table_from_im.event_id==event_id)[0][0]
-                    for event_id in event_ids_to_keep
-                ])
-            logging.info(f'\t-Copy/paste precomputed IMs to destination:')
-            # copy each item in directory
-            for each in os.listdir(preprocess_im_dir):
-                src_path = os.path.join(preprocess_im_dir,each)
-                dst_path = os.path.join(im_dir,each)
-                if os.path.isdir(src_path):
-                    if not os.path.exists(dst_path):
-                        os.mkdir(dst_path)
-                    if performed_crossing:
-                        for f in os.listdir(src_path):
-                            # get and read sparse data
-                            curr_src_path = os.path.join(src_path,f)
-                            data = sparse.load_npz(curr_src_path).toarray()
-                            # get subset of datafile with sites to keep
-                            data_with_sites_to_keep = data[:,site_inds_to_keep]
-                            if event_ids_to_keep is not None:
-                                data_with_sites_to_keep = data_with_sites_to_keep[event_inds_to_keep,:]
-                            # convert back to sparse matrix and export
-                            coo_out = sparse.coo_matrix(data_with_sites_to_keep)
-                            sparse.save_npz(os.path.join(dst_path,f), coo_out)
-                    else:
-                        # remove if existing
-                        if os.path.exists(dst_path):
-                            shutil.rmtree(dst_path)
-                        shutil.copytree(src=src_path,dst=dst_path)
-                else:
-                    if performed_crossing and 'site_data' in os.path.basename(src_path) and \
-                        src_path.endswith('.csv'):
-                        data = pd.read_csv(src_path)
-                        # get subset of datafile with sites to keep
-                        data_with_sites_to_keep = data.loc[site_inds_to_keep].copy()
-                        # export
-                        data_with_sites_to_keep.to_csv(dst_path,index=False)
-                    else:
-                        # remove if existing
-                        if os.path.exists(dst_path):
-                            os.remove(dst_path)
-                        shutil.copy(src=src_path,dst=dst_path)
-                logging.info(f'\t\t-{dst_path}')
-        else:
+    if infra_type == 'below_ground' and hazard == 'surface_fault_rupture':
+        logging.info(f'{counter}. Running fault rupture for below ground assets - skipping IM predictions...')
+    else:
+        logging.info(f'{counter}. Getting ground motion (i.e., IM) predictions from {im_source}...')
+        counter += 1
+        if im_source == "ShakeMap":
             logging.info(f'********')
             get_im_pred(
                 im_source, im_dir, site_data, infra_loc_header, im_filters,
-                # for user-defined and UCERF ruptures
-                opensra_dir=opensra_dir,
-                processed_input_dir=processed_input_dir,
-                rup_fpath=rup_fpath,
+                # for ShakeMaps
+                sm_dir=sm_dir,
+                sm_events=sm_events,
                 event_ids_to_keep=event_ids_to_keep,
-                # rupture_table=rupture_table
+                # rupture_table=rupture_table_from_crossing,
+                # col_headers_to_append=col_headers_to_append,
             )
             logging.info(f'********')
-    # merge rupture metadata from crossing (if exists) to that from IM
-    if rupture_table_from_crossing is not None:
-        # load rupture table with IM stage
-        rupture_table_im_fpath = os.path.join(im_dir,'RUPTURE_METADATA.csv')
-        rupture_table_from_im = pd.read_csv(rupture_table_im_fpath)
-        rupture_table_from_im.event_id = rupture_table_from_im.event_id.values.astype(int)
-        if event_ids_to_keep is not None:
-            if event_inds_to_keep is None:
-                event_inds_to_keep = np.asarray([
-                    np.where(rupture_table_from_im.event_id.values==event_id)[0][0]
-                    for event_id in event_ids_to_keep
-                ])
-            rupture_table_from_im = rupture_table_from_im.loc[event_inds_to_keep].reset_index(drop=True)
-        # initialize empty list
-        collect_list = {}
-        for col in col_headers_to_append:
-            collect_list[col] = [[]]*rupture_table_from_im.shape[0]
-        # find common event IDs
-        for i in range(rupture_table_from_im.shape[0]):
-            event_i_in_im = rupture_table_from_im.event_id[i]
-            if event_i_in_im in rupture_table_from_crossing.EventID.values:
-                row = np.where(rupture_table_from_crossing.EventID.values==event_i_in_im)[0][0]
-                for col in col_headers_to_append:
-                    collect_list[col][i] = rupture_table_from_crossing.loc[row,col]
-        # append to table
-        for col in col_headers_to_append:
-            rupture_table_from_im[col] = collect_list[col]
-        # export and update rupture_metadata file
-        rupture_table_from_im.to_csv(rupture_table_im_fpath,index=False)
-        # export to shp
-        save_name_shp = rupture_table_im_fpath.replace('.csv','.gpkg')
-        geoms = []
-        for i in range(rupture_table_from_im.shape[0]):
-            # trace = np.asarray(json.loads(rup_meta.fault_trace.iloc[i]))
-            if isinstance(rupture_table_from_im.fault_trace.iloc[i],str):
-                trace = np.asarray(json.loads(rupture_table_from_im.fault_trace.iloc[i]))
+        elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
+            # running UCERF and using statewide pipeline, skip IM calc and use precomputed files
+            # last statement to catch debugging/testing examples, which uses a subset of the statewide segments
+            if im_source == 'UCERF' and flag_using_state_network and flag_using_state_full_set:
+                # if rupture_table is created previously, which contains events to keep
+                if performed_crossing:
+                    # for each IM file, keep only keep segment IDs with crossings
+                    site_ids_to_keep = site_data.ID.values
+                    # always 1 less for index for preprocessed state network 
+                    site_inds_to_keep = site_ids_to_keep - 1
+                    site_inds_to_keep = site_inds_to_keep.astype(int)
+                if event_ids_to_keep is not None:
+                    # load rupture table with IM stage
+                    rupture_table_im_fpath = os.path.join(preprocess_im_dir,'RUPTURE_METADATA.csv')
+                    rupture_table_from_im = pd.read_csv(rupture_table_im_fpath)
+                    rupture_table_from_im.event_id = rupture_table_from_im.event_id.values.astype(int)
+                    event_inds_to_keep = np.asarray([
+                        np.where(rupture_table_from_im.event_id==event_id)[0][0]
+                        for event_id in event_ids_to_keep
+                    ])
+                logging.info(f'\t-Copy/paste precomputed IMs to destination:')
+                # copy each item in directory
+                for each in os.listdir(preprocess_im_dir):
+                    src_path = os.path.join(preprocess_im_dir,each)
+                    dst_path = os.path.join(im_dir,each)
+                    if os.path.isdir(src_path):
+                        if not os.path.exists(dst_path):
+                            os.mkdir(dst_path)
+                        if performed_crossing:
+                            for f in os.listdir(src_path):
+                                # get and read sparse data
+                                curr_src_path = os.path.join(src_path,f)
+                                data = sparse.load_npz(curr_src_path).toarray()
+                                # get subset of datafile with sites to keep
+                                data_with_sites_to_keep = data[:,site_inds_to_keep]
+                                if event_ids_to_keep is not None:
+                                    data_with_sites_to_keep = data_with_sites_to_keep[event_inds_to_keep,:]
+                                # convert back to sparse matrix and export
+                                coo_out = sparse.coo_matrix(data_with_sites_to_keep)
+                                sparse.save_npz(os.path.join(dst_path,f), coo_out)
+                        else:
+                            # remove if existing
+                            if os.path.exists(dst_path):
+                                shutil.rmtree(dst_path)
+                            shutil.copytree(src=src_path,dst=dst_path)
+                    else:
+                        if performed_crossing and 'site_data' in os.path.basename(src_path) and \
+                            src_path.endswith('.csv'):
+                            data = pd.read_csv(src_path)
+                            # get subset of datafile with sites to keep
+                            data_with_sites_to_keep = data.loc[site_inds_to_keep].copy()
+                            # export
+                            data_with_sites_to_keep.to_csv(dst_path,index=False)
+                        else:
+                            # remove if existing
+                            if os.path.exists(dst_path):
+                                os.remove(dst_path)
+                            shutil.copy(src=src_path,dst=dst_path)
+                    logging.info(f'\t\t-{dst_path}')
             else:
-                trace = np.asarray(rupture_table_from_im.fault_trace.iloc[i])                
-            geoms.append(LineString(trace[:,:2]))
-        rupture_table_from_im_gdf = GeoDataFrame(
-            pd.read_csv(rupture_table_im_fpath), # reread dataframe to convert fields of lists into strings
-            # rupture_table_from_im,
-            crs=4326, geometry=geoms
-        )
-        rupture_table_from_im_gdf.to_file(save_name_shp,index=False,layer='data')
-    logging.info(f'... DONE - Obtained IM predictions from {im_source} and stored to:')
-    logging.info(f"\t{im_dir}")
+                logging.info(f'********')
+                get_im_pred(
+                    im_source, im_dir, site_data, infra_loc_header, im_filters,
+                    # for user-defined and UCERF ruptures
+                    opensra_dir=opensra_dir,
+                    processed_input_dir=processed_input_dir,
+                    rup_fpath=rup_fpath,
+                    event_ids_to_keep=event_ids_to_keep,
+                    # rupture_table=rupture_table
+                )
+                logging.info(f'********')
+        # merge rupture metadata from crossing (if exists) to that from IM
+        if rupture_table_from_crossing is not None:
+            # load rupture table with IM stage
+            rupture_table_im_fpath = os.path.join(im_dir,'RUPTURE_METADATA.csv')
+            rupture_table_from_im = pd.read_csv(rupture_table_im_fpath)
+            rupture_table_from_im.event_id = rupture_table_from_im.event_id.values.astype(int)
+            if event_ids_to_keep is not None:
+                if event_inds_to_keep is None:
+                    event_inds_to_keep = np.asarray([
+                        np.where(rupture_table_from_im.event_id.values==event_id)[0][0]
+                        for event_id in event_ids_to_keep
+                    ])
+                rupture_table_from_im = rupture_table_from_im.loc[event_inds_to_keep].reset_index(drop=True)
+            # initialize empty list
+            collect_list = {}
+            for col in col_headers_to_append:
+                collect_list[col] = [[]]*rupture_table_from_im.shape[0]
+            # find common event IDs
+            for i in range(rupture_table_from_im.shape[0]):
+                event_i_in_im = rupture_table_from_im.event_id[i]
+                if event_i_in_im in rupture_table_from_crossing.EventID.values:
+                    row = np.where(rupture_table_from_crossing.EventID.values==event_i_in_im)[0][0]
+                    for col in col_headers_to_append:
+                        collect_list[col][i] = rupture_table_from_crossing.loc[row,col]
+            # append to table
+            for col in col_headers_to_append:
+                rupture_table_from_im[col] = collect_list[col]
+            # export and update rupture_metadata file
+            rupture_table_from_im.to_csv(rupture_table_im_fpath,index=False)
+            # export to shp
+            save_name_shp = rupture_table_im_fpath.replace('.csv','.gpkg')
+            geoms = []
+            for i in range(rupture_table_from_im.shape[0]):
+                # trace = np.asarray(json.loads(rup_meta.fault_trace.iloc[i]))
+                if isinstance(rupture_table_from_im.fault_trace.iloc[i],str):
+                    trace = np.asarray(json.loads(rupture_table_from_im.fault_trace.iloc[i]))
+                else:
+                    trace = np.asarray(rupture_table_from_im.fault_trace.iloc[i])                
+                geoms.append(LineString(trace[:,:2]))
+            rupture_table_from_im_gdf = GeoDataFrame(
+                pd.read_csv(rupture_table_im_fpath), # reread dataframe to convert fields of lists into strings
+                # rupture_table_from_im,
+                crs=4326, geometry=geoms
+            )
+            rupture_table_from_im_gdf.to_file(save_name_shp,index=False,layer='data')
+        logging.info(f'... DONE - Obtained IM predictions from {im_source} and stored to:')
+        logging.info(f"\t{im_dir}")
     
     # -----------------------------------------------------------
     # get well and caprock crossings - may move to another location in Preprocess, but must be after getIM

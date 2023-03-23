@@ -28,6 +28,7 @@ import os
 import shutil
 import sys
 import time
+from collections import Counter as coll_counter
 
 # scientific processing modules
 import numpy as np
@@ -50,13 +51,13 @@ from src.pc_func import pc_util, pc_workflow
 from src.pc_func.pc_coeffs_single_int import pc_coeffs_single_int
 from src.pc_func.pc_coeffs_double_int import pc_coeffs_double_int
 from src.pc_func.pc_coeffs_triple_int import pc_coeffs_triple_int
-from src.util import set_logging, lhs, get_cdf_given_pts, check_and_get_abspath, remap_str
+from src.util import set_logging, lhs, get_cdf_given_pts, check_and_get_abspath, remap_str, get_idx_of_list_a_in_b
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Main function
 def main(work_dir, logging_level='info', logging_message_detail='s',
-         display_after_n_event=100, clean_prev_output=True, get_timer=False):
+         display_after_n_event=10, clean_prev_output=True, get_timer=False):
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Setting logging level (e.g. DEBUG or INFO)
@@ -96,6 +97,84 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     logging.info(f'\t\t- {im_dir}')
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Load setup configuration file
+    setup_config_file = os.path.join(input_dir,'SetupConfig.json')
+    with open(setup_config_file, 'r') as f:
+        setup_config = json.load(f)
+    infra_type = setup_config['Infrastructure']['InfrastructureType']
+    im_source = im_source = list(setup_config['IntensityMeasure']['SourceForIM'])[0]
+    logging.info(f'{counter}. Loaded setup configuration file')
+    counter += 1
+    
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Load workflow
+    workflow_file = os.path.join(processed_input_dir,'workflow.json')
+    if os.path.exists(workflow_file):
+        with open(workflow_file, 'r') as f:
+            workflow = json.load(f)
+    
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # get various flags
+    # check infrastructure type to run
+    logging.info(f'{counter}. Running these configurations:')
+    running_below_ground = False
+    running_wells_caprocks = False
+    running_above_ground = False
+    if infra_type == 'below_ground':
+        running_below_ground = True
+        logging.info(f'\t- below ground assets')
+    elif infra_type == 'wells_caprocks':
+        running_wells_caprocks = True
+        logging.info(f'\t- wells')
+    elif infra_type == 'above_ground':
+        running_above_ground = True
+        logging.info(f'\t- above ground assets')
+        
+    # check PBEE categories
+    has_edp = False
+    has_dm = False
+    has_dv = False
+    if 'EDP' in workflow:
+        has_edp = True
+        logging.info(f'\t- includes EDP')
+    if 'DM' in workflow:
+        has_dm = True
+        logging.info(f'\t- includes DM')
+    if 'DV' in workflow:
+        has_dv = True
+        logging.info(f'\t- includes DV')
+    
+    # Check geohazard to run
+    running_below_ground_fault_rupture = False
+    running_below_ground_landslide = False
+    running_below_ground_liquefaction = False
+    running_below_ground_lateral_spread = False
+    running_below_ground_settlement = False
+    if running_below_ground and has_edp:
+        if 'surface_fault_rupture' in workflow['EDP']:
+            running_below_ground_fault_rupture = True
+            logging.info(f'\t- fault rupture')
+        if 'landslide' in workflow['EDP']:
+            running_below_ground_landslide = True
+            logging.info(f'\t- landslide')
+        if 'liquefaction' in workflow['EDP']:
+            running_below_ground_liquefaction = True
+            logging.info(f'\t- liquefaction')
+        if 'lateral_spread' in workflow['EDP']:
+            running_below_ground_lateral_spread = True
+            logging.info(f'\t- lateralspread')
+        if 'settlement' in workflow['EDP']:
+            running_below_ground_settlement = True
+            logging.info(f'\t- settlement')
+        
+    # Check if running caprocks for wells_caprocks, requires special processing
+    running_caprock = False
+    if 'caprock_leakage' in workflow['DV']:
+        running_caprock = True
+        logging.info(f'\t- with caprock included')
+    counter += 1
+    
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Import site data
     logging.info(f'{counter}. Loading site data file...')
     counter += 1
@@ -104,6 +183,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         site_data = pd.read_csv(os.path.join(processed_input_dir,'site_data_PROCESSED_CROSSING_ONLY.csv'))
         site_data_full = pd.read_csv(os.path.join(processed_input_dir,'site_data_PROCESSED.csv'))
         flag_crossing_file_exists = True
+        # import additional files if running below ground fault rupture
+        # if running_below_ground_fault_rupture:
+            # for col in ['prob_crossing','event_id','event_ind','norm_dist']:
+            #     site_data[col] = pd.read_csv(os.path.join(processed_input_dir,f'{col}.csv'),header=None).iloc[:,0].values
+            #     site_data[col] = site_data[col].apply(json.loads)
     else:
         site_data = pd.read_csv(os.path.join(processed_input_dir,'site_data_PROCESSED.csv'))
         flag_crossing_file_exists = False
@@ -116,48 +200,50 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # Import IM distributions
     im_import = {}
     for each in ['pga','pgv']:
-        im_import[each] = {
-            # note that sparse matrix files require -10 to all values for correct magnitude;
-            # during ground motion phase, locations with 0 intensities are reported as -10 instead of -np.inf;
-            # for storage, in order to be memory efficient, ground motions are stored as sparse matrx by adding
-            # 10 to all values, thus convert the -10 intensity magnitudes to 0;
-            # ---> this means when using the sparse datafiles, they must be -10 to get the correct magnitude
-            # 'mean_table': np.round(sparse.load_npz(os.path.join(im_dir,each.upper(),'MEAN.npz')).toarray()-10,decimals=3),
-            # 'sigma_table': np.round(sparse.load_npz(os.path.join(im_dir,each.upper(),'ALEATORY.npz')).toarray(),decimals=3),
-            # 'sigma_mu_table': np.round(sparse.load_npz(os.path.join(im_dir,each.upper(),'EPISTEMIC.npz')).toarray(),decimals=3)
-            'mean_table': sparse.load_npz(os.path.join(im_dir,each.upper(),'MEAN.npz')).toarray(),
-            'sigma_table': sparse.load_npz(os.path.join(im_dir,each.upper(),'ALEATORY.npz')).toarray(),
-            'sigma_mu_table': sparse.load_npz(os.path.join(im_dir,each.upper(),'EPISTEMIC.npz')).toarray()
-        }
+        if running_below_ground_fault_rupture:
+            # does not use IM predictions
+            im_import[each] = {}
+        else:
+            im_import[each] = {
+                # note that sparse matrix files require -10 to all values for correct magnitude;
+                # during ground motion phase, locations with 0 intensities are reported as -10 instead of -np.inf;
+                # for storage, in order to be memory efficient, ground motions are stored as sparse matrx by adding
+                # 10 to all values, thus convert the -10 intensity magnitudes to 0;
+                # ---> this means when using the sparse datafiles, they must be -10 to get the correct magnitude
+                # 'mean_table': np.round(sparse.load_npz(os.path.join(im_dir,each.upper(),'MEAN.npz')).toarray()-10,decimals=3),
+                # 'sigma_table': np.round(sparse.load_npz(os.path.join(im_dir,each.upper(),'ALEATORY.npz')).toarray(),decimals=3),
+                # 'sigma_mu_table': np.round(sparse.load_npz(os.path.join(im_dir,each.upper(),'EPISTEMIC.npz')).toarray(),decimals=3)
+                'mean_table': sparse.load_npz(os.path.join(im_dir,each.upper(),'MEAN.npz')).toarray(),
+                'sigma_table': sparse.load_npz(os.path.join(im_dir,each.upper(),'ALEATORY.npz')).toarray(),
+                'sigma_mu_table': sparse.load_npz(os.path.join(im_dir,each.upper(),'EPISTEMIC.npz')).toarray()
+            }
     # Import rupture information
     rupture_table = pd.read_csv(os.path.join(im_dir,'RUPTURE_METADATA.csv'))
     rupture_table.event_id = rupture_table.event_id.astype(int) # set as integers if not already
     event_ids_to_run = rupture_table.event_id.values # for looping through events to run
     event_ind_relative_to_rupture_table = rupture_table.index.values.astype(int)
-    # Get Number of sites
-    n_site = im_import[list(im_import)[0]]['mean_table'].shape[1]
+    # load additional files if below ground fault rupture
+    if running_below_ground_fault_rupture:
+        for col in ['seg_id_crossed', 'prob_crossing', 'norm_dist']:
+            rupture_table[col] = pd.read_csv(os.path.join(im_dir,f'{col}.csv'),header=None).iloc[:,0].values
+            rupture_table[col] = rupture_table[col].apply(json.loads)
+    logging.info(f'... DONE - Loaded seismic event files')
+    
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Get number of sites
+    if running_below_ground_fault_rupture:
+        # n_site = site_data_full.shape[0]
+        # n_site_cross_only = site_data.shape[0]
+        n_site = site_data.shape[0]
+        n_site_full = site_data_full.shape[0]
+    else:
+        n_site = im_import[list(im_import)[0]]['mean_table'].shape[1]
     # Make some arrays to be used later
     n_site_ind_arr = np.arange(n_site)
     null_arr_nsite = np.zeros(n_site)
     ones_arr_nsite = np.ones(n_site)
-    logging.info(f'... DONE - Loaded seismic event files')
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Load setup configuration file
-    setup_config_file = os.path.join(input_dir,'SetupConfig.json')
-    with open(setup_config_file, 'r') as f:
-        setup_config = json.load(f)
-    infra_type = setup_config['Infrastructure']['InfrastructureType']
-    im_source = im_source = list(setup_config['IntensityMeasure']['SourceForIM'])[0]
-    logging.info(f'{counter}. Loaded setup configuration file')
-    counter += 1
-    
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Load and process workflow
-    workflow_file = os.path.join(processed_input_dir,'workflow.json')
-    if os.path.exists(workflow_file):
-        with open(workflow_file, 'r') as f:
-            workflow = json.load(f)
     # Process workflow
     methods_dict, additional_params = pc_workflow.prepare_methods(workflow, n_site)
     workflow_order_list = pc_workflow.get_workflow_order_list(methods_dict, infra_type=infra_type)
@@ -188,53 +274,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         processed_cpt_metadata = pd.read_csv(os.path.join(processed_cpt_base_dir,'cpt_data_PROCESSED.csv'))
         logging.info(f'{counter}. Flagged OpenSRA to run CPT procedure and loaded preprocessed CPT files')
         counter += 1
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # get various flags
-    # check infrastructure type to run
-    running_below_ground = False
-    running_wells_caprocks = False
-    running_above_ground = False
-    if infra_type == 'below_ground':
-        running_below_ground = True
-    elif infra_type == 'wells_caprocks':
-        running_wells_caprocks = True
-    elif infra_type == 'above_ground':
-        running_above_ground = True
-        
-    # check PBEE categories
-    has_edp = False
-    has_dm = False
-    has_dv = False
-    if 'EDP' in workflow:
-        has_edp = True
-    if 'DM' in workflow:
-        has_dm = True
-    if 'DV' in workflow:
-        has_dv = True
-    
-    # Check geohazard to run
-    running_below_ground_fault_rupture = False
-    running_below_ground_landslide = False
-    running_below_ground_liquefaction = False
-    running_below_ground_lateral_spread = False
-    running_below_ground_settlement = False
-    if running_below_ground and has_edp:
-        if 'surface_fault_rupture' in workflow['EDP']:
-            running_below_ground_fault_rupture = True
-        if 'landslide' in workflow['EDP']:
-            running_below_ground_landslide = True
-        if 'liquefaction' in workflow['EDP']:
-            running_below_ground_liquefaction = True
-        if 'lateral_spread' in workflow['EDP']:
-            running_below_ground_lateral_spread = True
-        if 'settlement' in workflow['EDP']:
-            running_below_ground_settlement = True
-        
-    # Check if running caprocks for wells_caprocks, requires special processing
-    running_caprock = False
-    if 'caprock_leakage' in workflow['DV']:
-        running_caprock = True
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # for analysis with crossings with deformation polygons
@@ -252,14 +291,22 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         flag_event_dependent_crossing = True
     # if crossing file exists
     if flag_crossing_file_exists:
+        logging.info(f'{counter}. Identifying indices between full instrastructure inventory and subset of inventory with crossings...')
+        logging.info(f'\t- NOTE: this may take a few minutes if running fault rupture over below ground assets')
         # get probability of crossing
-        prob_crossing = site_data.prob_crossing.values
+        if running_below_ground_fault_rupture:
+            prob_crossing = [0] # placeholder
+        else:
+            prob_crossing = site_data.prob_crossing.values
         # if prob crossing == 1, then using deformation polygons and multiple crossings per segment is possible
         # if prob crossing == 0.25, then no geometry was used and only 1 crossing per segment
         if prob_crossing[0] == 1 or running_below_ground_fault_rupture:
             flag_possible_repeated_crossings = True
         # get segment IDs
         segment_ids_full = site_data_full.ID.values
+        segment_ids_full_list = list(site_data_full.ID.values)
+        segment_ids_crossed = site_data.ID.values
+        segment_ids_crossed_list = list(site_data.ID.values)
         # get table indices corresponding to IDs
         segment_index_full = site_data_full.index.values
         segment_index_crossed = site_data.index.values
@@ -271,60 +318,63 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 segment_ids_crossed_by_event_id = {}
                 rows_to_run_by_event_id = {}
                 segment_ids_crossed_repeat_by_event_id = {}
+                segment_ids_crossed_single_by_event_id = {}
                 segment_index_repeat_in_full_by_event_id = {}
                 segment_index_single_in_full_by_event_id = {}
                 # different ref column for event index for CPT vs fault rupture
                 if running_cpt_based_procedure:
                     event_ind_col = 'def_poly_index_crossed'
-                elif running_below_ground_fault_rupture:
-                    event_ind_col = 'event_ind'
-                # for CPT-informed deformation polygons, polygon ID is the event ID
-                # check to see if multiple crossings per segment for the same polygon ID
-                unique_event_index_with_crossing = np.unique(site_data[event_ind_col].values)
-                if running_cpt_based_procedure:
+                    # for CPT-informed deformation polygons, polygon ID is the event ID
+                    # check to see if multiple crossings per segment for the same polygon ID
+                    unique_event_index_with_crossing = np.unique(site_data[event_ind_col].values)
                     unique_event_id_with_crossing = cpt_pgdef_dist.event_id.loc[unique_event_index_with_crossing].values
                 elif running_below_ground_fault_rupture:
-                    unique_event_id_with_crossing = np.unique(site_data.event_id.values)
+                    unique_event_index_with_crossing = rupture_table.index.values
+                    unique_event_id_with_crossing = rupture_table.event_id.values
                 # for each unique event, see if there are repeating crossings
                 for i,event_ind in enumerate(unique_event_index_with_crossing):
                     # get current event id
-                    if running_cpt_based_procedure:
-                        curr_event_id = unique_event_id_with_crossing[i]
-                    elif running_below_ground_fault_rupture:
-                        curr_event_id = site_data.event_id.values[np.where(site_data.event_ind==event_ind)[0][0]]
-                    # get rows relative to site_data for segments with crossings for current event
-                    rows_to_run_by_event_id[curr_event_id] = np.where(site_data[event_ind_col]==event_ind)[0]
-                    # store subset of site_data for current event
-                    # site_data_by_event_id[curr_event_id] = site_data.loc[rows_with_segments_for_event_ind].copy().reset_index(drop=True)
+                    curr_event_id = unique_event_id_with_crossing[i]
                     # get all segments with crossings for current event
-                    segment_ids_curr_event = site_data.ID.loc[rows_to_run_by_event_id[curr_event_id]].values
+                    if running_cpt_based_procedure:
+                        # get rows relative to site_data for segments with crossings for current event
+                        rows_to_run_by_event_id[curr_event_id] = np.where(site_data[event_ind_col]==event_ind)[0]
+                        # store subset of site_data for current event
+                        segment_ids_curr_event = site_data.ID.loc[rows_to_run_by_event_id[curr_event_id]].values
+                    elif running_below_ground_fault_rupture:
+                        segment_ids_curr_event = np.asarray(rupture_table.seg_id_crossed.loc[event_ind])
+                        # get rows relative to site_data for segments with crossings for current event
+                        rows_to_run_by_event_id[curr_event_id] = get_idx_of_list_a_in_b(segment_ids_full_list,segment_ids_curr_event)
                     segment_ids_crossed_by_event_id[curr_event_id] = segment_ids_curr_event
                     # from segments list above, find repeating segments if any
-                    segment_ids_crossed_unique_curr_event, counts = \
-                        np.unique(segment_ids_curr_event, return_counts=True)
+                    segment_ids_crossed_unique_curr_event, counts = np.unique(segment_ids_curr_event, return_counts=True)
                     segment_ids_crossed_repeat_curr_event = segment_ids_crossed_unique_curr_event[np.where(counts>1)[0]]
                     segment_ids_crossed_single_curr_event = np.asarray(
                         list(set(segment_ids_crossed_unique_curr_event).difference(set(segment_ids_crossed_repeat_curr_event))))
                     segment_ids_crossed_single_curr_event = np.sort(segment_ids_crossed_single_curr_event)
                     # find row index corresponding to repeated IDS in full table
-                    segment_index_repeat_in_full_curr_event = np.asarray([
-                        np.where(segment_ids_full==seg_id)[0][0]
-                        for seg_id in segment_ids_crossed_repeat_curr_event
-                    ])
-                    segment_index_single_in_full_curr_event = np.asarray([
-                        np.where(segment_ids_full==seg_id)[0][0]
-                        for seg_id in segment_ids_crossed_single_curr_event
-                    ])
+                    segment_index_repeat_in_full_curr_event = get_idx_of_list_a_in_b(segment_ids_full_list,segment_ids_crossed_repeat_curr_event)
+                    segment_index_single_in_full_curr_event = get_idx_of_list_a_in_b(segment_ids_full_list,segment_ids_crossed_single_curr_event)
+                    # segment_index_repeat_in_full_curr_event = np.asarray([
+                    #     segment_ids_full_list.index(seg_id)
+                    #     for seg_id in segment_ids_crossed_repeat_curr_event
+                    # ])
+                    # segment_index_single_in_full_curr_event = np.asarray([
+                    #     segment_ids_full_list.index(seg_id)
+                    #     for seg_id in segment_ids_crossed_single_curr_event
+                    # ])
                     # store to dictionary
                     segment_ids_crossed_repeat_by_event_id[curr_event_id] = segment_ids_crossed_repeat_curr_event
+                    segment_ids_crossed_single_by_event_id[curr_event_id] = segment_ids_crossed_single_curr_event
                     segment_index_repeat_in_full_by_event_id[curr_event_id] = segment_index_repeat_in_full_curr_event
                     segment_index_single_in_full_by_event_id[curr_event_id] = segment_index_single_in_full_curr_event
                 # update events to run, only those with crossings
                 event_ids_to_run = unique_event_id_with_crossing # update to this list of event ids
-                event_ind_relative_to_rupture_table = np.asarray([
-                    np.where(rupture_table.event_id==event_id)[0][0]
-                    for event_id in unique_event_id_with_crossing
-                ])
+                event_ind_relative_to_rupture_table = get_idx_of_list_a_in_b(rupture_table.event_id.values,unique_event_id_with_crossing)
+                # event_ind_relative_to_rupture_table = np.asarray([
+                #     np.where(rupture_table.event_id==event_id)[0][0]
+                #     for event_id in unique_event_id_with_crossing
+                # ])
             # otherwise
             else:
                 segment_ids_crossed = site_data.ID.values
@@ -351,7 +401,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             segment_index_repeat_in_full = np.asarray([])
             segment_ids_crossed_single = segment_ids_crossed.copy()
             segment_index_single_in_full = segment_index_crossed.copy()
-        logging.info(f'{counter}. Identified indices between full instrastructure inventory and subset of inventory with crossings')
+        logging.info(f'... DONE')
         counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -418,7 +468,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     forward_euler_multiplier = 1.01
     # Number of Epistemic samples for inputs
     if flag_possible_repeated_crossings:
-        num_epi_input_samples = 1000
+        if running_below_ground_fault_rupture:
+            num_epi_input_samples = 50
+        else:
+            num_epi_input_samples = 1000
     else:
         num_epi_input_samples = 100
     # Number of Epistemic samples for fractiles
@@ -433,13 +486,20 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Misc setup config
+    if running_below_ground_fault_rupture:
+        display_after_n_event = 100;
+    
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Get samples for input parameters
     logging.info(f'{counter}. Performing sampling of input parameters that are not event-dependent...')
     counter += 1
     n_params = len(input_dist)
     param_names = list(input_dist)
-    input_samples = \
-        pc_workflow.get_samples_for_params(input_dist, num_epi_input_samples, n_site)
+    # if running_below_ground_fault_rupture:
+    #     input_samples = pc_workflow.get_samples_for_params(input_dist, num_epi_input_samples, n_site_cross_only)
+    # else:
+    input_samples = pc_workflow.get_samples_for_params(input_dist, num_epi_input_samples, n_site)
     
     # Additional sampling of inputs with more complex/dependent conditions
     logging.info(f'\t Performing additional procedures for other input parameters with more complex/dependent conditions...')
@@ -1012,37 +1072,64 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         
         ###########################################
         # run if CPT-based
-        if running_cpt_based_procedure or running_below_ground_fault_rupture:
+        if running_cpt_based_procedure:
             # also get the segments crossing deformation polygon developed for current event
             sites_to_run_curr_event = rows_to_run_by_event_id[event_id]
             # find sites with nonzero PGA
             pga_curr_event = np.round(im_import['pga']['mean_table'][event_ind,sites_to_run_curr_event].copy()-10,decimals=3)
+            # get sites with nonzero IMs
+            sites_with_nonzero_step0 = np.where(pga_curr_event>min_mean_for_zero_val['im']['pga'])[0]
+        elif running_below_ground_fault_rupture:
+            # get segment IDs for current event
+            all_segment_ids_curr_event = rupture_table.seg_id_crossed.loc[event_ind]
+            all_norm_dist_curr_event = rupture_table.norm_dist.loc[event_ind]
+            all_prob_crossing_curr_event = rupture_table.prob_crossing.loc[event_ind]
+            # keep only segments in segment_ids_crossed
+            segment_ids_curr_event = np.asarray([v for v in all_segment_ids_curr_event if v in segment_ids_crossed_list])
+            idx_for_segment_ids_curr_event = get_idx_of_list_a_in_b(all_segment_ids_curr_event,segment_ids_curr_event)
+            norm_dist_curr_event = np.asarray(all_norm_dist_curr_event)[idx_for_segment_ids_curr_event]
+            prob_crossing_curr_event = np.asarray(all_prob_crossing_curr_event)[idx_for_segment_ids_curr_event]
+            # get rows for segment IDs relative to crossing table
+            sites_to_run_curr_event = get_idx_of_list_a_in_b(segment_ids_crossed_list,segment_ids_curr_event)
+            # get sites with nonzero IMs (all for fault rupture)
+            sites_with_nonzero_step0 = sites_to_run_curr_event
         else:
             # find sites with nonzero PGA
             pga_curr_event = np.round(im_import['pga']['mean_table'][event_ind,:].copy()-10,decimals=3)
-        # get sites with nonzero IMs
-        sites_with_nonzero_step0 = np.where(pga_curr_event>min_mean_for_zero_val['im']['pga'])[0]
+            # get sites with nonzero IMs
+            sites_with_nonzero_step0 = np.where(pga_curr_event>min_mean_for_zero_val['im']['pga'])[0]
         n_site_curr_event = len(sites_with_nonzero_step0)
+        null_arr_nsite_nonzero = np.zeros(n_site_curr_event)
+        ones_arr_nsite_nonzero = np.ones(n_site_curr_event)
         # get nonzero im
         im_dist_info = {}
         for each in ['pga','pgv']:
-            im_dist_info[each] = {
-                # 'mean': im_import[each]['mean_table'].loc[event_ind,:].values,
-                # 'sigma': im_import[each]['sigma_table'].loc[event_ind,:].values,
-                # 'sigma_mu': im_import[each]['sigma_mu_table'].loc[event_ind,:].values,
-                
-                # note that sparse matrix files require -10 to all values for correct magnitude;
-                # during ground motion phase, locations with 0 intensities are reported as -10 instead of -np.inf;
-                # for storage, in order to be memory efficient, ground motions are stored as sparse matrx by adding
-                # 10 to all values, thus convert the -10 intensity magnitudes to 0;
-                # ---> this means when using the sparse datafiles, they must be -10 to get the correct magnitude
-                'mean': np.round(im_import[each]['mean_table'][event_ind,sites_with_nonzero_step0].copy()-10,decimals=3),
-                'sigma': np.round(im_import[each]['sigma_table'][event_ind,sites_with_nonzero_step0].copy(),decimals=3),
-                'sigma_mu': np.round(im_import[each]['sigma_mu_table'][event_ind,sites_with_nonzero_step0].copy(),decimals=3),
-                'dist_type': 'lognormal'
-            }
-            # avoid sigma = 0 for PC
-            im_dist_info[each]['sigma'] = np.maximum(im_dist_info[each]['sigma'],0.001)
+            if running_below_ground_fault_rupture:
+                # pga and pgv not used, just make proxy values
+                im_dist_info[each] = {
+                    'mean': -ones_arr_nsite_nonzero.copy(),
+                    'sigma': ones_arr_nsite_nonzero.copy()*0.001,
+                    'sigma_mu': null_arr_nsite_nonzero.copy(),
+                    'dist_type': 'lognormal'
+                }
+            else:
+                im_dist_info[each] = {
+                    # 'mean': im_import[each]['mean_table'].loc[event_ind,:].values,
+                    # 'sigma': im_import[each]['sigma_table'].loc[event_ind,:].values,
+                    # 'sigma_mu': im_import[each]['sigma_mu_table'].loc[event_ind,:].values,
+                    
+                    # note that sparse matrix files require -10 to all values for correct magnitude;
+                    # during ground motion phase, locations with 0 intensities are reported as -10 instead of -np.inf;
+                    # for storage, in order to be memory efficient, ground motions are stored as sparse matrx by adding
+                    # 10 to all values, thus convert the -10 intensity magnitudes to 0;
+                    # ---> this means when using the sparse datafiles, they must be -10 to get the correct magnitude
+                    'mean': np.round(im_import[each]['mean_table'][event_ind,sites_with_nonzero_step0].copy()-10,decimals=3),
+                    'sigma': np.round(im_import[each]['sigma_table'][event_ind,sites_with_nonzero_step0].copy(),decimals=3),
+                    'sigma_mu': np.round(im_import[each]['sigma_mu_table'][event_ind,sites_with_nonzero_step0].copy(),decimals=3),
+                    'dist_type': 'lognormal'
+                }
+                # avoid sigma = 0 for PC
+                im_dist_info[each]['sigma'] = np.maximum(im_dist_info[each]['sigma'],0.001)
         
         #----------------------
         if get_timer:
@@ -1074,10 +1161,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         if running_below_ground_fault_rupture:
             # also get 'norm_dist' and 'prob_disp_sf' from site_data if available
             for col in ['norm_dist']:
-                if col in site_data:
-                    input_samples[col] = \
-                        site_data[col].values.repeat(num_epi_input_samples).reshape(
-                            (-1, num_epi_input_samples))
+                if col in rupture_table:
+                    input_samples[col] = null_arr_nsite_by_ninput.copy()
+                    input_samples[col][sites_with_nonzero_step0] = \
+                        norm_dist_curr_event.repeat(num_epi_input_samples).reshape((-1, num_epi_input_samples))
                             
         # get list of sites with no well crossing
         if running_wells_caprocks:
@@ -1098,8 +1185,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         if flag_crossing_file_exists or running_wells_caprocks:
             # initialize params for storing additional sampling
             addl_input_dist = {}
-            null_arr_nsite_nonzero = np.zeros(n_site_curr_event)
-            ones_arr_nsite_nonzero = np.ones(n_site_curr_event)
             # if wells and caprocks, then perform additional sampling using fault depths and crossing angles
             if running_wells_caprocks:
                 crossing_params = [
@@ -1952,7 +2037,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             except ZeroDivisionError:
                                 raise ValueError("Somewhere in mean_of_mu there are invalid values; double check distribution")
                         # multiply by annual rate
-                        pc_coeffs_param_i = pc_coeffs_param_i * rup_info['rate']
+                        pc_coeffs_param_i *= rup_info['rate']
+                        # multiply by probability of crossing if below ground fault rupture
+                        if running_below_ground_fault_rupture:
+                            pc_coeffs_param_i *= prob_crossing_curr_event.repeat(pc_coeffs_param_i.shape[1]).reshape((-1, pc_coeffs_param_i.shape[1]))
                         # map from n_site_curr_event to n_site
                         pc_coeffs_param_i_full = null_arr_pc_terms[curr_case_str].copy()
                         if running_cpt_based_procedure:
@@ -2031,8 +2119,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # once pc coeffs are computed for all events, now go through cases again to generate samples and compute fractles
-
+    logging.info(f'{counter}. After comput PC coefficients for all events, now go through cases to generate samples and fractiles')
+    counter += 1
     for case_to_run in range(1,n_cases+1):
+        logging.info(f'\t- Case {case_to_run}:')
         # initialize
         pc_samples = {}
         # string for current case
@@ -2137,7 +2227,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         param_to_use = second_to_last_haz_param[0]
                 return_frac = pc_workflow.get_fractiles(
                     pc_samples[param_i],
-                    n_sig_fig=4,
+                    n_sig_fig=8,
                 )
                 # add param to column name
                 return_frac.columns = [f'{col}_{param_to_use}' for col in return_frac.columns]
@@ -2151,31 +2241,50 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 
             # multiply results by probablity of crossing
             if flag_crossing_file_exists:
-                df_frac[curr_case_str] = df_frac[curr_case_str] * np.tile(prob_crossing,(6,1)).T
+                # for below ground fault rupture, already performed
+                if not running_below_ground_fault_rupture:
+                    df_frac[curr_case_str] = df_frac[curr_case_str] * np.tile(prob_crossing,(6,1)).T
             
             # if using crossings, check for multiple crossings per segment and pick worst case for segment
             if flag_possible_repeated_crossings:
             # if infra_type == 'below_ground':
+                logging.info(f'\t\t- remapping results from sites with crossings to back to full infrastructure table')
+                logging.info(f'\t\t- NOTE: this may take a few minutes if running fault rupture over below ground assets')
                 # initialize fractile table with all locations
-                frac_full = pd.DataFrame(
-                    0,
-                    index=segment_index_full,
-                    columns=df_frac[curr_case_str].columns
-                )
+                # frac_full = pd.DataFrame(
+                #     0,
+                #     index=segment_index_full,
+                #     columns=df_frac[curr_case_str].columns
+                # )
+                frac_full_mat = np.zeros((len(segment_index_full),len(df_frac[curr_case_str].columns))
                 # remapping if possible for multiple crossings for same segment
                 # algorithm changes if crossing is dependent on event
                 if flag_event_dependent_crossing:
                     # loop through events
                     for event_ind, event_id in enumerate(event_ids_to_run):
                         # get segment id and ind for current event
-                        rows_to_run = rows_to_run_by_event_id[event_id]
                         segment_ids_crossed = segment_ids_crossed_by_event_id[event_id]
                         segment_ids_crossed_repeat = segment_ids_crossed_repeat_by_event_id[event_id]
+                        segment_ids_crossed_single = segment_ids_crossed_single_by_event_id[event_id]
                         segment_index_repeat_in_full = segment_index_repeat_in_full_by_event_id[event_id]
                         segment_index_single_in_full = segment_index_single_in_full_by_event_id[event_id]
-                        # get index to track segments with multiple crossings
-                        df_frac_index = df_frac[curr_case_str].index.values[rows_to_run]
+                        if running_below_ground_fault_rupture:
+                            # keep only segments in segment_ids_crossed
+                            locs_for_segment_ids_curr_event = np.asarray([idx for idx,v in enumerate(segment_ids_crossed) if v in segment_ids_crossed_list])
+                            segment_ids_crossed = segment_ids_crossed[locs_for_segment_ids_curr_event]
+                            if len(segment_ids_crossed_repeat) > 0:
+                                locs_for_segment_ids_crossed_repeat = np.asarray([idx for idx,v in enumerate(segment_ids_crossed_repeat) if v in segment_ids_crossed_list])
+                                segment_ids_crossed_repeat = segment_ids_crossed_repeat[locs_for_segment_ids_crossed_repeat]
+                                segment_index_repeat_in_full = segment_index_repeat_in_full[locs_for_segment_ids_crossed_repeat]
+                            locs_for_segment_ids_crossed_single = np.asarray([idx for idx,v in enumerate(segment_ids_crossed_single) if v in segment_ids_crossed_list])
+                            segment_ids_crossed_single = segment_ids_crossed_single[locs_for_segment_ids_crossed_single]
+                            segment_index_single_in_full = segment_index_single_in_full[locs_for_segment_ids_crossed_single]
+                            # get rows for segment IDs relative to crossing table
+                            rows_to_run = get_idx_of_list_a_in_b(segment_ids_crossed,segment_ids_crossed)
+                        else:
+                            rows_to_run = rows_to_run_by_event_id[event_id]
                         rows_to_run_index = list(range(len(rows_to_run)))
+                        df_frac_index = df_frac[curr_case_str].index.values[rows_to_run]
                         for ind, segment_id in enumerate(segment_ids_crossed_repeat):
                             ind_in_full_for_segment_id = segment_index_repeat_in_full[ind]
                             rows_with_repeat_seg = np.where(segment_ids_crossed==segment_id)[0]
@@ -2185,14 +2294,17 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             frac_repeat_curr_segment = df_frac[curr_case_str].loc[df_frac_index[rows_with_repeat_seg]].reset_index(drop=True)
                             # if fault rupture and below ground sum up between repeatin (primary and secondary)
                             if running_below_ground_fault_rupture:
-                                frac_full.loc[ind_in_full_for_segment_id] = frac_repeat_curr_segment.values.sum(axis=0)
+                                # frac_full.loc[ind_in_full_for_segment_id] = frac_repeat_curr_segment.values.sum(axis=0)
+                                frac_full_mat[ind_in_full_for_segment_id] = frac_repeat_curr_segment.values.sum(axis=0)
                             # else find worst case
                             else:
                                 # pick case with higher mean value
                                 worst_row = np.argmax(frac_repeat_curr_segment.iloc[:,-1])
-                                frac_full.loc[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
+                                # frac_full.loc[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
+                                frac_full_mat[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
                         # for all the segments with only 1 crossing
-                        frac_full.loc[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index[rows_to_run_index]].values
+                        # frac_full.loc[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index[rows_to_run_index]].values
+                        frac_full_mat[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index[rows_to_run_index]].values
                 # if not dependent on event
                 else:
                     # get index to track segments with multiple crossings
@@ -2204,11 +2316,16 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         frac_repeat_curr_segment = df_frac[curr_case_str].loc[rows].reset_index(drop=True)
                         # pick case with higher mean value
                         worst_row = np.argmax(frac_repeat_curr_segment.iloc[:,-1])
-                        frac_full.loc[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
+                        frac_full_mat[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
                     # for all the segments with only 1 crossing
-                    frac_full.loc[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index].values
+                    frac_full_mat[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index].values
                 # update df_frac
-                df_frac[curr_case_str] = frac_full.copy()
+                df_frac[curr_case_str] = pd.DataFrame(
+                    frac_full_mat,
+                    index=segment_index_full,
+                    columns=df_frac[curr_case_str].columns
+                )
+                # df_frac[curr_case_str] = frac_full.copy()
             
             #----------------------
             if get_timer:
@@ -2516,7 +2633,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         if 'LON_MID' in df_locs:
             gdf_frac_mean = GeoDataFrame(
                 None,
-                crs=4326,
+                crs=epsg_wgs84,
                 geometry=make_list_of_linestrings(
                     pt1_x=df_locs.LON_BEGIN.values,
                     pt1_y=df_locs.LAT_BEGIN.values,
@@ -2527,7 +2644,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         else:
             gdf_frac_mean = GeoDataFrame(
                 None,
-                crs=4326,
+                crs=epsg_wgs84,
                 geometry=points_from_xy(
                     x=df_locs.LON.values,
                     y=df_locs.LAT.values,
@@ -2547,7 +2664,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     new_col_name = new_col_name.replace('_',' ')
                     gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='mean_annual_rate_of_failure', index=False, crs=4326)
+        gdf_frac_mean.to_file(spath, layer='mean_annual_rate_of_failure', index=False, crs=epsg_wgs84)
         
     # for wells and caprocks - one sheet for wells, one sheet for caprocks if exists
     if running_wells_caprocks:
@@ -2555,7 +2672,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         # first get mean fractile summary for wells
         gdf_frac_mean['mean_annual_rate_of_failure_for_wells'] = GeoDataFrame(
             None,
-            crs=4326,
+            crs=epsg_wgs84,
             geometry=points_from_xy(
                 x=df_locs.LON.values,
                 y=df_locs.LAT.values,
@@ -2585,7 +2702,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 if not 'mean_annual_rate_of_failure_for_caprocks' in gdf_frac_mean:
                     gdf_frac_mean['mean_annual_rate_of_failure_for_caprocks'] = GeoDataFrame(
                         None,
-                        crs=4326,
+                        crs=epsg_wgs84,
                         geometry=caprock_crossing.geometry.values
                     )
                 for col in df_frac[case].columns:
@@ -2597,14 +2714,14 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         gdf_frac_mean['mean_annual_rate_of_failure_for_caprocks'][new_col_name] = df_frac[case][col].values
         # export
         for layer in gdf_frac_mean:
-            gdf_frac_mean[layer].to_file(spath, layer=layer, index=False, crs=4326)
+            gdf_frac_mean[layer].to_file(spath, layer=layer, index=False, crs=epsg_wgs84)
     
     # for above ground, everything fits into one summary sheet (same number of rows):
     if running_above_ground:
         # create a gpkg file to store mean fractiles
         gdf_frac_mean = GeoDataFrame(
             None,
-            crs=4326,
+            crs=epsg_wgs84,
             geometry=points_from_xy(
                 x=df_locs.LON.values,
                 y=df_locs.LAT.values,
@@ -2641,39 +2758,44 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     #     new_col_name = new_col_name.replace('_',' ')
                     #     gdf_frac_mean[new_col_name] = df_frac[case][col].values
         # export
-        gdf_frac_mean.to_file(spath, layer='mean_annual_rate_of_failure', index=False, crs=4326)
+        gdf_frac_mean.to_file(spath, layer='mean_annual_rate_of_failure', index=False, crs=epsg_wgs84)
     gpkg_contains.append('mean fractiles from call cases')
     
     # append other gpkg to gdf_frac_mean if they exist
     # 1) rupture metadata
-    gdf_rupture_table = read_file(os.path.join(im_dir,'RUPTURE_METADATA.gpkg'))
-    gdf_rupture_table.to_file(spath, layer='rupture_traces', index=False, crs=4326)
-    gpkg_contains.append('rupture scenarios close to sites')
+    if running_below_ground_fault_rupture:
+        gdf_section_table = read_file(os.path.join(im_dir,'SECTION_METADATA_from_crossing_logic.gpkg'))
+        gdf_section_table.to_file(spath, layer='ucerf_section_traces', index=False, crs=epsg_wgs84)
+        gpkg_contains.append('UCERF section traces tied to Q-faults that cross sites')
+    else:
+        gdf_rupture_table = read_file(os.path.join(im_dir,'RUPTURE_METADATA.gpkg'))
+        gdf_rupture_table.to_file(spath, layer='rupture_traces', index=False, crs=epsg_wgs84)
+        gpkg_contains.append('rupture scenarios close to sites')
     
     # 2) site data table with crossings only
     if flag_crossing_file_exists:
         # update previous string in gpkg_contains
         gpkg_contains[-1] = 'rupture scenarios crossed and/or close to sites'
         gdf_crossings_only = read_file(os.path.join(processed_input_dir,'site_data_PROCESSED_CROSSING_ONLY.gpkg'))
-        gdf_crossings_only.to_file(spath, layer=f'locations_with_crossings', index=False, crs=4326)
+        gdf_crossings_only.to_file(spath, layer=f'locations_with_crossings', index=False, crs=epsg_wgs84)
         gpkg_contains.append('locations with crossings')
         if os.path.exists(os.path.join(processed_input_dir,'deformation_polygons_crossed.gpkg')):
             gdf_def_poly = read_file(os.path.join(processed_input_dir,'deformation_polygons_crossed.gpkg'))
-            gdf_def_poly.to_file(spath, layer=f'deformation_polygons_crossed', index=False, crs=4326)
+            gdf_def_poly.to_file(spath, layer=f'deformation_polygons_crossed', index=False, crs=epsg_wgs84)
             gpkg_contains.append('deformation polygons with crossings')
     
     # 3) qfaults if running below_ground and surface_fault_rupture
     if running_below_ground_fault_rupture:
         for each in ['primary','secondary']:
-            gdf_qfault_primary = read_file(os.path.join(im_dir,'qfaults_crossed.gpkg'),layer=each)
-            gdf_qfault_primary.to_file(spath, layer=f'qfault_crossed_{each}', index=False, crs=4326)
+            gdf_qfault = read_file(os.path.join(im_dir,'qfaults_crossed.gpkg'),layer=each)
+            gdf_qfault.to_file(spath, layer=f'qfault_crossed_{each}', index=False, crs=epsg_wgs84)
         gpkg_contains.append('qfaults crossed')
     
     # 4) if running CPTBased
     if running_cpt_based_procedure:
         # processed CPT
         gdf_processed_cpt = read_file(os.path.join(processed_input_dir,'CPTs','cpt_data_PROCESSED.gpkg'))
-        gdf_processed_cpt.to_file(spath, layer=f'processed_cpts', index=False, crs=4326)
+        gdf_processed_cpt.to_file(spath, layer=f'processed_cpts', index=False, crs=epsg_wgs84)
         gpkg_contains.append('processed CPTs')
         # if freeface feature is given
         if 'PathToFreefaceDir' in setup_config['UserSpecifiedData']['CPTParameters']:
@@ -2685,14 +2807,14 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 freeface_fpath = check_and_get_abspath(freeface_fpath, input_dir)
         if freeface_fpath is not None:
             gdf_freeface_wgs84 = read_file(freeface_fpath, crs=epsg_wgs84)
-            gdf_freeface_wgs84.to_file(spath, layer=f'freeface_features', index=False, crs=4326)
+            gdf_freeface_wgs84.to_file(spath, layer=f'freeface_features', index=False, crs=epsg_wgs84)
             gpkg_contains.append('freeface features')
             
     # 5) if running caprock analysis
     if running_caprock:
         if os.path.exists(os.path.join(processed_input_dir,'caprock_crossing.gpkg')):
             gdf_caprock_crossing = read_file(os.path.join(processed_input_dir,'caprock_crossing.gpkg'))
-            gdf_caprock_crossing.to_file(spath, layer=f'caprocks_with_crossings', index=False, crs=4326)
+            gdf_caprock_crossing.to_file(spath, layer=f'caprocks_with_crossings', index=False, crs=epsg_wgs84)
             gpkg_contains.append('caprocks with crossings')            
 
     logging.info(f'{counter}. Exported a summary geopackage to:')

@@ -27,6 +27,13 @@ from numba_stats import truncnorm, norm
 from scipy.interpolate import interp2d
 
 
+def get_idx_of_list_a_in_b(list_a,list_b):
+    """
+    returns a list of indices relative to list a for every entry in list b
+    """
+    return np.nonzero(np.in1d(list_a,list_b))[0]
+
+
 def remap_str(string, map_dict, delimiter=' '):
     """
     split string into 'words' by delimiter,

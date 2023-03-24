@@ -20,8 +20,8 @@ import numpy as np
 # from numpy import tan, radians, where
 # from numba import jit
 # from numba import njit
-# import warnings
-# warnings.filterwarnings("ignore", category=RuntimeWarning) 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning) 
 
 # OpenSRA modules and classes
 from src.base_class import BaseModel

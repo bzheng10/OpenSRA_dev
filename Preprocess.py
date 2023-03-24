@@ -3097,6 +3097,7 @@ if __name__ == "__main__":
     # Parse command line input
     args = parser.parse_args()
     
+    print("--------------Start of runtime messages from OpenSRA backend--------------");
     # Run "Main"
     main(
         work_dir = args.workdir,
@@ -3105,3 +3106,4 @@ if __name__ == "__main__":
         display_after_n_event=args.display,
         clean_prev_output=args.clean,
     )
+    print("--------------End of runtime messages from OpenSRA backend--------------");

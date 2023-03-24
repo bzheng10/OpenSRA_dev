@@ -42,7 +42,7 @@ warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 # from src.site.geodata import NetworkData
 from src.site.geodata import PointData
 from src.site.site_util import make_list_of_linestrings
-from src.util import get_basename_without_extension, get_idx_of_list_a_in_b
+from src.util import get_basename_without_extension, get_idx_of_list_b_in_a_v1
 
 
 # ---
@@ -748,7 +748,7 @@ def get_pipe_crossing_fault_rup(
                     for each in rupture_list_for_unique_section_id_crossed
                 ]))
                 # rows with unique rupture IDs
-                unique_rupture_ind_crossed[each] = get_idx_of_list_a_in_b(rupture_table.EventID.values,unique_rupture_id_crossed[each])
+                unique_rupture_ind_crossed[each] = get_idx_of_list_b_in_a_v1(rupture_table.EventID.values,unique_rupture_id_crossed[each])
                 unique_rupture_id_crossed_map = pd.DataFrame(
                     unique_rupture_ind_crossed[each],
                     index=unique_rupture_id_crossed[each],
@@ -775,7 +775,7 @@ def get_pipe_crossing_fault_rup(
                     len_rupture_list = len(rupture_list_for_section_id_crossed_i)
                     
                     # unique_qfault_crossed
-                    ind_in_qfault_crossed_list_for_i =np.where(qfault_crossed==unique_qfault_crossed_i)[0]
+                    ind_in_qfault_crossed_list_for_i = np.where(qfault_crossed==unique_qfault_crossed_i)[0]
                     segments_crossed_for_i = [segment_crossed[j] for j in ind_in_qfault_crossed_list_for_i]
                     n_segment_for_i = len(segments_crossed_for_i)
                     
@@ -911,22 +911,20 @@ def get_pipe_crossing_fault_rup(
                         segment_end_for_curr_pipe_id[curr_segment_index:nearest_hard_pt_ind_end,:]
                     
                     # make lines from crossing to nearest hard points on start and end side
-                    lines_for_start_side = MultiLineString(
-                        make_list_of_linestrings(
-                            pt1_x=start_nodes_from_crossing_to_hard_pt_on_start_side[:,0],
-                            pt1_y=start_nodes_from_crossing_to_hard_pt_on_start_side[:,1],
-                            pt2_x=end_nodes_from_crossing_to_hard_pt_on_start_side[:,0],
-                            pt2_y=end_nodes_from_crossing_to_hard_pt_on_start_side[:,1],
-                        )
+                    lines_for_start_side = make_list_of_linestrings(
+                        pt1_x=start_nodes_from_crossing_to_hard_pt_on_start_side[:,0],
+                        pt1_y=start_nodes_from_crossing_to_hard_pt_on_start_side[:,1],
+                        pt2_x=end_nodes_from_crossing_to_hard_pt_on_start_side[:,0],
+                        pt2_y=end_nodes_from_crossing_to_hard_pt_on_start_side[:,1],
                     )
-                    lines_for_end_side = MultiLineString(
-                        make_list_of_linestrings(
-                            pt1_x=start_nodes_from_crossing_to_hard_pt_on_end_side[:,0],
-                            pt1_y=start_nodes_from_crossing_to_hard_pt_on_end_side[:,1],
-                            pt2_x=end_nodes_from_crossing_to_hard_pt_on_end_side[:,0],
-                            pt2_y=end_nodes_from_crossing_to_hard_pt_on_end_side[:,1],
-                        )
-                    )            
+                    lines_for_start_side = MultiLineString([v for v in lines_for_start_side if not isinstance(v,Point)])
+                    lines_for_end_side = make_list_of_linestrings(
+                        pt1_x=start_nodes_from_crossing_to_hard_pt_on_end_side[:,0],
+                        pt1_y=start_nodes_from_crossing_to_hard_pt_on_end_side[:,1],
+                        pt2_x=end_nodes_from_crossing_to_hard_pt_on_end_side[:,0],
+                        pt2_y=end_nodes_from_crossing_to_hard_pt_on_end_side[:,1],
+                    )
+                    lines_for_end_side = MultiLineString([v for v in lines_for_end_side if not isinstance(v,Point)])           
                     # get length of pipe segments from crossing to the nearest hard points on start and end side
                     # start side
                     length_start_side = lines_for_start_side.length
@@ -983,10 +981,14 @@ def get_pipe_crossing_fault_rup(
 
         for each in ['primary','secondary']:
             # get following attributes as dictionaries
-            event_id_crossed = segment_by_qfault[each].event_id_crossed.to_dict()
-            event_ind_crossed = segment_by_qfault[each].event_ind_crossed.to_dict()
-            prob_crossing_crossed = segment_by_qfault[each].prob_crossing.to_dict()
-            norm_dist_crossed = segment_by_qfault[each].norm_dist.to_dict()
+            segment_by_qfault_temp = segment_by_qfault[each][[
+                'ID','event_id_crossed','event_ind_crossed','prob_crossing','norm_dist'
+            ]].copy()
+            segment_by_qfault_temp.index = segment_by_qfault_temp.ID
+            event_id_crossed = segment_by_qfault_temp.event_id_crossed.to_dict()
+            event_ind_crossed = segment_by_qfault_temp.event_ind_crossed.to_dict()
+            prob_crossing_crossed = segment_by_qfault_temp.prob_crossing.to_dict()
+            norm_dist_crossed = segment_by_qfault_temp.norm_dist.to_dict()
             # get dictionaries of segment_id_crossed, prob_crossing, and norm_dist ordered by ruptures
             for curr_seg in event_id_crossed:
                 curr_event_id_list = event_id_crossed[curr_seg]
@@ -1006,7 +1008,7 @@ def get_pipe_crossing_fault_rup(
             unique_rupture_id_crossed[each]
             for each in ['primary','secondary']
         ])).astype(int)
-        scenarios_ind_with_crossing_for_haz = get_idx_of_list_a_in_b(
+        scenarios_ind_with_crossing_for_haz = get_idx_of_list_b_in_a_v1(
             rupture_table.EventID.values,scenarios_with_crossing_for_haz
         )
         n_scens = len(scenarios_ind_with_crossing_for_haz)
@@ -1145,7 +1147,7 @@ def get_pipe_crossing_fault_rup(
         count += 1
         logging.info(f'\t\t- {count}. Section table to {im_dir}:')
         section_id_crossed_all = np.unique(np.hstack([section_id_crossed['primary'],section_id_crossed['secondary']]))
-        rows_for_all_sections_crossed = get_idx_of_list_a_in_b(section_table.SectionID.values,section_id_crossed_all)
+        rows_for_all_sections_crossed = get_idx_of_list_b_in_a_v1(section_table.SectionID.values,section_id_crossed_all)
         section_table_export = section_table.loc[rows_for_all_sections_crossed].copy()
         for each in ['primary','secondary']:
             crossing_curr_haz = []
@@ -1797,22 +1799,20 @@ def get_pipe_crossing_landslide_and_liq(
                     segment_end_for_curr_pipe_id[curr_segment_index:nearest_hard_pt_ind_end,:]
                 
                 # make lines from crossing to nearest hard points on start and end side
-                lines_for_start_side = MultiLineString(
-                    make_list_of_linestrings(
-                        pt1_x=start_nodes_from_crossing_to_hard_pt_on_start_side[:,0],
-                        pt1_y=start_nodes_from_crossing_to_hard_pt_on_start_side[:,1],
-                        pt2_x=end_nodes_from_crossing_to_hard_pt_on_start_side[:,0],
-                        pt2_y=end_nodes_from_crossing_to_hard_pt_on_start_side[:,1],
-                    )
+                lines_for_start_side = make_list_of_linestrings(
+                    pt1_x=start_nodes_from_crossing_to_hard_pt_on_start_side[:,0],
+                    pt1_y=start_nodes_from_crossing_to_hard_pt_on_start_side[:,1],
+                    pt2_x=end_nodes_from_crossing_to_hard_pt_on_start_side[:,0],
+                    pt2_y=end_nodes_from_crossing_to_hard_pt_on_start_side[:,1],
                 )
-                lines_for_end_side = MultiLineString(
-                    make_list_of_linestrings(
-                        pt1_x=start_nodes_from_crossing_to_hard_pt_on_end_side[:,0],
-                        pt1_y=start_nodes_from_crossing_to_hard_pt_on_end_side[:,1],
-                        pt2_x=end_nodes_from_crossing_to_hard_pt_on_end_side[:,0],
-                        pt2_y=end_nodes_from_crossing_to_hard_pt_on_end_side[:,1],
-                    )
-                )            
+                lines_for_start_side = MultiLineString([v for v in lines_for_start_side if not isinstance(v,Point)])
+                lines_for_end_side = make_list_of_linestrings(
+                    pt1_x=start_nodes_from_crossing_to_hard_pt_on_end_side[:,0],
+                    pt1_y=start_nodes_from_crossing_to_hard_pt_on_end_side[:,1],
+                    pt2_x=end_nodes_from_crossing_to_hard_pt_on_end_side[:,0],
+                    pt2_y=end_nodes_from_crossing_to_hard_pt_on_end_side[:,1],
+                )
+                lines_for_end_side = MultiLineString([v for v in lines_for_end_side if not isinstance(v,Point)])              
                 # get length of pipe segments from crossing to the nearest hard points on start and end side
                 # if the lines of the segments cross the deformation geometry, then use half of pipeline length within the polygon as controlling length
                 # start side

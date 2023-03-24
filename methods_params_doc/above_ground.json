@@ -374,7 +374,7 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
+                                    "DescToDisplay": "This method does not require additional parameters as user input.",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -445,7 +445,7 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
+                                    "DescToDisplay": "This method does not require additional parameters as user input.",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null
@@ -516,7 +516,7 @@
                                 "N/A": {
                                     "NameToDisplay": "None",
                                     "VarType": null,
-                                    "DescToDisplay": "This method does not requires additional parameters as user input.",
+                                    "DescToDisplay": "This method does not require additional parameters as user input.",
                                     "WidgetType": "QLabel",
                                     "ToDisplay": true,
                                     "DefaultValue": null

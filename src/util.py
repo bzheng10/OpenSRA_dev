@@ -19,19 +19,73 @@ import sys
 import time
 import numpy as np
 import rasterio as rio
+from collections import defaultdict
 from numba import jit, njit, float64, int64
 from numba.types import unicode_type
 # from scipy import sparse, stats
 from scipy import sparse
-from numba_stats import truncnorm, norm
 from scipy.interpolate import interp2d
+from numba_stats import truncnorm, norm
 
 
-def get_idx_of_list_a_in_b(list_a,list_b):
+def get_sublist_of_list_b_in_a(list_a,list_b):
     """
-    returns a list of indices relative to list a for every entry in list b
+    for every key in list b, see if it is in list a
+    - if so, return index
+    - if not, return -(index) - 1 (catch when index == 0)
+    """
+    return np.asarray([x if v in list_a else -x-1 for x,v in enumerate(list_b)])
+
+
+def get_repeats_in_list(l):
+    """
+    returns a list of the repeated values in l
+    """
+    seen = set()
+    repeats = [x for x in l if x in seen or seen.add(x)]
+    return repeats
+
+
+def get_repeats_in_list_with_idx(l):
+    """
+    returns a list of the repeated values in l, along with index for repeats
+    https://stackoverflow.com/questions/5419204/index-of-duplicates-items-in-a-python-list
+    """
+    tally = defaultdict(list)
+    for i,item in enumerate(l):
+        tally[item].append(i)
+    return ((key,locs) for key,locs in tally.items() if len(locs)>1)
+
+
+def get_idx_of_list_b_in_a_v1(list_a,list_b):
+    """
+    for every key in list b, return index of key in list a if exists
+    - fast but only works if both list a and list b are ordered and list b is unique
     """
     return np.nonzero(np.in1d(list_a,list_b))[0]
+
+
+def get_idx_of_list_b_in_a_v2(list_a,list_b):
+    """
+    for every key in list b, return index of key in list a if exists
+    - slower than v1 but works if both list a and list b contain duplicates
+    """
+    set_a = set(list_a)
+    arr_a = np.asarray(list_a)
+    set_b = set(list_b)
+    common = sorted(list(set_a.intersection(set_b))) # items not
+    idx = get_idx_of_list_b_in_a_v1(list_a,common)
+    # find repeating items in list_b
+    # list_b_repeat = get_repeats_in_list(list_b)
+    # idx_to_append = []
+    # if len(list_b_repeat) > 0:
+    #     for dup in list_b_repeat:
+    #         if dup in common:
+    #             idx_val_of_dup = idx[common.index(dup)]
+    #             cnt = len(np.where(list_b==dup)[0]) # get count
+    #             idx_to_append += [idx_val_of_dup] * (cnt-1)
+    #     idx = np.sort(np.hstack([idx,idx_to_append]))
+    return idx
 
 
 def remap_str(string, map_dict, delimiter=' '):
@@ -517,7 +571,8 @@ def set_logging(level, file=None, msg_format='s'):
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     elif msg_format == 's' or msg_format == 'simple': # simple
         # formatter = logging.Formatter('%(message)s')
-        formatter = logging.Formatter('%(asctime)s - %(message)s',"%Y-%m-%d - %H:%M:%S")
+        # formatter = logging.Formatter('%(asctime)s - %(message)s',"%Y-%m-%d - %H:%M:%S")
+        formatter = logging.Formatter('%(asctime)s - %(message)s',"%H:%M:%S")
     handlerStream.setFormatter(formatter)
     logger.addHandler(handlerStream)
     

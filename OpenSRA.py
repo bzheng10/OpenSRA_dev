@@ -51,7 +51,9 @@ from src.pc_func import pc_util, pc_workflow
 from src.pc_func.pc_coeffs_single_int import pc_coeffs_single_int
 from src.pc_func.pc_coeffs_double_int import pc_coeffs_double_int
 from src.pc_func.pc_coeffs_triple_int import pc_coeffs_triple_int
-from src.util import set_logging, lhs, get_cdf_given_pts, check_and_get_abspath, remap_str, get_idx_of_list_a_in_b
+from src.util import set_logging, lhs, get_cdf_given_pts, check_and_get_abspath, remap_str
+from src.util import get_repeats_in_list_with_idx, get_sublist_of_list_b_in_a, get_repeats_in_list
+from src.util import get_idx_of_list_b_in_a_v1, get_idx_of_list_b_in_a_v2
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -221,7 +223,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     rupture_table = pd.read_csv(os.path.join(im_dir,'RUPTURE_METADATA.csv'))
     rupture_table.event_id = rupture_table.event_id.astype(int) # set as integers if not already
     event_ids_to_run = rupture_table.event_id.values # for looping through events to run
-    event_ind_relative_to_rupture_table = rupture_table.index.values.astype(int)
+    event_index_rel_to_rupture_table = rupture_table.index.values.astype(int)
     # load additional files if below ground fault rupture
     if running_below_ground_fault_rupture:
         for col in ['seg_id_crossed', 'prob_crossing', 'norm_dist']:
@@ -303,15 +305,22 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         if prob_crossing[0] == 1 or running_below_ground_fault_rupture:
             flag_possible_repeated_crossings = True
         # get segment IDs
-        segment_ids_full = site_data_full.ID.values
-        segment_ids_full_list = list(site_data_full.ID.values)
-        segment_ids_crossed = site_data.ID.values
-        segment_ids_crossed_list = list(site_data.ID.values)
-        # get table indices corresponding to IDs
-        segment_index_full = site_data_full.index.values
-        segment_index_crossed = site_data.index.values
+        segment_ids_full = site_data_full.ID.values # will not have repeating segment IDs
+        segment_ids_crossed = site_data.ID.values # may have repeating segment IDs depending on crossing algo
         # get repeated index
         if flag_possible_repeated_crossings:
+            # get list form
+            segment_ids_crossed_list = list(segment_ids_crossed)
+            # get segment IDs that are repeated
+            segment_ids_crossed_repeat_dict = {
+                key:val
+                for key,val in sorted(get_repeats_in_list_with_idx(segment_ids_crossed_list))
+            }
+            segment_ids_crossed_repeat = list(segment_ids_crossed_repeat_dict)
+            segment_ids_crossed_single = list(set(segment_ids_crossed_list).difference(set(segment_ids_crossed_repeat)))
+            # get table indices corresponding to IDs
+            segment_index_full = site_data_full.index.values
+            segment_index_crossed = site_data.index.values
             # if deformation polygons are event specific
             if flag_event_dependent_crossing:
                 # initialize
@@ -340,63 +349,42 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         # get rows relative to site_data for segments with crossings for current event
                         rows_to_run_by_event_id[curr_event_id] = np.where(site_data[event_ind_col]==event_ind)[0]
                         # store subset of site_data for current event
-                        segment_ids_curr_event = site_data.ID.loc[rows_to_run_by_event_id[curr_event_id]].values
+                        segment_ids_crossed_curr_event = site_data.ID.loc[rows_to_run_by_event_id[curr_event_id]].values
                     elif running_below_ground_fault_rupture:
-                        segment_ids_curr_event = np.asarray(rupture_table.seg_id_crossed.loc[event_ind])
-                        # get rows relative to site_data for segments with crossings for current event
-                        rows_to_run_by_event_id[curr_event_id] = get_idx_of_list_a_in_b(segment_ids_full_list,segment_ids_curr_event)
-                    segment_ids_crossed_by_event_id[curr_event_id] = segment_ids_curr_event
-                    # from segments list above, find repeating segments if any
-                    segment_ids_crossed_unique_curr_event, counts = np.unique(segment_ids_curr_event, return_counts=True)
+                        segment_ids_crossed_curr_event = np.asarray(rupture_table.seg_id_crossed.loc[event_ind])
+                    # from segments list above, get:
+                    # - list of all unique segment IDs, counts for each unique segment ID
+                    segment_ids_crossed_unique_curr_event, counts = np.unique(segment_ids_crossed_curr_event, return_counts=True)
+                    # - list of unique segment IDs with repeats (count > 1)
                     segment_ids_crossed_repeat_curr_event = segment_ids_crossed_unique_curr_event[np.where(counts>1)[0]]
-                    segment_ids_crossed_single_curr_event = np.asarray(
-                        list(set(segment_ids_crossed_unique_curr_event).difference(set(segment_ids_crossed_repeat_curr_event))))
-                    segment_ids_crossed_single_curr_event = np.sort(segment_ids_crossed_single_curr_event)
-                    # find row index corresponding to repeated IDS in full table
-                    segment_index_repeat_in_full_curr_event = get_idx_of_list_a_in_b(segment_ids_full_list,segment_ids_crossed_repeat_curr_event)
-                    segment_index_single_in_full_curr_event = get_idx_of_list_a_in_b(segment_ids_full_list,segment_ids_crossed_single_curr_event)
-                    # segment_index_repeat_in_full_curr_event = np.asarray([
-                    #     segment_ids_full_list.index(seg_id)
-                    #     for seg_id in segment_ids_crossed_repeat_curr_event
-                    # ])
-                    # segment_index_single_in_full_curr_event = np.asarray([
-                    #     segment_ids_full_list.index(seg_id)
-                    #     for seg_id in segment_ids_crossed_single_curr_event
-                    # ])
+                    # - list of unique segment IDs with no repeats (count == 1)
+                    segment_ids_crossed_single_curr_event = segment_ids_crossed_unique_curr_event[np.where(counts==1)[0]]
+                    # for seg IDs crossed by current event, find index (or indices of repeating) in full table
+                    segment_index_repeat_in_full_curr_event = get_idx_of_list_b_in_a_v1(segment_ids_full,segment_ids_crossed_repeat_curr_event)
+                    segment_index_single_in_full_curr_event = get_idx_of_list_b_in_a_v1(segment_ids_full,segment_ids_crossed_single_curr_event)
                     # store to dictionary
+                    segment_ids_crossed_by_event_id[curr_event_id] = segment_ids_crossed_curr_event
                     segment_ids_crossed_repeat_by_event_id[curr_event_id] = segment_ids_crossed_repeat_curr_event
                     segment_ids_crossed_single_by_event_id[curr_event_id] = segment_ids_crossed_single_curr_event
                     segment_index_repeat_in_full_by_event_id[curr_event_id] = segment_index_repeat_in_full_curr_event
                     segment_index_single_in_full_by_event_id[curr_event_id] = segment_index_single_in_full_curr_event
                 # update events to run, only those with crossings
                 event_ids_to_run = unique_event_id_with_crossing # update to this list of event ids
-                event_ind_relative_to_rupture_table = get_idx_of_list_a_in_b(rupture_table.event_id.values,unique_event_id_with_crossing)
-                # event_ind_relative_to_rupture_table = np.asarray([
-                #     np.where(rupture_table.event_id==event_id)[0][0]
-                #     for event_id in unique_event_id_with_crossing
-                # ])
+                event_index_rel_to_rupture_table = get_idx_of_list_b_in_a_v1(rupture_table.event_id.values,unique_event_id_with_crossing)
             # otherwise
             else:
-                segment_ids_crossed = site_data.ID.values
-                # get unique crossings
+                # from segments list above, get:
+                # - list of all unique segment IDs, counts for each unique segment ID
                 segment_ids_crossed_unique, counts = np.unique(segment_ids_crossed, return_counts=True)
+                # - list of unique segment IDs with repeats (count > 1)
                 segment_ids_crossed_repeat = segment_ids_crossed_unique[np.where(counts>1)[0]]
-                # segments with only 1 crossing
-                segment_ids_crossed_single = np.asarray(
-                    list(set(segment_ids_crossed_unique).difference(set(segment_ids_crossed_repeat))))
-                segment_ids_crossed_single = np.sort(segment_ids_crossed_single)
+                # - list of unique segment IDs with no repeats (count == 1)
+                segment_ids_crossed_single = segment_ids_crossed_unique[np.where(counts==1)[0]]
                 # find row index corresponding to repeated IDS in full table
-                segment_index_repeat_in_full = np.asarray([
-                    np.where(segment_ids_full==seg_id)[0][0]
-                    for seg_id in segment_ids_crossed_repeat
-                ])
-                segment_index_single_in_full = np.asarray([
-                    np.where(segment_ids_full==seg_id)[0][0]
-                    for seg_id in segment_ids_crossed_single
-                ])
+                segment_index_repeat_in_full = get_idx_of_list_b_in_a_v1(segment_ids_full,segment_ids_crossed_repeat)
+                segment_index_single_in_full = get_idx_of_list_b_in_a_v1(segment_ids_full,segment_ids_crossed_single)
         else:
             # no possibility of segments with repeated crossings
-            segment_ids_crossed = site_data.ID.values
             segment_ids_crossed_repeat = np.asarray([])
             segment_index_repeat_in_full = np.asarray([])
             segment_ids_crossed_single = segment_ids_crossed.copy()
@@ -1049,7 +1037,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     for ind, event_id in enumerate(event_ids_to_run):
     # for event_ind in range(1):
         # current event index
-        event_ind = event_ind_relative_to_rupture_table[ind]
+        event_ind = event_index_rel_to_rupture_table[ind]
         # for tracking sites with nonzero mean values to reduce scale
         sites_to_keep = {}
         rows_to_keep_rel_to_nonzero_step0 = {}
@@ -1081,18 +1069,17 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             sites_with_nonzero_step0 = np.where(pga_curr_event>min_mean_for_zero_val['im']['pga'])[0]
         elif running_below_ground_fault_rupture:
             # get segment IDs for current event
-            all_segment_ids_curr_event = rupture_table.seg_id_crossed.loc[event_ind]
-            all_norm_dist_curr_event = rupture_table.norm_dist.loc[event_ind]
-            all_prob_crossing_curr_event = rupture_table.prob_crossing.loc[event_ind]
-            # keep only segments in segment_ids_crossed
-            segment_ids_curr_event = np.asarray([v for v in all_segment_ids_curr_event if v in segment_ids_crossed_list])
-            idx_for_segment_ids_curr_event = get_idx_of_list_a_in_b(all_segment_ids_curr_event,segment_ids_curr_event)
-            norm_dist_curr_event = np.asarray(all_norm_dist_curr_event)[idx_for_segment_ids_curr_event]
-            prob_crossing_curr_event = np.asarray(all_prob_crossing_curr_event)[idx_for_segment_ids_curr_event]
+            segment_ids_curr_event = np.asarray(rupture_table.seg_id_crossed.loc[event_ind])
+            # get norm dist of crossed segments
+            norm_dist_curr_event = np.asarray(rupture_table.norm_dist.loc[event_ind])
+            # get prob crossing of crossed segments
+            prob_crossing_curr_event = np.asarray(rupture_table.prob_crossing.loc[event_ind])
             # get rows for segment IDs relative to crossing table
-            sites_to_run_curr_event = get_idx_of_list_a_in_b(segment_ids_crossed_list,segment_ids_curr_event)
+            sites_to_run_curr_event = get_idx_of_list_b_in_a_v2(segment_ids_crossed_list,segment_ids_curr_event)
             # get sites with nonzero IMs (all for fault rupture)
             sites_with_nonzero_step0 = sites_to_run_curr_event
+            # keep for post processing
+            rows_to_run_by_event_id[event_id] = sites_to_run_curr_event # relative to segment ID list in site data table
         else:
             # find sites with nonzero PGA
             pga_curr_event = np.round(im_import['pga']['mean_table'][event_ind,:].copy()-10,decimals=3)
@@ -2249,62 +2236,41 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             if flag_possible_repeated_crossings:
             # if infra_type == 'below_ground':
                 logging.info(f'\t\t- remapping results from sites with crossings to back to full infrastructure table')
-                logging.info(f'\t\t- NOTE: this may take a few minutes if running fault rupture over below ground assets')
+                # logging.info(f'\t\t- NOTE: this may take a few minutes if running fault rupture over below ground assets')
                 # initialize fractile table with all locations
-                # frac_full = pd.DataFrame(
-                #     0,
-                #     index=segment_index_full,
-                #     columns=df_frac[curr_case_str].columns
-                # )
-                frac_full_mat = np.zeros((len(segment_index_full),len(df_frac[curr_case_str].columns))
+                frac_full_mat = np.zeros((len(segment_index_full),len(df_frac[curr_case_str].columns)))
                 # remapping if possible for multiple crossings for same segment
                 # algorithm changes if crossing is dependent on event
                 if flag_event_dependent_crossing:
                     # loop through events
-                    for event_ind, event_id in enumerate(event_ids_to_run):
-                        # get segment id and ind for current event
-                        segment_ids_crossed = segment_ids_crossed_by_event_id[event_id]
-                        segment_ids_crossed_repeat = segment_ids_crossed_repeat_by_event_id[event_id]
-                        segment_ids_crossed_single = segment_ids_crossed_single_by_event_id[event_id]
-                        segment_index_repeat_in_full = segment_index_repeat_in_full_by_event_id[event_id]
-                        segment_index_single_in_full = segment_index_single_in_full_by_event_id[event_id]
-                        if running_below_ground_fault_rupture:
-                            # keep only segments in segment_ids_crossed
-                            locs_for_segment_ids_curr_event = np.asarray([idx for idx,v in enumerate(segment_ids_crossed) if v in segment_ids_crossed_list])
-                            segment_ids_crossed = segment_ids_crossed[locs_for_segment_ids_curr_event]
-                            if len(segment_ids_crossed_repeat) > 0:
-                                locs_for_segment_ids_crossed_repeat = np.asarray([idx for idx,v in enumerate(segment_ids_crossed_repeat) if v in segment_ids_crossed_list])
-                                segment_ids_crossed_repeat = segment_ids_crossed_repeat[locs_for_segment_ids_crossed_repeat]
-                                segment_index_repeat_in_full = segment_index_repeat_in_full[locs_for_segment_ids_crossed_repeat]
-                            locs_for_segment_ids_crossed_single = np.asarray([idx for idx,v in enumerate(segment_ids_crossed_single) if v in segment_ids_crossed_list])
-                            segment_ids_crossed_single = segment_ids_crossed_single[locs_for_segment_ids_crossed_single]
-                            segment_index_single_in_full = segment_index_single_in_full[locs_for_segment_ids_crossed_single]
-                            # get rows for segment IDs relative to crossing table
-                            rows_to_run = get_idx_of_list_a_in_b(segment_ids_crossed,segment_ids_crossed)
-                        else:
-                            rows_to_run = rows_to_run_by_event_id[event_id]
-                        rows_to_run_index = list(range(len(rows_to_run)))
-                        df_frac_index = df_frac[curr_case_str].index.values[rows_to_run]
-                        for ind, segment_id in enumerate(segment_ids_crossed_repeat):
-                            ind_in_full_for_segment_id = segment_index_repeat_in_full[ind]
-                            rows_with_repeat_seg = np.where(segment_ids_crossed==segment_id)[0]
-                            # df_frac_index = np.asarray(list(set(df_frac_index).difference(set(rows))))
-                            rows_to_run_index = np.asarray(list(set(rows_to_run_index).difference(set(rows_with_repeat_seg))))
-                            # frac_repeat_curr_segment = df_frac[curr_case_str].loc[rows].reset_index(drop=True)
+                    for idx, event_id in enumerate(event_ids_to_run):
+                        # rows of segments in site data table that ran during analysis
+                        rows_ran = rows_to_run_by_event_id[event_id]
+                        # get index to track segments with multiple crossings
+                        df_frac_index = df_frac[curr_case_str].index.values[rows_ran]
+                        rows_ran_index = list(range(len(rows_ran)))
+                        # get segment IDs crossed for current event, may have repeating segments (primary + secondary)
+                        segment_ids_crossed_idx = segment_ids_crossed_by_event_id[event_id]
+                        segment_ids_crossed_repeat_idx = segment_ids_crossed_repeat_by_event_id[event_id]
+                        segment_index_repeat_in_full_idx = segment_index_repeat_in_full_by_event_id[event_id]
+                        segment_index_single_in_full_idx = segment_index_single_in_full_by_event_id[event_id]
+                        # go through repeating segments
+                        for ind, segment_id in enumerate(segment_ids_crossed_repeat_idx):
+                            # get additional indices
+                            ind_in_full_for_segment_id = segment_index_repeat_in_full_idx[ind]
+                            rows_with_repeat_seg = np.where(segment_ids_crossed_idx==segment_id)[0]
+                            rows_ran_index = np.asarray(list(set(rows_ran_index).difference(set(rows_with_repeat_seg))))
                             frac_repeat_curr_segment = df_frac[curr_case_str].loc[df_frac_index[rows_with_repeat_seg]].reset_index(drop=True)
-                            # if fault rupture and below ground sum up between repeatin (primary and secondary)
+                            # if fault rupture and below ground, sum up repeating (primary and secondary)
                             if running_below_ground_fault_rupture:
-                                # frac_full.loc[ind_in_full_for_segment_id] = frac_repeat_curr_segment.values.sum(axis=0)
                                 frac_full_mat[ind_in_full_for_segment_id] = frac_repeat_curr_segment.values.sum(axis=0)
                             # else find worst case
                             else:
                                 # pick case with higher mean value
                                 worst_row = np.argmax(frac_repeat_curr_segment.iloc[:,-1])
-                                # frac_full.loc[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
                                 frac_full_mat[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
                         # for all the segments with only 1 crossing
-                        # frac_full.loc[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index[rows_to_run_index]].values
-                        frac_full_mat[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index[rows_to_run_index]].values
+                        frac_full_mat[segment_index_single_in_full_idx] = df_frac[curr_case_str].loc[df_frac_index[rows_ran_index]].values
                 # if not dependent on event
                 else:
                     # get index to track segments with multiple crossings
@@ -2325,7 +2291,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     index=segment_index_full,
                     columns=df_frac[curr_case_str].columns
                 )
-                # df_frac[curr_case_str] = frac_full.copy()
             
             #----------------------
             if get_timer:
@@ -2876,6 +2841,7 @@ if __name__ == "__main__":
     # Parse command line input
     args = parser.parse_args()
     
+    print("--------------Start of runtime messages from OpenSRA backend--------------");
     # Run "Main"
     main(
         work_dir = args.workdir,
@@ -2886,3 +2852,4 @@ if __name__ == "__main__":
         clean_prev_output=args.clean,
         get_timer=args.timer,
     )
+    print("--------------End of runtime messages from OpenSRA backend--------------");

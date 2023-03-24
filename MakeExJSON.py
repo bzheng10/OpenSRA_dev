@@ -20,6 +20,15 @@ infra_map = {
     'wells_caprocks': "Wells and Caprocks",
     'generic_model': "Using Generic Models",
 }
+infra_abbr_map = {
+    'above_ground': "AG",
+    'below_ground_landslide': "BG-L",
+    'below_ground_lateral_spread': "BG-LS",
+    'below_ground_settlement': "BG-S",
+    'below_ground_surface_fault_rupture': "BG-SFR",
+    'wells_caprocks': "WC",
+    'generic_model': "GM",
+}
 words_to_upper = ['cpt','ucerf','csv','gis']
 words_to_skip = ['with','no','in','from']
 words_to_map = {
@@ -32,6 +41,7 @@ words_to_map = {
     'ca': 'CA',
     'genmod': 'GenericModel in',
     'single': 'SingleIntegral',
+    'pipe_near_hayward': 'PipelineNearHayward',
     
     'im': 'IM',
     'edp': 'EDP',
@@ -54,6 +64,7 @@ out = {}
 for each in ex_folders:
     counter = 0
     infra_name = infra_map[each]
+    infra_abbr = infra_abbr_map[each]
     print(infra_name)
     curr_examples = os.listdir(os.path.join('examples',each))
     ex_list = []
@@ -76,7 +87,11 @@ for each in ex_folders:
                     print_name.append(word.capitalize())
             # print_name = '_'.join(print_name)
             print_name = ' '.join(print_name)
-            print(f'\t{counter+1}: {print_name}')
+            # ex label ID
+            ex_label_id = f'{infra_abbr}-{counter+1}'
+            print_name = f'{ex_label_id}: {print_name}'
+            # print(f'\t{counter+1}: {print_name}')
+            print(f'\t{print_name}')
             # make path
             ex_path = os.path.join(each, ex_name, 'Input', 'SetupConfig.json')
             ex_path = ex_path.replace('\\','/') # replace backward slash with forward slash to work in unix

@@ -223,15 +223,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     
     # ---------------------
-    # first decompress precomputed statewide IMs (only done once)
+    # decompress precomputed statewide IMs (only done once)
+    preprocess_lib_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed')
+    zip_fpath = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline.zip')
     if len(user_prov_gis_dir) > 0 and os.path.exists(user_prov_gis_dir):
         precompute_im_dir = os.path.join(user_prov_gis_dir,'Precomputed_IMs_for_Statewide_Pipeline')
-        zip_fpath = os.path.join(user_prov_gis_dir,'Precomputed_IMs_for_Statewide_Pipeline.zip')
     else:
-        preprocess_lib_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed')
         precompute_im_dir = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline')
-        precompute_im_dir = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline')
-        zip_fpath = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline.zip')
     extracted_state_data = False
     # see if folder exists
     if os.path.exists(precompute_im_dir):

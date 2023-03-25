@@ -113,31 +113,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     logging.info('\t\tIntensity measure directory:')
     logging.info(f'\t\t\t- {im_dir}')
     
-    # ---------------------
-    # first decompress precomputed statewide IMs (only done once)
-    preprocess_lib_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed')
-    preprocess_im_dir = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline')
-    zip_fpath = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline.zip')
-    extracted_state_data = False
-    # see if folder exists
-    if os.path.exists(preprocess_im_dir):
-        # if empty
-        if len(os.listdir(preprocess_im_dir)) == 0:
-            # unzip to directory
-            with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
-                zip_ref.extractall(preprocess_im_dir)
-            extracted_state_data = True
-    else:
-        # make folder
-        os.mkdir(preprocess_im_dir)
-        # unzip to directory
-        with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
-            zip_ref.extractall(preprocess_im_dir)
-        extracted_state_data = True
-    if extracted_state_data:
-        logging.info(f'{counter}. Extracted preprocessed IMs for state network (only performed once during first run after installation)')
-        counter += 1
-    
     # -----------------------------------------------------------
     # read important info from setup_config file
     setup_config_fpath = os.path.join(input_dir,'SetupConfig.json')
@@ -245,6 +220,38 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 user_prov_gis_dir = check_and_get_abspath(gis_data_params['Directory'], input_dir)
     logging.info(f'{counter}. Processed setup configuration file')
     counter += 1
+    
+    
+    # ---------------------
+    # first decompress precomputed statewide IMs (only done once)
+    if len(user_prov_gis_dir) > 0 and os.path.exists(user_prov_gis_dir):
+        precompute_im_dir = os.path.join(user_prov_gis_dir,'Precomputed_IMs_for_Statewide_Pipeline')
+        zip_fpath = os.path.join(user_prov_gis_dir,'Precomputed_IMs_for_Statewide_Pipeline.zip')
+    else:
+        preprocess_lib_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed')
+        precompute_im_dir = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline')
+        precompute_im_dir = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline')
+        zip_fpath = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline.zip')
+    extracted_state_data = False
+    # see if folder exists
+    if os.path.exists(precompute_im_dir):
+        # if empty
+        if len(os.listdir(precompute_im_dir)) == 0:
+            # unzip to directory
+            with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
+                zip_ref.extractall(precompute_im_dir)
+            extracted_state_data = True
+    else:
+        # make folder
+        os.mkdir(precompute_im_dir)
+        # unzip to directory
+        with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
+            zip_ref.extractall(precompute_im_dir)
+        extracted_state_data = True
+    if extracted_state_data:
+        logging.info(f'{counter}. Extracted preprocessed IMs for state network (only performed once during first run after installation)')
+        counter += 1
+        
     
     # -----------------------------------------------------------
     # Intensity Measure
@@ -629,7 +636,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     site_inds_to_keep = site_inds_to_keep.astype(int)
                 if event_ids_to_keep is not None:
                     # load rupture table with IM stage
-                    rupture_table_im_fpath = os.path.join(preprocess_im_dir,'RUPTURE_METADATA.csv')
+                    rupture_table_im_fpath = os.path.join(precompute_im_dir,'RUPTURE_METADATA.csv')
                     rupture_table_from_im = pd.read_csv(rupture_table_im_fpath)
                     rupture_table_from_im.event_id = rupture_table_from_im.event_id.values.astype(int)
                     event_inds_to_keep = np.asarray([
@@ -638,8 +645,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     ])
                 logging.info(f'\t-Copy/paste precomputed IMs to destination:')
                 # copy each item in directory
-                for each in os.listdir(preprocess_im_dir):
-                    src_path = os.path.join(preprocess_im_dir,each)
+                for each in os.listdir(precompute_im_dir):
+                    src_path = os.path.join(precompute_im_dir,each)
                     dst_path = os.path.join(im_dir,each)
                     if os.path.isdir(src_path):
                         if not os.path.exists(dst_path):

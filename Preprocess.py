@@ -113,6 +113,38 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     logging.info('\t\tIntensity measure directory:')
     logging.info(f'\t\t\t- {im_dir}')
     
+    # ---------------------
+    # decompress precomputed statewide IMs (only done once)
+    preprocess_lib_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed')
+    zip_fpath = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline.zip')
+    try:
+        local_app_dir = os.environ.get('LOCALAPPDATA')
+    except:
+        local_app_dir = ''
+    if len(local_app_dir) > 0 and os.path.exists(local_app_dir):
+        precompute_im_dir = os.path.join(local_app_dir,'Precomputed_IMs_for_Statewide_Pipeline')
+    else:
+        precompute_im_dir = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline')
+    extracted_state_data = False
+    # see if folder exists
+    if os.path.exists(precompute_im_dir):
+        # if empty
+        if len(os.listdir(precompute_im_dir)) == 0:
+            # unzip to directory
+            with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
+                zip_ref.extractall(precompute_im_dir)
+            extracted_state_data = True
+    else:
+        # make folder
+        os.mkdir(precompute_im_dir)
+        # unzip to directory
+        with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
+            zip_ref.extractall(precompute_im_dir)
+        extracted_state_data = True
+    if extracted_state_data:
+        logging.info(f'{counter}. Extracted preprocessed IMs for state network (only performed once during first run after installation)')
+        counter += 1
+    
     # -----------------------------------------------------------
     # read important info from setup_config file
     setup_config_fpath = os.path.join(input_dir,'SetupConfig.json')
@@ -220,36 +252,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 user_prov_gis_dir = check_and_get_abspath(gis_data_params['Directory'], input_dir)
     logging.info(f'{counter}. Processed setup configuration file')
     counter += 1
-    
-    
-    # ---------------------
-    # decompress precomputed statewide IMs (only done once)
-    preprocess_lib_dir = os.path.join(opensra_dir,'lib','OtherData','Preprocessed')
-    zip_fpath = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline.zip')
-    if len(user_prov_gis_dir) > 0 and os.path.exists(user_prov_gis_dir):
-        precompute_im_dir = os.path.join(user_prov_gis_dir,'Precomputed_IMs_for_Statewide_Pipeline')
-    else:
-        precompute_im_dir = os.path.join(preprocess_lib_dir,'Precomputed_IMs_for_Statewide_Pipeline')
-    extracted_state_data = False
-    # see if folder exists
-    if os.path.exists(precompute_im_dir):
-        # if empty
-        if len(os.listdir(precompute_im_dir)) == 0:
-            # unzip to directory
-            with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
-                zip_ref.extractall(precompute_im_dir)
-            extracted_state_data = True
-    else:
-        # make folder
-        os.mkdir(precompute_im_dir)
-        # unzip to directory
-        with zipfile.ZipFile(zip_fpath,"r") as zip_ref:
-            zip_ref.extractall(precompute_im_dir)
-        extracted_state_data = True
-    if extracted_state_data:
-        logging.info(f'{counter}. Extracted preprocessed IMs for state network (only performed once during first run after installation)')
-        counter += 1
-        
     
     # -----------------------------------------------------------
     # Intensity Measure

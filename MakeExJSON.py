@@ -30,7 +30,7 @@ infra_abbr_map = {
     'generic_model': "GM",
 }
 words_to_upper = ['cpt','ucerf','csv','gis']
-words_to_skip = ['with','no','in','from']
+words_to_skip = ['with','no','in','from', 'on']
 words_to_map = {
     'shakemap': 'ShakeMap',
     'statewide-subset': 'Statewide-Subset',
@@ -57,6 +57,38 @@ words_to_map = {
 to_skip = [
     'level1_bayarea_from_csv_no_polygon_shakemaps',
 ]
+
+# approx times
+approx_time_map = {
+    'Under 1 Min' : [
+        'AG-',
+        'GM-',
+        'BG-SFR-3',
+        'BG-LS-2',
+        'BG-LS-3',
+        'BG-LS-4',
+        'BG-LS-6',
+        'BG-LS-7',
+    ],
+    '1-5 Mins': [
+        'BG-L-3',
+        'BG-L-4',
+        'BG-LS-11',
+        'WC-',
+        'BG-S-1',
+    ],
+    '5-15 Mins': [
+        'BG-L-2',
+        'BG-LS-5',
+        'BG-LS-8',
+        'BG-LS-12',
+    ],
+    'Around 1 Hour': [
+        'BG-SFR-1',
+        'BG-SFR-2',
+        'BG-S-2',
+    ]
+}
 
 
 # go through each file in example and modify name
@@ -90,6 +122,14 @@ for each in ex_folders:
             # ex label ID
             ex_label_id = f'{infra_abbr}-{counter+1}'
             print_name = f'{ex_label_id}: {print_name}'
+            # run time
+            for runtime_str in approx_time_map:
+                for tagged in approx_time_map[runtime_str]:
+                    if tagged in print_name:
+                        if print_name.endswith(')'):
+                            print_name = print_name[:-1] + f', {runtime_str})'
+                        else:
+                            print_name += f' ({runtime_str})'
             # print(f'\t{counter+1}: {print_name}')
             print(f'\t{print_name}')
             # make path

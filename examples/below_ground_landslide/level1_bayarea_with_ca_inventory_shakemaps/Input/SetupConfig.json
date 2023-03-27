@@ -24,8 +24,6 @@
             "ShakeMap": {
                 "Directory": "../../../other_data/ShakeMaps",
                 "Events": [
-					"1989_Loma Prieta",
-					"1989_Loma Prieta_to0p5g",
                     "2014_South Napa"
                 ]
 			}

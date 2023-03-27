@@ -387,8 +387,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             # no possibility of segments with repeated crossings
             segment_ids_crossed_repeat = np.asarray([])
             segment_index_repeat_in_full = np.asarray([])
-            segment_ids_crossed_single = segment_ids_crossed.copy()
-            segment_index_single_in_full = segment_index_crossed.copy()
+            segment_ids_crossed_single = site_data.index.values
+            segment_index_single_in_full = site_data.index.values
         logging.info(f'... DONE')
         counter += 1
     
@@ -459,9 +459,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         if running_below_ground_fault_rupture:
             num_epi_input_samples = 50
         else:
+            # num_epi_input_samples = 1000
             num_epi_input_samples = 1000
     else:
-        num_epi_input_samples = 100
+        num_epi_input_samples = 50
     # Number of Epistemic samples for fractiles
     num_epi_fractile_samples = 1000
     # Make some arrays to be used later
@@ -1004,8 +1005,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # used for below ground reduce scale of problem; not necessary for other infrastructure
     min_mean_for_zero_val = {
         'im': {
-            'pga': -7, # pga, lognormal
-            'pgv': -5, # pgv, lognormal
+            'pga': -3, # pga, lognormal
+            'pgv': -1, # pgv, lognormal
         },
         'edp': {
             # 'pgdef': 0.05, # ground deformation, < 5 cm = 0, per Task 4B
@@ -2270,7 +2271,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                 worst_row = np.argmax(frac_repeat_curr_segment.iloc[:,-1])
                                 frac_full_mat[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
                         # for all the segments with only 1 crossing
-                        frac_full_mat[segment_index_single_in_full_idx] = df_frac[curr_case_str].loc[df_frac_index[rows_ran_index]].values
+                        if len(segment_index_single_in_full_idx) > 0:
+                            frac_full_mat[segment_index_single_in_full_idx] = df_frac[curr_case_str].loc[df_frac_index[rows_ran_index]].values
                 # if not dependent on event
                 else:
                     # get index to track segments with multiple crossings
@@ -2284,7 +2286,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         worst_row = np.argmax(frac_repeat_curr_segment.iloc[:,-1])
                         frac_full_mat[ind_in_full_for_segment_id] = frac_repeat_curr_segment.loc[worst_row].values
                     # for all the segments with only 1 crossing
-                    frac_full_mat[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index].values
+                    if len(segment_index_single_in_full) > 0:
+                        frac_full_mat[segment_index_single_in_full] = df_frac[curr_case_str].loc[df_frac_index].values
                 # update df_frac
                 df_frac[curr_case_str] = pd.DataFrame(
                     frac_full_mat,

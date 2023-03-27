@@ -356,6 +356,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     rupture_table_from_crossing = None
     performed_crossing = False
     col_headers_to_append = []
+    hazard = ''
     if infra_type == 'below_ground':
         # pipe crossings crossings
         if 'EDP' in workflow:
@@ -2206,7 +2207,7 @@ def preprocess_cpt_data(
     # for user-defined ruptures
     rup_fpath=None,
     # for sampling and Forward Euler differentiation for PC
-    num_epi_input_samples=1000, forward_euler_multiplier=1.01,
+    num_epi_input_samples=50, forward_euler_multiplier=1.01,
     # misc.
     display_after_n_event=100
 ):

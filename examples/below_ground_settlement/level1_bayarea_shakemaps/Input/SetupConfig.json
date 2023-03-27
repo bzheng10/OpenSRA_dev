@@ -24,11 +24,7 @@
             "ShakeMap": {
                 "Directory": "../../../other_data/ShakeMaps",
                 "Events": [
-					"1971_SanFernando",
-					"1989_Loma Prieta",
-					"1989_Loma Prieta_to0p5g",
-                    "1994_Northridge",
-					"2014_South Napa"
+					"1989_Loma Prieta"
                 ]
 			}
         }

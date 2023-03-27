@@ -2,17 +2,17 @@
     "Above Ground Components": {
         "Examples": [
             {
-                "name": "AG-1: ShakeMap GIS Input",
+                "name": "AG-1: ShakeMap GIS Input (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "above_ground/shakemap_gis_input/Input/SetupConfig.json"
             },
             {
-                "name": "AG-2: UCERF CSV Input",
+                "name": "AG-2: UCERF CSV Input (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "above_ground/ucerf_csv_input/Input/SetupConfig.json"
             },
             {
-                "name": "AG-3: UCERF with Filters CSV Input",
+                "name": "AG-3: UCERF with Filters CSV Input (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "above_ground/ucerf_with_filters_csv_input/Input/SetupConfig.json"
             }
@@ -21,22 +21,22 @@
     "Below Ground - Landslide": {
         "Examples": [
             {
-                "name": "BG-L-1: Level1 BalboaBlvd with CA Inventory Shakemaps (Fails in Preprocess)",
+                "name": "BG-L-1: Level1 BalboaBlvd with CA Inventory Shakemaps (Expected To Fail in Preprocess)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_landslide/level1_balboablvd_with_ca_inventory_shakemaps_(fails_in_preprocess)/Input/SetupConfig.json"
+                "inputFile": "below_ground_landslide/level1_balboablvd_with_ca_inventory_shakemaps_(expected_to_fail_in_preprocess)/Input/SetupConfig.json"
             },
             {
-                "name": "BG-L-2: Level1 BayArea no Deformation Polygon UCERF",
+                "name": "BG-L-2: Level1 BayArea no Deformation Polygon UCERF (5-15 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_landslide/level1_bayarea_no_deformation_polygon_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "BG-L-3: Level1 BayArea with CA Inventory Shakemaps",
+                "name": "BG-L-3: Level1 BayArea with CA Inventory Shakemaps (1-5 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_landslide/level1_bayarea_with_ca_inventory_shakemaps/Input/SetupConfig.json"
             },
             {
-                "name": "BG-L-4: Level1 BayArea with CA Inventory UCERF",
+                "name": "BG-L-4: Level1 BayArea with CA Inventory UCERF (1-5 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_landslide/level1_bayarea_with_ca_inventory_ucerf/Input/SetupConfig.json"
             }
@@ -50,57 +50,57 @@
                 "inputFile": "below_ground_lateral_spread/level1_balboablvd_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-2: Level1 BayArea ShakeMap 1989LomaPrieta-ScaledTo0p5g",
+                "name": "BG-LS-2: Level1 BayArea ShakeMap 1989LomaPrieta-ScaledTo0p5g (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap_1989lomaprieta-scaledto0p5g/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-3: Level1 BayArea ShakeMap 1989LomaPrieta User-Specified Maps",
+                "name": "BG-LS-3: Level1 BayArea ShakeMap 1989LomaPrieta User-Specified Maps (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap_1989lomaprieta_user-specified_maps/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-4: Level1 BayArea ShakeMap 2014SouthNapa",
+                "name": "BG-LS-4: Level1 BayArea ShakeMap 2014SouthNapa (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level1_bayarea_shakemap_2014southnapa/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-5: Level1 BayArea UCERF",
+                "name": "BG-LS-5: Level1 BayArea UCERF (5-15 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level1_bayarea_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-6: Level2 BalboaBlvd ShakeMap 1971SanFernando",
+                "name": "BG-LS-6: Level2 BalboaBlvd ShakeMap 1971SanFernando (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level2_balboablvd_shakemap_1971sanfernando/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-7: Level2 BalboaBlvd ShakeMap 1994Northridge",
+                "name": "BG-LS-7: Level2 BalboaBlvd ShakeMap 1994Northridge (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level2_balboablvd_shakemap_1994northridge/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-8: Level2 BalboaBlvd UCERF",
+                "name": "BG-LS-8: Level2 BalboaBlvd UCERF (5-15 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level2_balboablvd_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-9: Level3 CPT Alameda UCERF (Fails in Preprocess)",
+                "name": "BG-LS-9: Level3 CPT Alameda UCERF (Expected To Fail in Preprocess)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level3_cpt_alameda_ucerf_(fails_in_preprocess)/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level3_cpt_alameda_ucerf_(expected_to_fail_in_preprocess)/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-10: Level3 CPT BalboaBlvd ShakeMap 1971SanFernando",
+                "name": "BG-LS-10: Level3 CPT BalboaBlvd ShakeMap 1971SanFernando (May Fail in Preprocess Based on Sampling)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_lateral_spread/level3_cpt_balboablvd_shakemap_1971sanfernando/Input/SetupConfig.json"
+                "inputFile": "below_ground_lateral_spread/level3_cpt_balboablvd_shakemap_1971sanfernando_(may_fail_in_preprocess_based_on_sampling)/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-11: Level3 CPT BalboaBlvd ShakeMap 1994Northridge",
+                "name": "BG-LS-11: Level3 CPT BalboaBlvd ShakeMap 1994Northridge (1-5 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level3_cpt_balboablvd_shakemap_1994northridge/Input/SetupConfig.json"
             },
             {
-                "name": "BG-LS-12: Level3 CPT BalboaBlvd UCERF",
+                "name": "BG-LS-12: Level3 CPT BalboaBlvd UCERF (5-15 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_lateral_spread/level3_cpt_balboablvd_ucerf/Input/SetupConfig.json"
             }
@@ -109,41 +109,41 @@
     "Below Ground - Liquefaction Induced Settlement": {
         "Examples": [
             {
-                "name": "BG-S-1: Level1 BayArea Shakemaps",
+                "name": "BG-S-1: Level1 BayArea Shakemaps (1-5 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_settlement/level1_bayarea_shakemaps/Input/SetupConfig.json"
             },
             {
-                "name": "BG-S-2: Level1 BayArea UCERF",
+                "name": "BG-S-2: Level1 BayArea UCERF (Around 1 Hour)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_settlement/level1_bayarea_ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "BG-S-3: Level3 CPT BalboaBlvd Shakemaps (Fails in Preprocess)",
+                "name": "BG-S-3: Level3 CPT BalboaBlvd Shakemaps (Expected To Fail in Preprocess)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement/level3_cpt_balboablvd_shakemaps_(fails_in_preprocess)/Input/SetupConfig.json"
+                "inputFile": "below_ground_settlement/level3_cpt_balboablvd_shakemaps_(expected_to_fail_in_preprocess)/Input/SetupConfig.json"
             },
             {
-                "name": "BG-S-4: Level3 CPT BalboaBlvd UCERF (Fails in Preprocess)",
+                "name": "BG-S-4: Level3 CPT BalboaBlvd UCERF (Expected To Fail in Preprocess)",
                 "description": "Placeholder\n",
-                "inputFile": "below_ground_settlement/level3_cpt_balboablvd_ucerf_(fails_in_preprocess)/Input/SetupConfig.json"
+                "inputFile": "below_ground_settlement/level3_cpt_balboablvd_ucerf_(expected_to_fail_in_preprocess)/Input/SetupConfig.json"
             }
         ]
     },
     "Below Ground - Surface Fault Rupture": {
         "Examples": [
             {
-                "name": "BG-SFR-1: BayArea",
+                "name": "BG-SFR-1: BayArea (Around 1 Hour)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_surface_fault_rupture/bayarea/Input/SetupConfig.json"
             },
             {
-                "name": "BG-SFR-2: LosAngeles",
+                "name": "BG-SFR-2: LosAngeles (Around 1 Hour)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_surface_fault_rupture/losangeles/Input/SetupConfig.json"
             },
             {
-                "name": "BG-SFR-3: Pipe Near Hayward",
+                "name": "BG-SFR-3: Pipe Near Hayward (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_surface_fault_rupture/pipe_near_hayward/Input/SetupConfig.json"
             }
@@ -152,22 +152,22 @@
     "Using Generic Models": {
         "Examples": [
             {
-                "name": "GM-1: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DM DV",
+                "name": "GM-1: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DM DV (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dm_dv/Input/SetupConfig.json"
             },
             {
-                "name": "GM-2: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DV",
+                "name": "GM-2: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DV (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dv/Input/SetupConfig.json"
             },
             {
-                "name": "GM-3: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DV SingleIntegral",
+                "name": "GM-3: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DV SingleIntegral (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dv_single/Input/SetupConfig.json"
             },
             {
-                "name": "GM-4: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in EDP DV",
+                "name": "GM-4: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in EDP DV (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_edp_dv/Input/SetupConfig.json"
             }
@@ -176,12 +176,12 @@
     "Wells and Caprocks": {
         "Examples": [
             {
-                "name": "WC-1: UCERF",
+                "name": "WC-1: UCERF (1-5 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "wells_caprocks/ucerf/Input/SetupConfig.json"
             },
             {
-                "name": "WC-2: User-Specified Rupture",
+                "name": "WC-2: User-Specified Rupture (1-5 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "wells_caprocks/user-specified_rupture/Input/SetupConfig.json"
             }

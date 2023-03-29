@@ -436,7 +436,7 @@ def get_workflow_order_list(methods_dict, infra_type='below_ground', verbose=Tru
         print('list of integration cases:')
         for case in workflow_order_list:
             print(f'\t{case}:')
-            print(f"\t\t- number of integrations = {workflow_order_list[case]['n_pbee_dim']}")
+            print(f"\t\t- number of integrations = {workflow_order_list[case]['n_pbee_dim']-1}")
             print(f"\t\t- {', '.join(workflow_order_list[case]['cat_list'])}")
             print(f"\t\t- {', '.join(workflow_order_list[case]['haz_list'])}")
     # return

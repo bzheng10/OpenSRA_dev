@@ -719,7 +719,8 @@ def get_pipe_crossing_fault_rup(
                 segment_crossed_azimuth = get_azimuth(segment_crossed_start,segment_crossed_end)
                 crossing_theta = azimuth_lines(segment_crossed_azimuth, strike)
                 # probability of crossing
-                norm_seg_len = segment_by_qfault[each].LENGTH_KM.values*1000/200
+                # norm_seg_len = segment_by_qfault[each].LENGTH_KM.values*1000/200
+                norm_seg_len = intersections.length/200 # length of intersected part of segments normalized by 200 m
                 prob_crossing = norm_seg_len*np.abs(np.sin(np.radians(crossing_theta)))
                 prob_crossing = np.round(prob_crossing,decimals=4)
                 
@@ -784,14 +785,13 @@ def get_pipe_crossing_fault_rup(
                     scenario_crossed_seg_i = list(unique_rupture_id_crossed_map.loc[rupture_list_for_section_id_crossed_i].values.flatten())
                     scenario_id_crossed_seg_i = rupture_list_for_section_id_crossed_i # rupture IDs crossed by current segment
                     norm_dist_seg_i = list(np.asarray(metadata_section_id_crossed_i.NormDistInRupX1000)/1000) # normalized distance from endpoint
-                    prob_crossing_seg_i = [prob_crossing[ind_in_qfault_crossed_list_for_i[0]]]*len_rupture_list # probability of crossing
                     
                     # append to list and repeat over list of repeating segments
                     for j in range(n_segment_for_i):
                         scenario_crossed_list.append(scenario_crossed_seg_i)
                         scenario_id_crossed_list.append(scenario_id_crossed_seg_i)
                         norm_dist_list.append(norm_dist_seg_i)
-                        prob_crossing_list.append(prob_crossing_seg_i)
+                        prob_crossing_list.append([prob_crossing[ind_in_qfault_crossed_list_for_i[j]]]*len_rupture_list) # probability of crossing
                         
             logging.info(f'\t\t- Obtained crossing probability and normalized distances...')
                         

@@ -143,7 +143,7 @@
                 "inputFile": "below_ground_surface_fault_rupture/losangeles/Input/SetupConfig.json"
             },
             {
-                "name": "BG-SFR-3: Pipe Near Hayward (Under 1 Min)",
+                "name": "BG-SFR-3: Pipe Near Hayward (5-15 Mins)",
                 "description": "Placeholder\n",
                 "inputFile": "below_ground_surface_fault_rupture/pipe_near_hayward/Input/SetupConfig.json"
             }

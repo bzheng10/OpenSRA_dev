@@ -63,7 +63,6 @@ approx_time_map = {
     'Under 1 Min' : [
         'AG-',
         'GM-',
-        'BG-SFR-3',
         'BG-LS-2',
         'BG-LS-3',
         'BG-LS-4',
@@ -82,6 +81,7 @@ approx_time_map = {
         'BG-LS-5',
         'BG-LS-8',
         'BG-LS-12',
+        'BG-SFR-3',
     ],
     'Around 1 Hour': [
         'BG-SFR-1',

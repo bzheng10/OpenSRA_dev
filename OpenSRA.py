@@ -517,7 +517,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 input_samples['beta_crossing'][cond] = np.abs(180-input_samples['beta_crossing'][cond])
             logging.info(f'\t\t- added "beta_crossing" to input samples for {infra_type} analysis')
         else:
-            input_samples['beta_crossing'] = 0*ones_arr_nsite_by_ninput # dummy - not used but to carry on with analysis
+            input_samples['beta_crossing'] = null_arr_nsite_by_ninput.copy() # dummy - not used but to carry on with analysis
         if 'theta_rake' in input_samples:
             # target range = -180 to 180 degrees, but
             # distribution limits are extended to -360 and 360
@@ -531,7 +531,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 input_samples['theta_rake'][cond] = input_samples['theta_rake'][cond]-360
             logging.info(f'\t\t- added "theta_rake" to input samples for {infra_type} analysis')
         else:
-            input_samples['theta_rake'] = 0*ones_arr_nsite_by_ninput # dummy - not used but to carry on with analysis
+            input_samples['theta_rake'] = null_arr_nsite_by_ninput.copy() # dummy - not used but to carry on with analysis
                 
     # get liquefaction susceptibility categories if obtained from regional geologic maps
     # for liq susc cat
@@ -937,19 +937,20 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 # --- f_ds: displacement scale factor (nonzero for secondary hazard)
                 # n site with secondary hazard
                 qfault_type = site_data.qfault_type.values
-                # make ones table for each param
-                f_r_samples = ones_arr_nsite_by_ninput.copy()
+                # make ones table for param
+                f_r_samples = np.ones((n_site,num_epi_fractile_samples))
+                # make ones table for param
                 f_ds_samples = ones_arr_nsite_by_ninput.copy()
                 # see crossing with secondary qfault exists
                 cond_secondary = qfault_type=='secondary'
                 if True in cond_secondary:
                     where_secondary = np.where(cond_secondary)[0]
                     n_secondary = len(where_secondary)
-                    # performing sampling
                     # get LHS samples
-                    res = lhs(n_site=n_secondary, n_var=2, n_samp=num_epi_input_samples)
+                    res = lhs(n_site=n_secondary, n_var=1, n_samp=num_epi_fractile_samples)
                     res_cdf = norm.cdf(res,0,1)
-                    # first get samples of f_r
+                    # get samples of f_r relative to num_epi_)
+                    # set up distribution
                     f_r_trian_dist_pts = np.array([
                         [0.2,0.8],
                         [0.5,2],
@@ -960,9 +961,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     # get samples
                     f_r_samples[where_secondary] = np.transpose([
                         np.interp(res_cdf[:,samp_ind,0],f_r_trian_dist_cdf[:,1],f_r_trian_dist_cdf[:,0])
-                        for samp_ind in range(num_epi_input_samples)
+                        for samp_ind in range(num_epi_fractile_samples)
                     ])
                     # next get samples of f_ds
+                    # get LHS samples
+                    res = lhs(n_site=n_secondary, n_var=1, n_samp=num_epi_input_samples)
+                    res_cdf = norm.cdf(res,0,1)
+                    # set up distribution
                     f_ds_trian_dist_pts = np.array([
                         [0.05,2/3],
                         [0.15,2],
@@ -972,12 +977,14 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     f_ds_trian_dist_cdf = get_cdf_given_pts(f_ds_trian_dist_pts)
                     # get samples
                     f_ds_samples[where_secondary] = np.transpose([
-                        np.interp(res_cdf[:,samp_ind,1],f_ds_trian_dist_cdf[:,1],f_ds_trian_dist_cdf[:,0])
+                        np.interp(res_cdf[:,samp_ind,0],f_ds_trian_dist_cdf[:,1],f_ds_trian_dist_cdf[:,0])
                         for samp_ind in range(num_epi_input_samples)
                     ])
                 # store samples to input_samples
-                input_samples['f_r'] = f_r_samples
+                # input_samples['f_r'] = f_r_samples
                 input_samples['f_ds'] = f_ds_samples
+                # tranpose f_r_samples to match PC sample shape
+                f_r_samples = np.transpose(f_r_samples)
             # store to input samples
             input_samples['primary_mech'] = primary_mech
             crossing_params_intermediate.append('primary_mech')
@@ -1026,6 +1033,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         time_initial = time.time()
         time_start = time_initial
     #----------------------
+    
+    # TMP TRACK FOR FAULT RUPTURE
+    mean_of_mu_disp_sfr = []
+    sigma_of_mu_disp_sfr = []
+    sigma_disp_sfr = []
     
     # event to run
     logging.info('---------------------------')
@@ -1147,7 +1159,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         
         # get additional rupture params for fault rupture specifically
         if running_below_ground_fault_rupture:
-            # also get 'norm_dist' and 'prob_disp_sf' from site_data if available
+            # get 'norm_dist' from site_data if available
             for col in ['norm_dist']:
                 if col in rupture_table:
                     input_samples[col] = null_arr_nsite_by_ninput.copy()
@@ -1448,6 +1460,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         sigma_of_mu[curr_case_str][step0_str] = {param_for_domain: step0_results[param_for_domain]['sigma_of_mu']}
                         sigma[curr_case_str][step0_str] = {param_for_domain: step0_results[param_for_domain]['sigma']}
                         prev_haz_param = [param_for_domain]
+                        
+                        # if case_to_run == 1:
+                        #     mean_of_mu_disp_sfr.append(mean_of_mu[curr_case_str][step0_str]['pgdef'])
+                        #     sigma_of_mu_disp_sfr.append(sigma_of_mu[curr_case_str][step0_str]['pgdef'])
+                        #     sigma_disp_sfr.append(sigma[curr_case_str][step0_str]['pgdef'])
                 
                 #----------------------
                 if get_timer:
@@ -2026,9 +2043,15 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                 raise ValueError("Somewhere in mean_of_mu there are invalid values; double check distribution")
                         # multiply by annual rate
                         pc_coeffs_param_i *= rup_info['rate']
-                        # multiply by probability of crossing if below ground fault rupture
+                        # if below ground fault rupture
+                        # multiply by prob of crossing, prob of surface rupture, and scale factor for secondary rupture
                         if running_below_ground_fault_rupture:
                             pc_coeffs_param_i *= prob_crossing_curr_event.repeat(pc_coeffs_param_i.shape[1]).reshape((-1, pc_coeffs_param_i.shape[1]))
+                            # calculate and apply prob of surface rupture given maginitude
+                            term = np.exp(-12.51+2.053*rup_info['mag'])
+                            prob_surf_rup = term / (1+term)
+                            pc_coeffs_param_i *= prob_surf_rup
+                            
                         # map from n_site_curr_event to n_site
                         pc_coeffs_param_i_full = null_arr_pc_terms[curr_case_str].copy()
                         if running_cpt_based_procedure:
@@ -2104,6 +2127,18 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         # logging.info(f'\t---------------------------')
     time_loop = time.time()
     #----------------------
+    
+    
+    # <<<<<<<<<<<<<<<<<<<<<<
+    # tmp_exp_dir = os.path.abspath(os.path.join('..','fault_rupture_analysis'))
+    # mean_of_mu_disp_sfr = pd.DataFrame(np.asarray(mean_of_mu_disp_sfr),columns=[f'{idx+1}' for idx in range(n_site)])
+    # sigma_of_mu_disp_sfr = pd.DataFrame(np.asarray(sigma_of_mu_disp_sfr),columns=[f'{idx+1}' for idx in range(n_site)])
+    # sigma_disp_sfr = pd.DataFrame(np.asarray(sigma_disp_sfr),columns=[f'{idx+1}' for idx in range(n_site)])
+    # mean_of_mu_disp_sfr.to_csv(os.path.join(tmp_exp_dir,'mean_of_mu_disp_sfr.csv'),index=False)
+    # sigma_of_mu_disp_sfr.to_csv(os.path.join(tmp_exp_dir,'sigma_of_mu_disp_sfr.csv'),index=False)
+    # sigma_disp_sfr.to_csv(os.path.join(tmp_exp_dir,'sigma_disp_sfr.csv'),index=False)
+    # <<<<<<<<<<<<<<<<<<<<<<
+    
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # once pc coeffs are computed for all events, now go through cases again to generate samples and compute fractles
@@ -2182,6 +2217,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 )
                 # keep sum within 0 and 1
                 pc_samples[param_i] = np.maximum(np.minimum(pc_samples[param_i],1),0)
+                
+                # if below ground fault rupture:
+                # sample and apply probably of secondary fault rupture
+                if running_below_ground_fault_rupture:
+                    if True in cond_secondary:
+                        pc_samples[param_i] *= f_r_samples
 
             #----------------------
             if get_timer:   
@@ -2231,7 +2272,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             if flag_crossing_file_exists:
                 # for below ground fault rupture, already performed
                 if not running_below_ground_fault_rupture:
-                    df_frac[curr_case_str] = df_frac[curr_case_str] * np.tile(prob_crossing,(6,1)).T
+                    df_frac[curr_case_str] = df_frac[curr_case_str] * np.tile(prob_crossing,(6,1)).T            
             
             # if using crossings, check for multiple crossings per segment and pick worst case for segment
             if flag_possible_repeated_crossings:

@@ -90,10 +90,10 @@ class PetersenEtal2011(SurfaceFaultRupture):
                 'desc': 'normalized distance of crossing from fault end (max=0.5)',
                 'unit': '',
             },
-            'f_r': {
-                'desc': 'faulting frequency (nonzero for secondary hazard), recommended by LCI',
-                'unit': '',
-            },
+            # 'f_r': {
+            #     'desc': 'faulting frequency (nonzero for secondary hazard), recommended by LCI',
+            #     'unit': '',
+            # },
             'f_ds': {
                 'desc': 'displacement scale factor (nonzero for secondary hazard), recommended by LCI',
                 'unit': '',
@@ -120,7 +120,7 @@ class PetersenEtal2011(SurfaceFaultRupture):
     @staticmethod
     # @njit
     def _model(
-        mag, norm_dist, f_r, f_ds, # upstream PBEE RV
+        mag, norm_dist, f_ds, # upstream PBEE RV
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
@@ -131,14 +131,15 @@ class PetersenEtal2011(SurfaceFaultRupture):
         ln_pgdef = 1.7927*mag + 3.3041*x_star -11.2192 # ln(cm)
         
         # calculate probability of surface rupture
-        term = np.exp(-12.51+2.053*mag)
-        prob_surf_rup = term / (1+term)
+        # term = np.exp(-12.51+2.053*mag)
+        # prob_surf_rup = term / (1+term)
         
         # apply prob and scale factors as recommended by LCI
         # - prob of surface rupture
-        # - faulting frequency prob
-        # - displacement scale factor
-        ln_pgdef = ln_pgdef * prob_surf_rup * f_r * f_ds # applied to ln(d)
+        # - secondary faulting frequency prob
+        # - secondary displacement scale factor
+        # ln_pgdef = ln_pgdef * prob_surf_rup * f_r * f_ds # applied to ln(d)
+        ln_pgdef = ln_pgdef * f_ds # applied to ln(d)
         
         # convert to meters and limit to 1e-5 m to avoid ln(0) during PC
         pgdef = np.maximum(np.exp(ln_pgdef)/100, 1e-5) # m
@@ -156,7 +157,7 @@ class PetersenEtal2011(SurfaceFaultRupture):
         # get intermediate values if requested
         if return_inter_params:
             output['x_star'] = x_star
-            output['prob_surf_rup'] = prob_surf_rup
+            # output['prob_surf_rup'] = prob_surf_rup
         
         # return
         return output

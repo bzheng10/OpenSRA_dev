@@ -7,7 +7,7 @@
 -->
 
 # OpenSRA
-This repository contains the source code to OpenSRA_backend, developed by [Slate Geotechnical Consultants (Slate)](http://slategeotech.com/), with assistance from [NHERI SimCenter](https://simcenter.designsafe-ci.org/) and [UC Berkeley](https://ce.berkeley.edu/).
+This repository contains the source code to OpenSRA_backend, developed by [Slate Geotechnical Consultants (Slate)](http://slategeotech.com/), with assistance from [NHERI SimCenter](https://simcenter.designsafe-ci.org/) and [UC Berkeley](https://ce.berkeley.edu/). The source code for the front end can be found [here](https://github.com/NHERI-SimCenter/OpenSRAFrontEnd).
 
 ## Developers
 Barry Zheng, PhD @ [Slate](https://slategeotech.com/people/)
@@ -61,7 +61,7 @@ pip install numba_stats openquake.engine tables
 ```
 
 ## Additional prepackaged datasets for OpenSRA
-OpenSRA uses a number of prepackaged datasets that are not stored on GitHub due to file size. Please contact Barry Zheng for download link to datasets.
+OpenSRA uses a number of prepackaged datasets that are not stored on GitHub due to file size. Please contact Barry Zheng or refer to the User Manual for download link to datasets.
 
 ## User's Guide
 To run OpenSRA in the command prompt:

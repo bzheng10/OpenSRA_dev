@@ -279,7 +279,7 @@ def process_well_trace(well_trace_dir, wells_to_read):
     # default crs
     epsg_wgs84 = 4326
     epsg_utm_zone10 = 32610
-    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10)
+    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10, always_xy=True)
     # get list of text files
     list_of_trace_files_in_dir = os.listdir(well_trace_dir)
     well_trace_list = []
@@ -298,7 +298,7 @@ def process_well_trace(well_trace_dir, wells_to_read):
             )
             well_locs_geom.append(Point(curr_trace[0,0],curr_trace[0,1]))
             # transform from lat lon to UTM zone 10 meters
-            curr_trace[:,0],curr_trace[:,1] = transformer_wgs84_to_utmzone10.transform(curr_trace[:,1],curr_trace[:,0])
+            curr_trace[:,0],curr_trace[:,1] = transformer_wgs84_to_utmzone10.transform(curr_trace[:,0],curr_trace[:,1])
             # append to dataframe
             well_trace_list.append(curr_trace)
     # number of wells
@@ -326,8 +326,8 @@ def get_well_crossing(
     n_fault = fault_list.shape[0]
     
     # create transformers for transforming coordinates
-    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10)
-    transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84)
+    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10, always_xy=True)
+    transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84, always_xy=True)
     
     # preprocess fault trace to get vertices for planes
 
@@ -358,7 +358,7 @@ def get_well_crossing(
         fault_trace_curr_meter = fault_trace_curr[:,:2].copy()
         # fault_trace_curr_meter = fault_trace_curr.copy()
         fault_trace_curr_meter[:,0], fault_trace_curr_meter[:,1] = \
-            transformer_wgs84_to_utmzone10.transform(fault_trace_curr[:,1],fault_trace_curr[:,0])
+            transformer_wgs84_to_utmzone10.transform(fault_trace_curr[:,0],fault_trace_curr[:,1])
         
         # lists for tracking planes
         plane_pt1_curr_fault = []
@@ -420,7 +420,7 @@ def get_well_crossing(
                 ]
         coords_for_curr_fault = np.asarray(coords_for_curr_fault)
         # convert back to lat lon
-        coords_for_curr_fault[:,1], coords_for_curr_fault[:,0] = \
+        coords_for_curr_fault[:,0], coords_for_curr_fault[:,1] = \
             transformer_utmzone10_to_wgs84.transform(coords_for_curr_fault[:,0],coords_for_curr_fault[:,1])
         # make geometry
         fault_trace_geom.append(LineString(zip(coords_for_curr_fault[:,0],coords_for_curr_fault[:,1])))
@@ -472,8 +472,7 @@ def get_well_crossing(
     intersections_converted = []
     for each in intersections:
         if len(each) > 0:
-            converted_lat, converted_lon = \
-                transformer_utmzone10_to_wgs84.transform(each[:,0],each[:,1])
+            converted_lon, converted_lat = transformer_utmzone10_to_wgs84.transform(each[:,0],each[:,1])
             intersections_converted.append(np.vstack([
                 np.round(converted_lon,6),
                 np.round(converted_lat,6),

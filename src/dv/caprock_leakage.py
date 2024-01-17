@@ -14,8 +14,6 @@
 # -----------------------------------------------------------
 # Python modules
 import numpy as np
-# from numpy import tan, radians, where
-# from numba import jit
 
 # OpenSRA modules and classes
 from src.base_class import BaseModel
@@ -24,14 +22,6 @@ from src.base_class import BaseModel
 # -----------------------------------------------------------
 class CaprockLeakage(BaseModel):
     "Inherited class specfic to caprock leakage"
-
-    # _RETURN_PBEE_META = {
-    #     'category': 'DV',        # Return category in PBEE framework, e.g., IM, EDP, DM
-    #     'type': 'caprock leakage',       # Type of model (e.g., liquefaction, landslide, pipe strain)
-    #     'variable': [
-    #         'leakage',
-    #     ]        # Return variable for PBEE category, e.g., pgdef, eps_p
-    # }
 
     def __init__(self):
         super().__init__()
@@ -69,25 +59,11 @@ class ZhangEtal2022(CaprockLeakage):
         "desc": 'returned PBEE upstream random variables:',
         'params': {
             'prob_leak': {
-                'desc': 'probability of leakage (%)',
-                'unit': '%',
-                # 'desc': 'total gas leakage out of caprocks (kg)',
-                # 'unit': 'kg',
-                # 'mean': None,
-                # 'aleatory': 1.5467557*0.089,
-                # 'epistemic': {
-                #     'coeff': None, # base uncertainty, based on coeffcients
-                #     'input': None, # sigma_mu uncertainty from input parameters
-                #     'total': np.sqrt(0.1630424**2 + 0.0085993**2) # SRSS of coeff and input sigma_mu uncertainty
-                # },
-                # 'dist_type': 'lognormal',
+                'desc': 'probability of leakage',
+                'unit': 'decimal',
             },
         }
     }
-    # _INPUT_PBEE_META = {
-    #     'category': None,        # Input category in PBEE framework, e.g., IM, EDP, DM
-    #     'variable': None       # Input variable for PBEE category, e.g., pgdef, eps_pipe
-    # }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
         'category': None,        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
@@ -109,10 +85,6 @@ class ZhangEtal2022(CaprockLeakage):
     }
     _REQ_MODEL_RV_FOR_LEVEL = {}
     _REQ_MODEL_FIXED_FOR_LEVEL = {}
-    # _MODEL_INTERNAL = {
-    #     'n_sample': 1,
-    #     'n_site': 1,
-    # }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
     _MODEL_INPUT_RV = {}
@@ -128,15 +100,7 @@ class ZhangEtal2022(CaprockLeakage):
     def __init__(self):
         """create instance"""
         super().__init__()
-    
-    
-    # @classmethod
-    # def get_req_rv_and_fix_params(cls, kwargs):
-    #     """determine what model parameters to use"""
-    #     req_rvs_by_level = []
-    #     req_fixed_by_level = []
-    #     return req_rvs_by_level, req_fixed_by_level
-    
+
 
     @classmethod
     # @njit
@@ -153,13 +117,14 @@ class ZhangEtal2022(CaprockLeakage):
         # prepare outputs
         output = {
             'prob_leak': {
-                'mean': prob_leak * 100, # convert to %
+                # 'mean': prob_leak * 100, # convert to %
+                'mean': prob_leak,
                 'sigma': 1e-5,
-                'sigma_mu': 0.0085993 * 100, # convert to %
+                # 'sigma_mu': 0.0085993 * 100, # convert to %
+                'sigma_mu': 0.0085993,
                 'dist_type': 'normal',
-                'unit': '%'
+                'unit': 'decimal'
             },
-            # 'leak': leak,
         }
         # get intermediate values if requested
         if return_inter_params:

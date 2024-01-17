@@ -14,6 +14,7 @@
 # -----------------------------------------------------------
 # Python base modules
 import argparse
+import configparser
 import copy
 import glob
 import importlib
@@ -36,7 +37,7 @@ warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
 # for geospatial processing
 from geopandas import GeoDataFrame, GeoSeries, points_from_xy, read_file
-from shapely.geometry import Point, LineString
+from shapely.geometry import Point, LineString, box
 from shapely.errors import ShapelyDeprecationWarning
 from pyproj import Transformer
 # suppress warning that may come up
@@ -54,6 +55,22 @@ from src.site.get_caprock_crossing import get_caprock_crossing
 from src.site.site_util import make_list_of_linestrings, make_grid_nodes
 from src.util import set_logging, check_and_get_abspath, get_shp_file_from_dir
 
+
+# check for PROJ_DATA and GDAL_DATA in environment variables
+# print('...checking for required enviornment variables...')
+# for each in os.environ:
+#     print(f'{each}\n\t- {os.environ[each]}')
+# if not 'CONDA_PREFIX' in os.environ:
+#     os.environ['CONDA_PREFIX'] = os.path.dirname(os.environ['PYTHONPATH'])
+#     print(f'\tadded CONDA_PREFIX')
+# if not 'PROJ_DATA' in os.environ:
+#     os.environ['PROJ_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','proj'))
+#     print(f'\tadded PROJ_DATA')
+# if not 'GDAL_DATA' in os.environ:
+#     os.environ['GDAL_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','gdal'))
+#     print(f'\tadded GDAL_DATA')
+
+
 # -----------------------------------------------------------
 # Main function
 def main(work_dir, logging_level='info', logging_message_detail='s',
@@ -62,18 +79,15 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     # -----------------------------------------------------------
     # Setting logging level (e.g. DEBUG or INFO)
-    set_logging(
-        level=logging_level,
-        msg_format=logging_message_detail
-    )
+    set_logging(level=logging_level, msg_format=logging_message_detail)
     
     # -----------------------------------------------------------
     # start of preprocess
     logging.info('---------------')
     logging.info('******** Start of preprocessing for OpenSRA ********')
     logging.info('---------------')
-    config = {} # dictionary to store configuration params
-    counter = 1 # counter for stages of processing   
+    preproc_config = {} # dictionary to store configuration during preprocess
+    counter = 1 # counter for stages of processing
     
     # -----------------------------------------------------------
     # get paths and make directories
@@ -99,6 +113,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             os.mkdir(processed_input_dir)
         if not os.path.isdir(im_dir):
             os.mkdir(im_dir)
+    for each in ['opensra_dir','input_dir','processed_input_dir','im_dir']:
+        preproc_config[each] = locals()[each]
     logging.info(f'{counter}. Check and create file directories')
     counter += 1
     logging.info('\tPerforming preprocessing of methods and input variables for OpenSRA')
@@ -112,6 +128,27 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     logging.info(f'\t\t\t- {processed_input_dir}')
     logging.info('\t\tIntensity measure directory:')
     logging.info(f'\t\t\t- {im_dir}')
+    
+    # -----------------------------------------------------------
+    # load version to run
+    config = configparser.ConfigParser()
+    config.read(os.path.join(opensra_dir,'config.ini'))
+    version_to_run = str(config['GeneralSettings']['VersionToRun'])
+    default_src_dir = os.path.normpath(os.path.join(opensra_dir,'src'))
+    logging.info(f'{counter}. Determine OpenSRA entity version to run')
+    logging.info(f'\tVersion to run: {version_to_run.upper()}')
+    logging.info(f'\t\tPaths to backend source files:')
+    if version_to_run == 'default':
+        logging.info(f'\t\t\t- default: {default_src_dir}')
+    else:
+        entity_src_dir = os.path.normpath(os.path.join(opensra_dir,'nda',version_to_run,'src'))
+        if os.path.exists(entity_src_dir):
+            logging.info(f'\t\t\t- entity-specific: {entity_src_dir}')
+        else:
+            raise ValueError("Path to entity-specific source directory does not exist - check root/config.ini")
+    for each in ['opensra_dir','input_dir','processed_input_dir','im_dir']:
+        preproc_config[each] = locals()[each]
+    counter += 1
     
     # ---------------------
     # decompress precomputed statewide IMs (only done once)
@@ -179,11 +216,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 'CA_Natural_Gas_Pipeline_Segments_WGS84_Under100m.csv'
             )
             flag_using_state_full_set = True
-        infra_fpath = os.path.join(
-            opensra_dir,
-            'lib','OtherData','Preprocessed',
-            infra_fpath
-        )
+        infra_fpath = os.path.join(opensra_dir,'lib','OtherData','Preprocessed',infra_fpath)
         infra_geom_fpath = infra_fpath.replace('.csv','.gpkg')
         flag_using_state_network = True
     elif infra_ftype == 'Region_Network':
@@ -198,16 +231,33 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 'Los_Angeles_Pipeline_Network_Clipped_From_Statewide',
                 'Los_Angeles_Pipeline_Network_Clipped_From_Statewide.gpkg'
             )
-        infra_fpath = os.path.join(
-            opensra_dir,
-            'lib','OtherData','Preprocessed',
-            infra_fpath
-        )
+        infra_fpath = os.path.join(opensra_dir,'lib','OtherData','Preprocessed',infra_fpath)
         infra_fpath = os.path.abspath(infra_fpath) # get absolute path to avoid cross-platform pathing errors
         infra_fname = infra_fpath # update fname with fpath
         # update infra_ftype to shapefile for internal processing
         infra_ftype = "Shapefile"
         flag_using_region_network = True
+    elif infra_ftype == 'NDA_Network':
+        if 'NDAData' in setup_config['General']['Directory']:
+            if len(setup_config['General']['Directory']['NDAData']) > 0:
+                nda_dataset_dir = setup_config['General']['Directory']['NDAData']
+                if os.path.exists(nda_dataset_dir):
+                    # use internal preprocessed CSV file for state pipeline network
+                    if 'full' in infra_fname:
+                        infra_fpath = os.path.join('Pipeline_Network','Infra_Full','infra_full_preproc.shp')
+                    elif 'bayarea' in infra_fname:
+                        infra_fpath = os.path.join('Pipeline_Network','Infra_BayArea','infra_bayarea_preproc.shp')
+                    infra_fpath = os.path.join(nda_dataset_dir,infra_fpath)
+                    infra_fpath = os.path.abspath(infra_fpath) # get absolute path to avoid cross-platform pathing errors
+                    infra_fname = infra_fpath # update fname with fpath
+                    # update infra_ftype to shapefile for internal processing
+                    infra_ftype = "Shapefile"
+                else:
+                    raise ValueError('Invalid path for "NDADATA" in setup_config-General-Directory!')
+            else:
+                raise ValueError('Empty path for "NDADATA" in setup_config-General-Directory!')
+        else:
+            raise ValueError('Cannot find "NDADATA" in setup_config-General-Directory!')
     else:
         # check if infra_fname is already a valid filepath, if not then infer from input_dir
         infra_fpath = check_and_get_abspath(infra_fname, input_dir)
@@ -270,8 +320,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         rup_fpath = check_and_get_abspath(rup_fpath, input_dir)
     elif im_source == 'UCERF':
         pass
+    elif im_source == 'UserDefinedGM':
+        gm_summary_fpath = setup_config['IntensityMeasure']['SourceForIM']['UserDefinedGM']['PathToSummaryTXT']
+        path_to_gm_data = setup_config['IntensityMeasure']['SourceForIM']['UserDefinedGM']['PathToGMDataFolder']
     else:
-        raise NotImplementedError("To be added into preprocess...")
+        raise NotImplementedError(f'"{im_source}" not implemented')
     # get filters if present
     if 'Filter' in setup_config['IntensityMeasure']['SourceForIM'][im_source]:
         im_filters = setup_config['IntensityMeasure']['SourceForIM'][im_source]['Filter']
@@ -284,28 +337,65 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # load json with available datasets, below-ground only for now
     avail_data_summary = None # initialize
     opensra_dataset_dir = os.path.join(opensra_dir,'lib','Datasets')
-    if infra_type == 'below_ground':
-        # default path for development env
-        if 'OpenSRAData' in setup_config['General']['Directory']:
-            if len(setup_config['General']['Directory']['OpenSRAData']) > 0:
-                opensra_dataset_dir = setup_config['General']['Directory']['OpenSRAData']
-        # check if dataset dir is valid path, if not raise error
-        if not os.path.exists(opensra_dataset_dir):
-            raise ValueError(f"Path to OpenSRA pre-package datasets does not exist: {opensra_dataset_dir}")
-        avail_data_summary_fpath = os.path.join(opensra_dataset_dir,'AvailableDataset.json')
-        with open(avail_data_summary_fpath,'r') as f:
-            avail_data_summary = json.load(f)
-        logging.info(f'{counter}. Loaded JSON file with information of prepackaged datasets (below-ground only)')
-        counter += 1
+    # if infra_type == 'below_ground':
+    # default path for development env
+    if 'OpenSRAData' in setup_config['General']['Directory']:
+        if len(setup_config['General']['Directory']['OpenSRAData']) > 0:
+            opensra_dataset_dir = setup_config['General']['Directory']['OpenSRAData']
+    # check if dataset dir is valid path, if not raise error
+    if not os.path.exists(opensra_dataset_dir):
+        raise ValueError(f"Path to OpenSRA pre-packaged datasets does not exist: {opensra_dataset_dir}")
+    avail_data_summary_fpath = os.path.join(opensra_dataset_dir,'AvailableDataset.json')
+    with open(avail_data_summary_fpath,'r') as f:
+        avail_data_summary = json.load(f)
+    # update path in data to include dirpath to folder for full file path
+    for param in avail_data_summary['Parameters']:
+        # first update path in data to include dirpath to folder for full file path
+        for key,val in avail_data_summary['Parameters'][param]['Datasets'].items():
+            avail_data_summary['Parameters'][param]['Datasets'][key]['Path'] = os.path.join(
+                opensra_dataset_dir,avail_data_summary['Parameters'][param]['Datasets'][key]['Path'])
+    # logging.info(f'{counter}. Loaded JSON file with information of prepackaged datasets (below-ground only)')
+    logging.info(f'{counter}. Loaded JSON file with information of pre-packaged datasets')
+    counter += 1
+
+    # -----------------------------------------------------------
+    # load json with NDA datasets, if path is available
+    nda_data_summary = None # initialize
+    if 'NDAData' in setup_config['General']['Directory']:
+        if len(setup_config['General']['Directory']['NDAData']) > 0:
+            nda_dataset_dir = setup_config['General']['Directory']['NDAData']
+        # check if dataset dir is valid path
+        if os.path.exists(nda_dataset_dir):
+            nda_data_summary_fpath = os.path.join(nda_dataset_dir,'AvailableDataset.json')
+            with open(nda_data_summary_fpath,'r') as f:
+                nda_data_summary = json.load(f)
+            # merge with avail_data_summary
+            for param in nda_data_summary['Parameters']:
+                # first update path in data to include dirpath to folder for full file path
+                for key,val in nda_data_summary['Parameters'][param]['Datasets'].items():
+                    nda_data_summary['Parameters'][param]['Datasets'][key]['Path'] = os.path.join(
+                        nda_dataset_dir,nda_data_summary['Parameters'][param]['Datasets'][key]['Path'])
+                # see if param is already in avail_data_summary
+                if param in avail_data_summary['Parameters']:
+                    avail_set_count = len(avail_data_summary['Parameters'][param]['Datasets'])
+                    nda_set_count = len(nda_data_summary['Parameters'][param]['Datasets'])
+                    # shift datasets in avail_data_summary down
+                    for key,val in avail_data_summary['Parameters'][param]['Datasets'].items():
+                        curr_ind = int(key.replace('Set',''))
+                        avail_data_summary['Parameters'][param]['Datasets'][f'Set{curr_ind+nda_set_count}'] = val
+                    # add data from NDA to avail_data_summary
+                    for key,val in nda_data_summary['Parameters'][param]['Datasets'].items():
+                        avail_data_summary['Parameters'][param]['Datasets'][key] = val
+                else:
+                    avail_data_summary['Parameters'][param] = nda_data_summary['Parameters'][param]
+            logging.info(f'{counter}. Loaded JSON file with information of NDA datasets and added to OpenSRA pre-packaged data')
+            counter += 1
     
     # -----------------------------------------------------------
     # preprocess infrastructure file
     logging.info(f'{counter}. Processing infrastructure file...')
     counter += 1
-    preprocess_infra_file(
-        infra_type, infra_fpath, infra_loc_header,
-        processed_input_dir, flag_using_state_network, l_max=0.1,
-    )
+    preprocess_infra_file(infra_type, infra_fpath, infra_loc_header, processed_input_dir, flag_using_state_network, l_max=1.0,)
     logging.info(f'... DONE - Processed infrastructure file and exported site data table to directoy:')
     logging.info(f'\t{processed_input_dir}')
     
@@ -319,8 +409,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     
     # -----------------------------------------------------------
     # import preferred input distributions
-    pref_param_dist, pref_param_fixed = \
-        import_param_dist_table(opensra_dir, infra_type=infra_type)
+    pref_param_dist, pref_param_fixed = import_param_dist_table(opensra_dir, infra_type=infra_type)
     logging.info(f'{counter}. Loaded backend tables with preferred variable distributions/values from the following spreadsheet')
     logging.info(f"\t{os.path.join('param_dist',f'{infra_type}.xlsx')}")
     counter += 1
@@ -328,11 +417,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # -----------------------------------------------------------
     # read input tables for random, fixed variables, and site data
     rvs_input, fixed_input, site_data, site_data_geom = \
-        read_input_tables(
-            input_dir, processed_input_dir,
-            flag_using_state_network, flag_using_region_network,
-            infra_type, infra_geom_fpath
-    )
+        read_input_tables(input_dir, processed_input_dir, flag_using_state_network, flag_using_region_network, infra_type, infra_geom_fpath)
     if site_data.shape[0] == 0:
         logging.info(f'\n')
         logging.info(f'*****FATAL*****')
@@ -355,6 +440,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     event_inds_to_keep = None
     rupture_table_from_crossing = None
     performed_crossing = False
+    ran_crossing_function = False
     col_headers_to_append = []
     hazard = ''
     if infra_type == 'below_ground':
@@ -378,20 +464,19 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 # run get pipe crossing function
                 logging.info(f'{counter}. Performing pipeline crossing algorithm for {hazard}...')
                 counter += 1
-                # site_data = 
                 site_data, rupture_table_from_crossing, col_headers_to_append, event_ids_to_keep = \
                     get_pipe_crossing_fault_rup(
                         processed_input_dir=processed_input_dir,
                         im_dir=im_dir,
                         infra_site_data=site_data.copy(),
                         avail_data_summary=avail_data_summary,
-                        opensra_dataset_dir=opensra_dataset_dir,
                         preproc_ucerf3_for_qfault_dir=preproc_ucerf3_for_qfault_dir,
                         fault_disp_model=fault_disp_model,
                         im_source=im_source,
                         infra_site_data_geom=site_data_geom,
                     )
                 performed_crossing = True
+                ran_crossing_function = True
                 logging.info(f'... DONE - Obtained pipeline crossing for {hazard}')
                 
             # liq and landslide share the same function for pipe crossing
@@ -415,7 +500,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
                             rvs_input, fixed_input, workflow,
                             # OpenSRA internal files
-                            avail_data_summary, opensra_dataset_dir,
+                            avail_data_summary,
                             # for all IM sources
                             im_source, im_filters,
                             # for ShakeMaps
@@ -447,7 +532,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         if def_poly_source == 'CA_LandslideInventory_WGS84':
                             file_metadata = avail_data_summary['Parameters']['ca_landslide_inventory']
                             def_shp_crs = file_metadata['Datasets']['Set1']['CRS']
-                            spath_def_poly = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
+                            spath_def_poly = file_metadata['Datasets']['Set1']['Path']
                         else:
                             # check if def_poly_source is a valid path
                             fdir = check_and_get_abspath(def_poly_source, user_prov_gis_dir)
@@ -474,41 +559,44 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     demand = 'edp'
                 else:
                     demand = 'im'
-                site_data = get_pipe_crossing_landslide_and_liq(
-                    path_to_def_shp=spath_def_poly,
-                    infra_site_data=site_data.copy(),
-                    avail_data_summary=avail_data_summary,
-                    opensra_dataset_dir=opensra_dataset_dir,
-                    infra_site_data_geom=site_data_geom,
-                    export_dir=processed_input_dir,
-                    def_type=hazard,
-                    def_shp_crs=def_shp_crs,
-                    freeface_fpath=freeface_fpath,
-                    demand=demand
-                )
-                # if can't find crossing, end preprocessing
-                if site_data is None:
-                    raise ValueError(f"FATAL: No crossings identified using specified deformation polygons!")
-                # continue
-                if spath_def_poly is not None:
-                    performed_crossing = True
-                if site_data.shape[0] == 0:
-                    logging.info('\n')
-                    logging.info(f'*****FATAL*****')
-                    logging.info(f'- No crossings identified using CPT generated deformation polygons for {hazard}!')
-                    logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
-                    if hazard == 'landslide':
-                        logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile and try preprocessing again.')
-                    elif 'liquefaction' in workflow['EDP']:
-                        logging.info(f'- Please revise the input infrastructure file and/or the site investigation data and try preprocessing again.')
-                    # logging.info(f'- Preprocessing will now exit.')
-                    logging.info(f'*****FATAL*****')
-                    logging.info('\n')
-                    raise ValueError(f"FATAL: No crossings identified using CPT generated deformation polygons for {hazard}!")
-                    # sys.exit()
+                if 'repair_rate' in workflow['DM']:
+                    logging.info(f'... DONE - crossing not required for repair rate models')
                 else:
-                    logging.info(f'... DONE - Obtained pipeline crossing for {hazard}')
-    
+                    site_data = get_pipe_crossing_landslide_and_liq(
+                        path_to_def_shp=spath_def_poly,
+                        infra_site_data=site_data.copy(),
+                        avail_data_summary=avail_data_summary,
+                        infra_site_data_geom=site_data_geom,
+                        export_dir=processed_input_dir,
+                        def_type=hazard,
+                        def_shp_crs=def_shp_crs,
+                        freeface_fpath=freeface_fpath,
+                        demand=demand
+                    )
+                    ran_crossing_function = True
+                    # if can't find crossing, end preprocessing
+                    if site_data is None:
+                        raise ValueError(f"FATAL: No crossings identified using specified deformation polygons!")
+                    # continue
+                    if spath_def_poly is not None:
+                        performed_crossing = True
+                    if site_data.shape[0] == 0:
+                        logging.info('\n')
+                        logging.info(f'*****FATAL*****')
+                        logging.info(f'- No crossings identified using CPT generated deformation polygons for {hazard}!')
+                        logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
+                        if hazard == 'landslide':
+                            logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile and try preprocessing again.')
+                        elif 'liquefaction' in workflow['EDP']:
+                            logging.info(f'- Please revise the input infrastructure file and/or the site investigation data and try preprocessing again.')
+                        # logging.info(f'- Preprocessing will now exit.')
+                        logging.info(f'*****FATAL*****')
+                        logging.info('\n')
+                        raise ValueError(f"FATAL: No crossings identified using CPT generated deformation polygons for {hazard}!")
+                        # sys.exit()
+                    else:
+                        logging.info(f'... DONE - Obtained pipeline crossing for {hazard}')
+        
     # -----------------------------------------------------------
     # rvs and fixed params split by preferred and user provided
     pref_rvs, user_prov_table_rvs, user_prov_gis_rvs, \
@@ -523,7 +611,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         user_prov_table_rvs, user_prov_table_fixed,
         user_prov_gis_rvs, user_prov_gis_fixed,
         pref_rvs, pref_fixed, site_data, user_prov_gis_dir,
-        infra_type, running_cpt_based_procedure
+        infra_type, ran_crossing_function, running_cpt_based_procedure
     )
     logging.info(f'{counter}. Retrieved user provided distributions from infrastructure table')
     counter += 1
@@ -557,7 +645,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # -----------------------------------------------------------
     # update to landslide params if level to run == 1
     updated_site_data = False
-    if infra_type == 'below_ground' and level_to_run == 1:
+    if infra_type == 'below_ground' and level_to_run == 1 and ran_crossing_function:
         # landslide crossings
         category = 'EDP'
         if category in workflow and 'landslide' in workflow[category]:
@@ -569,15 +657,15 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 pass
             elif 'settlement' in workflow[category]:
                 pass
-        if updated_site_data:
-            # export updated crossing summary table
-            site_data.drop(columns='geometry').to_csv(
-                # os.path.join(export_dir,f'site_data_{def_type.upper()}_CROSSINGS_ONLY.csv'),
-                os.path.join(processed_input_dir,f'site_data_PROCESSED_CROSSING_ONLY.csv'),
-                index=False
-            )
-            logging.info(f'{counter}. Performed additional actions for pipe crossing')
-            counter += 1
+    if updated_site_data:
+        # export updated crossing summary table
+        site_data.drop(columns='geometry').to_csv(
+            # os.path.join(export_dir,f'site_data_{def_type.upper()}_CROSSINGS_ONLY.csv'),
+            os.path.join(processed_input_dir,f'site_data_PROCESSED_CROSSING_ONLY.csv'),
+            index=False
+        )
+        logging.info(f'{counter}. Performed additional actions for pipe crossing')
+        counter += 1
     
     # -----------------------------------------------------------
     # get rest of distribution metrics from preferred datasets
@@ -594,9 +682,9 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             pref_param_fixed,
             workflow,
             avail_data_summary,
-            opensra_dataset_dir,
             level_to_run,
             flag_using_state_network,
+            ran_crossing_function,
             # running_cpt_based_procedure,
             # site_data_with_crossing_only,
             export_path_dist_table=os.path.join(processed_input_dir,'param_dist.csv'),
@@ -614,6 +702,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         counter += 1
         if im_source == "ShakeMap":
             logging.info(f'********')
+            # event_ids_to_keep = np.arange(len(sm_events))
+            print(f"at 1:")
+            print(f"- {sm_events}")
+            print(f"- {event_ids_to_keep}")
             get_im_pred(
                 im_source, im_dir, site_data, infra_loc_header, im_filters,
                 # for ShakeMaps
@@ -624,6 +716,16 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 # col_headers_to_append=col_headers_to_append,
             )
             logging.info(f'********')
+        elif im_source == "UserDefinedGM":
+            logging.info(f'********')
+            # event_ids_to_keep = np.arange(len(sm_events))
+            get_im_pred(
+                im_source, im_dir, site_data, infra_loc_header, im_filters,
+                # for user-defined ground motions
+                gm_summary_fpath=gm_summary_fpath,
+                path_to_gm_data=path_to_gm_data,
+                event_ids_to_keep=event_ids_to_keep,
+            )
         elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
             # running UCERF and using statewide pipeline, skip IM calc and use precomputed files
             # last statement to catch debugging/testing examples, which uses a subset of the statewide segments
@@ -780,6 +882,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             )
             logging.info(f'... DONE - Obtained caprock crossings for fault rupture')
     
+    # --
+    # store preprocess configurations
+    with open(os.path.join(processed_input_dir,'preproc_config.json'),'w') as f:
+        json.dump(preproc_config,f,indent=4)    
+    
     # -----------------------------------------------------------
     # end of preprocess
     logging.info('---------------')
@@ -795,15 +902,17 @@ def get_im_pred(
     # for user-defined ruptures
     opensra_dir=None, processed_input_dir=None, rup_fpath=None,
     event_ids_to_keep=None,
+    # for user-defined ground motions
+    gm_summary_fpath=None, path_to_gm_data=None,
     # to return haz object for additional processing
-    return_haz_obj=False
+    return_haz_obj=False,
 ):
     """get IM predictions from backend"""
     # initialize seismic hazard class
     seismic_hazard = getattr(haz, 'SeismicHazard')()
     
     # get IM predictions based on IM source
-    if im_source == "ShakeMap":
+    if im_source == "ShakeMap" or im_source == "UserDefinedGM":
         # set sites and site params
         if 'LON_MID' in site_data:
             seismic_hazard.set_site_data(
@@ -823,7 +932,10 @@ def get_im_pred(
                 lat=site_data[infra_loc_header['lat_header']],
                 vs30=np.zeros(site_data.shape[0])
             )
-        seismic_hazard.init_ssc(im_source,sm_dir=sm_dir,event_names=sm_events)  # initialize source
+        if im_source == "ShakeMap":
+            seismic_hazard.init_ssc(im_source,sm_dir=sm_dir,event_names=sm_events)  # initialize source  
+        elif im_source == "UserDefinedGM":
+            seismic_hazard.init_ssc(im_source,gm_summary_fpath=gm_summary_fpath, path_to_gm_data=path_to_gm_data)  # initialize source
         
     elif im_source == 'UserDefinedRupture' or im_source == 'UCERF':
         # prepackaged site data
@@ -1065,9 +1177,11 @@ def make_workflow(setup_config, input_dir, processed_input_dir, to_export=True):
         'pipe_strain_landslide': "LandslideInducedPipeStrain",
         'pipe_strain_lateral_spread': "LateralSpreadInducedPipeStrain",
         'pipe_strain_surface_fault_rupture': "SurfaceFaultRuptureInducedPipeStrain",
+        'repair_rate': "RepairRate",
         'pipe_comp_rupture': "PipeCompressiveRupture",
         'pipe_tensile_rupture': "PipeTensileRupture",
         'pipe_tensile_leakage': "PipeTensileLeakage",
+        'pipe_rupture_using_repair_rate': "PipeRuptureUsingRepairRate",
         
         # above ground
         'wellhead_rotation': "WellheadRotation",
@@ -1250,7 +1364,7 @@ def read_input_tables(
                     crs=4326
                 )
             ).geometry
-        site_data_geom = None
+        # site_data_geom = None
     return rvs_input, fixed_input, site_data, site_data_geom
 
 
@@ -1277,6 +1391,7 @@ def get_param_dist_from_user_prov_table(
     site_data,
     user_prov_gis_dir,
     infra_type,
+    ran_crossing_function,
     running_cpt_based_procedure=False,
     param_dist_meta={},
 ):
@@ -1323,8 +1438,6 @@ def get_param_dist_from_user_prov_table(
                 curr_param_dist['dist_type'] = user_prov_table_rvs.loc[i,metric_map['dist_type']].lower()
             # mean
             mean_val = user_prov_table_rvs.loc[i,metric_map['mean']]
-            # if param == 's_u_backfill':
-            #     print('here')
             try: # try converting to float, if can't then it's a column name
                 curr_param_dist['mean'] = float(mean_val)
             except ValueError: # read from site data table
@@ -1535,6 +1648,9 @@ def get_param_dist_from_user_prov_table(
         }
         try: # try converting to float, if can't then it's a column name
             curr_param_dist['value'] = float(user_prov_table_fixed.loc[i,'Value'])
+            # repeat for number of sites if dimension is 0
+            if np.ndim(curr_param_dist['value']) == 0:
+                curr_param_dist['value'] = np.ones(n_site) * curr_param_dist['value']
         except ValueError:
             # if is column name, then pull values from column, else use as value
             if user_prov_table_fixed.loc[i,'Value'].upper() in site_data.columns:
@@ -1560,7 +1676,7 @@ def get_param_dist_from_user_prov_table(
         param_dist_meta[param] = curr_param_dist.copy()
     
     # see if there are any fixed parameters where the values are from user defined GIS files
-    if user_prov_gis_fixed.shape[0] > 0 and not locs in locals():
+    if user_prov_gis_fixed.shape[0] > 0 and not 'locs' in locals():
         # get coordinates
         if 'LON_MID' in site_data:
             locs = geodata.PointData(
@@ -1679,10 +1795,10 @@ def get_param_dist_from_user_prov_table(
         param_dist_meta[param] = curr_param_dist.copy()
         
     # some RV are determined internally and are not presented through the GUI
+    pref_params_to_add = []
     if infra_type == 'below_ground':
-        pref_params_to_add = ['beta_crossing','psi_dip','theta_rake']
-    else:
-        pref_params_to_add = []
+        if ran_crossing_function:
+            pref_params_to_add = ['beta_crossing','psi_dip','theta_rake']
     for param in pref_params_to_add:
         curr_param_dist = {
             'source': 'Preferred'
@@ -1817,15 +1933,15 @@ def get_pref_dist_for_params(
     pref_param_fixed,
     workflow,
     avail_data_summary,
-    opensra_dataset_dir,
     level_to_run,
     flag_using_state_network,
+    ran_crossing_function,
     # running_cpt_based_procedure,
     # site_data_with_crossing_only=None,
     export_path_dist_table=None,
     export_path_dist_json=None,
     infra_type='below_ground',
-    default_statewide_geo_map='wills'
+    default_statewide_geo_map='wills',
 ):
     """get rest of the missing distribution metrics"""
     
@@ -1840,7 +1956,8 @@ def get_pref_dist_for_params(
         #         'beta_crossing_secondary','psi_dip_secondary','theta_rake_secondary',
         #     ]
         # else:
-        crossing_params = crossing_params + ['l_anchor','beta_crossing','psi_dip','theta_rake']
+        if ran_crossing_function:
+            crossing_params = crossing_params + ['l_anchor','beta_crossing','psi_dip','theta_rake']
         if level_to_run == 3:
             crossing_params.append('def_length')
         
@@ -1879,23 +1996,27 @@ def get_pref_dist_for_params(
                     file_key = 'level1_geo_unit_wills15'
                     file_metadata = avail_data_summary['Parameters'][file_key]
                     store_name = file_metadata['ColumnNameToStoreAs']
-                    geo_unit_fpath = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
+                    geo_unit_fpath = file_metadata['Datasets']['Set1']['Path']
                     geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
-                    locs.data = locs.sample_shapefile(
-                        input_table=locs.data,
-                        fpath=geo_unit_fpath,
-                        crs=geo_unit_crs,
-                        attr='PTYPE',
-                        store_name=store_name,
-                        missing_val='water'
-                    )
-                    param_dist_table[store_name] = locs.data[store_name].values
+                    geom_total_bound = file_metadata['Datasets']['Set1']['TotalBounds']
+                    geom_total_bound_poly = box(*geom_total_bound)
+                    if len(locs.data.sindex.query(geom_total_bound_poly,predicate='intersects')) > 0:
+                        locs.data = locs.sample_shapefile(
+                            input_table=locs.data,
+                            fpath=geo_unit_fpath,
+                            crs=geo_unit_crs,
+                            attr='UnitAbbr',
+                            store_name=store_name,
+                            missing_val='water'
+                        )
+                        param_dist_table[store_name] = locs.data[store_name].values
+                    else:
+                        # skip sampling
+                        locs.data[store_name] = file_metadata['Datasets']['Set1']['DefaultValue']
+                        param_dist_table[store_name] = file_metadata['Datasets']['Set1']['DefaultValue']
                     param_dist_table[store_name] = param_dist_table[store_name].astype('<U20')
                     # load strength params from Bain et al. (2022)
-                    default_geo_prop_fpath = os.path.join(
-                        opensra_dataset_dir,
-                        avail_data_summary['Parameters']['phi_soil']['Datasets']['Set1']['Path']
-                    )
+                    default_geo_prop_fpath = avail_data_summary['Parameters']['phi_soil']['Datasets']['Set1']['Path']
                     default_geo_prop = pd.read_csv(default_geo_prop_fpath)
                     unique_geo_unit = np.unique(param_dist_table[store_name])
                     geo_unit_desc = np.empty_like(param_dist_table[store_name])
@@ -1954,39 +2075,30 @@ def get_pref_dist_for_params(
             # if liq susc is needed, then sample regional geologic units
             if 'liq_susc' in param_dist_meta and param_dist_meta['liq_susc']['source'] == 'Preferred':
                 # read from Witter et al. (2006) and Bedrossian et al. (2012)
-                logging.info(f'\tFor getting liquefaction susceptibility category from geologic maps...')
+                logging.info(f'\t- Retrieve geologic units from geologic maps...')
                 for each in ['witter06','bedrossian12']:
                     file_key = f'level2_geo_unit_{each}'
                     file_metadata = avail_data_summary['Parameters'][file_key]
                     store_name = file_metadata['ColumnNameToStoreAs']
-                    geo_unit_fpath = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
+                    geo_unit_fpath = file_metadata['Datasets']['Set1']['Path']
                     geo_unit_crs = file_metadata['Datasets']['Set1']['CRS']
                     src_name = file_metadata['Datasets']['Set1']['Source']
-                    locs.data = locs.sample_shapefile(
-                        input_table=locs.data,
-                        fpath=geo_unit_fpath,
-                        crs=geo_unit_crs,
-                        attr='PTYPE',
-                        store_name=store_name
-                    )
-                    param_dist_table[store_name] = locs.data[store_name].values
-                    witter_store_name = store_name
+                    geom_total_bound = file_metadata['Datasets']['Set1']['TotalBounds']
+                    geom_total_bound_poly = box(*geom_total_bound)
+                    if len(locs.data.sindex.query(geom_total_bound_poly,predicate='intersects')) > 0:
+                        locs.data = locs.sample_shapefile(
+                            input_table=locs.data,
+                            fpath=geo_unit_fpath,
+                            crs=geo_unit_crs,
+                            attr='PTYPE',
+                            store_name=store_name
+                        )
+                        param_dist_table[store_name] = locs.data[store_name].values
+                    else:
+                        # skip sampling
+                        locs.data[store_name] = file_metadata['Datasets']['Set1']['DefaultValue']
+                        param_dist_table[store_name] = file_metadata['Datasets']['Set1']['DefaultValue']
                     logging.info(f'\t\t- read {src_name} geologic units')
-                # file_key = 'level2_geo_unit_bedrossian12'
-                # file_metadata = avail_data_summary['Parameters'][file_key]
-                # store_name = file_metadata['ColumnNameToStoreAs']
-                # geo_unit_fpath = os.path.join(opensra_dir,file_metadata['Datasets']['Set1']['Path'])
-                # locs.data = locs.sample_shapefile(
-                #     input_table=locs.data,
-                #     fpath=geo_unit_fpath,
-                #     crs=geo_unit_crs,
-                #     attr='PTYPE',
-                #     store_name=store_name
-                # )
-                # param_dist_table[store_name] = locs.data[store_name].values
-                # bedrossian_store_name = store_name
-                # logging.info(f'\tRead Bedrossian et al. (2012) geologic units')
-                # drop liq susc from param dist table, to sample during run
                 param_dist_table.drop(columns=['liq_susc'],inplace=True)
             
             # Merge Bedrossian et al. and Witter et al. into one column called "Regional_Geologic_Unit"
@@ -2003,9 +2115,30 @@ def get_pref_dist_for_params(
         if param in pref_param_fixed.rv_label.values:
             row_for_param = np.where(pref_param_fixed.rv_label==param)[0][0]
             if pref_param_fixed['preferred exists?'][row_for_param]:
-                # find which sites are np.nan and update values
+                # find which sites are np.nan
                 rows_nan = np.where(param_dist_table[param].isnull())[0]
-                param_dist_table.loc[rows_nan,param] = pref_param_fixed.value[row_for_param]
+                # get preferred value
+                pref_val = pref_param_fixed.value[row_for_param]
+                # if value is 'internal gis dataset', sample from data
+                if pref_val == 'internal gis dataset':
+                    # path for GIS file
+                    file_metadata = avail_data_summary['Parameters'][param]
+                    gis_fpath = file_metadata['Datasets']['Set1']['Path']
+                    gis_crs = file_metadata['Datasets']['Set1']['CRS']
+                    locs.data = locs.sample_raster(
+                        input_table=locs.data,
+                        fpath=gis_fpath,
+                        crs=gis_crs,
+                        store_name=param
+                    )
+                    # get the values
+                    pref_val = locs.data[param].values
+                    # pref_val = locs.data[param].values
+                    param_dist_table.loc[rows_nan,param] = pref_val[rows_nan]
+                
+                # else directly assign preferred value to missing valus
+                else:
+                    param_dist_table.loc[rows_nan,param] = pref_val
                 # remove param from missing param list
                 params_with_missing_dist_metric.pop(param,None)
                 
@@ -2027,26 +2160,26 @@ def get_pref_dist_for_params(
                     # get rows with geo unit
                     rows_with_geo_unit = np.where(param_dist_table['wills_geo_unit_desc'].values==each)[0]
                     # intersection of geo unit and NaN
-                    rows_comb = list(set(rows_nan).intersection(set(rows_with_geo_unit)))
+                    # rows_comb = list(set(rows_nan).intersection(set(rows_with_geo_unit)))
                     # get preferred value from Chris Bain's table
                     rows_for_param = np.where(default_geo_prop['Unit Abbreviation'].values==each)[0][0]
                     # dist type
-                    param_dist_table.loc[rows_comb,f'{param}_dist_type'] = 'lognormal'
+                    param_dist_table.loc[rows_with_geo_unit,f'{param}_dist_type'] = 'lognormal'
                     # mean
                     pref_val = default_geo_prop[soil_prop_map[param]['mean']][rows_for_param]
-                    param_dist_table.loc[rows_comb,f'{param}_mean'] = np.log(pref_val)
+                    param_dist_table.loc[rows_with_geo_unit,f'{param}_mean'] = np.log(pref_val)
                     # sigma
                     pref_val = default_geo_prop[soil_prop_map[param]['cov']][rows_for_param]
-                    param_dist_table.loc[rows_comb,f'{param}_sigma'] = \
+                    param_dist_table.loc[rows_with_geo_unit,f'{param}_sigma'] = \
                         np.sqrt(np.log((pref_val/100)**2 + 1))
                         # np.log(1+pref_val/100) * param_dist_table.loc[rows_comb,f'{param}_mean'].values
                         # np.log(1+pref_val/100) * param_dist_table.loc[rows_comb,f'{param}_mean'].values
                     # low
                     pref_val = default_geo_prop[soil_prop_map[param]['low']][rows_for_param]
-                    param_dist_table.loc[rows_comb,f'{param}_low'] = np.log(pref_val)
+                    param_dist_table.loc[rows_with_geo_unit,f'{param}_low'] = np.log(pref_val)
                     # high
                     pref_val = default_geo_prop[soil_prop_map[param]['high']][rows_for_param]
-                    param_dist_table.loc[rows_comb,f'{param}_high'] = np.log(pref_val)
+                    param_dist_table.loc[rows_with_geo_unit,f'{param}_high'] = np.log(pref_val)
 
             # all other cases
             else:
@@ -2079,7 +2212,7 @@ def get_pref_dist_for_params(
                                     pass
                                 # path for GIS file
                                 file_metadata = avail_data_summary['Parameters'][param]
-                                gis_fpath = os.path.join(opensra_dataset_dir,file_metadata['Datasets']['Set1']['Path'])
+                                gis_fpath = file_metadata['Datasets']['Set1']['Path']
                                 gis_crs = file_metadata['Datasets']['Set1']['CRS']
                                 locs.data = locs.sample_raster(
                                     input_table=locs.data,
@@ -2179,7 +2312,7 @@ def get_pref_dist_for_params(
     
     # export table
     if export_path_dist_table is not None:
-        param_dist_table.to_csv(export_path_dist_table,index=False)
+        # param_dist_table.to_csv(export_path_dist_table,index=False)
         # also export to hdf5 for access
         param_dist_table.to_hdf(export_path_dist_table.replace('.csv','.h5'),key='table',mode='w')
         # also export to txt
@@ -2199,13 +2332,15 @@ def preprocess_cpt_data(
     setup_config, opensra_dir, im_dir, processed_input_dir, input_dir,
     rvs_input, fixed_input, workflow,
     # OpenSRA internal files
-    avail_data_summary, opensra_dataset_dir,
+    avail_data_summary,
     # for all IM sources
     im_source, im_filters,
     # for ShakeMaps
     sm_dir=None, sm_events=None,
     # for user-defined ruptures
     rup_fpath=None,
+    # for user-defined ground motions
+    gm_summary_fpath=None, path_to_gm_data=None,
     # for sampling and Forward Euler differentiation for PC
     num_epi_input_samples=50, forward_euler_multiplier=1.01,
     # misc.
@@ -2216,8 +2351,8 @@ def preprocess_cpt_data(
     # coordinate systems
     epsg_wgs84 = 4326 # lat lon, deg
     epsg_utm_zone10 = 32610 # m
-    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10)
-    transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84)
+    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10, always_xy=True)
+    transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84, always_xy=True)
     
     # -----------------------------------------------------------
     # setup config shorthands
@@ -2266,6 +2401,13 @@ def preprocess_cpt_data(
             sm_dir=sm_dir,
             sm_events=sm_events,
         )
+    elif im_source == "UserDefinedGM":
+        get_im_pred(
+            im_source, processed_cpt_im_dir, cpt_meta_wgs84, cpt_loc_headers, im_filters,
+            # for user-defined ground motions
+            gm_summary_fpath=gm_summary_fpath,
+            path_to_gm_data=path_to_gm_data,
+        )
     elif im_source == "UserDefinedRupture" or im_source == 'UCERF':
         get_im_pred(
             im_source, processed_cpt_im_dir, cpt_meta_wgs84, cpt_loc_headers, im_filters,
@@ -2274,6 +2416,8 @@ def preprocess_cpt_data(
             processed_input_dir=processed_input_dir,
             rup_fpath=rup_fpath,
         )
+    else:
+        raise NotImplementedError(f'CPT processing with {im_source} not implemented')
     logging.info(f'********')
     
     # -----------------------------------------------------------
@@ -2368,7 +2512,7 @@ def preprocess_cpt_data(
             cpt_meta_wgs84[store_name] = cpt_meta_wgs84[col_with_gw_depth].values
         elif param == 'slope':
             # 2) sample mean from map
-            pref_gis_fpath = os.path.join(opensra_dataset_dir,param_metadata['Datasets']['Set1']['Path'])
+            pref_gis_fpath = param_metadata['Datasets']['Set1']['Path']
             pref_gis_crs = param_metadata['Datasets']['Set1']['CRS']
             cpt_meta_wgs84[store_name] = cpt_locs.sample_raster(
                 input_table=cpt_locs.data.copy(),
@@ -2510,8 +2654,7 @@ def preprocess_cpt_data(
         for i in range(len(gdf_nodes_utm))
     ]
     # get lat lon of nodes
-    nodes_lat_1d, nodes_lon_1d = transformer_utmzone10_to_wgs84.transform(
-        gdf_nodes_utm.x.values, gdf_nodes_utm.y.values)
+    nodes_lon_1d, nodes_lat_1d = transformer_utmzone10_to_wgs84.transform(gdf_nodes_utm.x.values, gdf_nodes_utm.y.values)
     logging.info(f'- Generated grid around CPTs:')
     logging.info(f'\t- buffer: {buffer} m')
     logging.info(f'\t- grid spacing: {grid_spacing} m')
@@ -2526,10 +2669,7 @@ def preprocess_cpt_data(
     param = 'aspect'
     aspect_file_metadata = avail_data_summary['Parameters'][param]
     aspect_store_name = aspect_file_metadata['ColumnNameToStoreAs']
-    aspect_gis_fpath = os.path.join(
-        opensra_dataset_dir,
-        aspect_file_metadata['Datasets']['Set1']['Path']
-    )
+    aspect_gis_fpath = aspect_file_metadata['Datasets']['Set1']['Path']
     aspect_gis_crs = aspect_file_metadata['Datasets']['Set1']['CRS']
     grid_locs.data = grid_locs.sample_raster(
         input_table=grid_locs.data.copy(),

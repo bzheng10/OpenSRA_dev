@@ -23,7 +23,7 @@ from scipy import sparse
 # OpenSRA modules and classes
 from src.base_class import BaseModel
 
-
+ 
 # -----------------------------------------------------------
 class GroundSettlement(BaseModel):
     "Inherited class specfic to liquefaction-induced ground settlement"
@@ -38,6 +38,172 @@ class GroundSettlement(BaseModel):
 
     def __init__(self):
         super().__init__()
+
+
+# -----------------------------------------------------------
+class PGE2022(GroundSettlement):
+    """
+    Compute volumetric settlement at a given location with the methodology from the PG&E (2022) report.
+    
+    Parameters
+    ----------
+    From upstream PBEE:
+    pga: float, np.ndarray or list
+        [g] peak ground acceleration
+    mag: float, np.ndarray or list
+        moment magnitude
+        
+    Geotechnical/geologic:
+    pge_b: float, np.ndarray or list
+        [g] coefficent b from pge rasters
+    pge_c: float, np.ndarray or list
+        [dimensionless] coefficent c from pge rasters
+    msf_max: float, np.ndarray or list
+        [dimensionless] maximum magnitude scale factor
+    ds: float, np.ndarray or list
+        [m] settlement coeffient from subsurface conditions
+    sigs: float, np.ndarray or list
+        [dimensionless] log-normal standard deviation for settlement 
+
+    Returns
+    -------
+    pgdef : float, np.ndarray
+        [m] permanent ground deformation
+    sigma_pgdef : float, np.ndarray
+        aleatory variability for ln(pgdef)
+    
+    References
+    ----------
+    .. [1] Pacific Gas & Electric (PG&E), 202, San Francisco Bay Area Liquefaction and Lateral Spread Study, Pacific Gas & Electric (PG&E) Revised Report.
+
+    
+    """
+
+    _NAME = 'PG&E (2022)'       # Name of the model
+    _ABBREV = None                     # Abbreviated name of the model
+    _REF = "".join([                     # Reference for the model
+        'Pacific Gas & Electric (PG&E), 2023, San Francisco Bay Area Liquefaction and Lateral Spread Study, Pacific Gas & Electric (PG&E) Revised Report.'
+    ])
+    _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
+        "desc": 'returned PBEE upstream random variables:',
+        'params': {
+            'pgdef': {
+                'desc': 'permanent ground deformation (m)',
+                'unit': 'm',
+                # 'dist_type': 'lognormal',
+            },
+            # 'sigma_pgdef': {
+            #     'desc': 'aleatory variability for ln(pgdef)',
+            #     'unit': '',
+            #     'mean': None,
+            # },
+        }
+    }
+    # _INPUT_PBEE_META = {
+    #     'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+    #     'variable': [
+    #     ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
+    _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Return category in PBEE framework, e.g., IM, EDP, DM
+        "desc": 'PBEE upstream random variables:',
+        'params': {
+            'pga': {
+                'desc': 'peak ground acceleration (g)',
+                'unit': 'g',
+            },
+            'mag': {
+                'desc': 'moment magnitude',
+                'unit': '',
+            }
+        }
+    }
+    _INPUT_DIST_VARY_WITH_LEVEL = False
+    # _INPUT_DIST_VARY_WITH_LEVEL = True
+    _N_LEVEL = 3
+    _MODEL_INPUT_INFRA = {
+        "desc": 'Infrastructure random variables:',
+        "params": {}
+    }
+    _MODEL_INPUT_GEO = {
+        "desc": 'Geotechnical/geologic random variables:',
+        'params': {
+        }
+    }
+    _MODEL_INPUT_FIXED = {
+        'desc': 'Fixed input variables:',
+        'params': {
+        'pge_b': 'coefficent b from pge rasters (g)',
+            'pge_c': 'coefficent c from pge rasters',
+            'msf_max': 'maximum magnitude scale factor',
+            'ds': 'settlement coeffient from subsurface conditions (m)',
+            'sigs': 'log-normal standard deviation for settlement',
+            'dl': 'lateral spreading coeffient from subsurface conditions (m)',
+        }
+    }
+    _REQ_MODEL_RV_FOR_LEVEL = {
+        # 'prob_liq'
+    }
+    _REQ_MODEL_FIXED_FOR_LEVEL = {
+        'pge_b', 'pge_c', 'msf_max', 'ds', 'sigs', 'dl'
+        # 'liq_susc'
+    }
+    # _MODEL_INTERNAL = {
+    #     'n_sample': 1,
+    #     'n_site': 1,
+    # }
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
+    _MODEL_FORM_DETAIL = {}
+    _MODEL_INPUT_RV = {}
+    
+    
+    @staticmethod
+    # @njit
+    def _model(
+        pga, mag, # upstream PBEE RV
+        pge_b, pge_c, msf_max, ds, sigs, dl, # geotechnical/geologic
+        return_inter_params=False # to get intermediate params
+    ):
+        """Model"""
+        
+        # initialize arrays
+        msf = np.empty(pga.shape)
+        med_ln_dl = np.empty(pga.shape)
+        
+        # magnitude scaling factor value
+        msf = 1 + (msf_max - 1)*(8.64 * np.exp(-1 * mag / 4) - 1.325)
+        
+        # probability of liquefaction
+        ds[ds==0] = min(np.min(ds[ds>0]),1e-10) # avoid ds == 0 for log
+        dl[dl==0] = min(np.min(dl[dl>0]),1e-10) # avoid dl == 0 for log
+        med_ln_ds = np.log(ds / (1 + ((pga / msf) / pge_b) ** pge_c))
+        med_ln_dl = np.log(dl / (1 + ((pga / msf) / pge_b) ** pge_c))
+        pgdef = np.exp(med_ln_ds) + (0.5*np.exp(med_ln_dl))
+        pgdef = np.maximum(pgdef,1e-5)
+        
+        # catch some isnan sigs
+        sigs[np.isnan(sigs)] = 1e-3
+        
+        # prepare outputs
+        output = {
+            'pgdef': {
+                'mean': pgdef,
+                'sigma': sigs,
+                'sigma_mu': np.ones(med_ln_ds.shape)*0.25,
+                'dist_type': 'lognormal',
+                'unit': 'm'
+            },
+            # 'pgdef': pgdef,
+            # 'sigma_pgdef': sigma_pgdef,
+            # 'sigma_mu_pgdef': sigma_mu_pgdef,
+        }
+        # get intermediate values if requested
+        if return_inter_params:
+            pass
+        
+        # return
+        return output
 
 
 # -----------------------------------------------------------
@@ -305,7 +471,7 @@ class Hazus2020(GroundSettlement):
     
     Geotechnical/geologic:
     prob_liq: float, np.ndarray or list
-        [%] probability of liquefaction
+        probability of liquefaction
     
     Fixed:
     liq_susc: str, np.ndarray or list
@@ -371,7 +537,7 @@ class Hazus2020(GroundSettlement):
     _MODEL_INPUT_GEO = {
         "desc": 'Geotechnical/geologic random variables:',
         'params': {
-            'prob_liq': 'probability of liquefaction (%)'
+            'prob_liq': 'probability of liquefaction'
         }
     }
     _MODEL_INPUT_FIXED = {
@@ -422,7 +588,7 @@ class Hazus2020(GroundSettlement):
         pgdef[liq_susc=='none'] = 1e-3
         
         # condition with prob_liq
-        pgdef = pgdef * prob_liq/100
+        pgdef = pgdef * prob_liq
         
         # convert from cm to m
         pgdef = pgdef/100

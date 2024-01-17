@@ -15,8 +15,6 @@
 # Python modules
 import numpy as np
 from scipy.stats import norm, lognorm
-# from numpy import tan, radians, where
-# from numba import jit
 
 # OpenSRA modules and classes
 from src.base_class import BaseModel
@@ -25,14 +23,6 @@ from src.base_class import BaseModel
 # -----------------------------------------------------------
 class PipeCompressiveRupture(BaseModel):
     "Inherited class specfic to compressive pipe rupture"
-
-    # _RETURN_PBEE_META = {
-    #     'category': 'DV',        # Return category in PBEE framework, e.g., IM, EDP, DM
-    #     'type': 'rupture',       # Type of model (e.g., liquefaction, landslide, pipe strain)
-    #     'variable': [
-    #         'eps_crit_rup'
-    #     ] # Return variable for PBEE category, e.g., pgdef, eps_pipe
-    # }
 
     def __init__(self):
         super().__init__()
@@ -92,35 +82,15 @@ class BainEtal2022(PipeCompressiveRupture):
             'eps_comp_crit_rup': {
                 'desc': 'critical compressive pipe strain for rupture (%)',
                 'unit': '%',
-                # 'mean': None,
-                # 'aleatory': None,
-                # 'epistemic': 0.25, # base model uncertainty, does not include input uncertainty
-                # 'dist_type': 'lognormal',
             },
-            # 'sigma_eps_crit_rup': {
-            #     'desc': 'aleatory variability for ln(eps_crit_rup)',
-            #     'unit': '',
-            #     'mean': None,
-            # },
         }
     }
     _INPUT_PBEE_META = {
-        # 'category': 'DM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        # 'variable': 'eps_pipe'        # Input variable for PBEE category, e.g., pgdef, eps_pipe
     }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
         'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
-        'params': {
-            # 'eps_pipe': {
-            #     'desc': 'longitudinal pipe strain (%)',
-            #     'unit': '%',
-            #     'mean': None,
-            #     'aleatory': None,
-            #     'epistemic': None,
-            #     'dist_type': 'lognormal'
-            # }
-        }
+        'params': {}
     }
     _INPUT_DIST_VARY_WITH_LEVEL = True
     _N_LEVEL = 3
@@ -152,10 +122,6 @@ class BainEtal2022(PipeCompressiveRupture):
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
     _MODEL_INPUT_RV = {}
-    # _SUB_CLASS = None
-    # OUTPUT = [                      # List of available outputs
-    #     'eps_crit_rupture',
-    # ]
 
 
     # instantiation
@@ -172,23 +138,6 @@ class BainEtal2022(PipeCompressiveRupture):
         return_inter_params=False # to get intermediate params
     ):
         """Model"""
-        # model coefficients
-        # c0 =  1.709     # constant
-        # c1 = -1.000     # ln(eps_pipe)
-        # c2 = -1.617     # ln(d_pipe/t_pipe)
-        
-        # print(d_pipe)
-        # print(t_pipe)
-        # print(sigma_y)
-        # print(op_press)
-        # print(steel_grade)
-        
-
-        # get other params based on steel_grade
-        # sigma_y = np.empty_like(d_pipe)
-        # n_param = np.empty_like(d_pipe)
-        # r_param = np.empty_like(d_pipe)
-        
         # first get sigma_y, kPa
         # Grade-B
         grade = 'Grade-B'
@@ -219,18 +168,6 @@ class BainEtal2022(PipeCompressiveRupture):
         # eps_pipe_eq = eps_pipe / (1 + sigma_h/sigma_y) # %, zero internal pressure equivalent compressive pipe strain
         # prob = norm.sf((c0 + c1*np.log(eps_pipe_eq/100) + c2*np.log(d_pipe/t_pipe)) / cls.DIST['ALEATORY']) # survival function
         eps_comp_crit_rup = np.exp(-(np.log(1 + sigma_h/sigma_y) + 1.617*np.log(d_pipe/t_pipe) - 2.130))
-        
-        # print(sigma_h)
-        # print(sigma_y)
-        # print(d_pipe)
-        # print(np.max(d_pipe))
-        # print(np.min(d_pipe))
-        # print(t_pipe)
-        # print(np.max(t_pipe))
-        # print(np.min(t_pipe))
-        # print(np.max(d_pipe/t_pipe))
-        # print(np.min(d_pipe/t_pipe))
-        # print(np.where(np.isnan(d_pipe/t_pipe)))
         
         # prepare outputs
         output = {

@@ -1,4 +1,4 @@
-ac_ais-upper	d_ais_n_upper	ac_ais-lower	d_ais_n_lower
+ac_ais_upper	d_ais_n_upper	ac_ais_lower	d_ais_n_lower
 0.10116327	39.5694502	0.10116327	22.22485437
 0.11907223	34.25545599	0.12093774	19.51963476
 0.13847359	29.86970704	0.13735428	17.39271725

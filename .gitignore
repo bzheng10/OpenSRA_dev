@@ -9,6 +9,8 @@ __nbcache__/
 hidden/
 test_env/
 pc_coeffs/
+nda/
+tracked_calcs/
 superseded/
 *.ipynb
 test_arg.py

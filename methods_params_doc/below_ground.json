@@ -11,6 +11,58 @@
 					"ToDisplay": true,
 					"DefaultValue": "ZhuEtal2017",
 					"Options" : {
+						"PGE2022": {
+							"NameToDisplay": "PG&E (2022)",
+							"ToDisplay": true,
+							"Return": {
+								"Description": "This method returns the probability of liquefaction. Note: the uncertainty associated with this method is currently assumed to be zero.",
+								"Params": ["prob_liq"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a source for PGA and magnitude from the \"Intensity Measure\" tab.",
+								"Params": ["pga", "mag"]
+							},
+                            "DisplayOrder": [
+                                "pge_a",
+                                "pge_b",
+                                "pge_c",
+                                "msf_max"
+                            ],
+							"Params": {
+								"pge_a": {
+									"NameToDisplay": "pge_a",
+									"VarType": "fixed",
+									"DescToDisplay": "coefficient a; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"pge_b": {
+									"NameToDisplay": "pge_b",
+									"VarType": "fixed",
+									"DescToDisplay": "[g] coefficient b; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"pge_c": {
+									"NameToDisplay": "pge_c",
+									"VarType": "fixed",
+									"DescToDisplay": "coefficient c; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"msf_max": {
+									"NameToDisplay": "msf_max",
+									"VarType": "fixed",
+									"DescToDisplay": "maxmimum magnitude scaling factor; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								}
+							}
+						},
 						"ZhuEtal2017": {
 							"NameToDisplay": "Zhu et al. (2017)",
 							"ToDisplay": true,
@@ -306,6 +358,67 @@
 					"ToDisplay": true,
 					"DefaultValue": "Hazus2020",
 					"Options" : {
+						"PGE2022": {
+							"NameToDisplay": "PG&E (2022)",
+							"ToDisplay": true,
+							"Return": {
+								"Description": "This method returns permanent ground deformation for liquefaction-induced lateral spread.",
+								"Params": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a source for PGA and magnitude from the \"Intensity Measure\" tab.",
+								"Params": ["pga", "mag"]
+							},
+                            "DisplayOrder": [
+                                "dl",
+                                "pge_b",
+                                "pge_c",
+                                "msf_max",
+								"sigl"
+                            ],
+							"Params": {
+								"dl": {
+									"NameToDisplay": "dl",
+									"VarType": "fixed",
+									"DescToDisplay": "[m] lateral spreading coefficient; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"pge_b": {
+									"NameToDisplay": "pge_b",
+									"VarType": "fixed",
+									"DescToDisplay": "[g] coefficient b; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"pge_c": {
+									"NameToDisplay": "pge_c",
+									"VarType": "fixed",
+									"DescToDisplay": "coefficient c; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"msf_max": {
+									"NameToDisplay": "msf_max",
+									"VarType": "fixed",
+									"DescToDisplay": "maxmimum magnitude scaling factor; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"sigl": {
+									"NameToDisplay": "sigl",
+									"VarType": "fixed",
+									"DescToDisplay": "log-normal standard deviation of the permanent ground deformation for liquefaction-induced lateral spread",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								}
+							}
+						},
 						"Hazus2020": {
 							"NameToDisplay": "Hazus (2020)",
 							"ToDisplay": true,
@@ -479,6 +592,76 @@
 					"ToDisplay": true,
 					"DefaultValue": "Hazus2020",
 					"Options" : {
+						"PGE2022": {
+							"NameToDisplay": "PG&E (2022)",
+							"ToDisplay": true,
+							"Return": {
+								"Description": "This method returns permanent ground deformation for liquefaction-induced settlement.",
+								"Params": ["pgdef"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a source for PGA and magnitude from the \"Intensity Measure\" tab.",
+								"Params": ["pga", "mag"]
+							},
+                            "DisplayOrder": [
+                                "ds",
+                                "pge_b",
+                                "pge_c",
+                                "msf_max",
+								"sigs",
+								"dl"
+                            ],
+							"Params": {
+								"ds": {
+									"NameToDisplay": "dl",
+									"VarType": "fixed",
+									"DescToDisplay": "[m] settlement coefficient; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"pge_b": {
+									"NameToDisplay": "pge_b",
+									"VarType": "fixed",
+									"DescToDisplay": "[g] coefficient b; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"pge_c": {
+									"NameToDisplay": "pge_c",
+									"VarType": "fixed",
+									"DescToDisplay": "coefficient c; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"msf_max": {
+									"NameToDisplay": "msf_max",
+									"VarType": "fixed",
+									"DescToDisplay": "maxmimum magnitude scaling factor; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"sigs": {
+									"NameToDisplay": "sigs",
+									"VarType": "fixed",
+									"DescToDisplay": "log-normal standard deviation of the permanent ground deformation for liquefaction-induced settlement",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"dl": {
+									"NameToDisplay": "dl",
+									"VarType": "fixed",
+									"DescToDisplay": "[m] lateral-spreading coefficient; default from PG&E raster",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								}
+							}
+						},
 						"Hazus2020": {
 							"NameToDisplay": "Hazus (2020)",
 							"ToDisplay": true,
@@ -895,6 +1078,120 @@
         }
     },
     "DamageMeasure": {
+        "RepairRate": {
+			"NameToDisplay": "Repair Rate",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "Hazus2020",
+					"Options" : {
+						"PGE2020": {
+							"NameToDisplay": "PG&E (2020)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+								"d_pipe",
+								"corrosivity",
+								"install_year"
+							],
+							"Return": {
+								"Description": "This method returns repair rates for rupture for pipeline segments.",
+								"ParamsLabel": ["repair_rate"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a method for permanent ground deformation from the \"Engineering Demand Parameter\" tab and a source for peak ground velocity and magnitude from the \"Intensity Measure\" tab.",
+								"ParamsLabel": ["pgdef", "pgv", "mag"]
+							},
+							"Params": {
+								"d_pipe": {
+									"NameToDisplay": "d_pipe",
+									"VarType": "random",
+									"DescToDisplay": "[mm] pipe outside diameter - required for \"level 2 and 3\" analysis",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"corrosivity": {
+									"NameToDisplay": "corrosivity",
+									"VarType": "fixed",
+									"DescToDisplay": "[ohm-cm] soil corrosivity: <=750 high impact on damage, >1500 = low impact on damage (default: \"1600\", i.e., no correction)",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								},
+								"install_year": {
+									"NameToDisplay": "install_year",
+									"VarType": "fixed",
+									"DescToDisplay": "year of installation (default: \"1980\", i.e., no correction)",
+									"WidgetType": "QLabel",
+									"ToDisplay": true,
+									"DefaultValue": null
+								}
+							}
+						},
+						"Hazus2020": {
+							"NameToDisplay": "Hazus (FEMA, 2020)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "This method returns repair rates for rupture for pipeline segments.",
+								"ParamsLabel": ["repair_rate"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a method for permanent ground deformation from the \"Engineering Demand Parameter\" tab and a source for peak ground velocity from the \"Intensity Measure\" tab.",
+								"ParamsLabel": ["pgdef", "pgv"]
+							},
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This method does not require additional parameters as user input.",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": ["repair_rate"]
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DamageMeasure"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "RepairRate"
+								}
+							}
+						}
+					}
+				}
+			}
+        },
         "LateralSpreadInducedPipeStrain": {
 			"NameToDisplay": "Lateral Spread Induced Pipe Strain",
 			"WidgetType": null,
@@ -928,7 +1225,7 @@
 								"steel_grade"
 							],
 							"Return": {
-								"Description": "This method returns lateral spread induced tensile and compressive strain\" for pipeline segments.",
+								"Description": "This method returns lateral spread induced tensile and compressive strains for pipeline segments.",
 								"ParamsLabel": ["eps_pipe_tens", "eps_pipe_comp"]
 							},
 							"UpstreamDependency": {
@@ -1134,7 +1431,7 @@
 								"steel_grade"
 							],
 							"Return": {
-								"Description": "This method returns settlement-induced tensile and compressive strain for pipeline segments.",
+								"Description": "This method returns settlement-induced tensile and compressive strains for pipeline segments.",
 								"Params": ["eps_pipe_tens", "eps_pipe_comp"]
 							},
 							"UpstreamDependency": {
@@ -1332,7 +1629,7 @@
 								"steel_grade"
 							],
 							"Return": {
-								"Description": "This method returns landslide-induced tensile and compressive strain for pipeline segments.",
+								"Description": "This method returns landslide-induced tensile and compressive strains for pipeline segments.",
 								"Params": ["eps_pipe_tens", "eps_pipe_comp"]
 							},
 							"UpstreamDependency": {
@@ -1941,6 +2238,77 @@
 									"DescToDisplay": "",
 									"ToDisplay": true,
 									"DefaultValue": "PipeTensileLeakage"
+								}
+							}
+						}
+					}
+				}
+			}
+        },
+        "PipeRuptureUsingRepairRate": {
+			"NameToDisplay": "Pipe Rupture Using Repair Rate",
+			"WidgetType": null,
+			"ToDisplay": true,
+			"Params": {
+				"Method": {
+					"NameToDisplay": "Available Method(s)",
+					"WidgetType": "QComboBox",
+					"ToDisplay": true,
+					"DefaultValue": "Hazus2020",
+					"Options" : {
+						"Hazus2020": {
+							"NameToDisplay": "Hazus (FEMA, 2020)",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "This method returns the critical repair rate at which 50% probability of breakage is expected to occur for pipeline segments.",
+								"Params": ["repair_rate_crit"]
+							},
+							"UpstreamDependency": {
+								"Description": "This method requires a method for repair rate from the \"Damage Measure - Repair Rate\" tab.",
+								"Params": ["repair_rate"]
+							},
+							"Params": {
+                                "N/A": {
+                                    "NameToDisplay": "None",
+                                    "VarType": null,
+                                    "DescToDisplay": "This method does not require additional parameters as user input.",
+                                    "WidgetType": "QLabel",
+                                    "ToDisplay": true,
+                                    "DefaultValue": null
+                                }
+							}
+						},
+						"GenericModel": {
+							"NameToDisplay": "Generic Model",
+							"ToDisplay": true,
+							"DisplayOrder": [
+							],
+							"Return": {
+								"Description": "",
+								"Params": ["NA", "_crit"]
+							},
+							"UpstreamDependency": {
+								"Description": "Since this is a user-defined model, users can choose their preferred method to use for upstream dependency.",
+								"Params": []
+							},
+							"Params": {
+								"ReturnCategory": {
+									"NameToDisplay": "ReturnCategory",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "DecisionVariable"
+								},
+								"ReturnHazard": {
+									"NameToDisplay": "ReturnHazard",
+                                    "VarType": "UserInput",
+									"WidgetType": "QLineEdit",
+									"DescToDisplay": "",
+									"ToDisplay": true,
+									"DefaultValue": "PipeRuptureUsingRepairRate"
 								}
 							}
 						}

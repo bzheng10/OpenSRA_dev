@@ -83,8 +83,8 @@ def get_caprock_crossing(
     n_fault = fault_list.shape[0]
 
     # create transformers for transforming coordinates
-    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10)
-    transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84)
+    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10, always_xy=True)
+    transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84, always_xy=True)
 
     # track caprock crossing
     caprock_crossing_flag = []
@@ -94,8 +94,7 @@ def get_caprock_crossing(
     for h in range(n_caprock):
         z_depth_curr_caprock = caprock_list.depth_m[h]
         curr_caprock_polygon_wgs84 = caprock_list.geometry[h]
-        curr_caprock_polygon_coord_utmzone10 = \
-            transformer_wgs84_to_utmzone10.transform(*np.flipud(np.transpose(curr_caprock_polygon_wgs84.boundary.coords)))
+        curr_caprock_polygon_coord_utmzone10 = transformer_wgs84_to_utmzone10.transform(*np.transpose(curr_caprock_polygon_wgs84.boundary.coords))
         curr_caprock_polygon_utmzone10 = Polygon(np.transpose(curr_caprock_polygon_coord_utmzone10))
         
         # # just need to see if caprock crosses with ANY of the fault, if so, then move on to next caprock
@@ -134,8 +133,7 @@ def get_caprock_crossing(
                 # transform fault trace to x (m), y(m) under UTM zone 10
                 fault_trace_curr_meter = fault_trace_curr[:,:2].copy()
                 # fault_trace_curr_meter = fault_trace_curr.copy()
-                fault_trace_curr_meter[:,0], fault_trace_curr_meter[:,1] = \
-                    transformer_wgs84_to_utmzone10.transform(fault_trace_curr[:,1],fault_trace_curr[:,0])
+                fault_trace_curr_meter[:,0], fault_trace_curr_meter[:,1] = transformer_wgs84_to_utmzone10.transform(fault_trace_curr[:,0],fault_trace_curr[:,1])
                 
                 # lists for tracking planes
                 plane_pt1_curr_fault = []

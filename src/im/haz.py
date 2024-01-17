@@ -29,8 +29,8 @@ from scipy.stats import norm
 from scipy import sparse
 
 # geospatial processing modules
-from geopandas import GeoDataFrame
-from shapely.geometry import LineString
+from geopandas import GeoDataFrame, GeoSeries, points_from_xy
+from shapely.geometry import LineString, MultiLineString
 
 # efficient processing modules
 # import numba as nb
@@ -141,7 +141,8 @@ class SeismicHazard(object):
     
     def init_ssc(self, ssc_name=None, ucerf_model_name=None, 
                  sm_dir=None, opensra_dir=None, event_names=None, 
-                 im_list=['pga','pgv'], user_def_rup_fpath=None):
+                 im_list=['pga','pgv'], user_def_rup_fpath=None,
+                 gm_summary_fpath=None,path_to_gm_data=None,):
         """
         Initializes seismic source
         If ssc_name is not specified, default to 'Mean UCERF3 FM3.1'
@@ -170,7 +171,7 @@ class SeismicHazard(object):
                 elif ssc_name == 'UserDefinedRupture':
                     self.source = getattr(ssc, ssc_name)(fpath=user_def_rup_fpath)
                 elif ssc_name == 'UserDefinedGM':
-                    raise NotImplementedError("UserDefinedGM to be implemented")
+                    self.source = getattr(ssc, ssc_name)(gm_summary_fpath=gm_summary_fpath, path_to_gm_data=path_to_gm_data, im_list=im_list)
                 else:
                     raise NotImplementedError("Available options for SSC are UCERF3, ShakeMap, UserDefinedRupture, and UserDefinedGM")
             else:
@@ -215,7 +216,7 @@ class SeismicHazard(object):
             self.event_id = self.source.df_rupture.EventID.values
             self.rate = self.source.df_rupture.AnnualRate.values
             self.mag = self.source.df_rupture.Magnitude.values
-        elif self.ssc_name == 'ShakeMap':
+        elif self.ssc_name == 'ShakeMap' or self.ssc_name == 'UserDefinedGM':
             self.source.process_rupture(
                 mag_min=mag_min,
                 mag_max=mag_max,
@@ -299,13 +300,12 @@ class SeismicHazard(object):
         elif self._n_event == 0:
             return f"No scenarios to run - pick from {self.supported_source_types}"
         else:
-            if self.ssc_name == "ShakeMap":
+            if self.ssc_name == "ShakeMap" or self.ssc_name == "UserDefinedGM":
                 # calculate IMs using GMC
-                logging.info(f"Getting ground motions from ShakeMap grids:")
+                logging.info(f"Getting ground motions from {self.ssc_name}:")
                 logging.info(f"\t- Number of events: {self._n_event}")
                 logging.info(f"\t- Number of sites: {self._n_site}")
                 # setup
-                
                 shape = (self._n_event, self._n_site)
                 self.gm_pred = {}
                 im_list = [im.lower() for im in im_list] # convert to lower case
@@ -317,12 +317,13 @@ class SeismicHazard(object):
                             'sigma_mu': np.zeros(shape)
                         }
                 logging.info(f"\t- Periods to get: {', '.join(self.im_list)}")
+                # premake gdf for site lat lon
+                gs_sites = GeoSeries(points_from_xy(self.site_data['lon'], self.site_data['lat']))
                 # loop through number of events
                 for i in range(self._n_event):
                 # for i, rup_ind in self.source.rupture_in_maxdist:
-                    # perform sampling of IMs from ShakeMap
-                    site_gm, site_aleatory, site_epistemic = \
-                        self.source._sample_gm_from_map_i(i, self.site_data['lon'], self.site_data['lat'])
+                    # perform sampling of IMs
+                    site_gm, site_aleatory, site_epistemic = self.source._sample_gm_from_map_i(i, gs_sites.copy())
                     # store outputs
                     for j, im in enumerate(im_list):
                         self.gm_pred[im]['mean'][i] = site_gm[:,j]
@@ -331,7 +332,7 @@ class SeismicHazard(object):
                     # print message to track number of events already ran
                     if (i+1) % n_events_print == 0:
                         logging.info(f"\t\t- finished sampling from {self.source.event_names[i]}...")
-                logging.info(f">>>>>>>>>>> Finished sampling ground motions from ShakeMaps")
+                logging.info(f">>>>>>>>>>> Finished sampling ground motions from {self.ssc_name}")
             else:
                 # calculate IMs using GMC
                 logging.info(f"Calculating ground motion predictions:")
@@ -437,25 +438,32 @@ class SeismicHazard(object):
             if self.ssc_name == 'UCERF':
                 self._export_site_data(sdir)
             # self._export_rupture_metadata(sdir, addl_rup_meta=addl_rup_meta)
-            self._export_rupture_metadata(sdir)
+            if self.ssc_name == 'UserDefinedGM':
+                self._export_rupture_metadata(sdir, export_rup_geom=False, export_to_shp=False)
+            else:
+                self._export_rupture_metadata(sdir)
     
     
     # def _export_rupture_metadata(self, sdir=None, export_rup_geom=True, addl_rup_meta=None):
-    def _export_rupture_metadata(self, sdir=None, export_rup_geom=True):
+    def _export_rupture_metadata(self, sdir=None, export_rup_geom=True, export_to_shp=True):
         """exports rupture scenario metadata (mean annual rate and magnitude)"""
         if self.mag is None:
             return "Nothing to export - first run self.init_ssc (and self.filter_ucerf_rupture) to get ruptures"
         else:
+            cols_to_export = []
+            # event id
+            if self.event_id is None:
+                event_id = np.arange(self._n_event)
+            else:
+                event_id = self.event_id
+            event_id = np.asarray(event_id).astype(int)
+            # mag
             mag = self.mag
+            # annual rate
             if self.rate is None:
                 rate = np.ones(self._n_event)
             else:
                 rate = self.rate
-            if self.event_id is None:
-                event_id = np.arange(self._n_event)+1
-            else:
-                event_id = self.event_id
-            event_id = np.asarray(event_id).astype(int)
             # make DataFrame
             rup_meta_out = DataFrame(
                 np.vstack([event_id,mag,rate]).T,
@@ -485,21 +493,29 @@ class SeismicHazard(object):
             save_name_csv = os.path.join(sdir,'RUPTURE_METADATA.csv')
             rup_meta_out.to_csv(save_name_csv,index=False)
             # export to shp
-            save_name_shp = os.path.join(sdir,'RUPTURE_METADATA.gpkg')
-            geoms = []
-            for i in range(rup_meta_out.shape[0]):
-                # trace = np.asarray(json.loads(rup_meta.fault_trace.iloc[i]))
-                trace = np.asarray(rup_meta_out.fault_trace.iloc[i])
-                geoms.append(LineString(trace[:,:2]))
-            rup_meta_out_gdf = GeoDataFrame(
-                pd.read_csv(save_name_csv), # reread dataframe to convert fields of lists into strings
-                crs=4326, geometry=geoms
-                # rup_meta_out, crs=4326, geometry=geoms
-            )
-            rup_meta_out_gdf.to_file(save_name_shp,index=False,layer='data')
+            if export_to_shp:
+                save_name_shp = os.path.join(sdir,'RUPTURE_METADATA.gpkg')
+                geoms = []                    
+                for i in range(rup_meta_out.shape[0]):
+                    # trace = np.asarray(json.loads(rup_meta.fault_trace.iloc[i]))
+                    # trace = np.asarray(rup_meta_out.fault_trace.iloc[i])
+                    # trace = np.asarray([coord_k for list_j in rup_meta_out.fault_trace.iloc[i] for coord_k in list_j])
+                    if self.ssc_name == 'UserDefinedRupture':
+                        geoms.append(LineString([pt_j[:2] for pt_j in rup_meta_out.fault_trace.iloc[i]])) # only supports single, continuous rupture (i.e., no multilines)
+                    else:
+                        geoms.append(MultiLineString([LineString(np.asarray(list_j)[:,:2]) for list_j in rup_meta_out.fault_trace.iloc[i]]))
+                    
+                rup_meta_out_gdf = GeoDataFrame(
+                    pd.read_csv(save_name_csv), # reread dataframe to convert fields of lists into strings
+                    crs=4326, geometry=geoms
+                    # rup_meta_out, crs=4326, geometry=geoms
+                )
+                rup_meta_out_gdf.to_file(save_name_shp,index=False,layer='data')
+            # files exported
             logging.info(f"Exported rupture metadata to:")
             logging.info(f"\t- {save_name_csv}")
-            logging.info(f"\t- {save_name_shp}")
+            if export_to_shp:
+                logging.info(f"\t- {save_name_shp}")
             
 
     def _export_site_data(self, sdir=None):

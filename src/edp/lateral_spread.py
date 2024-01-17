@@ -40,6 +40,155 @@ class LateralSpread(BaseModel):
 
 
 # -----------------------------------------------------------
+class PGE2022(LateralSpread):
+    """
+    Compute lateral spreading with the methodology from the PG&E (2022) report.
+    
+    Parameters
+    ----------
+    From upstream PBEE:
+    pga: float, np.ndarray or list
+        [g] peak ground acceleration
+    mag: float, np.ndarray or list
+        moment magnitude
+        
+    Geotechnical/geologic:
+    pge_b: float, np.ndarray or list
+        [g] coefficent b from pge rasters
+    pge_c: float, np.ndarray or list
+        [dimensionless] coefficent c from pge rasters
+    msf_max: float, np.ndarray or list
+        [dimensionless] maximum magnitude scale factor
+    dl: float, np.ndarray or list
+        [m] lateral spreading coeffient from subsurface conditions
+    sigl: float, np.ndarray or list
+        [dimensionless] log-normal standard deviation for lateral spreading 
+
+    Returns
+    -------
+    pgdef : float, np.ndarray
+        [m] permanent ground deformation
+    sigma_pgdef : float, np.ndarray
+        aleatory variability for ln(pgdef)
+    
+    References
+    ----------
+    .. [1] Pacific Gas & Electric (PG&E), 2022, San Francisco Bay Area Liquefaction and Lateral Spread Study, Pacific Gas & Electric (PG&E) Revised Report.
+    
+    """
+
+    _NAME = 'PG&E (2022)'       # Name of the model
+    _ABBREV = None                     # Abbreviated name of the model
+    _REF = "".join([                     # Reference for the model
+        'Pacific Gas & Electric (PG&E), 2022, San Francisco Bay Area Liquefaction and Lateral Spread Study, Pacific Gas & Electric (PG&E) Revised Report.'
+    ])
+    _RETURN_PBEE_DIST = {                            # Distribution information
+        'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
+        "desc": 'returned PBEE upstream random variables:',
+        'params': {
+            'pgdef': {
+                'desc': 'permanent ground deformation from lateral spreading (m)',
+                'unit': 'm',
+            },
+        }
+    }
+    # _INPUT_PBEE_META = {
+    #     'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+    #     'variable': [
+    #         'pga', 'mag'
+    #     ] # Input variable for PBEE category, e.g., pgdef, eps_pipe
+    # }
+    _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
+        'category': 'IM',        # Input category in PBEE framework, e.g., IM, EDP, DM
+        "desc": 'PBEE upstream random variables:',
+        'params': {
+            'pga': {
+                'desc': 'peak ground acceleration (g)',
+                'unit': 'g',
+            },
+            'mag': {
+                'desc': 'moment magnitude',
+                'unit': '',
+            }
+        }
+    }
+    _INPUT_DIST_VARY_WITH_LEVEL = False
+    # _INPUT_DIST_VARY_WITH_LEVEL = True
+    _N_LEVEL = 3
+    _MODEL_INPUT_INFRA = {
+        "desc": 'Infrastructure random variables:',
+        "params": {}
+    }
+    _MODEL_INPUT_GEO = {
+        "desc": 'Geotechnical/geologic random variables:',
+        'params': {
+        }
+    }
+    _MODEL_INPUT_FIXED = {
+        'desc': 'Fixed input variables:',
+        'params': {
+            'pge_b': 'coefficent b from pge rasters (g)',
+            'pge_c': 'coefficent c from pge rasters',
+            'msf_max': 'maximum magnitude scale factor',
+            'dl': 'lateral spreading coeffient from subsurface conditions (m)',
+            'sigl': 'log-normal standard deviation for lateral spreading',
+        }
+    }
+    _REQ_MODEL_RV_FOR_LEVEL = {
+        # 'prob_liq',
+    }
+    _REQ_MODEL_FIXED_FOR_LEVEL = {
+        'pge_b', 'pge_c', 'msf_max', 'dl', 'sigl'
+    }
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
+    _MODEL_FORM_DETAIL = {}
+    _MODEL_INPUT_RV = {}
+    
+    
+    @staticmethod
+    # @njit
+    def _model(
+        pga, mag, # upstream PBEE RV
+        pge_b, pge_c, msf_max, dl, sigl, # geotechnical/geologic
+        return_inter_params=False # to get intermediate params
+    ):
+        """Model"""
+        
+        # initialize arrays
+        msf = np.empty(pga.shape)
+        med_ln_dl = np.empty(pga.shape)
+        
+        # magnitude scaling factor value
+        msf = 1 + (msf_max - 1)*(8.64 * np.exp(-1 * mag / 4) - 1.325)
+        
+        # permanent ground deformation from lateral spreading
+        dl[dl==0] = min(np.min(dl[dl>0]),1e-10) # avoid dl == 0 for for log
+        med_ln_dl = np.log(dl / (1 + ((pga / msf) / pge_b) ** pge_c))
+        pgdef = np.exp(med_ln_dl)
+        pgdef = np.maximum(pgdef,1e-5)
+        
+        # catch some isnan sigl
+        sigl[np.isnan(sigl)] = 1e-3
+        
+        # prepare outputs
+        output = {
+            'pgdef': {
+                'mean': pgdef,
+                'sigma': sigl,
+                'sigma_mu': np.ones(med_ln_dl.shape)*0.25,
+                'dist_type': 'lognormal',
+                'unit': 'm'
+            },
+        }
+        # get intermediate values if requested
+        if return_inter_params:
+            output['msf'] = msf
+        
+        # return
+        return output
+
+
+# -----------------------------------------------------------
 class YoudEtal2002(LateralSpread):
     """
     Revised multilinear regression equations for prediction of lateral spread displacement (Youd et al., 2002). Two models are available:
@@ -245,7 +394,7 @@ class Hazus2020(LateralSpread):
         
     Geotechnical/geologic:
     prob_liq: float, np.ndarray or list
-        [%] probability of liquefaction
+        probability of liquefaction
     dist_water: float, np.ndarray or list, optional
         [km] distance to nearest river, lake, or coast; site is only susceptible to lateral spread if distance is less than 25 meters
     
@@ -314,7 +463,7 @@ class Hazus2020(LateralSpread):
     _MODEL_INPUT_GEO = {
         "desc": 'Geotechnical/geologic random variables:',
         'params': {
-            'prob_liq': 'probability of liquefaction (%)',
+            'prob_liq': 'probability of liquefaction',
             'dist_water': 'distance to nearest river, lake, or coast'
         }
     }
@@ -382,7 +531,7 @@ class Hazus2020(LateralSpread):
         k_delta = 0.0086*mag**3 - 0.0914*mag**2 + 0.4698*mag - 0.9835
         
         # susceptibility to lateral spreading only for deposits found near water body (dw < dw_cutoff)
-        pgdef = k_delta * expected_pgdef * prob_liq/100
+        pgdef = k_delta * expected_pgdef * prob_liq
         pgdef = pgdef/100 # also convert from cm to m
         pgdef[dist_water>25] = 1e-5
         

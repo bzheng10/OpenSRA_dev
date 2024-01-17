@@ -668,6 +668,14 @@ class PantoliEtal2022(WellheadRotation):
         l_p6_sys4 = l_p6_sys4/0.3048 # meter to feet
         w_valve = w_valve*224.809/1000 # kN to kips
         
+        # prevent 0 values for log(val)
+        zero_val = 1e-5
+        h_tree[h_tree==0] = zero_val # ft
+        l_p2[l_p2==0] = zero_val # ft
+        l_p6_sys23[l_p6_sys23==0] = zero_val # ft
+        l_p6_sys4[l_p6_sys4==0] = zero_val # ft
+        w_valve[w_valve==0] = zero_val # kips, or 0.01 lbs
+        
         # initialize intermediate and output arrays
         cases_to_run = []
         output_mean = {}

@@ -23,8 +23,8 @@ import numpy as np
 
 # OpenSRA modules and classes
 from src.base_class import BaseModel
-from src.dm._pipe_strain_base_models import HutabaratEtal2022_Normal, HutabaratEtal2022_Reverse
-from src.dm._pipe_strain_base_models import HutabaratEtal2022_SSComp, HutabaratEtal2022_SSTens
+from src.dm._pipe_strain_base import HutabaratEtal2022_Normal, HutabaratEtal2022_Reverse
+from src.dm._pipe_strain_base import HutabaratEtal2022_SSComp, HutabaratEtal2022_SSTens
 
 
 # -----------------------------------------------------------
@@ -175,8 +175,6 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             'level2': ['d_pipe', 't_pipe'],
             'level3': ['d_pipe', 't_pipe', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
         }
-        # 'clay': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'alpha_backfill', 's_u_backfill'],
-        # 'sand': ['d_pipe', 't_pipe', 'sigma_y', 'h_pipe', 'gamma_backfill', 'phi_backfill', 'delta_backfill'],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
         'clay': {
@@ -189,8 +187,6 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
             'level2': ['soil_type', 'soil_density'],
             'level3': ['soil_type', 'soil_density'],
         }
-        # 'clay': ['soil_type', 'soil_density'],
-        # 'sand': ['soil_type', 'soil_density'],
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = True
     _MODEL_FORM_DETAIL = {}

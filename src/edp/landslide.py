@@ -205,7 +205,7 @@ class BrayMacedo2019(Landslide):
         if ndim > 1:
             pgdef, sigma_pgdef, \
             ky, prob_d_eq_0, ln_pgdef_trunc, nonzero_median_cdf, = \
-                cls._model_njit(
+                cls.model(
                     pga, mag,
                     slope, t_slope, gamma_soil,
                     phi_soil, coh_soil,
@@ -214,7 +214,7 @@ class BrayMacedo2019(Landslide):
             # for testing
             pgdef, sigma_pgdef, \
             ky, prob_d_eq_0, ln_pgdef_trunc, nonzero_median_cdf, = \
-                cls._model_njit.py_func(
+                cls.model.py_func(
                     pga, mag,
                     slope, t_slope, gamma_soil,
                     phi_soil, coh_soil,
@@ -252,7 +252,7 @@ class BrayMacedo2019(Landslide):
         # fastmath=True,
         cache=True
     )
-    def _model_njit(
+    def model(
         pga, mag, # upstream PBEE RV
         slope, t_slope, gamma_soil, phi_soil, coh_soil, # geotechnical/geologic
     ):
@@ -530,20 +530,27 @@ class Jibson2007(Landslide):
         slope_rad = slope*np.pi/180
         phi_soil_rad = phi_soil*np.pi/180
         
-        # factor of safety
-        fs = coh_soil/(gamma_soil*t_slope*np.sin(slope_rad)) + \
-            np.tan(phi_soil_rad)/np.tan(slope_rad)
+        # # factor of safety
+        # fs = coh_soil/(gamma_soil*t_slope*np.sin(slope_rad)) + \
+        #     np.tan(phi_soil_rad)/np.tan(slope_rad)
+        
+        # # yield acceleration
+        # ky = np.maximum((fs-1) * np.sin(slope_rad),0.01)
         
         # yield acceleration
-        ky = np.maximum((fs-1) * np.sin(slope_rad),0.01)
+        ky = np.tan(phi_soil_rad-slope_rad) + \
+            coh_soil/(
+                gamma_soil * t_slope * np.cos(slope_rad)**2 * \
+                (1+np.tan(phi_soil_rad)*np.tan(slope_rad)))
+        ky = np.maximum(ky,0.01) # to avoid ky = 0
 
         # for magnitudes between 5.3 and 7.6
         # ind_mag_btw_5p3_7p6 = np.where(np.logical_and(mag>=5.3, mag<=7.6))[0]
         ind_mag_btw_5p3_7p6 = np.logical_and(mag>=5.3, mag<=7.6)
         # if len(ind_mag_btw_5p3_7p6) > 0:
         if True in ind_mag_btw_5p3_7p6:
-            # ratio = np.minimum(ky[ind_mag_btw_5p3_7p6]/pga[ind_mag_btw_5p3_7p6],0.99)
-            ratio = ky[ind_mag_btw_5p3_7p6]/pga[ind_mag_btw_5p3_7p6]
+            ratio = np.minimum(ky[ind_mag_btw_5p3_7p6]/pga[ind_mag_btw_5p3_7p6],0.99)
+            # ratio = ky[ind_mag_btw_5p3_7p6]/pga[ind_mag_btw_5p3_7p6]
             pgdef[ind_mag_btw_5p3_7p6] = 10**(
                 -2.710 + np.log10(
                     (1-ratio)**2.335 * (ratio)**-1.478
@@ -555,8 +562,8 @@ class Jibson2007(Landslide):
         # ind_mag_other = list(set(list(range(pga.shape[0]))).difference(set(ind_mag_btw_5p3_7p6)))
         ind_mag_other = ~np.logical_and(mag>=5.3, mag<=7.6)
         if True in ind_mag_other:
-            # ratio = np.minimum(ky[ind_mag_other]/pga[ind_mag_other],0.99)
-            ratio = ky[ind_mag_other]/pga[ind_mag_other]
+            ratio = np.minimum(ky[ind_mag_other]/pga[ind_mag_other],0.99)
+            # ratio = ky[ind_mag_other]/pga[ind_mag_other]
             pgdef[ind_mag_other] = 10**(
                 0.215 + np.log10(
                     (1-ratio)**2.341 * (ratio)**-1.438
@@ -582,7 +589,7 @@ class Jibson2007(Landslide):
         }
         # get intermediate values if requested
         if return_inter_params:
-            output['fs'] = fs
+            # output['fs'] = fs
             output['ky'] = ky
         
         # return

@@ -497,7 +497,8 @@ def get_samples_for_params(dist, n_sample, n_site):
 def process_methods_for_mean_and_sigma_of_mu(
     haz_dict, upstream_params, internal_params, input_samples=None, 
     n_sample=1, n_site=1, use_input_mean=False, input_dist=None,
-    level_to_run=3 # needed for generic models
+    level_to_run=3, # needed for generic models
+    turn_off_sigmas=False # misc
 ):
     """preprocess methods to get mean of mu, sigma of mu, and sigma for inputs"""
     
@@ -568,6 +569,7 @@ def process_methods_for_mean_and_sigma_of_mu(
         
         # loop through and search for return var and sigma, some methods have multiple conditions
         for param in return_params:
+                        
             # see if output is a single value or an array
             if np.ndim(out[param]['mean']) == 0:
                 # make ones array for results
@@ -607,8 +609,8 @@ def process_methods_for_mean_and_sigma_of_mu(
                     store_rvs[param][ind_lognormal,:] = np.log(out[param]['mean'][ind_lognormal,:])
            
             # get mean of mu
-            track_rvs_mean[param] = np.ma.masked_invalid(store_rvs[param]).mean(axis=1)
-            # track_rvs_mean[param] = store_rvs[param].mean(axis=1)
+            # track_rvs_mean[param] = np.ma.masked_invalid(store_rvs[param]).mean(axis=1)
+            track_rvs_mean[param] = store_rvs[param].mean(axis=1)
             
             # get average sigma over domain
             store_sigma[param] = np.sqrt(np.mean(store_sigma[param]**2,axis=1))
@@ -618,9 +620,9 @@ def process_methods_for_mean_and_sigma_of_mu(
         
             # after getting mean of mu, get epistemic uncertainty
             track_rvs_mean_reshape = np.tile(track_rvs_mean[param].copy(),(n_sample,1)).T
-            var_of_mu_input_vector_down = \
-                np.ma.masked_invalid((store_rvs[param]-track_rvs_mean_reshape)**2).mean(axis=1)
-            # var_of_mu_input_vector_down = np.mean((store_rvs[param]-track_rvs_mean_reshape)**2,axis=1)
+            # var_of_mu_input_vector_down = \
+            #     np.ma.masked_invalid((store_rvs[param]-track_rvs_mean_reshape)**2).mean(axis=1)
+            var_of_mu_input_vector_down = np.mean((store_rvs[param]-track_rvs_mean_reshape)**2,axis=1)
             store_sigma_mu[param] = np.sqrt(store_sigma_mu[param]**2 + var_of_mu_input_vector_down)
         
             # store for post-processing and checks
@@ -668,12 +670,20 @@ def process_methods_for_mean_and_sigma_of_mu(
         sigma_down = np.sqrt(var_down)
         
         # store to results
-        haz_results[param] = {
-            'mean_of_mu': mean_of_mu_vector_down,
-            'sigma_of_mu': sigma_mu_down,
-            'sigma': sigma_down,
-            'dist_type': store_dist_type[param]
-        }
+        if turn_off_sigmas is False:
+            haz_results[param] = {
+                'mean_of_mu': mean_of_mu_vector_down,
+                'sigma_of_mu': sigma_mu_down,
+                'sigma': sigma_down,
+                'dist_type': store_dist_type[param]
+            }
+        else:
+            haz_results[param] = {
+                'mean_of_mu': mean_of_mu_vector_down,
+                'sigma_of_mu': np.ones(sigma_mu_down.shape)*0.0,
+                'sigma': np.ones(sigma_down.shape)*0.001,
+                'dist_type': store_dist_type[param]
+            }
     
     # print(f'\t2a---3. time: {time.time()-time_start} seconds')
     # time_start = time.time()
@@ -690,7 +700,8 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
     haz_dict, upstream_params, internal_params, input_samples=None,
     n_sample=1, n_site=1, get_liq_susc=True, use_input_mean=False, input_dist=None,
     get_mean_over_samples=False,
-    level_to_run=3 # needed for generic models
+    level_to_run=3, # needed for generic models
+    turn_off_sigmas=False # misc
 ):
     """preprocess methods to get mean of mu, sigma of mu, and sigma for inputs"""
     
@@ -764,59 +775,62 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
         for param in return_params:
             # if isinstance(out[param],dict):
             # see if output is a single value or an array
-            if np.ndim(out[param]['mean']) == 0:
-                # make ones array for results
-                to_expand = True
-                ones_arr = np.ones((n_site,n_sample))
+            if param == 'liq_susc_val': # skip if liq_susc_val - not tracking mean and sigmas
+                pass
             else:
-                to_expand = False
+                if np.ndim(out[param]['mean']) == 0:
+                    # make ones array for results
+                    to_expand = True
+                    ones_arr = np.ones((n_site,n_sample))
+                else:
+                    to_expand = False
                 
-            # get params
-            store_sigma_mu[param] = out[param]['sigma_mu']
-            store_dist_type[param] = out[param]['dist_type']
-            # repeat mat if output is a single value
-            if to_expand:
-                store_sigma_mu[param] = ones_arr*store_sigma_mu[param]
-                    
-            # store mean
-            if out[param]['dist_type'] == 'lognormal':
-                store_rvs[param] = np.log(out[param]['mean'])
-            elif out[param]['dist_type'] == 'normal':
-                store_rvs[param] = out[param]['mean']
-            # repeat mat if output is a single value
-            if to_expand:
-                store_rvs[param] = ones_arr*store_rvs[param]
+                # get params
+                store_sigma_mu[param] = out[param]['sigma_mu']
+                store_dist_type[param] = out[param]['dist_type']
+                # repeat mat if output is a single value
+                if to_expand:
+                    store_sigma_mu[param] = ones_arr*store_sigma_mu[param]
+                        
+                # store mean
+                if out[param]['dist_type'] == 'lognormal':
+                    store_rvs[param] = np.log(out[param]['mean'])
+                elif out[param]['dist_type'] == 'normal':
+                    store_rvs[param] = out[param]['mean']
+                # repeat mat if output is a single value
+                if to_expand:
+                    store_rvs[param] = ones_arr*store_rvs[param]
 
-            # get mean of mu
-            track_rvs_mean[param] = np.ma.masked_invalid(store_rvs[param]).mean(axis=1)
-            # track_rvs_mean[param] = store_rvs[param].mean(axis=1)
-        
-            # get average base sigma_mu over domain
-            store_sigma_mu[param] = np.sqrt(np.mean(store_sigma_mu[param]**2,axis=1))
-    
-            # after getting mean, run loop again to get epistemic uncertainty
-            track_rvs_mean_reshape = np.tile(track_rvs_mean[param].copy(),(n_sample,1)).T
-            var_of_mu_input_vector_down = \
-                np.ma.masked_invalid((store_rvs[param]-track_rvs_mean_reshape)**2).mean(axis=1)
-            # var_of_mu_input_vector_down = np.mean((store_rvs[param]-track_rvs_mean_reshape)**2,axis=1)
-            sigma_of_mu_vector_method_down = np.sqrt(store_sigma_mu[param]**2 + var_of_mu_input_vector_down)
-
-            # if tracking mean over samples
-            if get_mean_over_samples:
-                # store for post-processing and checks
-                haz_results_by_method[method][param] = {
-                    'mean_of_mu': track_rvs_mean[param],
-                    'sigma_of_mu': sigma_of_mu_vector_method_down,
-                    'dist_type': store_dist_type[param]
-                }
+                # get mean of mu
+                # track_rvs_mean[param] = np.ma.masked_invalid(store_rvs[param]).mean(axis=1)
+                track_rvs_mean[param] = store_rvs[param].mean(axis=1)
             
-            else:        
-                # store for post-processing and checks
-                haz_results_by_method[method][param] = {
-                    'mean_of_mu': store_rvs[param],
-                    'sigma_of_mu': sigma_of_mu_vector_method_down,
-                    'dist_type': store_dist_type[param]
-                }
+                # get average base sigma_mu over domain
+                store_sigma_mu[param] = np.sqrt(np.mean(store_sigma_mu[param]**2,axis=1))
+        
+                # after getting mean, run loop again to get epistemic uncertainty
+                track_rvs_mean_reshape = np.tile(track_rvs_mean[param].copy(),(n_sample,1)).T
+                # var_of_mu_input_vector_down = \
+                #     np.ma.masked_invalid((store_rvs[param]-track_rvs_mean_reshape)**2).mean(axis=1)
+                var_of_mu_input_vector_down = np.mean((store_rvs[param]-track_rvs_mean_reshape)**2,axis=1)
+                sigma_of_mu_vector_method_down = np.sqrt(store_sigma_mu[param]**2 + var_of_mu_input_vector_down)
+
+                # if tracking mean over samples
+                if get_mean_over_samples:
+                    # store for post-processing and checks
+                    haz_results_by_method[method][param] = {
+                        'mean_of_mu': track_rvs_mean[param],
+                        'sigma_of_mu': sigma_of_mu_vector_method_down,
+                        'dist_type': store_dist_type[param]
+                    }
+                
+                else:        
+                    # store for post-processing and checks
+                    haz_results_by_method[method][param] = {
+                        'mean_of_mu': store_rvs[param],
+                        'sigma_of_mu': sigma_of_mu_vector_method_down,
+                        'dist_type': store_dist_type[param]
+                    }
         # print(f'\bb. time: {time.time()-time_start1} seconds')
         # time_start1 = time.time()
     
@@ -825,35 +839,45 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
     # loop through return params to get mean, sigma, and sigma_mu between methods
     for param in return_params:
 
-        # initialize hazard-level varibles for geting mean values
-        if get_mean_over_samples:
-            mean_of_mu_vector_down = np.zeros(n_site)
+        if param == 'liq_susc_val':
+            pass
         else:
-            mean_of_mu_vector_down = np.zeros((n_site,n_sample))
-        var_of_mu_down = 0
-        
-        # loop through methods
-        for count,method in enumerate(methods):
-            # accumulate to get mean values
-            mean_of_mu_vector_down += haz_results_by_method[method][param]['mean_of_mu'] * weights[count]
-            var_of_mu_down += haz_results_by_method[method][param]['sigma_of_mu']**2 * weights[count]
-        
-        # get epistemic uncertainty with mean of method
-        var_of_mu_btw_methods_vector_down = np.sum([
-            (haz_results_by_method[method][param]['mean_of_mu']-mean_of_mu_vector_down)**2
-            for each in methods
-        ],axis=0)/n_methods
-        # get mean over samples
-        var_of_mu_btw_methods_vector_down = np.mean(var_of_mu_btw_methods_vector_down,axis=1)
-        # take square root
-        sigma_mu_down = np.sqrt(var_of_mu_down + var_of_mu_btw_methods_vector_down)
-        
-        # store to results
-        haz_results[param] = {
-            'mean_of_mu': mean_of_mu_vector_down,
-            'sigma_of_mu': sigma_mu_down,
-            'dist_type': store_dist_type[param]
-        }
+            # initialize hazard-level varibles for geting mean values
+            if get_mean_over_samples:
+                mean_of_mu_vector_down = np.zeros(n_site)
+            else:
+                mean_of_mu_vector_down = np.zeros((n_site,n_sample))
+            var_of_mu_down = 0
+            
+            # loop through methods
+            for count,method in enumerate(methods):
+                # accumulate to get mean values
+                mean_of_mu_vector_down += haz_results_by_method[method][param]['mean_of_mu'] * weights[count]
+                var_of_mu_down += haz_results_by_method[method][param]['sigma_of_mu']**2 * weights[count]
+            
+            # get epistemic uncertainty with mean of method
+            var_of_mu_btw_methods_vector_down = np.sum([
+                (haz_results_by_method[method][param]['mean_of_mu']-mean_of_mu_vector_down)**2
+                for each in methods
+            ],axis=0)/n_methods
+            # get mean over samples
+            var_of_mu_btw_methods_vector_down = np.mean(var_of_mu_btw_methods_vector_down,axis=1)
+            # take square root
+            sigma_mu_down = np.sqrt(var_of_mu_down + var_of_mu_btw_methods_vector_down)
+            
+            # store to results
+            if turn_off_sigmas is False:
+                haz_results[param] = {
+                    'mean_of_mu': mean_of_mu_vector_down,
+                    'sigma_of_mu': sigma_mu_down,
+                    'dist_type': store_dist_type[param]
+                }
+            else:
+                haz_results[param] = {
+                    'mean_of_mu': mean_of_mu_vector_down,
+                    'sigma_of_mu': np.ones(sigma_mu_down.shape)*0.0,
+                    'dist_type': store_dist_type[param]
+                }
         
     # print(f'\tcc. time: {time.time()-time_start1} seconds')
     # time_start1 = time.time()
@@ -869,11 +893,11 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
         for count,method in enumerate(methods):
             if liq_susc_val[method] is not None:
                 if get_mean_over_samples:
-                    liq_susc_val_mean += np.ma.masked_invalid(liq_susc_val[method]).mean(axis=1)
+                    liq_susc_val_mean += np.ma.masked_invalid(liq_susc_val[method]).mean(axis=1) * 1/n_methods
                     # liq_susc_val_mean += np.mean(liq_susc_val[method],axis=1)
                 else:
-                    liq_susc_val_mean += liq_susc_val[method]
-        
+                    liq_susc_val_mean += liq_susc_val[method] * 1/n_methods
+
         # get liq susc category
         liq_susc[liq_susc_val_mean>-1.15] = 'very high'
         liq_susc[liq_susc_val_mean<=-1.15] = 'high'
@@ -885,19 +909,22 @@ def process_methods_for_mean_and_sigma_of_mu_for_liq(
         liq_susc = None
 
     # return
-    return haz_results, liq_susc
+    if get_liq_susc:
+        return haz_results, liq_susc, liq_susc_val_mean
+    else:
+        return haz_results, liq_susc
 
 
 # def get_fractiles(pc_samples, site_id, infra_type, fractiles=[5,16,50,84,95]):
 def get_fractiles(pc_samples, fractiles=[5,16,50,84,95], n_sig_fig=None):
     """get fractiles and mean"""
     frac_return = np.vstack([
-        np.percentile(pc_samples*100,fractiles,axis=0),
-        np.nanmean(pc_samples*100,axis=0)
-        # np.mean(pc_samples*100,axis=0)
+        np.percentile(pc_samples,fractiles,axis=0),
+        np.nanmean(pc_samples,axis=0)
+        # np.mean(pc_samples,axis=0)
     ]).T
     # convert back to decimals
-    frac_return = frac_return/100
+    # frac_return = frac_return
     # print(frac_return)
     # round to N sig figs
     if n_sig_fig is not None:

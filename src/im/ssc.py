@@ -17,21 +17,21 @@ import os
 import logging
 import json
 import sys
+import time
 import xml.etree.ElementTree as ET
+from zipfile import ZipFile
+from xml.dom.minidom import parseString
 # import inspect
 
 # data manipulation modules
 import numpy as np
 # from numpy.testing import assert_array_equal, assert_allclose
-import pandas as pd
-from pandas import DataFrame, read_hdf
-from geopandas import GeoDataFrame, GeoSeries, points_from_xy
-from shapely.geometry import Polygon
+from pandas import DataFrame, read_hdf, read_csv, concat
 # from scipy.interpolate import interp1d
 
-
 # geospatial processing modules
-
+from geopandas import GeoDataFrame, GeoSeries, points_from_xy
+from shapely.geometry import Polygon
 
 # OpenQuake for distance calculations
 from openquake.hazardlib.geo.surface.simple_fault import SimpleFaultSurface
@@ -195,8 +195,8 @@ class _UCERF(SeismicSource):
         self.ucerf_model_rupture_fpath = os.path.join(self.ucerf_model_dir,"UCERF3_reduced_senario_dM0.5_v2_ruptures.csv")
         self.ucerf_model_section_fpath = os.path.join(self.ucerf_model_dir,"UCERF3_reduced_senario_dM0.5_v2_sections.csv")
         # load ucerf rupture file
-        self.df_rupture = pd.read_csv(self.ucerf_model_rupture_fpath)
-        self.df_section = pd.read_csv(self.ucerf_model_section_fpath)
+        self.df_rupture = read_csv(self.ucerf_model_rupture_fpath)
+        self.df_section = read_csv(self.ucerf_model_section_fpath)
         # convert fault trace from string to list of coordinates
         self.df_rupture.FaultTrace = self.df_rupture.FaultTrace.apply(lambda x: json.loads(x))
         self.df_rupture.SectionIDForRupture = self.df_rupture.SectionIDForRupture.apply(lambda x: json.loads(x))
@@ -495,7 +495,8 @@ class ShakeMap(SeismicSource):
         if event_names is None:
             self.event_names = [
                 case for case in os.listdir(sm_dir) 
-                if os.path.isdir(os.path.join(sm_dir,case)) and 'rupture.json' in os.listdir(os.path.join(sm_dir,case))
+                if os.path.isdir(os.path.join(sm_dir,case))
+                # if os.path.isdir(os.path.join(sm_dir,case)) and 'rupture.json' in os.listdir(os.path.join(sm_dir,case))
             ]
         else:
             self.event_names = event_names
@@ -504,7 +505,6 @@ class ShakeMap(SeismicSource):
         # self.event_id = np.arange(self._n_event)
         # self.rate = np.ones(self._n_event) # set annual rates to 1 for ShakeMap events
         # self.event_metadata = np.zeros((self._n_event ,3)) # [event_id, magnitude, annual_rate]
-        
         
         # initialize empty params
         # self.mag = None
@@ -525,17 +525,31 @@ class ShakeMap(SeismicSource):
         self._check_content_in_sm_dir()
         self._parse_sm_files() # loads ruptures and sections for UCERF models
     
-    
     def _check_content_in_sm_dir(self):
         """check to make sure each ShakeMap folder contains the required files"""
         for event_i in self.event_names:
             # see what files are given
             files = os.listdir(os.path.join(self._sm_dir,event_i))
-            if 'grid.xml' in files and 'grid.xml' in files and 'grid.xml' in files:
+            has_grid = False
+            has_uncertainty = False
+            has_rupture = False
+            if 'grid.xml' in files:
+                has_grid = True
+            if 'uncertainty.xml' in files:
+                has_uncertainty = True
+            if 'rupture.json' in files or 'fault.kmz' in files:
+                has_rupture = True
+            if has_grid and has_uncertainty and has_rupture:
                 pass
             else:
-                raise ValueError(f'Requires "grid.xml", "uncertainty.xml", and "rupture.json"; one of them is missing')
-    
+                logging.info(f'Missing the following item(s) for ShakeMap event: {event_i}')
+                if not has_grid:
+                    logging.info(f'\t- "grid.xml" with mean ground motions')
+                if not has_uncertainty:
+                    logging.info(f'\t- "uncertainty.xml" with epistemic uncertainty')
+                if not has_rupture:
+                    logging.info(f'\t- "rupture.json" or "fault.kmz" with fault trace')
+                raise ValueError("~~~~~OpenSRA will exit now!~~~~~")
     
     def _parse_sm_files(self):
         """load data from ShakeMap folders"""
@@ -543,13 +557,14 @@ class ShakeMap(SeismicSource):
         dip = []
         rake = []
         mag = []
-        dzs = []
+        # dzs = []
         planes_for_events = []
         traces = []
         ref = []
         z_tor = []
         z_bor = []
         dip_dir = []
+        n_planes = []
         # loop through events
         for i, event_i in enumerate(self.event_names):
             curr_sm_dir = os.path.join(self._sm_dir,event_i)
@@ -590,6 +605,9 @@ class ShakeMap(SeismicSource):
                 # skip 'event_specific_uncertainty'; uncertainty information will be imported from "uncertainty.xml"
                 if current_tag == 'event_specific_uncertainty':
                     pass
+                elif current_tag == 'event':
+                    # get magnitude
+                    mag.append(float(child.get('magnitude')))
                 # read 'grid_field' information
                 elif current_tag == 'grid_field':
                     if not child.get('index') in gm_dict[current_tag].keys():
@@ -707,74 +725,147 @@ class ShakeMap(SeismicSource):
             self._sigma_meta[event_i] = sigma_dict.copy()
             
             # combine dfs into one
-            self.sm_grid_data[event_i] = pd.concat([coord_df, mean_df, sigma_df], axis=1)
+            self.sm_grid_data[event_i] = concat([coord_df, mean_df, sigma_df], axis=1)
 
             # -----------------------------------------------------------
             # parse rupture file
-            with open(os.path.join(curr_sm_dir,'rupture.json'),'r') as f:
-                sm_rupture = json.load(f)
-            mag.append(sm_rupture['metadata']['mag'])
-            rake.append(sm_rupture['metadata']['rake'])
-            ref.append(event_i)
-            planes_for_events.append(np.asarray(sm_rupture['features'][0]['geometry']['coordinates'][0]))
-            for plane in planes_for_events[-1]:
-                plane_wgs84 = np.zeros(plane.shape)
-                plane_wgs84[:,2] = plane[:,2]
-                plane_wgs84[:,0],plane_wgs84[:,1],_,_ = wgs84_to_utm(lon=plane[:,0],lat=plane[:,1],force_zone_num=10)
-                plane_wgs84[:,0] = plane_wgs84[:,0]/1000
-                plane_wgs84[:,1] = plane_wgs84[:,1]/1000
-                top_edge_i = []
-                bot_edge_i = []
-                trace_i = []
-                for j in range(len(plane_wgs84)-1):
-                    if plane_wgs84[j,2] != plane_wgs84[j+1,2]:
-                        dhoriz = ((plane_wgs84[j,0]-plane_wgs84[j+1,0])**2 + (plane_wgs84[j,1]-plane_wgs84[j+1,1])**2) ** 0.5
-                        dy = plane_wgs84[j+1,1]-plane_wgs84[j,1]
-                        dx = plane_wgs84[j+1,0]-plane_wgs84[j,0]
-                        if dx == 0 and dy == 0:
-                            dip_dir.append(90)
+            flag_using_fault_kmz = False
+            flag_using_rupture_json = False
+            if 'rupture.json' in os.listdir(curr_sm_dir):
+                flag_using_rupture_json = True
+                with open(os.path.join(curr_sm_dir,'rupture.json'),'r') as f:
+                    sm_rupture = json.load(f)
+                # mag.append(sm_rupture['metadata']['mag'])
+                rake.append(sm_rupture['metadata']['rake'])
+                ref.append(event_i)
+                planes_for_events.append(sm_rupture['features'][0]['geometry']['coordinates'][0])
+                n_planes.append(len(planes_for_events[-1]))
+                # planes_for_events.append(np.squeeze(sm_rupture['features'][0]['geometry']['coordinates']))
+            elif 'fault.kmz' in os.listdir(curr_sm_dir):
+                flag_using_fault_kmz = True
+                # get rake
+                # if 'other_fault_info.json' in os.listdir(curr_sm_dir):
+                #     with open(os.path.join(curr_sm_dir,'other_fault_info.json'),'r') as f:
+                #         other_fault_info = json.load(f)
+                #     #  try to pull from "other_fault_info.json"
+                #     if 'rake' in other_fault_info:
+                #         rake.append(None)
+                #     else:
+                #         raise ValueError(f'Missing "rake" as input. Create a file called "other_fault_info.json" and add "Rake" as a key')
+                # else:
+                #     raise ValueError(f'Missing "rake" as input. Create a file called "other_fault_info.json" and add "Rake" as a key')
+                rake.append(None)
+                dip.append(None)
+                dip_dir.append(None)
+                z_tor.append(None)
+                z_bor.append(None)
+                n_planes.append(1)
+                ref.append(os.path.basename(curr_sm_dir))
+                # read fault kmz and kml, and convert to xml
+                fault_kmz_fname = 'fault.kmz'
+                kmz = ZipFile(os.path.join(curr_sm_dir,fault_kmz_fname),'r')
+                kml = kmz.open(fault_kmz_fname.replace('.kmz','.kml'),'r').read()
+                fault_xml = parseString(kml).toxml()
+                # find section for "Fault Surface Projection"
+                ind_fault_surf_proj = fault_xml.find('Fault Surface Projection') # technically not the trace - working
+                # get string of coordinates
+                ind_coord_start = ind_fault_surf_proj + fault_xml[ind_fault_surf_proj:].find('<coordinates>')+len('<coordinates>')
+                ind_coord_end = ind_fault_surf_proj + fault_xml[ind_fault_surf_proj:].find('</coordinates>')
+                coord_str = fault_xml[ind_coord_start:ind_coord_end]
+                # convert coordinate string to coordinate array
+                coords = np.asarray([[float(val) for val in coord.split(',')] for coord in coord_str.split(' ')])
+                coords = coords[:,:2] # keep lon + lat
+                coords = np.round(coords,3) # round to 3 digits, a few coordinates that are very close together spatially
+                coords_unique = np.unique(coords,axis=0) # keep unique only
+                traces.append(coords_unique.tolist()) # convert to list for consistent typing with "rupture.json" processing
+                
+            if flag_using_rupture_json:
+                trace_for_plane = []
+                z_tor_for_plane = []
+                z_bor_for_plane = []
+                dip_for_plane = []
+                dip_dir_for_plane = []
+                # go through every plane and compute its geometric info (z_tor, z_bot, dip)
+                # -1 for last SM event appended
+                for plane in planes_for_events[-1]:
+                    plane = np.asarray(plane)
+                    plane_wgs84 = np.zeros(plane.shape)
+                    plane_wgs84[:,2] = plane[:,2] # depth already in SI units, km
+                    plane_wgs84[:,0],plane_wgs84[:,1],_,_ = wgs84_to_utm(lon=plane[:,0],lat=plane[:,1],force_zone_num=10) # from deg to km
+                    plane_wgs84[:,0] = plane_wgs84[:,0]/1000 # m to km
+                    plane_wgs84[:,1] = plane_wgs84[:,1]/1000 # m to km
+                    top_edge_i = []
+                    bot_edge_i = []
+                    trace_i = []
+                    # loop through every index in plane
+                    for j in range(len(plane_wgs84)-1):
+                        # identify where depth changes, and use the two nodes with different depths to determine z_tor, z_bor, dip
+                        if plane_wgs84[j,2] != plane_wgs84[j+1,2]:
+                            dhoriz = ((plane_wgs84[j,0]-plane_wgs84[j+1,0])**2 + (plane_wgs84[j,1]-plane_wgs84[j+1,1])**2) ** 0.5 # x-y tangent length
+                            dy = plane_wgs84[j+1,1]-plane_wgs84[j,1]
+                            dx = plane_wgs84[j+1,0]-plane_wgs84[j,0]
+                            # get dip dir
+                            if dx == 0 and dy == 0:
+                                # if dy and dx are 0, then plane's dip dir is indeterminate (any direction)
+                                dip_dir_for_plane.append(90)
+                            else:
+                                # get dip dir by angle between dy and dx
+                                dip_dir_for_plane.append(np.round(np.arctan(dy/dx)*180/np.pi,1))
+                                # correct for sign convention based on dx direction
+                                if dx < 0:
+                                    dip_dir_for_plane[-1] = -dip_dir_for_plane[-1]
+                            # get dz and use it to determine dip angle
+                            dz = abs(plane_wgs84[j,2]-plane_wgs84[j+1,2])
+                            dip_for_plane.append(np.round(np.arctan(dz/dhoriz)*180/np.pi,1))
+                            # dzs.append(dz)
+                            # finally, get z_tor and z_bot
+                            z_tor_for_plane.append(min(plane_wgs84[j,2],plane_wgs84[j+1,2]))
+                            z_bor_for_plane.append(max(plane_wgs84[j,2],plane_wgs84[j+1,2]))
+                            n_top_edge = j+1
+                            break
+                    # determine plane trace (surface projection along dip)
+                    if z_tor_for_plane[-1] > 0:
+                        top_edge_j = plane_wgs84[:n_top_edge] # get top edge nodes
+                        # if dip is vertical, then trace aligns with the top of edge nodes.
+                        if dip_for_plane[-1] == 90:
+                            x_trace = top_edge_j[:,0]
+                            y_trace = top_edge_j[:,1]
                         else:
-                            dip_dir.append(np.round(np.arctan(dy/dx)*180/np.pi,1))
-                            if dx < 0:
-                                dip_dir[-1] = -dip_dir[-1]
-                        dz = abs(plane_wgs84[j,2]-plane_wgs84[j+1,2])
-                        dip.append(np.round(np.arctan(dz/dhoriz)*180/np.pi,1))
-                        dzs.append(dz)
-                        z_tor.append(min(plane_wgs84[j,2],plane_wgs84[j+1,2]))
-                        z_bor.append(max(plane_wgs84[j,2],plane_wgs84[j+1,2]))
-                        n_top_edge = j+1
-                        break
-                if z_tor[-1] > 0:
-                    top_edge_j = plane_wgs84[:n_top_edge]
-                    if dip[-1] == 90:
-                        x_trace = top_edge_j[:,0]
-                        y_trace = top_edge_j[:,1]
+                            # separate out nodes on top and bottom edges
+                            top_edge_j = plane_wgs84[:n_top_edge]
+                            bot_edge_j = plane_wgs84[len(plane_wgs84)-2:n_top_edge-1:-1]
+                            # back project trace nodes based on dip and dip dir
+                            surf_diag_to_trace = z_tor_for_plane[-1]/np.tan(dip_for_plane[-1]*np.pi/180)
+                            if dip_dir_for_plane[-1] < 0:
+                                x_trace = top_edge_j[:,0] + np.cos(dip_dir_for_plane[-1]*np.pi/180)*surf_diag_to_trace
+                            else:
+                                x_trace = top_edge_j[:,0] - np.cos(dip_dir_for_plane[-1]*np.pi/180)*surf_diag_to_trace
+                            y_trace = top_edge_j[:,1] - np.sin(dip_dir_for_plane[-1]*np.pi/180)*surf_diag_to_trace
+                        # convert back to degrees
+                        x_trace_wgs, y_trace_wgs = utm_to_wgs84(x_trace*1000,y_trace*1000,zone=10)
+                        # round coords and append to list
+                        trace_j = np.asarray(np.transpose([
+                            np.round(x_trace_wgs,6),
+                            np.round(y_trace_wgs,6),
+                            np.zeros(len(x_trace))
+                        ]))
                     else:
-                        top_edge_j = plane_wgs84[:n_top_edge]
-                        bot_edge_j = plane_wgs84[len(plane_wgs84)-2:n_top_edge-1:-1]
-                        surf_diag_to_trace = z_tor[-1]/np.tan(dip[-1]*np.pi/180)
-                        if dip_dir[-1] < 0:
-                            x_trace = top_edge_j[:,0] + np.cos(dip_dir[-1]*np.pi/180)*surf_diag_to_trace
-                        else:
-                            x_trace = top_edge_j[:,0] - np.cos(dip_dir[-1]*np.pi/180)*surf_diag_to_trace
-                        y_trace = top_edge_j[:,1] - np.sin(dip_dir[-1]*np.pi/180)*surf_diag_to_trace
-                    x_trace_wgs, y_trace_wgs = utm_to_wgs84(x_trace*1000,y_trace*1000,zone=10)
-                    trace_j = np.asarray(np.transpose([
-                        np.round(x_trace_wgs,6),
-                        np.round(y_trace_wgs,6),
-                        np.zeros(len(x_trace))
-                    ]))
-                else:
-                    trace_j = plane[:n_top_edge,:]
-                traces.append(np.flipud(trace_j).tolist())
+                        trace_j = plane[:n_top_edge,:]
+                    trace_for_plane.append(np.flipud(trace_j).tolist())
+                # add metrics to list
+                traces.append(trace_for_plane)
+                z_tor.append(z_tor_for_plane)
+                z_bor.append(z_bor_for_plane)
+                dip.append(dip_for_plane)
+                dip_dir.append(dip_dir_for_plane)
 
             # store ShakeMap file information
             for j, im in enumerate(self.im_list):
                 self.sm_summary['Event_'+str(i)]['Units'][im] = gm_dict['grid_field'][str(index_for_ims_in_mean_file[j]+1)]['units']
-            self.sm_summary['Event_'+str(i)]['Metadata'] = gm_dict['event']            
+            self.sm_summary['Event_'+str(i)]['Metadata'] = gm_dict['event']
             
         # storing event rupture details
-        self.df_rupture = pd.DataFrame.from_dict({
+        self.df_rupture = DataFrame.from_dict({
             'EventID': list(range(len(traces))),
             'EventName': ref,
             'Magnitude': mag,
@@ -784,9 +875,9 @@ class ShakeMap(SeismicSource):
             'DipDir': dip_dir,
             'UpperDepth': z_tor,
             'LowerDepth': z_bor,
+            'NumPlanes': z_bor,
             'FaultTrace': traces,
         })
-    
     
     def process_rupture(
         self,
@@ -811,22 +902,19 @@ class ShakeMap(SeismicSource):
             logging.info(f"\t\t- min magnitude: {self._mag_min}")
         if self._mag_max is not None:
             self.df_rupture = self.df_rupture.loc[self.df_rupture.Magnitude<=self._mag_max].reset_index(drop=True)
-            logging.info(f"\t\t- min magnitude: {self._mag_max}")
+            logging.info(f"\t\t- max magnitude: {self._mag_max}")
         # if only keeping certain events
         if self._event_ids_to_keep is not None:
-            rows_with_event_ids_to_keep = np.asarray([
-                np.where(self.df_rupture.EventID.values==event_id)[0][0]
-                for event_id in self._event_ids_to_keep
-            ])
+            event_id_dict_for_search = {event_id:i for i,event_id in enumerate(self.df_rupture.EventID)}
+            rows_with_event_ids_to_keep = [event_id_dict_for_search[event_id] for event_id in self._event_ids_to_keep]
             self.df_rupture = self.df_rupture.loc[rows_with_event_ids_to_keep].reset_index(drop=True)
         self._n_event = self.df_rupture.shape[0]
         logging.info(f"\t- Number of events remaining after filter: {self._n_event}")
     
-    
-    def _sample_gm_from_map_i(self, i, lon, lat, out_of_bound_value=-10, aleatory_default=0.01):
+    def _sample_gm_from_map_i(self, i, gs_sites, out_of_bound_value=-10, aleatory_default=0.01):
         """sample ground motions from maps for event i using nearest neighbor"""
         # num sites
-        n_site = len(lon)
+        n_site = gs_sites.shape[0]
         # other items
         im_list = self.im_list
         # current event name
@@ -834,46 +922,29 @@ class ShakeMap(SeismicSource):
         gm_meta_i = self._gm_meta[event_i].copy()
         grid_data_i = self.sm_grid_data[event_i].copy()
         index_for_ims_mean = self._index_for_ims[event_i]['mean']
-        index_for_ims_sigma = self._index_for_ims[event_i]['sigma']
         # use sindex in geopandas for nearest neighbor
         gdf_gm = GeoDataFrame(geometry=points_from_xy(
             grid_data_i.lon.values,grid_data_i.lat.values))
-        # make boundary to first filter points within ShakeMap extent
+        # make boundary to first filter points outside ShakeMap extent
         bound = GeoDataFrame(geometry=[Polygon([
             [gm_meta_i['grid_specification']['lon_min'], gm_meta_i['grid_specification']['lat_min']],
             [gm_meta_i['grid_specification']['lon_min'], gm_meta_i['grid_specification']['lat_max']],
             [gm_meta_i['grid_specification']['lon_max'], gm_meta_i['grid_specification']['lat_max']],
             [gm_meta_i['grid_specification']['lon_max'], gm_meta_i['grid_specification']['lat_min']],
         ])])
-        # turn sites into geoseries
-        gs_sites = GeoSeries(points_from_xy(lon, lat))
-        # get points within boundary
-        sites_in_bound = gs_sites.sindex.query_bulk(bound.geometry, predicate='intersects')[1]
-        # sites_in_bound = gs_sites.sindex.query_bulk(bound.geometry)[1]
+        # get points within and outside boundary
+        sites_in_bound = gs_sites.sindex.query(bound.geometry, predicate='intersects')[1]
         sites_not_in_bound = list(set(list(range(n_site))).difference(set(sites_in_bound)))
-        # for sites in bound, get nearest neighbor
-        # first make new geoseries
-        gs_sites_in_bound = GeoSeries(points_from_xy(lon[sites_in_bound],lat[sites_in_bound]))
-        # get nearest neighbor for sites
-        # nearest_sm_node = gdf_gm.sindex.nearest(gs_sites_in_bound)[1]
-        nearest_site, nearest_sm_node = gdf_gm.sindex.nearest(gs_sites_in_bound, return_all=False)
+        gdf_sites_in_bound = gs_sites.loc[sites_in_bound].copy().reset_index(drop=True)
+        # get nearest gm nodes for sites in bound
+        nearest_site, nearest_sm_node = gdf_gm.sindex.nearest(gdf_sites_in_bound.geometry, return_all=False)
         # initialize array for interpolated means and uncertainty
         site_gm = np.zeros((n_site,len(im_list)))
         site_sigma = np.zeros((n_site,len(im_list)))
         site_aleatory = np.zeros((n_site,len(im_list)))
         site_epistemic = np.zeros((n_site,len(im_list)))
         
-        # print(sites_in_bound.shape)
-        # print(nearest_sm_node.shape)
-        # print(nearest_site.shape)
-        
-        # print(nearest_site[:10])
-        # print(nearest_sm_node[:10])
-        # print(sites_in_bound[:10])
-        
-        # if len(nearest_sm_node) != len(sites_in_bound)
-        
-        # interpolate for median IMs
+        # get median IMs
         for i in range(len(im_list)):
             # get im mean values
             site_gm[sites_in_bound,i] = grid_data_i[f'{im_list[i]}_mean'].values[nearest_sm_node]
@@ -890,10 +961,7 @@ class ShakeMap(SeismicSource):
             site_sigma[sites_in_bound,i] = grid_data_i[f'{im_list[i]}_sigma'].values[nearest_sm_node]
             # site_sigma[sites_not_in_bound,i] = out_of_bound_value
             site_aleatory[sites_in_bound,i] = aleatory_default
-            site_epistemic[sites_in_bound,i] = np.sqrt(
-                site_sigma[sites_in_bound,i]**2 - \
-                site_aleatory[sites_in_bound,i]**2
-            )
+            site_epistemic[sites_in_bound,i] = np.sqrt(site_sigma[sites_in_bound,i]**2 - site_aleatory[sites_in_bound,i]**2)
             
         # update metadata
         self._gm_meta[event_i] = gm_meta_i.copy()
@@ -910,7 +978,7 @@ class ShakeMap(SeismicSource):
 # -----------------------------------------------------------
 class UserDefinedRupture(SeismicSource):
     """
-    User defined class
+    User defined class for user defined rupture, which OpenSRA uses to calculate ground motions with GMPEs
     
     Parameters
     ----------
@@ -954,7 +1022,7 @@ class UserDefinedRupture(SeismicSource):
             return ValueError("Must provided fpath (path to rupture CSV file)")
         else:
             # read
-            self.df_rupture = pd.read_csv(self.fpath)
+            self.df_rupture = read_csv(self.fpath)
             # convert fault trace from string to list of coordinates
             self.df_rupture.FaultTrace = self.df_rupture.FaultTrace.apply(lambda x: json.loads(x))
             # get number of events
@@ -984,7 +1052,7 @@ class UserDefinedRupture(SeismicSource):
         if len(missing_cols)>0:
             logging.info(f'The table is missing the following columns/headers:')
             logging.info(f'\t {", ".join(missing_cols)}')
-            
+
     
     def process_rupture(
         self,
@@ -1316,8 +1384,8 @@ class UCERF(UserDefinedRupture):
         self.ucerf_model_rupture_fpath = os.path.join(self.ucerf_model_dir,"UCERF3_reduced_senario_dM0.5_v2_ruptures.csv")
         self.ucerf_model_section_fpath = os.path.join(self.ucerf_model_dir,"UCERF3_reduced_senario_dM0.5_v2_sections.csv")
         # load ucerf rupture file
-        self.df_rupture = pd.read_csv(self.ucerf_model_rupture_fpath)
-        self.df_section = pd.read_csv(self.ucerf_model_section_fpath)
+        self.df_rupture = read_csv(self.ucerf_model_rupture_fpath)
+        self.df_section = read_csv(self.ucerf_model_section_fpath)
         # convert fault trace from string to list of coordinates
         self.df_rupture.FaultTrace = self.df_rupture.FaultTrace.apply(lambda x: json.loads(x))
         self.df_rupture.SectionIDForRupture = self.df_rupture.SectionIDForRupture.apply(lambda x: json.loads(x))
@@ -1436,9 +1504,184 @@ class UCERF_single_rup_file_superseded(UserDefinedRupture):
         # self.ucerf_model_fpath = os.path.join(self.ucerf_model_dir,"UCERF3_reduced_senario_dM0.5.csv")
         self.ucerf_model_fpath = os.path.join(self.ucerf_model_dir,"UCERF3_reduced_senario_dM0.5_v2.csv")
         # load ucerf rupture file
-        self.df_rupture = pd.read_csv(self.ucerf_model_fpath)
+        self.df_rupture = read_csv(self.ucerf_model_fpath)
         # convert fault trace from string to list of coordinates
         self.df_rupture.FaultTrace = self.df_rupture.FaultTrace.apply(lambda x: json.loads(x))
         # get number of events
         self._n_event = self.df_rupture.shape[0]
         logging.info(f"Loaded {self.ucerf_model} ruptures")
+        
+        
+
+# -----------------------------------------------------------
+class UserDefinedGM(SeismicSource):
+    """
+    User defined class for users to provide ground motion values directly in the form of gridded data.
+    
+    Parameters
+    ----------
+    
+    Returns
+    -------
+    
+    """
+    
+    
+    # instantiation
+    def __init__(self, gm_summary_fpath, path_to_gm_data, im_list=['pga','pgv']):
+        """Create an instance of the class"""
+        
+        # invoke parent function
+        super().__init__()
+        
+        # get inputs
+        self._gm_summary_fpath = gm_summary_fpath
+        self._path_to_gm_data = path_to_gm_data
+        self.im_list = im_list
+        
+        # read summary file
+        self._read_gm_summary_file()
+        
+        # initialize empty params, unused
+        # self.mag = None
+        self.oq_surfaces = None # OpenQuake surfaces
+        self._max_dist = None
+        self._mag_min = None
+        self._mag_max = None
+        self._rate_min = None
+        self._rate_max = None
+        self._mesh_spacing = None
+        
+    def _read_gm_summary_file(self):
+        """read summary file with GM metadata"""
+        # get lines from text file
+        with open(self._gm_summary_fpath,'r') as f:
+            lines = f.readlines()
+        # get information from lines
+        metadata_dict = {}
+        event_data = []
+        for i,line in enumerate(lines):
+            line_clean = line.strip().replace('# ','')
+            # if 'Missing value' in line_clean:
+            #     metadata_dict['missing_val'] = float(lines[i+1].strip())
+            if 'Bounds' in line_clean:
+                # rearrange such that it's lon/lat
+                tmp = [float(val) for val in lines[i+1].strip().split()]
+                metadata_dict['bounds'] = [tmp[1], tmp[0], tmp[3], tmp[2]]
+            # if 'Grid spacing' in line_clean:
+            #     metadata_dict['grid_spacing'] = float(lines[i+1].strip())
+            if 'Number of scenario maps' in line_clean:
+                metadata_dict['n_event'] = int(lines[i+1].strip())
+            if 'Magnitude' in line_clean:
+                metadata_dict['headers'] = ['EventID','Magnitude','AnnualRate','EventFileName']
+                event_data = [lines[j].strip().split() for j in range(i+1, len(lines))]
+                # break from here as rest of table is read
+                break
+        # make dataframe for scenarios
+        self.df_rupture = DataFrame(event_data,columns=metadata_dict['headers'])
+        # convert strings to int/float
+        self.df_rupture['EventID'] = self.df_rupture['EventID'].apply(lambda x: int(x))
+        self.df_rupture['Magnitude'] = self.df_rupture['Magnitude'].apply(lambda x: float(x))
+        self.df_rupture['AnnualRate'] = self.df_rupture['AnnualRate'].apply(lambda x: float(x))
+        # additional columns empty for compatibility
+        # self.df_rupture['Dip'] = None
+        # self.df_rupture['Rake'] = None
+        # self.df_rupture['DipDir'] = None
+        # self.df_rupture['UpperDepth'] = None
+        # self.df_rupture['LowerDepth'] = None
+        # self.df_rupture['FaultTrace'] = None
+        # store metadata about the scenarios
+        self._extent = metadata_dict['bounds']
+        # self._grid_spacing = metadata_dict['grid_spacing']
+        self._n_event = metadata_dict['n_event']
+        # self._missing_val = metadata_dict['missing_val']
+        # make boundary for filter locations outside extent
+        self._bound = GeoDataFrame(geometry=[Polygon([
+            [self._extent[0], self._extent[1]],
+            [self._extent[0], self._extent[3]],
+            [self._extent[2], self._extent[3]],
+            [self._extent[2], self._extent[1]],
+        ])])
+    
+    def process_rupture(
+        self,
+        mag_min=None,
+        mag_max=None,
+        event_ids_to_keep=None
+    ):
+        """a series of actions to process and filter rupture scenarios"""
+        # get inputs
+        self._mag_min = mag_min
+        self._mag_max = mag_max
+        self._event_ids_to_keep = event_ids_to_keep
+        # some preprocessing
+        # run actions
+        logging.info(f"Screening ruptures...")
+        logging.info(f"\t- Filtered rupture scenarios by:")
+        if self._mag_min is None and self._mag_max is None:
+            logging.info(f"\t\t- none")
+        # filter by magnitudes
+        if self._mag_min is not None:
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.Magnitude>=self._mag_min].reset_index(drop=True)
+            logging.info(f"\t\t- min magnitude: {self._mag_min}")
+        if self._mag_max is not None:
+            self.df_rupture = self.df_rupture.loc[self.df_rupture.Magnitude<=self._mag_max].reset_index(drop=True)
+            logging.info(f"\t\t- max magnitude: {self._mag_max}")
+        # if only keeping certain events
+        if self._event_ids_to_keep is not None:
+            event_id_dict_for_search = {event_id:i for i,event_id in enumerate(self.df_rupture.EventID)}
+            rows_with_event_ids_to_keep = [event_id_dict_for_search[event_id] for event_id in self._event_ids_to_keep]
+            self.df_rupture = self.df_rupture.loc[rows_with_event_ids_to_keep].reset_index(drop=True)
+        self._n_event = self.df_rupture.shape[0]
+        logging.info(f"\t- Number of events remaining after filter: {self._n_event}")
+        
+    @staticmethod
+    def _parse_gm_file(fpath, im_list=['pga','pgv'],
+                       # file header and structure information
+                       default_headers = ['lat','lon','pga','pgv','sa_t0p3','sa_t1p0','sa_t3p0'],
+                       skiprows=5, delimiter=',',
+                       crs=4326,
+                       ):
+        """load data from a user-defined gm file"""
+        # load in table
+        df = read_csv(fpath, delimiter=delimiter, skiprows=skiprows, names=default_headers)
+        # use table to make gdf with im_list for for sampling
+        gdf = GeoDataFrame(df[im_list], crs=crs, geometry=points_from_xy(x=df.lon.values,y=df.lat.values))
+        return gdf
+    
+    def _sample_gm_from_map_i(self, i, gs_sites, out_of_bound_value=-10, aleatory_default=0.01, epistemic_default=0.0):
+        """sample ground motions from maps for event i using nearest neighbor"""
+        # num sites
+        n_site = gs_sites.shape[0]
+        # other items
+        im_list = self.im_list
+        # current event file name
+        event_fname_i = self.df_rupture.EventFileName[i]
+        event_fpath_i = os.path.join(self._path_to_gm_data,event_fname_i)
+        # read gm file
+        gdf_gm = self._parse_gm_file(event_fpath_i,im_list=im_list)
+        # use sindex in geopandas for nearest neighbor, get points within boundary
+        sites_in_bound = gs_sites.sindex.query(self._bound.geometry, predicate='intersects')[1]
+        sites_not_in_bound = list(set(list(range(n_site))).difference(set(sites_in_bound)))
+        gdf_sites_in_bound = gs_sites.loc[sites_in_bound].copy().reset_index(drop=True)        
+        # get nearest gm nodes for sites in bound
+        nearest_site, nearest_sm_node = gdf_gm.sindex.nearest(gdf_sites_in_bound.geometry, return_all=False)
+        # initialize array for interpolated means and uncertainty
+        site_gm = np.zeros((n_site,len(im_list)))
+        site_sigma = np.zeros((n_site,len(im_list)))
+        site_aleatory = np.zeros((n_site,len(im_list)))
+        site_epistemic = np.zeros((n_site,len(im_list)))
+        # interpolate for median IMs
+        for i in range(len(im_list)):
+            # get im mean values
+            site_gm[sites_in_bound,i] = gdf_gm[im_list[i]].values[nearest_sm_node]
+            # get im sigma values
+            site_aleatory[sites_in_bound,i] = aleatory_default
+            site_epistemic[sites_in_bound,i] = epistemic_default
+        # convert to log for mean
+        site_gm[sites_in_bound,:] = np.log(site_gm[sites_in_bound,:])
+        # set out_of_bound values
+        site_gm[sites_not_in_bound,:] = out_of_bound_value
+        # return
+        return site_gm, site_aleatory, site_epistemic
+    

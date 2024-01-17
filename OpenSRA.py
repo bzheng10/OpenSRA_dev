@@ -56,10 +56,28 @@ from src.util import get_repeats_in_list_with_idx, get_sublist_of_list_b_in_a, g
 from src.util import get_idx_of_list_b_in_a_v1, get_idx_of_list_b_in_a_v2
 
 
+# check for PROJ_DATA and GDAL_DATA in environment variables
+# print('...checking for required enviornment variables...')
+# for each in os.environ:
+#     print(f'{each}\n\t- {os.environ[each]}')
+# if not 'CONDA_PREFIX' in os.environ:
+#     os.environ['CONDA_PREFIX'] = os.path.dirname(os.environ['PYTHONPATH'])
+#     print(f'\tadded CONDA_PREFIX')
+# if not 'PROJ_DATA' in os.environ:
+#     os.environ['PROJ_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','proj'))
+#     print(f'\tadded PROJ_DATA')
+# if not 'GDAL_DATA' in os.environ:
+#     os.environ['GDAL_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','gdal'))
+#     print(f'\tadded GDAL_DATA')
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Main function
-def main(work_dir, logging_level='info', logging_message_detail='s',
-         display_after_n_event=10, clean_prev_output=True, get_timer=False):
+def main(
+    work_dir, logging_level='info', logging_message_detail='s',
+    display_after_n_event=10, clean_prev_output=True, get_timer=False,
+    turn_off_sigmas=False
+):
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Setting logging level (e.g. DEBUG or INFO)
@@ -152,6 +170,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     running_below_ground_liquefaction = False
     running_below_ground_lateral_spread = False
     running_below_ground_settlement = False
+    running_below_ground_pge_for_edp = False
     if running_below_ground and has_edp:
         if 'surface_fault_rupture' in workflow['EDP']:
             running_below_ground_fault_rupture = True
@@ -162,6 +181,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         if 'liquefaction' in workflow['EDP']:
             running_below_ground_liquefaction = True
             logging.info(f'\t- liquefaction')
+            for method in workflow['EDP']['liquefaction']:
+                if 'PGE' in method:
+                    running_below_ground_pge_for_edp = True
+                    break
         if 'lateral_spread' in workflow['EDP']:
             running_below_ground_lateral_spread = True
             logging.info(f'\t- lateralspread')
@@ -418,13 +441,25 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     missing_params = all_params.copy()
     for param in all_params:
         if f'{param}_mean' in input_cols:
-            input_dist[param] = {
-                'mean': input_table[f'{param}_mean'].values,
-                'sigma': input_table[f'{param}_sigma'].values,
-                'low': input_table[f'{param}_low'].values,
-                'high': input_table[f'{param}_high'].values,
-                'dist_type': input_table[f'{param}_dist_type'].values[0],
-            }
+            if turn_off_sigmas is False:
+                input_dist[param] = {
+                    'mean': input_table[f'{param}_mean'].values,
+                    'sigma': input_table[f'{param}_sigma'].values,
+                    'low': input_table[f'{param}_low'].values,
+                    'high': input_table[f'{param}_high'].values,
+                    'dist_type': input_table[f'{param}_dist_type'].values[0],
+                }
+            else:
+                if input_table[f'{param}_dist_type'].values[0] == 'lognormal':
+                    input_dist[param] = {
+                        'value': np.exp(input_table[f'{param}_mean'].values),
+                        'dist_type': 'fixed',
+                    }
+                else:
+                    input_dist[param] = {
+                        'value': input_table[f'{param}_mean'].values,
+                        'dist_type': 'fixed',
+                    }
             missing_params.remove(param)
         else:
             if param in input_cols:
@@ -477,7 +512,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Misc setup config
     if running_below_ground_fault_rupture:
-        display_after_n_event = 100;
+        display_after_n_event = 100
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Get samples for input parameters
@@ -844,7 +879,12 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                 scale=sigmas
                             )
                             # store samples to input_samples
-                            input_samples[param] = samples
+                            if turn_off_sigmas is False:
+                                input_samples[param] = samples
+                            else:
+                                # still need to implement this section
+                                logging.info('not implemented step for "turn off sigma"')
+                                input_samples[param] = np.ones(samples.shape)*means
                 else:
                     # get default values
                     primary_mech = str_arr_nsite_by_ninput.copy()
@@ -1034,10 +1074,51 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         time_start = time_initial
     #----------------------
     
-    # TMP TRACK FOR FAULT RUPTURE
-    mean_of_mu_disp_sfr = []
-    sigma_of_mu_disp_sfr = []
-    sigma_disp_sfr = []
+    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    # TMP METHOD FOR TRACKING INTERMEDIATE PARAMETERS
+    logging.info(f'{counter}. Set up intermediate parameters to track...')
+    # get list of params to track
+    to_track_params = []
+    if 'repair_rate' in workflow_order_list['case_1']['haz_list']:
+        to_track_params.append('repair_rate')
+    for each in ['lateral_spread','settlement','landslide','liquefaction']:
+        if locals()[f'running_below_ground_{each}']:
+            to_track_params.append(each)
+    # create dictionary to store track params
+    to_track_dict = {
+        each: {
+            'trackable': False,
+            'track_step': 0,
+            'track_step_str': ''
+        } for each in to_track_params
+    }
+    # check if trackable or not
+    for each in to_track_params:
+        for i, haz_name in enumerate(workflow_order_list['case_1']['haz_list']):
+            if each == 'liquefaction':
+                if haz_name == 'lateral_spread' or haz_name == 'settlement':
+                    to_track_dict[each]['trackable'] = True
+                    to_track_dict[each]['track_step'] = i
+                    to_track_dict[each]['track_step_str'] = f'step{i}'
+            else:
+                if each == haz_name:
+                    to_track_dict[each]['trackable'] = True
+                    to_track_dict[each]['track_step'] = i
+                    to_track_dict[each]['track_step_str'] = f'step{i}'
+    # initialize dictionaries for storing tracked data
+    track_metrics = {
+        met: {each: None for each in to_track_params}
+        for met in ['mean_of_mu','sigma_of_mu','sigma','sites']
+    }
+    track_map = {
+        'liquefaction': 'prob_liq',
+        'lateral_spread': 'pgdef',
+        'settlement': 'pgdef',
+        'landslide': 'pgdef',
+        'repair_rate': 'repair_rate',
+    }
+    logging.info(f'\t-{", ".join(to_track_params)}')
+    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
     # event to run
     logging.info('---------------------------')
@@ -1103,6 +1184,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         ones_arr_nsite_nonzero = np.ones(n_site_curr_event)
         # get nonzero im
         im_dist_info = {}
+        im_samples = {}
         for each in ['pga','pgv']:
             if running_below_ground_fault_rupture:
                 # pga and pgv not used, just make proxy values
@@ -1112,6 +1194,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     'sigma_mu': null_arr_nsite_nonzero.copy(),
                     'dist_type': 'lognormal'
                 }
+                if each != 'pga':
+                    im_samples[each] = np.ones((n_site_curr_event,num_epi_input_samples)) # unused
             else:
                 im_dist_info[each] = {
                     # 'mean': im_import[each]['mean_table'].loc[event_ind,:].values,
@@ -1130,6 +1214,17 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 }
                 # avoid sigma = 0 for PC
                 im_dist_info[each]['sigma'] = np.maximum(im_dist_info[each]['sigma'],0.001)
+                if each != 'pga':
+                    im_samples[each] = pc_workflow.get_samples_for_params(
+                        {each: {
+                            'mean': im_dist_info[each]['mean'],
+                            'sigma': np.sqrt(im_dist_info[each]['sigma']**2 + im_dist_info[each]['sigma_mu']**2),
+                            'low': ones_arr_nsite_nonzero.copy()*-np.inf,
+                            'high': ones_arr_nsite_nonzero.copy()*np.inf,
+                            'dist_type': im_dist_info[each]['dist_type']
+                        }},
+                        num_epi_input_samples,n_site_curr_event
+                    )[each].copy()
         
         #----------------------
         if get_timer:
@@ -1146,16 +1241,20 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         }
         rup_info = {}
         for key in list(rupture_table.columns):
-            if key in rup_map_key:
-                if isinstance(rupture_table[key][event_ind], str):
-                    rup_info[rup_map_key[key]] = np.asarray(json.loads(rupture_table[key][event_ind]))
-                else:
-                    rup_info[rup_map_key[key]] = rupture_table[key][event_ind]
+            # not needed
+            if key == 'fault_trace':
+                pass
             else:
-                if isinstance(rupture_table[key][event_ind], str):
-                    rup_info[key] = np.asarray(json.loads(rupture_table[key][event_ind]))
+                if key in rup_map_key:
+                    if isinstance(rupture_table[key][event_ind], str):
+                        rup_info[rup_map_key[key]] = np.asarray(json.loads(rupture_table[key][event_ind]))
+                    else:
+                        rup_info[rup_map_key[key]] = rupture_table[key][event_ind]
                 else:
-                    rup_info[key] = rupture_table[key][event_ind]
+                    if isinstance(rupture_table[key][event_ind], str):
+                        rup_info[key] = np.asarray(json.loads(rupture_table[key][event_ind]))
+                    else:
+                        rup_info[key] = rupture_table[key][event_ind]
         
         # get additional rupture params for fault rupture specifically
         if running_below_ground_fault_rupture:
@@ -1244,18 +1343,27 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                     param_val_arr[sites_with_crossing] = rup_info[param]
                                 else:
                                     param_val_arr = null_arr_nsite.copy()
-                            # make dist
-                            addl_input_dist[param] = {
-                                'mean': param_val_arr,
-                                'sigma': sigmas,
-                                'low': lows,
-                                'high': highs,
-                                'dist_type': param_dist_type
-                            }
-                            # also update the metrics in input_dist
-                            input_dist[param]['mean'] = addl_input_dist[param]['mean'].copy()
-                            input_dist[param]['low'] = addl_input_dist[param]['low'].copy()
-                            input_dist[param]['high'] = addl_input_dist[param]['high'].copy()
+                            if turn_off_sigmas is False:
+                                # make dist
+                                addl_input_dist[param] = {
+                                    'mean': param_val_arr,
+                                    'sigma': sigmas,
+                                    'low': lows,
+                                    'high': highs,
+                                    'dist_type': param_dist_type
+                                }
+                                # also update the metrics in input_dist
+                                input_dist[param]['mean'] = addl_input_dist[param]['mean'].copy()
+                                input_dist[param]['low'] = addl_input_dist[param]['low'].copy()
+                                input_dist[param]['high'] = addl_input_dist[param]['high'].copy()
+                            else:
+                                addl_input_dist[param] = {
+                                    'value': param_val_arr,
+                                    'dist_type': 'fixed'
+                                }
+                                # also update the mean value in input_dist
+                                input_dist[param]['value'] = addl_input_dist[param]['value'].copy()
+                                input_dist[param]['dist_type'] = addl_input_dist[param]['dist_type'].copy()
             # perform sampling on additional params and append to existing samples
             if len(addl_input_dist) > 0:
                 addl_input_samples = \
@@ -1283,7 +1391,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             time_start = time.time()
         #----------------------
             
-        # print(input_samples_nsite_nonzero['d_pipe'])
         input_dist_nsite_nonzero = {}
         for param in input_dist:
             input_dist_nsite_nonzero[param] = {}
@@ -1454,17 +1561,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             n_sample=num_epi_input_samples,
                             n_site=n_site_curr_event,
                             level_to_run=level_to_run,
+                            # turn_off_sigmas=turn_off_sigmas,
                         )
                         # get other metrics
                         mean_of_mu[curr_case_str][step0_str] = {param_for_domain: step0_results[param_for_domain]['mean_of_mu']}
                         sigma_of_mu[curr_case_str][step0_str] = {param_for_domain: step0_results[param_for_domain]['sigma_of_mu']}
                         sigma[curr_case_str][step0_str] = {param_for_domain: step0_results[param_for_domain]['sigma']}
                         prev_haz_param = [param_for_domain]
-                        
-                        # if case_to_run == 1:
-                        #     mean_of_mu_disp_sfr.append(mean_of_mu[curr_case_str][step0_str]['pgdef'])
-                        #     sigma_of_mu_disp_sfr.append(sigma_of_mu[curr_case_str][step0_str]['pgdef'])
-                        #     sigma_disp_sfr.append(sigma[curr_case_str][step0_str]['pgdef'])
                 
                 #----------------------
                 if get_timer:
@@ -1567,7 +1670,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                 liq_internal_params = {}
                                 # preprocess methods with input samples
                                 if 'liq_susc' in input_dist:
-                                    liq_results, _, = pc_workflow.process_methods_for_mean_and_sigma_of_mu_for_liq(
+                                    liq_results, _ = pc_workflow.process_methods_for_mean_and_sigma_of_mu_for_liq(
                                         haz_dict=liq_haz_dict,
                                         upstream_params=liq_upstream_params,
                                         internal_params=liq_internal_params,
@@ -1576,11 +1679,13 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                         n_site=n_site_curr_event,
                                         get_liq_susc=False,
                                         level_to_run=level_to_run,
+                                        # turn_off_sigmas=turn_off_sigmas,
                                     )
                                     if not 'liq_susc' in input_samples:
                                         liq_susc = np.tile(input_dist['liq_susc']['value'],(num_epi_input_samples,1)).T
                                 else:
-                                    liq_results, liq_susc, = pc_workflow.process_methods_for_mean_and_sigma_of_mu_for_liq(
+                                    liq_results, liq_susc, _ = pc_workflow.process_methods_for_mean_and_sigma_of_mu_for_liq(
+                                    # liq_results, liq_susc, liq_susc_val_mean = pc_workflow.process_methods_for_mean_and_sigma_of_mu_for_liq(
                                         haz_dict=liq_haz_dict,
                                         upstream_params=liq_upstream_params,
                                         internal_params=liq_internal_params,
@@ -1589,41 +1694,58 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                         n_site=n_site_curr_event,
                                         get_liq_susc=True,
                                         level_to_run=level_to_run,
+                                        # turn_off_sigmas=turn_off_sigmas,
                                     )
+                                    
+                                    # df_liq_susc_val = pd.DataFrame(np.arange(n_site)+1,columns=['Ind'])
+                                    # df_liq_susc_val['liq_susc_val'] = -99
+                                    # df_liq_susc_val.loc[sites_to_keep[step0_str],'liq_susc_val'] = liq_susc_val_mean.mean(axis=1)
+                                    # df_liq_susc_val['liq_susc'] = 'none'
+                                    # df_liq_susc_val.loc[np.where(df_liq_susc_val['liq_susc_val']>-1.15)[0],'liq_susc'] = 'very high'
+                                    # df_liq_susc_val.loc[np.where(df_liq_susc_val['liq_susc_val']<=-1.15)[0],'liq_susc'] = 'high'
+                                    # df_liq_susc_val.loc[np.where(df_liq_susc_val['liq_susc_val']<=-1.95)[0],'liq_susc'] = 'moderate'
+                                    # df_liq_susc_val.loc[np.where(df_liq_susc_val['liq_susc_val']<=-3.15)[0],'liq_susc'] = 'low'
+                                    # df_liq_susc_val.loc[np.where(df_liq_susc_val['liq_susc_val']<=-3.20)[0],'liq_susc'] = 'very low'
+                                    # df_liq_susc_val.loc[np.where(df_liq_susc_val['liq_susc_val']<=-38.1)[0],'liq_susc'] = 'none'
+                                    # df_liq_susc_val.to_csv(os.path.join('..','tracked_calcs','liq_susc.csv'),index=False)
+                                    
                                 # rerun with with upstream param * factor for getting slope using forward Euler
-                                liq_upstream_params_forward = liq_upstream_params.copy()
-                                for param in liq_haz_dict['upstream_params']:
-                                    # intensities
-                                    if param == 'pga' or param == 'pgv':
-                                        liq_upstream_params_forward[param] = liq_upstream_params_forward[param] * forward_euler_multiplier
-                                # preprocess methods with input samples
-                                if 'liq_susc' in input_dist:
-                                    liq_results_forward, _, = pc_workflow.process_methods_for_mean_and_sigma_of_mu_for_liq(
-                                        haz_dict=liq_haz_dict,
-                                        upstream_params=liq_upstream_params_forward,
-                                        internal_params=liq_internal_params,
-                                        input_samples=liq_input_samples, 
-                                        n_sample=num_epi_input_samples,
-                                        n_site=n_site_curr_event,
-                                        get_liq_susc=False,
-                                        level_to_run=level_to_run,
-                                    )
-                                    if not 'liq_susc' in input_samples:
-                                        liq_susc_forward = np.tile(
-                                            input_dist_nsite_nonzero['liq_susc']['value'],
-                                            (num_epi_input_samples,1)
-                                        ).T
-                                else:
-                                    liq_results_forward, liq_susc_forward, = pc_workflow.process_methods_for_mean_and_sigma_of_mu_for_liq(
-                                        haz_dict=liq_haz_dict,
-                                        upstream_params=liq_upstream_params_forward,
-                                        internal_params=liq_internal_params,
-                                        input_samples=liq_input_samples, 
-                                        n_sample=num_epi_input_samples,
-                                        n_site=n_site_curr_event,
-                                        get_liq_susc=True,
-                                        level_to_run=level_to_run,
-                                    )
+                                if not running_below_ground_pge_for_edp:
+                                    liq_upstream_params_forward = liq_upstream_params.copy()
+                                    for param in liq_haz_dict['upstream_params']:
+                                        # intensities
+                                        if param == 'pga' or param == 'pgv':
+                                            liq_upstream_params_forward[param] = liq_upstream_params_forward[param] * forward_euler_multiplier
+                                    # preprocess methods with input samples
+                                    if 'liq_susc' in input_dist:
+                                        liq_results_forward, _ = pc_workflow.process_methods_for_mean_and_sigma_of_mu_for_liq(
+                                            haz_dict=liq_haz_dict,
+                                            upstream_params=liq_upstream_params_forward,
+                                            internal_params=liq_internal_params,
+                                            input_samples=liq_input_samples, 
+                                            n_sample=num_epi_input_samples,
+                                            n_site=n_site_curr_event,
+                                            get_liq_susc=False,
+                                            level_to_run=level_to_run,
+                                            # turn_off_sigmas=turn_off_sigmas,
+                                        )
+                                        if not 'liq_susc' in input_samples:
+                                            liq_susc_forward = np.tile(
+                                                input_dist_nsite_nonzero['liq_susc']['value'],
+                                                (num_epi_input_samples,1)
+                                            ).T
+                                    else:
+                                        liq_results_forward, liq_susc_forward, _ = pc_workflow.process_methods_for_mean_and_sigma_of_mu_for_liq(
+                                            haz_dict=liq_haz_dict,
+                                            upstream_params=liq_upstream_params_forward,
+                                            internal_params=liq_internal_params,
+                                            input_samples=liq_input_samples, 
+                                            n_sample=num_epi_input_samples,
+                                            n_site=n_site_curr_event,
+                                            get_liq_susc=True,
+                                            level_to_run=level_to_run,
+                                            # turn_off_sigmas=turn_off_sigmas,
+                                        )
                             
                             ###########################################
                             # get additional params for evaluation
@@ -1657,7 +1779,15 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                         ).T
                                 # from rupture params
                                 else:
-                                    curr_upstream_params[param] = ones_arr_nsite_nonzero_by_ninput[rows_inputs].copy()*rup_info[param]
+                                    # rup_info contains rupture infmration
+                                    if param in rup_info:
+                                        curr_upstream_params[param] = ones_arr_nsite_nonzero_by_ninput[rows_inputs].copy()*rup_info[param]
+                                    # samples of IMs that are not primary to PC
+                                    elif param in im_samples:
+                                        curr_upstream_params[param] = im_samples[param][rows_inputs].copy()
+                                    else:
+                                        raise ValueError(f'FATAL: Cannot find IM parameter "{param}" in rup_info nor im_samples')
+                                        
                             # pull internal params, e.g., prob_liq and liq_susc
                             curr_internal_params = {}
                             for param in curr_param_internal:
@@ -1684,6 +1814,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                 n_sample=num_epi_input_samples,
                                 n_site=n_site_to_use,
                                 level_to_run=level_to_run,
+                                # turn_off_sigmas=turn_off_sigmas,
                             )
                             
                             #----------------------
@@ -1696,7 +1827,6 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                             nonzero_ind_from_out = np.arange(n_site_to_use).astype(int)
                             # reduce problem scale by keeping only values greater than threshold
                             for param in curr_results:
-                                # print(param, curr_results[param]['mean_of_mu'])
                                 if param in min_mean_for_zero_val[curr_cat]:
                                     threshold_val = min_mean_for_zero_val[curr_cat][param]
                                     if curr_results[param]['dist_type'] == 'lognormal':
@@ -1733,13 +1863,14 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                         curr_upstream_params_forward[param] = curr_upstream_params_forward[param] * forward_euler_multiplier
                                 # pull internal params, e.g., prob_liq and liq_susc
                                 curr_internal_params_forward = {}
-                                for param in curr_param_internal:
-                                    if param == 'liq_susc':
-                                        if not 'liq_susc' in input_samples:
-                                            curr_internal_params_forward[param] = liq_susc_forward.copy()
-                                    else:
-                                        if liq_results is not None:
-                                            curr_internal_params_forward[param] = liq_results_forward[param]['mean_of_mu'].copy()
+                                if not running_below_ground_pge_for_edp:
+                                    for param in curr_param_internal:
+                                        if param == 'liq_susc':
+                                            if not 'liq_susc' in input_samples:
+                                                curr_internal_params_forward[param] = liq_susc_forward.copy()
+                                        else:
+                                            if liq_results is not None:
+                                                curr_internal_params_forward[param] = liq_results_forward[param]['mean_of_mu'].copy()
                                 
                                 #----------------------
                                 if get_timer:
@@ -1756,6 +1887,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                     n_sample=num_epi_input_samples,
                                     n_site=n_site_to_use,
                                     level_to_run=level_to_run,
+                                    # turn_off_sigmas=turn_off_sigmas,
                                 )
                                 
                                 #----------------------
@@ -1824,13 +1956,35 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                 # get amu and bmu for PC
                                 amu[curr_case_str][curr_step_str] = curr_amu.copy()
                                 bmu[curr_case_str][curr_step_str] = curr_bmu.copy()
+                                
+                    # get metrics for tracked parameters
+                    if case_to_run == 1:
+                        for param in to_track_dict:
+                            if to_track_dict[param]['trackable'] and to_track_dict[param]['track_step'] == step:
+                                for met in track_metrics:
+                                    if met == 'sites':
+                                        track_metrics[met][param] = sites_to_keep[curr_step_str]
+                                    else:
+                                        if param == 'liquefaction':
+                                            haz_for_tracked_liq = 'edp'
+                                            if met == 'mean_of_mu':
+                                                track_metrics[met][param] = liq_results[track_map[param]][met].mean(axis=1)
+                                            elif met == 'sigma_of_mu':
+                                                track_metrics[met][param] = liq_results[track_map[param]][met]
+                                            elif met == 'sigma':
+                                                track_metrics[met][param] = np.ones(liq_results[track_map[param]]['sigma_of_mu'].shape)*1e-3
+                                        else:
+                                            if param == 'repair_rate':
+                                                haz_for_tracked_rr = workflow_order_list[curr_case_str]['haz_list'][step-1]
+                                                method_for_tracked_rr = list(workflow[curr_cat.upper()][param])[0]
+                                            track_metrics[met][param] = locals()[met][curr_case_str][curr_step_str][track_map[param]]
                 
                 #----------------------
                 if get_timer:
                     print(f'\t2. time: {time.time()-time_start} seconds')
                     time_start = time.time()
                 #----------------------
-                
+                    
                 ###########################################
                 # set up for final step
                 last_step = pbee_dim[curr_case_str]-1
@@ -1889,6 +2043,31 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     last_internal_params = {}
                     last_upstream_mean_params = {}
                     last_internal_mean_params = {}
+                    # pull upstream params for full analysis
+                    for param in last_haz_dict['upstream_params']:
+                        # if in previous mean of mu
+                        if param in mean_of_mu[curr_case_str][prev_step_str]:
+                            if np.ndim(mean_of_mu[curr_case_str][prev_step_str][param]) == 0:
+                                last_upstream_params[param] = \
+                                    ones_arr_nsite_nonzero_by_ninput.copy() * \
+                                    np.exp(mean_of_mu[curr_case_str][prev_step_str][param].copy())
+                            else:
+                                last_upstream_params[param] = np.tile(
+                                    np.exp(mean_of_mu[curr_case_str][prev_step_str][param].copy())
+                                    ,(num_epi_input_samples,1)
+                                ).T
+                        # from rupture params
+                        else:
+                            last_upstream_params[param] = ones_arr_nsite_nonzero_by_ninput[rows_inputs].copy()*rup_info[param]
+                    # pull internal params, e.g., prob_liq and liq_susc
+                    last_internal_params = {}
+                    for param in last_param_internal:
+                        if param == 'liq_susc':
+                            if not 'liq_susc' in input_samples:
+                                last_internal_params[param] = liq_susc.copy()
+                        else:
+                            if liq_results is not None:
+                                last_internal_params[param] = liq_results[param]['mean_of_mu'].copy()
                     # preprocess methods with input samples
                     _, last_results = pc_workflow.process_methods_for_mean_and_sigma_of_mu(
                         haz_dict=last_haz_dict,
@@ -1898,6 +2077,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         n_sample=num_epi_input_samples,
                         n_site=n_site_to_use,
                         level_to_run=level_to_run,
+                        # turn_off_sigmas=turn_off_sigmas,
                     )
                     # track nonzero sites for step0
                     nonzero_ind_from_out = []
@@ -2043,6 +2223,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                                 raise ValueError("Somewhere in mean_of_mu there are invalid values; double check distribution")
                         # multiply by annual rate
                         pc_coeffs_param_i *= rup_info['rate']
+                        
                         # if below ground fault rupture
                         # multiply by prob of crossing, prob of surface rupture, and scale factor for secondary rupture
                         if running_below_ground_fault_rupture:
@@ -2128,21 +2309,9 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     time_loop = time.time()
     #----------------------
     
-    
-    # <<<<<<<<<<<<<<<<<<<<<<
-    # tmp_exp_dir = os.path.abspath(os.path.join('..','fault_rupture_analysis'))
-    # mean_of_mu_disp_sfr = pd.DataFrame(np.asarray(mean_of_mu_disp_sfr),columns=[f'{idx+1}' for idx in range(n_site)])
-    # sigma_of_mu_disp_sfr = pd.DataFrame(np.asarray(sigma_of_mu_disp_sfr),columns=[f'{idx+1}' for idx in range(n_site)])
-    # sigma_disp_sfr = pd.DataFrame(np.asarray(sigma_disp_sfr),columns=[f'{idx+1}' for idx in range(n_site)])
-    # mean_of_mu_disp_sfr.to_csv(os.path.join(tmp_exp_dir,'mean_of_mu_disp_sfr.csv'),index=False)
-    # sigma_of_mu_disp_sfr.to_csv(os.path.join(tmp_exp_dir,'sigma_of_mu_disp_sfr.csv'),index=False)
-    # sigma_disp_sfr.to_csv(os.path.join(tmp_exp_dir,'sigma_disp_sfr.csv'),index=False)
-    # <<<<<<<<<<<<<<<<<<<<<<
-    
-    
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # once pc coeffs are computed for all events, now go through cases again to generate samples and compute fractles
-    logging.info(f'{counter}. After comput PC coefficients for all events, now go through cases to generate samples and fractiles')
+    logging.info(f'{counter}. After computing PC coefficients for all events, now go through cases to generate samples and fractiles')
     counter += 1
     for case_to_run in range(1,n_cases+1):
         logging.info(f'\t- Case {case_to_run}:')
@@ -2162,7 +2331,8 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
             prob_leak_dist = np.asarray([
                 -1.65, -1, 0, 1, 1.65, 0
             ]) * output['prob_leak']['sigma_mu'] + output['prob_leak']['mean']
-            prob_leak_dist = np.round(prob_leak_dist/100,decimals=3) # convert to decimals and leave at 3 decimals
+            # prob_leak_dist = np.round(prob_leak_dist/100,decimals=3) # convert to decimals and leave at 3 decimals
+            prob_leak_dist = np.round(prob_leak_dist,decimals=3) # convert to decimals and leave at 3 decimals
             # get list of annual rates
             ann_rates = rupture_table.annual_rate.values
             # initialize df_frac
@@ -2215,8 +2385,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     hermite_prob_table_indep[curr_case_str].T,
                     pc_coeffs[curr_case_str][param_i]
                 )
-                # keep sum within 0 and 1
-                pc_samples[param_i] = np.maximum(np.minimum(pc_samples[param_i],1),0)
+                # keep sum within 0 and 1 if ShakeMap, else just >=0
+                if im_source == 'ShakeMap':
+                    pc_samples[param_i] = np.maximum(np.minimum(pc_samples[param_i],1),0)
+                else:
+                    pc_samples[param_i] = np.maximum(pc_samples[param_i],0)
                 
                 # if below ground fault rupture:
                 # sample and apply probably of secondary fault rupture
@@ -2254,10 +2427,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                         param_to_use = second_to_last_haz_param[i]
                     else:
                         param_to_use = second_to_last_haz_param[0]
-                return_frac = pc_workflow.get_fractiles(
-                    pc_samples[param_i],
-                    n_sig_fig=8,
-                )
+                return_frac = pc_workflow.get_fractiles(pc_samples[param_i], n_sig_fig=8,)
                 # add param to column name
                 return_frac.columns = [f'{col}_{param_to_use}' for col in return_frac.columns]
                 df_frac[curr_case_str] = pd.concat([df_frac[curr_case_str],return_frac],axis=1)
@@ -2267,12 +2437,18 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                 print(f'\t6. time: {time.time()-time_start} seconds')
                 time_start = time.time()
             #----------------------
-                
+            
             # multiply results by probablity of crossing
             if flag_crossing_file_exists:
                 # for below ground fault rupture, already performed
                 if not running_below_ground_fault_rupture:
-                    df_frac[curr_case_str] = df_frac[curr_case_str] * np.tile(prob_crossing,(6,1)).T            
+                    df_frac[curr_case_str] = df_frac[curr_case_str] * np.tile(prob_crossing,(6,1)).T
+                    
+            # if running PGE for below ground deformation, multiply results by probability of liq
+            if running_below_ground_pge_for_edp:
+                prob_liq_pge = liq_results['prob_liq']['mean_of_mu'].mean(axis=1)
+                df_frac[curr_case_str].loc[sites_with_nonzero_step0] = \
+                    df_frac[curr_case_str].loc[sites_with_nonzero_step0] * np.tile(prob_liq_pge,(6,1)).T
             
             # if using crossings, check for multiple crossings per segment and pick worst case for segment
             if flag_possible_repeated_crossings:
@@ -2335,6 +2511,11 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     index=segment_index_full,
                     columns=df_frac[curr_case_str].columns
                 )
+            
+            # scale for pipe length for p_fail per 100 meters if running below ground assets
+            # if running_below_ground:
+            #     for col in df_frac[curr_case_str]:
+            #         df_frac[curr_case_str][col] = 1-(1-df_frac[curr_case_str][col])**(100/site_data.LENGTH_KM.values)
             
             #----------------------
             if get_timer:
@@ -2777,9 +2958,10 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         gdf_section_table.to_file(spath, layer='ucerf_section_traces', index=False, crs=epsg_wgs84)
         gpkg_contains.append('UCERF section traces tied to Q-faults that cross sites')
     else:
-        gdf_rupture_table = read_file(os.path.join(im_dir,'RUPTURE_METADATA.gpkg'))
-        gdf_rupture_table.to_file(spath, layer='rupture_traces', index=False, crs=epsg_wgs84)
-        gpkg_contains.append('rupture scenarios close to sites')
+        if im_source != 'UserDefinedGM':
+            gdf_rupture_table = read_file(os.path.join(im_dir,'RUPTURE_METADATA.gpkg'))
+            gdf_rupture_table.to_file(spath, layer='rupture_traces', index=False, crs=epsg_wgs84)
+            gpkg_contains.append('rupture scenarios close to sites')
     
     # 2) site data table with crossings only
     if flag_crossing_file_exists:
@@ -2831,6 +3013,44 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     logging.info(f'The summary geopackage contains the following:')
     for each in gpkg_contains:
         logging.info(f'\t- {each}')
+        
+    # <<<<<<<<<<<<<<<<<<<<<<
+    logging.info(f'{counter}. Preparing to export tracked intermediate parameters...')
+    counter += 1
+    if turn_off_sigmas:
+        uncertainty_str = 'noUncertainty'
+    else:
+        uncertainty_str = 'withUncertainty'
+    # opensra_dir = os.path.dirname(os.path.abspath(__file__))
+    track_main_dir = os.path.abspath(os.path.join(sdir,'tracked_calcs'))
+    if os.path.exists(track_main_dir) is False:
+        os.mkdir(track_main_dir)
+    if im_source == 'ShakeMap':
+        sm_name = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events'][0].split('_')[0] + '_'
+    else:
+        sm_name = ''
+    for param in to_track_params:
+        # track_param_dir = os.path.join(track_main_dir,param.replace('_',''))
+        track_param_dir = os.path.join(track_main_dir,param)
+        if os.path.exists(track_param_dir) is False:
+            os.mkdir(track_param_dir)
+        logging.info(f'\t- {param}')
+        for met in track_metrics:
+            if met != 'sites':
+                df_met = pd.DataFrame(
+                    np.vstack([
+                        track_metrics['sites'][param],
+                        track_metrics[met][param]
+                    ]).T,
+                    columns=['Index',''.join(val.capitalize() for val in met.split('_'))]
+                )
+                if param == 'repair_rate':
+                    spath = os.path.join(track_param_dir,f'{sm_name}{met}_{param}_{haz_for_tracked_rr}_{uncertainty_str}_{method_for_tracked_rr}.csv')                    
+                else:
+                    spath = os.path.join(track_param_dir,f'{sm_name}{met}_{track_map[param]}_{uncertainty_str}.csv')
+                df_met.to_csv(spath,index=False)
+                logging.info(f'\t- {param}')
+    # <<<<<<<<<<<<<<<<<<<<<<
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # End of analysis
@@ -2885,7 +3105,7 @@ if __name__ == "__main__":
     # Parse command line input
     args = parser.parse_args()
     
-    print("--------------Start of runtime messages from OpenSRA backend--------------");
+    print("--------------Start of runtime messages from OpenSRA backend--------------")
     # Run "Main"
     main(
         work_dir = args.workdir,
@@ -2896,4 +3116,4 @@ if __name__ == "__main__":
         clean_prev_output=args.clean,
         get_timer=args.timer,
     )
-    print("--------------End of runtime messages from OpenSRA backend--------------");
+    print("--------------End of runtime messages from OpenSRA backend--------------")

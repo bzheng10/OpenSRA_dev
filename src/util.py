@@ -252,7 +252,7 @@ def get_basename_without_extension(path):
 
 
 # -----------------------------------------------------------
-@jit
+@njit
 def make_grid(x_min, y_min, x_max, y_max, dx, dy):
     """given min/max for x and y, and dx and dy, make grid"""
     grid = [

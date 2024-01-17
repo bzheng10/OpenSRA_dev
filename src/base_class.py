@@ -46,13 +46,6 @@ class BaseModel(object):
     _NAME = ''  # Name of the model
     _ABBREV = ''            # Abbreviated name of the model
     _REF = ''                    # Reference for the model
-    # _RETURN_PBEE_META = {
-    #     'category': 'EDP',        # Return category in PBEE framework, e.g., IM, EDP, DM
-    #     'type': 'landslide',       # Type of model (e.g., liquefaction, landslide, pipe strain)
-    #     'variable': [
-    #         'pgdef'
-    #     ] # Return variable for PBEE category, e.g., pgdef, eps_p
-    # }
     _RETURN_PBEE_DIST = {                            # Distribution information
         "desc": 'returned PBEE upstream random variables:',
         'params': {
@@ -70,6 +63,10 @@ class BaseModel(object):
     # random inputs with means, sigmas, and distributions (normal or lognormal)
     _INPUT_DIST_VARY_WITH_LEVEL = False
     _N_LEVEL = 1
+    _REQ_MODEL_RV_FOR_LEVEL = {}
+    _REQ_MODEL_FIXED_FOR_LEVEL = {}
+    _REQ_PARAMS_VARY_WITH_CONDITIONS = False
+    _MODEL_FORM_DETAIL = {}
     _MODEL_INPUT_RV = {
         'rv1': {'mean':None, 'sigma': None, 'cov': None, 'min': -np.inf, 'max': np.inf, 'dist': 'lognormal', 'unit': None, 'desc': 'text'},
         'rv2': {'mean':None, 'sigma': None, 'cov': None, 'min': -np.inf, 'max': np.inf, 'dist': 'normal',    'unit': None, 'desc': 'text'},
@@ -131,7 +128,6 @@ class BaseModel(object):
     #     # 'opt3': 'string'
     # }
 
-
     # instantiation
     def __init__(self):
         """Create an instance of the class"""        
@@ -155,7 +151,6 @@ class BaseModel(object):
         self._intermediates = {}
         self._outputs = {}
 
-
     def _set_instance_var(self):
         """Store class variables to instance"""
         class_var_to_set = [
@@ -170,7 +165,6 @@ class BaseModel(object):
                 setattr(self, var.lower()[1:], getattr(self, var).copy())
             else:
                 setattr(self, var.lower()[1:], getattr(self, var))
-    
 
     @classmethod
     def get_req_rv_and_fix_params(cls, kwargs):
@@ -196,7 +190,6 @@ class BaseModel(object):
             req_rvs_by_level[f'level{i+1}'] = sorted(list(set(req_rvs_by_level[f'level{i+1}'])))
             req_fixed_by_level[f'level{i+1}'] = sorted(list(set(req_fixed_by_level[f'level{i+1}'])))
         return req_rvs_by_level, req_fixed_by_level
-    
     
     def _gather_all_inputs(self):
         """Gathers all required inputs"""
@@ -231,7 +224,6 @@ class BaseModel(object):
     #         # setattr(self,f'_missing_inputs_fixed',list(getattr(self,f'model_input_fixed')['params']))
     #         # self._missing_inputs_fixed += getattr(self,f'_missing_inputs_{each}')
     
-    
     # def _gather_inputs_by_level(self):
     #     """Gathers needed inputs by levels"""
     #     self._req_inputs_by_level = {}
@@ -251,7 +243,6 @@ class BaseModel(object):
     #                             # if 'mean' is not 'user provided', then distribution exists
     #                             if params[param_name]['mean'] == 'user provided':
     #                                 self._req_inputs_by_level[f'level{i+1}'].append(param_name)
-                                
     
     @classmethod
     def print_inputs(cls, disp_dist=True):
@@ -294,13 +285,11 @@ class BaseModel(object):
                             #                 logging.info(f'\t\t{each}: {params[param][each]}')
                     else:
                         logging.info(f"\tNone")
-        
                 
     @property
     def n_model_terms(self):
         """Count number of terms in model, including coeff"""
         return sum(len(self.model_form_detail[level]) for level in self.model_form_detail)
-
 
     # call function
     def __call__(self):
@@ -311,11 +300,9 @@ class BaseModel(object):
         # self._get_results()
         # return self._get_results()
     
-    
     def clear_inputs(self):
         """Clear inputs dictionary"""
         self._inputs = {}
-    
         
     # def set_input_pbee_rv_dist(self, mean, aleatory, epistemic, dist_type='lognormal'):
     def set_input_pbee_dist(self, kwargs):
@@ -334,7 +321,6 @@ class BaseModel(object):
         self._n_site = n_site
         self._n_sample = n_sample
     
-    
     def set_all_inputs(self, kwargs):
         """Set all parameters"""
         # initalize lists for tracking missing variables
@@ -343,14 +329,12 @@ class BaseModel(object):
         self._set_general_inputs(kwargs, param_type='geo')
         self._set_general_inputs(kwargs, param_type='other')
         self._set_general_inputs(kwargs, param_type='fixed')
-    
             
     def set_infra_inputs(self, kwargs):
         """Set site parameters"""
         # initalize lists for tracking missing variables
         # logging.info(f'Setting site inputs')
-        self._set_general_inputs(kwargs, param_type='infra')
-            
+        self._set_general_inputs(kwargs, param_type='infra') 
             
     def set_geo_inputs(self, kwargs):
         """Set eq parameters"""
@@ -358,20 +342,17 @@ class BaseModel(object):
         # logging.info(f'Setting earthquake inputs')
         self._set_general_inputs(kwargs, param_type='geo')
     
-    
     def set_other_inputs(self, kwargs):
         """Set other parameters"""
         # initalize lists for tracking missing variables
         # logging.info(f'Setting other inputs')
         self._set_general_inputs(kwargs, param_type='other')
-
     
     def set_fixed_inputs(self, kwargs):
         """Set other parameters"""
         # initalize lists for tracking missing variables
         # logging.info(f'Setting other inputs')
-        self._set_general_inputs(kwargs, param_type='fixed')
-        
+        self._set_general_inputs(kwargs, param_type='fixed') 
     
     def _set_general_inputs(self, kwargs, param_type='geo'):
         """Set parameters: 'infra', 'geo', 'other', or 'fixed'"""
@@ -396,8 +377,7 @@ class BaseModel(object):
         # store missing inputs
         setattr(self,f'_missing_inputs_{param_type}',missing_inputs)
         # expand dims
-        self._expand_input_dims()
-        
+        self._expand_input_dims() 
     
     # def _clean_up_sigma_or_cov(self):
     #     """if both sigma and cov are present, remove one"""
@@ -408,8 +388,6 @@ class BaseModel(object):
     #                 if 'cov' in self._inputs[param_name]:
     #                     if 
                     
-                    
-                
     #             if self._inputs[param_name]['sigma'] == 'preferred' or \
     #                 self._inputs[param_name]['sigma'] is None or \
     #                     np.isnan(self._inputs[param_name]['sigma']):
@@ -433,7 +411,6 @@ class BaseModel(object):
     #                 if 'cov' in self._inputs[param_name]:
     #                     self._inputs[param_name].pop('cov')
 
-
     def _expand_input_dims(self):
         """For all input parameters, expand dims to be 2d (1 x n_site)"""
         for param_name in self._inputs:
@@ -444,7 +421,6 @@ class BaseModel(object):
             else:
                 if np.ndim(self._inputs[param_name]) == 0:
                     self._inputs[param_name] = np.repeat(self._inputs[param_name],self._n_site)
-    
     
     def perform_calc(self, run_with_mean=True, return_inter_params=False):
         """Performs calculations"""        
@@ -475,7 +451,6 @@ class BaseModel(object):
                 param_name: output[param_name]
             })
     
-    
     @staticmethod
     def _get_kwargs_for_lambda_func(kwargs, lambda_func, inds=None):
         """returns dictionary with only arguments for lambda function"""
@@ -484,12 +459,10 @@ class BaseModel(object):
         else:
             return {key:val[inds] for key, val in kwargs.items() if key in lambda_func.__code__.co_varnames}
     
-    
     @staticmethod
     def _get_mean_coeff_for_lambda_func(coeff_dict, lambda_func):
         """returns dictionary with only arguments for lambda function"""
         return {key:val['mean'] for key, val in coeff_dict.items()}
-
     
     # get inputs
     # def set_inputs(self, kwargs):
@@ -529,7 +502,6 @@ class BaseModel(object):
     #     # for param in self.INPUT['OPTIONAL']:
     #     #     self._inputs[param] = kwargs.get(param, self.INPUT['OPTIONAL'][param])
 
-
     def sample_rv(self, param):
         """sample from default distribution"""
         if param in self.model_input_rv:
@@ -566,7 +538,6 @@ class BaseModel(object):
         else:
             return ValueError(f'default distribution for "{param}" does not exist')
 
-
     @staticmethod
     def rvs(mean, sigma, dist_type, low=None, high=None, n_sample=1):
         """set boundaries to infinite if not given"""
@@ -583,7 +554,6 @@ class BaseModel(object):
         if dist_type == 'lognormal':
             samples = np.exp(samples)
         return samples
-
 
     # get results
     # def _get_results(self):
@@ -614,9 +584,12 @@ class BaseModel(object):
     #     # }
     #     return self.MODEL_DIST
 
-
     @classmethod
-    def run_check(cls, rtol=5e-3, atol=0, verbose=True, detailed_verbose=False, opensra_path=None):
+    def run_check(
+        cls, rtol=5e-3, atol=0, verbose=True,
+        detailed_verbose=False, opensra_path=None, addl_path_for_nda_mod='',
+        dist_metric=['mean','sigma','sigma_mu'],
+    ):
         """Check result from function against known results"""
         # tolerance to use
         tol_dict = {}
@@ -631,6 +604,7 @@ class BaseModel(object):
             opensra_path = os.getcwd()
         test_file_dir = os.path.join(
             opensra_path,
+            addl_path_for_nda_mod,
             'test',
             # cls._RETURN_PBEE_META['category'].lower(),
             cls._RETURN_PBEE_DIST['category'].lower(),
@@ -657,12 +631,8 @@ class BaseModel(object):
         # perform calculations
         inst.perform_calc(return_inter_params=True)
         
-        # distribution metric to check, some do not contain
-        # if 'liquefaction' in inst.__module__:
-            # dist_metric = ['mean','sigma','sigma_mu']
-        # else:
-            # dist_metric = ['mean']
-        dist_metric = ['mean','sigma','sigma_mu']
+        # distribution metric to check
+        # dist_metric = ['mean','sigma','sigma_mu']
         
         # perform check
         print(f"Running tests for {cls.__module__}.{method_name}:")
@@ -703,7 +673,7 @@ class BaseModel(object):
                         param_out, # calculation
                         test_data_dict[param_name], # true
                         rtol=rtol, atol=atol,
-                    )                
+                    )
                     
         # # print message if able to check through all cases
         if verbose:
@@ -712,7 +682,6 @@ class BaseModel(object):
             else:
                 print(f"\t...passed\n")
                 # print(f"Running tests for {cls.__module__}.{method_name}... passed\n")
-
 
     @staticmethod
     def _numpy_check(arr_calc, arr_ref, rtol, atol):
@@ -736,17 +705,14 @@ class BaseModel(object):
                 rtol=rtol*10, atol=atol, equal_nan=True,
             )
 
-
     @staticmethod
     def get_sigma_from_cov(mean, cov):
         """Calculates sigma from COV [decimals]"""
         return mean*cov
 
-
     @classmethod
     def _update_param(cls):
         return NotImplementedError("To be added")
-
 
     @staticmethod
     def _convert_to_ndarray(arr, length=1):
@@ -758,7 +724,6 @@ class BaseModel(object):
         else:
             return np.asarray([arr]*length)
         # return arr if isinstance(arr, np.ndarray) else np.asarray([arr]*length)
-
 
     # addtional templates
     def instance_method_placeholder_1(self):
@@ -872,12 +837,10 @@ class GenericModel(BaseModel):
         'func_string': {},
         'string': {}
     }
-    
 
     # instantiation
     def __init__(self):
         super().__init__()
-    
     
     def define_upstream_pbee_info(self, cat, var_list, desc='', unit=''):
         """

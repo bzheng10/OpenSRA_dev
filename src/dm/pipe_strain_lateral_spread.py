@@ -23,8 +23,8 @@ import numpy as np
 
 # OpenSRA modules and classes
 from src.base_class import BaseModel
-from src.dm._pipe_strain_base_models import BainEtal2022
-from src.dm._pipe_strain_base_models import HutabaratEtal2022_Normal, HutabaratEtal2022_SSComp, HutabaratEtal2022_SSTens
+from src.dm._pipe_strain_base import BainEtal2022
+from src.dm._pipe_strain_base import HutabaratEtal2022_Normal, HutabaratEtal2022_SSComp, HutabaratEtal2022_SSTens
 
 
 # -----------------------------------------------------------

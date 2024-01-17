@@ -110,7 +110,7 @@ class JayaramBaker2009(SpatialCorrelation):
 
 
     @staticmethod
-    @jit(nopython=True)
+    @njit
     def _model(d, T, geo_cond):
         """Model"""
         # additional model parameters
@@ -133,7 +133,7 @@ class JayaramBaker2009(SpatialCorrelation):
 
 
 # -----------------------------------------------------------
-@jit(nopython=True)
+@njit
 def jb09(d, T, geo_cond=2):
     """
     Compute correlations between spatial ordinates using Jayaram & Baker (2009).

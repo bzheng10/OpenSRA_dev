@@ -46,8 +46,6 @@ class BainEtal2022(PipeTensileRupture):
     Parameters
     ----------
     From upstream PBEE:
-    # eps_pipe: float, np.ndarray or list
-    #    [%] tensile pipe strain
     
     Infrastructure:
     
@@ -57,8 +55,6 @@ class BainEtal2022(PipeTensileRupture):
     -------
     eps_crit_rup : np.ndarray or list
         [%] mean critical tensile pipe strain for rupture
-    sigma_eps_crit_rup : float, np.ndarray
-        aleatory variability for ln(sigma_eps_crit_rup)
         
     References
     ----------
@@ -82,34 +78,15 @@ class BainEtal2022(PipeTensileRupture):
             'eps_tens_crit_rup': {
                 'desc': 'critical tensile pipe strain for rupture (%)',
                 'unit': '%',
-                # 'mean': None,
-                # 'aleatory': None,
-                # 'epistemic': 0.25, # base model uncertainty, does not include input uncertainty
-                # 'dist_type': 'lognormal',
             },
-            # 'sigma_eps_crit_rup': {
-            #     'desc': 'aleatory variability for ln(eps_crit_rup)',
-            #     'unit': '',
-            #     'mean': None,
-            # },
         }
     }
     _INPUT_PBEE_META = {
-        # 'category': 'DM',        # Input category in PBEE framework, e.g., IM, EDP, DM
-        # 'variable': 'eps_pipe'        # Input variable for PBEE category, e.g., pgdef, eps_pipe
     }
     _INPUT_PBEE_DIST = {     # Randdom variable from upstream PBEE category required by model, e.g, pga, pgdef, pipe_strain
         'category': 'DM',        # Return category in PBEE framework, e.g., IM, EDP, DM
         "desc": 'PBEE upstream random variables:',
         'params': {
-            # 'eps_pipe': {
-            #     'desc': 'longitudinal pipe strain (%)',
-            #     'unit': '%',
-            #     'mean': None,
-            #     'aleatory': None,
-            #     'epistemic': None,
-            #     'dist_type': 'lognormal'
-            # }
         }
     }
     _INPUT_DIST_VARY_WITH_LEVEL = False
@@ -125,14 +102,8 @@ class BainEtal2022(PipeTensileRupture):
         }
     }
     _REQ_MODEL_RV_FOR_LEVEL = {
-        # 'level1': [],
-        # 'level2': [],
-        # 'level3': [],
     }
     _REQ_MODEL_FIXED_FOR_LEVEL = {
-        # 'level1': [],
-        # 'level2': [],
-        # 'level3': [],
     }
     _REQ_PARAMS_VARY_WITH_CONDITIONS = False
     _MODEL_FORM_DETAIL = {}
@@ -149,7 +120,7 @@ class BainEtal2022(PipeTensileRupture):
     # @njit
     def _model(
         return_inter_params=False # to get intermediate params
-        ):
+    ):
         """Model"""
         # model coefficients
 

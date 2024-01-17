@@ -23,8 +23,8 @@ from numpy import cos, sin, radians, logical_and, logical_or
 
 # OpenSRA modules and classes
 from src.base_class import BaseModel
-from src.dm._pipe_strain_base_models import HutabaratEtal2022_Normal, HutabaratEtal2022_Reverse
-from src.dm._pipe_strain_base_models import HutabaratEtal2022_SSComp, HutabaratEtal2022_SSTens
+from src.dm._pipe_strain_base import HutabaratEtal2022_Normal, HutabaratEtal2022_Reverse
+from src.dm._pipe_strain_base import HutabaratEtal2022_SSComp, HutabaratEtal2022_SSTens
 
 
 # -----------------------------------------------------------

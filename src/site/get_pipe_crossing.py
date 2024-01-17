@@ -17,6 +17,7 @@
 import logging
 import os
 import sys
+import time
 import warnings
 
 # scientific processing modules
@@ -432,7 +433,6 @@ def get_pipe_crossing_fault_rup(
     im_dir,
     infra_site_data,
     avail_data_summary,
-    opensra_dataset_dir,
     preproc_ucerf3_for_qfault_dir,
     fault_disp_model='PetersenEtal2011',
     im_source='UCERF',
@@ -458,8 +458,8 @@ def get_pipe_crossing_fault_rup(
         # create transformers for transforming coordinates
         epsg_wgs84 = 4326
         epsg_utm_zone10 = 32610
-        transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10)
-        transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84)
+        transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10, always_xy=True)
+        transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84, always_xy=True)
 
         # read preprocessed UCERF3 rupture and section files
         if im_source == 'UCERF':
@@ -512,12 +512,8 @@ def get_pipe_crossing_fault_rup(
             segment_gdf.LAT_END.values,
         ]).T
         # convert to UTM (m)
-        segment_full_begin_utm = np.asarray(transformer_wgs84_to_utmzone10.transform(
-            segment_start[:,1],segment_start[:,0]
-        )).T
-        segment_full_end_utm = np.asarray(transformer_wgs84_to_utmzone10.transform(
-            segment_end[:,1],segment_end[:,0]
-        )).T
+        segment_full_begin_utm = np.asarray(transformer_wgs84_to_utmzone10.transform(segment_start[:,0],segment_start[:,1])).T
+        segment_full_end_utm = np.asarray(transformer_wgs84_to_utmzone10.transform(segment_end[:,0],segment_end[:,1])).T
         # make segment gdf in UTM
         segment_start_utm_geom = points_from_xy(segment_full_begin_utm[:,0],segment_full_begin_utm[:,1])
         segment_end_utm_geom = points_from_xy(segment_full_end_utm[:,0],segment_full_end_utm[:,1])
@@ -580,9 +576,7 @@ def get_pipe_crossing_fault_rup(
             # string for fault reference in available dataset json
             qfault_str = f'qfault_{each}'
             # get qfault file path
-            qfault_fpath = os.path.join(opensra_dataset_dir,
-                avail_data_summary['Parameters'][qfault_str]['Datasets']['Set1']['Path']
-            )
+            qfault_fpath = avail_data_summary['Parameters'][qfault_str]['Datasets']['Set1']['Path']
             qfault_crs = avail_data_summary['Parameters'][qfault_str]['Datasets']['Set1']['CRS']
             # read qfault shapefile
             gdf_qfault = read_file(qfault_fpath,crs=qfault_crs)
@@ -796,9 +790,7 @@ def get_pipe_crossing_fault_rup(
             logging.info(f'\t\t- Obtained crossing probability and normalized distances...')
                         
             # convert crossing_coords to lat lon
-            crossing_coords_lat, crossing_coords_lon = transformer_utmzone10_to_wgs84.transform(
-                crossing_coords[:,0],crossing_coords[:,1]
-            )
+            crossing_coords_lon, crossing_coords_lat = transformer_utmzone10_to_wgs84.transform(crossing_coords[:,0],crossing_coords[:,1])
 
             # append to dataframe
             segment_by_qfault[each][f'qfault_crossed'] = qfault_crossed
@@ -1209,7 +1201,6 @@ def get_pipe_crossing_landslide_and_liq(
     path_to_def_shp,
     infra_site_data,
     avail_data_summary,
-    opensra_dataset_dir,
     infra_site_data_geom=None,
     export_dir=None,
     def_type='landslide',
@@ -1229,12 +1220,14 @@ def get_pipe_crossing_landslide_and_liq(
           2) def_type = 'lateral_spread', 'settlement', 'landslide'
     """
     
+    time_start = time.time()
+    
     # ---
     # create transformers for transforming coordinates
     epsg_wgs84 = 4326
     epsg_utm_zone10 = 32610
-    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10)
-    transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84)
+    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10, always_xy=True)
+    transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84, always_xy=True)
     
     # ---
     # load shapefile with deformation polygons
@@ -1250,6 +1243,11 @@ def get_pipe_crossing_landslide_and_liq(
         def_poly_gdf = read_file(path_to_def_shp,crs=def_shp_crs)
         if def_poly_gdf.crs != 4326:
             def_poly_gdf.to_crs(4326, inplace=True)
+    
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'1: time = {dt} sec')
+    
             
     # if demand == 'im', treat as poly_exist == False (e.g., deformation zone does not matter)
     if demand == 'im':
@@ -1277,6 +1275,10 @@ def get_pipe_crossing_landslide_and_liq(
     pipe_id_full = segment_gdf.LINE_ID.values # complete list of pipe IDs
     segment_id_full = segment_gdf.ID.values # complete list of segment IDs
     segment_index_full = np.asarray(segment_gdf.index) # complete list of segment indices
+    
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'2: time = {dt} sec')
     
     # ---
     # get crossings between segments and deformation polygons
@@ -1317,23 +1319,25 @@ def get_pipe_crossing_landslide_and_liq(
     else:
         pipe_id_crossed_unique = np.unique(pipe_id_full)
     
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'3: time = {dt} sec')
+    
     # ---
     # convert start and endpoints of segments to UTM zone 10 (meters)
     segment_full_begin_utm = np.transpose(
-        transformer_wgs84_to_utmzone10.transform(
-            segment_gdf.LAT_BEGIN.values,
-            segment_gdf.LON_BEGIN.values,
-        )
+        transformer_wgs84_to_utmzone10.transform(segment_gdf.LON_BEGIN.values,segment_gdf.LAT_BEGIN.values,)
     )
     segment_full_end_utm = np.transpose(
-        transformer_wgs84_to_utmzone10.transform(
-            segment_gdf.LAT_END.values,
-            segment_gdf.LON_END.values,
-        )
+        transformer_wgs84_to_utmzone10.transform(segment_gdf.LON_END.values,segment_gdf.LAT_END.values,)
     )
     if poly_exist:
         segment_crossed_begin_utm = segment_full_begin_utm[crossed_segment_index]
         segment_crossed_end_utm = segment_full_end_utm[crossed_segment_index]
+    
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'4: time = {dt} sec')
     
     # ---
     # if using state network, hard points along pipelines have been precomputed
@@ -1369,6 +1373,10 @@ def get_pipe_crossing_landslide_and_liq(
             # add end of pipeline as a hard point
             hard_points_ind[-1] = np.hstack([hard_points_ind[-1], n_segment])
             hard_points[-1] = np.vstack([hard_points[-1], segment_end_for_curr_pipe_id[-1]])
+    
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'5: time = {dt} sec')
     
     # ---
     # get DEM for unique deformation polygon boundaries to determine direction of slip
@@ -1408,7 +1416,7 @@ def get_pipe_crossing_landslide_and_liq(
                 # sample DEM at grid nodes
                 param = 'dem'
                 dem_file_metadata = avail_data_summary['Parameters'][param]
-                dem_raster_fpath = os.path.join(opensra_dataset_dir,dem_file_metadata['Datasets']['Set1']['Path'])
+                dem_raster_fpath = dem_file_metadata['Datasets']['Set1']['Path']
                 dem_raster_crs = dem_file_metadata['Datasets']['Set1']['CRS']
             if not os.path.exists(dem_raster_fpath):
                 raise ValueError("Path to DEM raster does not exist. Check pipe crossing function")
@@ -1422,7 +1430,10 @@ def get_pipe_crossing_landslide_and_liq(
             bound_coord_flat_df.data['x'] = bound_coord_utm_flat[:,0] # add utm x
             bound_coord_flat_df.data['y'] = bound_coord_utm_flat[:,1] # add utm y
 
-            
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'6: time = {dt} sec')
+     
     # ---
     # get slip direction (azimuth, relative to North) for deformation polygons
     if poly_exist:
@@ -1467,6 +1478,10 @@ def get_pipe_crossing_landslide_and_liq(
         def_poly_crossed_unique_gdf_utm['slip_vect_dx'] = slip_vect_dx
         def_poly_crossed_unique_gdf_utm['slip_vect_dy'] = slip_vect_dy
 
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'7: time = {dt} sec')
+    
     # ---
     # split deformation polygons (geometries) into scarp (head), body, toe
     if poly_exist:
@@ -1499,6 +1514,10 @@ def get_pipe_crossing_landslide_and_liq(
                 upper_list.append(upper_i)
                 lower_list.append(lower_i)
         
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'8: time = {dt} sec')
+    
     # ---
     # get deformation length for deformation polygons
     if poly_exist:
@@ -1514,6 +1533,10 @@ def get_pipe_crossing_landslide_and_liq(
                 )
             def_poly_crossed_unique_gdf_utm['def_length'] = def_length_list
 
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'9: time = {dt} sec')
+    
     # ---
     if poly_exist:
         # remap crossed polygons to dataframe
@@ -1532,6 +1555,10 @@ def get_pipe_crossing_landslide_and_liq(
             def_poly_crossed_gdf_utm = \
                 def_poly_crossed_unique_gdf_utm.loc[crossed_def_poly_map[:,2]].reset_index(drop=True)
         
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'10: time = {dt} sec')
+    
     # ---
     # get all crossings 
     if poly_exist:
@@ -1573,10 +1600,7 @@ def get_pipe_crossing_landslide_and_liq(
         crossing_summary_gdf_utm = crossing_summary_gdf_utm.explode(ignore_index=True)
     else:
         segment_full_mid_utm = np.transpose(
-            transformer_wgs84_to_utmzone10.transform(
-                segment_gdf.LAT_MID.values,
-                segment_gdf.LON_MID.values,
-            )
+            transformer_wgs84_to_utmzone10.transform(segment_gdf.LON_MID.values,segment_gdf.LAT_MID.values,)
         )
         # create geodataframe of crossings
         crossing_summary_gdf_utm = GeoDataFrame(
@@ -1589,6 +1613,10 @@ def get_pipe_crossing_landslide_and_liq(
             )
         )
         
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'11: time = {dt} sec')
+    
     # get l/h for at crossed segments if analyzing lateral spread and freeface freature exists
     if poly_exist and def_type == 'lateral_spread' and freeface_fpath is not None:
         gdf_freeface_wgs84 = read_file(freeface_fpath, crs=epsg_wgs84)
@@ -1608,7 +1636,11 @@ def get_pipe_crossing_landslide_and_liq(
         crossing_summary_gdf_utm['lh_ratio'] = \
             crossing_summary_gdf_utm['freeface_dist_m']/crossing_summary_gdf_utm['freeface_height_m']
         crossing_summary_gdf_utm['lh_ratio'] = np.maximum(crossing_summary_gdf_utm['lh_ratio'],4) # set lower limit to 4
-                
+         
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'12: time = {dt} sec')
+           
     # ---
     # go through each crossing and determine crossing angle and section of deformation geometry
     if poly_exist:
@@ -1660,6 +1692,10 @@ def get_pipe_crossing_landslide_and_liq(
             crossing_summary_gdf_utm['section_crossed'] = None
         crossing_summary_gdf_utm['which_half'] = None
         
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'13: time = {dt} sec')
+    
     # ---
     if poly_exist:
         # if crossing exists, continue, else set beta_crossing to null array
@@ -1667,14 +1703,14 @@ def get_pipe_crossing_landslide_and_liq(
             # convert start and endpoints of segment in UTM zone 10 meters
             crossing_summary_segment_begin_utm = np.transpose(
                 transformer_wgs84_to_utmzone10.transform(
-                    crossing_summary_gdf_utm.LAT_BEGIN.values,
                     crossing_summary_gdf_utm.LON_BEGIN.values,
+                    crossing_summary_gdf_utm.LAT_BEGIN.values,
                 )
             )
             crossing_summary_segment_end_utm = np.transpose(
                 transformer_wgs84_to_utmzone10.transform(
-                    crossing_summary_gdf_utm.LAT_END.values,
                     crossing_summary_gdf_utm.LON_END.values,
+                    crossing_summary_gdf_utm.LAT_END.values,
                 )
             )
             # get crossing coords
@@ -1739,6 +1775,10 @@ def get_pipe_crossing_landslide_and_liq(
         else:
             beta_crossing = np.asarray([])
         
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'14: time = {dt} sec')
+    
     # ---
     # get anchorage lengths
     length_tol = 1e-1 # m
@@ -1853,6 +1893,10 @@ def get_pipe_crossing_landslide_and_liq(
     anchorage_length = np.round(anchorage_length,decimals=1)
     crossing_summary_gdf_utm['l_anchor'] = np.maximum(anchorage_length,1e-2) # limit to 1 cm
 
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'15: time = {dt} sec')
+    
     # ---
     # calculate deformation length for (liquefaction only)
     if def_type == 'lateral_spread' or def_type == 'settlement':
@@ -1875,11 +1919,19 @@ def get_pipe_crossing_landslide_and_liq(
         def_length = np.round(def_length,decimals=1)
         crossing_summary_gdf_utm['def_length'] = np.maximum(def_length,1e-2) # limit to 1 cm
     
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'16: time = {dt} sec')
+    
     # ---
     # convert crossing_summary_gdf_utm back to lat lon
     crossing_summary_gdf = crossing_summary_gdf_utm.to_crs(epsg_wgs84)
     crossing_summary_gdf['crossing_lon'] = crossing_summary_gdf.geometry.x.values
     crossing_summary_gdf['crossing_lat'] = crossing_summary_gdf.geometry.y.values
+    
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'17: time = {dt} sec')
     
     # ---
     # probability of crossing
@@ -1938,6 +1990,10 @@ def get_pipe_crossing_landslide_and_liq(
     else:
         raise ValueError(f'The hazard "{def_type}" is not a hazard under this study')
     
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'18: time = {dt} sec')
+    
     # convert columns to numerics
     for col in crossing_summary_gdf:
         crossing_summary_gdf[col] = pd.to_numeric(crossing_summary_gdf[col],errors='ignore')
@@ -1979,6 +2035,10 @@ def get_pipe_crossing_landslide_and_liq(
             layer='data'
         )
     
+    dt = time.time() - time_start
+    time_start = time.time()
+    print(f'19: time = {dt} sec')
+    
     # ---
     # return
     return crossing_summary_gdf
@@ -1990,7 +2050,6 @@ def get_pipe_crossing_fault_rup_superseded(
     im_dir,
     infra_site_data,
     avail_data_summary,
-    opensra_dataset_dir,
     preproc_ucerf3_for_qfault_dir,
     reduced_ucerf_fpath,
     fault_disp_model='PetersenEtal2011',
@@ -2012,8 +2071,8 @@ def get_pipe_crossing_fault_rup_superseded(
         # create transformers for transforming coordinates
         epsg_wgs84 = 4326
         epsg_utm_zone10 = 32610
-        transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10)
-        transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84)
+        transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10, always_xy=True)
+        transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84, always_xy=True)
 
         # read Norm's reduced UCERF scenarios
         rupture_table = read_file(reduced_ucerf_fpath,crs=epsg_wgs84)
@@ -2053,12 +2112,8 @@ def get_pipe_crossing_fault_rup_superseded(
             segment_gdf.LAT_END.values,
         ]).T
         # convert to UTM (m)
-        segment_full_begin_utm = np.asarray(transformer_wgs84_to_utmzone10.transform(
-            segment_start[:,1],segment_start[:,0]
-        )).T
-        segment_full_end_utm = np.asarray(transformer_wgs84_to_utmzone10.transform(
-            segment_end[:,1],segment_end[:,0]
-        )).T
+        segment_full_begin_utm = np.asarray(transformer_wgs84_to_utmzone10.transform(segment_start[:,0],segment_start[:,1])).T
+        segment_full_end_utm = np.asarray(transformer_wgs84_to_utmzone10.transform(segment_end[:,0],segment_end[:,1])).T
         # make segment gdf in UTM
         segment_start_utm_geom = points_from_xy(segment_full_begin_utm[:,0],segment_full_begin_utm[:,1])
         segment_end_utm_geom = points_from_xy(segment_full_end_utm[:,0],segment_full_end_utm[:,1])
@@ -2113,9 +2168,7 @@ def get_pipe_crossing_fault_rup_superseded(
             # string for fault reference in available dataset json
             qfault_str = f'qfault_{each}'
             # get qfault file path
-            qfault_fpath = os.path.join(opensra_dataset_dir,
-                avail_data_summary['Parameters'][qfault_str]['Datasets']['Set1']['Path']
-            )
+            qfault_fpath = avail_data_summary['Parameters'][qfault_str]['Datasets']['Set1']['Path']
             qfault_crs = avail_data_summary['Parameters'][qfault_str]['Datasets']['Set1']['CRS']
             # read qfault shapefile
             gdf_qfault = read_file(qfault_fpath,crs=qfault_crs)
@@ -2342,9 +2395,7 @@ def get_pipe_crossing_fault_rup_superseded(
                     prob_crossing_list.append(prob_crossing_seg_i)
             
             # convert crossing_coords to lat lon
-            crossing_coords_lat, crossing_coords_lon = transformer_utmzone10_to_wgs84.transform(
-                crossing_coords[:,0],crossing_coords[:,1]
-            )
+            crossing_coords_lon, crossing_coords_lat = transformer_utmzone10_to_wgs84.transform(crossing_coords[:,0],crossing_coords[:,1])
             
             # append to dataframe
             segment_by_qfault[each][f'qfault_crossed'] = qfault_crossed

@@ -61,19 +61,15 @@ def read_cpt_data(cpt_summary_fpath, cpt_data_fdir, col_with_gw_depth):
     # create transformers for transforming coordinates
     epsg_wgs84 = 4326 # degrees
     epsg_utm_zone10 = 32610 # meters
-    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10)
-    transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84)
+    transformer_wgs84_to_utmzone10 = Transformer.from_crs(epsg_wgs84, epsg_utm_zone10, always_xy=True)
+    transformer_utmzone10_to_wgs84 = Transformer.from_crs(epsg_utm_zone10, epsg_wgs84, always_xy=True)
     # read CPT metadata with locations
     # cpt_meta_fpath = os.path.join(cpt_base_dir,'Summary.csv')
     cpt_meta = read_csv(cpt_summary_fpath)
     # make sure summary file has the required columns:
     if not ('CPT_FileName' in cpt_meta and 'Longitude' in cpt_meta and 'Latitude' in cpt_meta):
         raise ValueError('CPT summary file must contained the following columns: "CPT_FileName", "Longitude", and "Latitude"')
-    cpt_meta['utm_x'], cpt_meta['utm_y'] = \
-        transformer_wgs84_to_utmzone10.transform(
-            cpt_meta['Latitude'].values,
-            cpt_meta['Longitude'].values,
-        )
+    cpt_meta['utm_x'], cpt_meta['utm_y'] = transformer_wgs84_to_utmzone10.transform(cpt_meta['Longitude'].values, cpt_meta['Latitude'].values,)
     # see if groundwater depth is given; raise error if not
     if not col_with_gw_depth in cpt_meta:
         raise ValueError(f'CPT summary table does not contain the column {col_with_gw_depth} for mean groundwater depth')

@@ -23,6 +23,7 @@ import warnings
 import copy
 import shutil
 from itertools import chain
+from contextlib import contextmanager
 # import itertools
 
 # data manipulation modules
@@ -37,13 +38,17 @@ from scipy.spatial.distance import cdist
 # geospatial processing modules
 # import geopandas as gpd
 from geopandas import GeoDataFrame, GeoSeries, points_from_xy, read_file
+import shapely.plotting
 from shapely.geometry import LineString, MultiLineString, Point, MultiPoint, Polygon, MultiPolygon
 from shapely.ops import linemerge, polygonize
 from shapely.prepared import prep
 import rasterio as rio
 import rasterio.features
-import rasterio.warp
+# import rasterio.warp
+# from rasterio.warp import calculate_default_transform, reproject, Resampling
+# from rasterio.io import MemoryFile
 from rasterio.plot import show, adjust_band
+from pyproj import Transformer
 # from shapely.strtree import STRtree
 # from rtree import index
 
@@ -94,6 +99,12 @@ class GeoData(object):
     # class definitions
     SUPPORTED_FTYPE = ['.shp', '.gpkg', '.gdb', '.tif', '.xml', '.csv', '.from_args'] # supported file types
     
+    # typical CRS
+    COMMON_CRS = {
+        'WGS84': 4326,
+        'UTMZone10': 32610,
+    }
+    
     
     # instantiation
     def __init__(self, fpath, crs=4326):
@@ -116,6 +127,7 @@ class GeoData(object):
         self._fig = None
         self._ax = None
         self._fignum = None
+        self._added_north_arrow = None
         # for exporting
         self._fig_spath = None
     
@@ -293,6 +305,7 @@ class GeoData(object):
             self._ax[0,0].set_aspect('equal')
             self._ax[0,0].autoscale()
             self._fig.tight_layout()
+            self._added_north_arrow = False
             
             # show or not
             if show is True:
@@ -326,7 +339,9 @@ class GeoData(object):
             # ctx.add_basemap(ax=self._ax[0,0], source=ctx.providers.USGS.USTopo, crs=self.crs)
             if source is None:
                 # source = ctx.providers.Stamen.TonerLite
-                source = ctx.providers.Stamen.Terrain
+                # source = ctx.providers.Stamen.Terrain
+                # source = ctx.providers.OpenStreetMap.Mapnik
+                source = ctx.providers.CartoDB.Positron
             ctx.add_basemap(ax=self._ax[0,0], source=source, zoom=zoom, crs=self.crs)
         
     
@@ -343,6 +358,46 @@ class GeoData(object):
                 self._fig_spath = spath
             self._fig.savefig(self._fig_spath, transparent=True, orientation=orientation, bbox_inches='tight')
 
+
+    def add_north_arrow(self, xTnorm=0.05, yTnorm=0.05):
+        """
+        modified from this solution, with (xT,yT)=bottom-center of arrow:
+        https://stackoverflow.com/questions/58088841/how-to-add-a-north-arrow-on-a-geopandas-map
+        """
+        if self._added_north_arrow is False:
+            ax_xlim = self._ax[0,0].get_xlim()
+            ax_ylim = self._ax[0,0].get_ylim()
+            scale = (ax_xlim[1]-ax_xlim[0])/75 # scale to 10th of xlim width
+            def t_s(t,xT,yT,s):
+                x,y = t
+                return (xT+(x*s),yT+(y*s))
+            a = [(0, 4), (0, 0), (2, -1)]
+            b = [(0, 4), (0, 0), (-2, -1)]
+            t_pos = (0,5)
+            xT = xTnorm*(ax_xlim[1]-ax_xlim[0]) + ax_xlim[0]
+            yT = yTnorm*(ax_ylim[1]-ax_ylim[0]) + ax_ylim[0]
+            t_pos_x,t_pos_y = t_s(t_pos,xT,yT,scale)
+            polygon1 = Polygon( [t_s(t,xT,yT,scale) for t in a] )
+            polygon2 = Polygon( [t_s(t,xT,yT,scale) for t in b] )
+            shapely.plotting.plot_polygon(
+                polygon1, add_points=False, ax=self._ax[0,0], color=None, facecolor='None', edgecolor='k', linewidth=2)
+            shapely.plotting.plot_polygon(
+                polygon2, add_points=False, ax=self._ax[0,0], color=None, facecolor='k', edgecolor='k', linewidth=None)
+            self._ax[0,0].text(x=t_pos_x,y=t_pos_y,s='N', fontsize='large',
+                    ha='center',
+                    va='center',weight='bold',fontname='arial')
+            self._added_north_arrow = True
+
+            
+    def get_ax(self):
+        """get figure axis"""
+        return self._ax[0,0]
+    
+    
+    def get_fig(self):
+        """get figure object"""
+        return self._fig
+    
 
 # -----------------------------------------------------------
 class CSVData(GeoData):
@@ -479,7 +534,13 @@ class CSVData(GeoData):
         logging.info(f"\t{self._bound_spath}")
     
     
-    def plot(self, show=True, figsize=[16,8], plot_bound=False, facecolor='none', edgecolor='g', marker='.', markersize=6, add_basemap=False, zoom='auto'):
+    def plot(
+        self, show=True, figsize=[16,8], plot_bound=False,
+        facecolor='none', edgecolor='g', marker='.', markersize=6,
+        add_basemap=False, zoom='auto',
+        add_north_arrow=True,
+        plt_kwargs={},
+    ):
         """plots geodata"""
         # if matplotlib is loaded, make plot
         if not 'matplotlib' in sys.modules:
@@ -493,10 +554,13 @@ class CSVData(GeoData):
             if plot_bound:
                 if self._bound_coord is None:
                     self.get_bound()
-                self._ax[0,0].plot(self._bound_coord[:,0], self._bound_coord[:,1], 'k')
+                self._ax[0,0].plot(self._bound_coord[:,0], self._bound_coord[:,1], 'k', **plt_kwargs)
             # add basemap
             if add_basemap:
                 self.add_basemap(zoom=zoom)
+            # add north arrow
+            if add_north_arrow:
+                self.add_north_arrow()
             # show or not
             if show is True:
                 plt.show()
@@ -515,7 +579,8 @@ class DataFromArgs(CSVData):
                  lon, lat, lon_header="LON", lat_header="LAT",
                  shape_type='point', crs=4326,
                  lon_begin=None, lat_begin=None, lon_begin_header="LON_BEGIN", lat_begin_header="LAT_BEGIN",
-                 lon_end=None, lat_end=None, lon_end_header="LON_END", lat_endheader="LAT_END"):
+                 lon_end=None, lat_end=None, lon_end_header="LON_END", lat_endheader="LAT_END",
+                 addl_df=None):
         # invoke parent function
         # GeoData().__init__(fpath)
         # GeoData(fpath)
@@ -566,7 +631,7 @@ class DataFromArgs(CSVData):
             self._lat = (self._lat_begin+self._lat_end)/2
         
         # create data table
-        self._create_data_table()
+        self._create_data_table(addl_df)
         
         # convert data to GeoDataFrame
         self._convert_to_gdf()
@@ -574,6 +639,13 @@ class DataFromArgs(CSVData):
         # initialize other attributes
         # geometry coordinates
         # for exporting
+        # for plotting
+        self._fig = None
+        self._ax = None
+        self._fignum = None
+        self._added_north_arrow = None
+        # for exporting
+        self._fig_spath = None
 
     @staticmethod
     def _check_and_expand_dim(x):
@@ -582,7 +654,7 @@ class DataFromArgs(CSVData):
         else:
             return x
 
-    def _create_data_table(self):
+    def _create_data_table(self, addl_df=None):
         """creates DataFrame for input data"""
         if self._shape_type == 'point':
             self.data = pd.DataFrame(
@@ -608,6 +680,9 @@ class DataFromArgs(CSVData):
                     'LENGTH_KM'
                     ]
             )
+        if addl_df is not None:
+            # concat with additional df and rearrange such that geometry is last
+            self.data = pd.concat([self.data,addl_df,],axis=1)
 
     def _convert_to_gdf(self):
         """converts to geopandas.GeoDataFrame"""
@@ -991,9 +1066,15 @@ class ShapefileData(GeoData):
         logging.info(f"\t{self._grid_node_clipped_spath}")
     
     
-    def plot(self, show=True, figsize=[16,8], plot_base=True, facecolor='none', edgecolor='k', linewidth=2,
-             attr_to_plot=None, vmin=None, vmax=None, cmap='Pastel2', add_basemap=False, plot_grid=True,
-             plot_grid_nodes=False, zoom='auto'):
+    def plot(
+        self, show=True, figsize=[16,8], plot_base=True,
+        facecolor='none', edgecolor='k', linewidth=2,
+        attr_to_plot=None, vmin=None, vmax=None, cmap='Pastel2',
+        plot_grid=True, plot_grid_nodes=False,
+        add_basemap=False, zoom='auto',
+        add_north_arrow=True,
+        plt_kwargs={},
+    ):
         """plots geodata"""
         # if matplotlib is loaded, make plot
         if not 'matplotlib' in sys.modules:
@@ -1022,7 +1103,7 @@ class ShapefileData(GeoData):
                 if self.grid is None:
                     logging.info(f'grid has not been generated; first run "make_grid_over_extent"')
                 else:
-                    self.grid.plot(ax=self._ax[0,0], facecolor='none', edgecolor='g', linewidth=1)
+                    self.grid.plot(ax=self._ax[0,0], facecolor='none', edgecolor='g', linewidth=1, **plt_kwargs)
             # plot nearest points
             if plot_grid_nodes:
                 if self.grid_node_table is not None:
@@ -1032,6 +1113,9 @@ class ShapefileData(GeoData):
             # add basemap
             if add_basemap:
                 self.add_basemap(zoom=zoom)
+            # add north arrow
+            if add_north_arrow:
+                self.add_north_arrow()
             # show or not
             if show is True:
                 plt.show()
@@ -1290,10 +1374,15 @@ class PointData(ShapefileData):
         logging.info(f"\t{self._nearest_node_table_spath}")
     
     
-    def plot(self, show=True, figsize=[16,8], plot_base=True, 
-             plot_bound=False, facecolor='none', edgecolor='g', marker='o', markersize=6, 
-             attr_to_plot=None, vmin=None, vmax=None, cmap='Pastel2', add_basemap=False, 
-             plot_nearest_grid_node=False, plot_grid=True, plot_grid_nodes=False, zoom='auto'):
+    def plot(
+        self, show=True, figsize=[16,8], plot_base=True, 
+        plot_bound=False, facecolor='none', edgecolor='g', marker='o', markersize=6, 
+        attr_to_plot=None, vmin=None, vmax=None, cmap='Pastel2', 
+        plot_nearest_grid_node=False, plot_grid=True, plot_grid_nodes=False,
+        add_basemap=False, zoom='auto',
+        add_north_arrow=True,
+        plt_kwargs={}
+    ):
         """plots geodata"""
         # if matplotlib is loaded, make plot
         if not 'matplotlib' in sys.modules:
@@ -1329,6 +1418,9 @@ class PointData(ShapefileData):
             # add basemap
             if add_basemap:
                 self.add_basemap(zoom=zoom)
+            # add north arrow
+            if add_north_arrow:
+                self.add_north_arrow()
             # show or not
             if show is True:
                 plt.show()
@@ -1728,10 +1820,15 @@ class NetworkData(ShapefileData):
         logging.info(f"\t{self._nearest_node_table_spath}")
     
     
-    def plot(self, show=True, figsize=[16,8], plot_seg_midpt=False, plot_base=True,
-             plot_bound=False, facecolor='none', edgecolor='k', linewidth=2,
-             attr_to_plot=None, vmin=None, vmax=None, cmap='Pastel2', add_basemap=False,
-             plot_nearest_grid_node=False, plot_grid=True, plot_grid_nodes=False, zoom='auto'):
+    def plot(
+        self, show=True, figsize=[16,8], plot_seg_midpt=False, plot_base=True,
+        plot_bound=False, facecolor='none', edgecolor='k', linewidth=2,
+        attr_to_plot=None, vmin=None, vmax=None, cmap='Pastel2',
+        plot_nearest_grid_node=False, plot_grid=True, plot_grid_nodes=False,
+        add_basemap=False, zoom='auto',
+        add_north_arrow=True,
+        plt_kwargs={},
+    ):
         """plots geodata"""
         # if matplotlib is loaded, make plot
         if not 'matplotlib' in sys.modules:
@@ -1760,6 +1857,9 @@ class NetworkData(ShapefileData):
             # add basemap
             if add_basemap:
                 self.add_basemap(zoom=zoom)
+            # add north arrow
+            if add_north_arrow:
+                self.add_north_arrow()
             # show or not
             if show is True:
                 plt.show()
@@ -1781,7 +1881,7 @@ class RasterData(GeoData):
         
         # read data
         self._read_data()
-        self._check_crs()
+        # self._check_crs()
         
         # initialize other attributes
         # for sampling
@@ -1794,30 +1894,47 @@ class RasterData(GeoData):
     def _read_data(self):
         """reads data"""
         if os.path.exists(self.fpath):
+            # if self.crs == 4326:
             self.data = rio.open(self.fpath)
+            if self.crs != self.data.crs:
+                logging.info(f'WARNING: mismatch in actual data CRS versus documented CRS for {os.path.basename(self.fpath)}')
+                self.crs = self.data.crs
+            # else:
+            #     self.data = self._reproject_raster(self.fpath)
         else:
             raise ValueError(f'Raster file "{os.path.basename(self.fpath)}" does not exist')
     
     
-    def _check_crs(self):
-        """
-        - check raster CRS, if not 4326, raise error
-        - reprojection of raster data is not currently implemented
-        """
-        if self.data.crs != 4326:
-            raise ValueError(f'CRS for Raster file "{os.path.basename(self.fpath)}" is not EPSG:4326')
-            raise ValueError(f'Reprojection for raster files has not been implemented - EPSG:4326 is required')
-    
+    # def _check_crs(self):
+    #     """
+    #     - check raster CRS, if not 4326, raise error
+    #     - reprojection of raster data is not currently implemented
+    #     """
+        # if self.data.crs != 4326:
+        #     logging.info(f'CRS for Raster file "{os.path.basename(self.fpath)}" is not default EPSG:4326 --- reproject to 4326')
+        #     with reproject_raster(in_path, crs) as in_mem_ds:
+                # do  with in_mem_ds
+            # raise ValueError(f'CRS for Raster file "{os.path.basename(self.fpath)}" is not EPSG:4326')
+            # raise ValueError(f'Reprojection for raster files has not been implemented - EPSG:4326 is required')
+
     
     def close(self):
         """closes file"""
         self.data.close()
         
     
-    def get_sample(self, x, y, band=1, interp_scheme='nearest', out_of_bound_value=np.nan, invalid_value=np.nan, dtype=None):
+    def get_sample(self, x, y, band=1, interp_scheme='nearest', out_of_bound_value=np.nan, invalid_value=np.nan, dtype=None, xy_crs=4326):
         """performs 2D interpolation at (x,y) pairs. Accepted interp_scheme = 'nearest', 'linear', 'cubic', and 'quintic'"""
-        self.x_sample = x
-        self.y_sample = y
+        if xy_crs != self.data.crs:
+            # make transformer for reprojection
+            transformer_xy_to_data = Transformer.from_crs(xy_crs, self.data.crs, always_xy=True)
+            # reproject and store
+            x_proj, y_proj = transformer_xy_to_data.transform(x, y)
+            self.x_sample = x_proj
+            self.y_sample = y_proj
+        else:
+            self.x_sample = x
+            self.y_sample = y
         n_sample = len(x)
         if interp_scheme == 'nearest':
             self.sample = np.array([val[0] for val in self.data.sample(list(zip(self.x_sample,self.y_sample)))])
@@ -1840,7 +1957,13 @@ class RasterData(GeoData):
         self.sample[abs(self.sample)>1e10] = invalid_value
     
     
-    def plot(self, show=True, figsize=[16,8], band=1, plot_base=True, cmap='Greens', show_colorbar=True, plot_sample=False, add_basemap=False, zoom='auto'):
+    def plot(
+        self, show=True, figsize=[16,8],
+        band=1, plot_base=True, cmap='Greens', show_colorbar=True,
+        plot_sample=False, add_basemap=False, zoom='auto',
+        add_north_arrow=True,
+        plt_kwargs={},
+    ):
         """plots geodata"""
         # if matplotlib is loaded, make plot
         if not 'matplotlib' in sys.modules:
@@ -1868,6 +1991,9 @@ class RasterData(GeoData):
             # add basemap
             if add_basemap:
                 self.add_basemap(zoom=zoom)
+            # add north arrow
+            if add_north_arrow:
+                self.add_north_arrow()
             # show or not
             if show is True:
                 plt.show()

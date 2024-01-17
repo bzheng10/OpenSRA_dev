@@ -105,7 +105,7 @@ class BakerJayaram2008(CrossCorrelation):
 
 
     @staticmethod
-    @jit(nopython=True)
+    @njit
     def _model(T1, T2):
         """Model"""
         # additional model parameters
@@ -142,7 +142,7 @@ class BakerJayaram2008(CrossCorrelation):
         
 
 # -----------------------------------------------------------
-# @jit(nopython=True)
+# @njit
 def bj08(T1, T2):
     """
     Compute correlations between spectral ordinates using Baker & Jayaram (2008).

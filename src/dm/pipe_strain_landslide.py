@@ -251,8 +251,8 @@ class HutabaratEtal2022(LandslideInducedPipeStrain):
         # 8) reverse and strike-slip compression:
         #####
         
-        # for PGD less than 5 cm or 0.05 m, set to 0
-        pgdef[pgdef<0.05] = 0
+        # for PGD less than 5 cm or 0.05 m, set to 1e-5 (i.e., "zero" deformation, but avoid 0 to avoid log(0) = -inf)
+        pgdef[pgdef<0.05] = 1e-5
         
         # initialize output variables
         eps_pipe_comp = np.ones(pgdef.shape)*1e-5

@@ -57,19 +57,18 @@ from src.util import set_logging, check_and_get_abspath, get_shp_file_from_dir
 
 
 # check for PROJ_DATA and GDAL_DATA in environment variables
-# print('...checking for required enviornment variables...')
-# for each in os.environ:
-#     print(f'{each}\n\t- {os.environ[each]}')
-# if not 'CONDA_PREFIX' in os.environ:
-#     os.environ['CONDA_PREFIX'] = os.path.dirname(os.environ['PYTHONPATH'])
-#     print(f'\tadded CONDA_PREFIX')
-# if not 'PROJ_DATA' in os.environ:
-#     os.environ['PROJ_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','proj'))
-#     print(f'\tadded PROJ_DATA')
-# if not 'GDAL_DATA' in os.environ:
-#     os.environ['GDAL_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','gdal'))
-#     print(f'\tadded GDAL_DATA')
-
+print('...checking for required enviornment variables...')
+for each in os.environ:
+    print(f'\t- {each}: {os.environ[each]}')
+if not 'CONDA_PREFIX' in os.environ:
+    os.environ['CONDA_PREFIX'] = os.path.dirname(os.environ['PYTHONPATH'])
+    print(f'\tadded CONDA_PREFIX')
+if not 'PROJ_DATA' in os.environ:
+    os.environ['PROJ_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','proj'))
+    print(f'\tadded PROJ_DATA')
+if not 'GDAL_DATA' in os.environ:
+    os.environ['GDAL_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','gdal'))
+    print(f'\tadded GDAL_DATA')
 
 # -----------------------------------------------------------
 # Main function
@@ -559,43 +558,44 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
                     demand = 'edp'
                 else:
                     demand = 'im'
-                if 'repair_rate' in workflow['DM']:
-                    logging.info(f'... DONE - crossing not required for repair rate models')
-                else:
-                    site_data = get_pipe_crossing_landslide_and_liq(
-                        path_to_def_shp=spath_def_poly,
-                        infra_site_data=site_data.copy(),
-                        avail_data_summary=avail_data_summary,
-                        infra_site_data_geom=site_data_geom,
-                        export_dir=processed_input_dir,
-                        def_type=hazard,
-                        def_shp_crs=def_shp_crs,
-                        freeface_fpath=freeface_fpath,
-                        demand=demand
-                    )
-                    ran_crossing_function = True
-                    # if can't find crossing, end preprocessing
-                    if site_data is None:
-                        raise ValueError(f"FATAL: No crossings identified using specified deformation polygons!")
-                    # continue
-                    if spath_def_poly is not None:
-                        performed_crossing = True
-                    if site_data.shape[0] == 0:
-                        logging.info('\n')
-                        logging.info(f'*****FATAL*****')
-                        logging.info(f'- No crossings identified using CPT generated deformation polygons for {hazard}!')
-                        logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
-                        if hazard == 'landslide':
-                            logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile and try preprocessing again.')
-                        elif 'liquefaction' in workflow['EDP']:
-                            logging.info(f'- Please revise the input infrastructure file and/or the site investigation data and try preprocessing again.')
-                        # logging.info(f'- Preprocessing will now exit.')
-                        logging.info(f'*****FATAL*****')
-                        logging.info('\n')
-                        raise ValueError(f"FATAL: No crossings identified using CPT generated deformation polygons for {hazard}!")
-                        # sys.exit()
+                if 'DM' in workflow:
+                    if 'repair_rate' in workflow['DM']:
+                        logging.info(f'... DONE - crossing not required for repair rate models')
                     else:
-                        logging.info(f'... DONE - Obtained pipeline crossing for {hazard}')
+                        site_data = get_pipe_crossing_landslide_and_liq(
+                            path_to_def_shp=spath_def_poly,
+                            infra_site_data=site_data.copy(),
+                            avail_data_summary=avail_data_summary,
+                            infra_site_data_geom=site_data_geom,
+                            export_dir=processed_input_dir,
+                            def_type=hazard,
+                            def_shp_crs=def_shp_crs,
+                            freeface_fpath=freeface_fpath,
+                            demand=demand
+                        )
+                        ran_crossing_function = True
+                        # if can't find crossing, end preprocessing
+                        if site_data is None:
+                            raise ValueError(f"FATAL: No crossings identified using specified deformation polygons!")
+                        # continue
+                        if spath_def_poly is not None:
+                            performed_crossing = True
+                        if site_data.shape[0] == 0:
+                            logging.info('\n')
+                            logging.info(f'*****FATAL*****')
+                            logging.info(f'- No crossings identified using CPT generated deformation polygons for {hazard}!')
+                            logging.info(f'- Preprocessing will now exit as the final risk metrics will all be zero.')
+                            if hazard == 'landslide':
+                                logging.info(f'- Please revise the input infrastructure file and/or the landslide deformation shapefile and try preprocessing again.')
+                            elif 'liquefaction' in workflow['EDP']:
+                                logging.info(f'- Please revise the input infrastructure file and/or the site investigation data and try preprocessing again.')
+                            # logging.info(f'- Preprocessing will now exit.')
+                            logging.info(f'*****FATAL*****')
+                            logging.info('\n')
+                            raise ValueError(f"FATAL: No crossings identified using CPT generated deformation polygons for {hazard}!")
+                            # sys.exit()
+                        else:
+                            logging.info(f'... DONE - Obtained pipeline crossing for {hazard}')
         
     # -----------------------------------------------------------
     # rvs and fixed params split by preferred and user provided
@@ -703,9 +703,9 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         if im_source == "ShakeMap":
             logging.info(f'********')
             # event_ids_to_keep = np.arange(len(sm_events))
-            print(f"at 1:")
-            print(f"- {sm_events}")
-            print(f"- {event_ids_to_keep}")
+            # print(f"at 1:")
+            # print(f"- {sm_events}")
+            # print(f"- {event_ids_to_keep}")
             get_im_pred(
                 im_source, im_dir, site_data, infra_loc_header, im_filters,
                 # for ShakeMaps
@@ -2342,7 +2342,7 @@ def preprocess_cpt_data(
     # for user-defined ground motions
     gm_summary_fpath=None, path_to_gm_data=None,
     # for sampling and Forward Euler differentiation for PC
-    num_epi_input_samples=50, forward_euler_multiplier=1.01,
+    num_epi_input_samples=100, forward_euler_multiplier=1.01,
     # misc.
     display_after_n_event=100
 ):

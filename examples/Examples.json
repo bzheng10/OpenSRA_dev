@@ -152,24 +152,24 @@
     "Using Generic Models": {
         "Examples": [
             {
-                "name": "GM-1: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DM DV (Under 1 Min)",
-                "description": "Placeholder\n",
-                "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dm_dv/Input/SetupConfig.json"
-            },
-            {
-                "name": "GM-2: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DV (Under 1 Min)",
+                "name": "GM-1: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DV (Under 1 Min)",
                 "description": "Placeholder\n",
                 "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dv/Input/SetupConfig.json"
             },
             {
-                "name": "GM-3: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DV SingleIntegral (Under 1 Min)",
+                "name": "GM-2: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in DM DV (Under 1 Min)",
                 "description": "Placeholder\n",
-                "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dv_single/Input/SetupConfig.json"
+                "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_dm_dv/Input/SetupConfig.json"
             },
             {
-                "name": "GM-4: Level3 CPT BalboaBlvd ShakeMap 1994Northridge GenericModel in EDP DV (Under 1 Min)",
+                "name": "GM-3: BalboaBlvd ShakeMap 1994Northridge GenericModel in EDP DV (Under 1 Min)",
                 "description": "Placeholder\n",
-                "inputFile": "generic_model/level3_cpt_balboablvd_shakemap_1994northridge_genmod_edp_dv/Input/SetupConfig.json"
+                "inputFile": "generic_model/balboablvd_shakemap_1994northridge_genmod_edp_dv/Input/SetupConfig.json"
+            },
+            {
+                "name": "GM-4: BalboaBlvd ShakeMap 1994Northridge GenericModel in DV SingleIntegral (Under 1 Min)",
+                "description": "Placeholder\n",
+                "inputFile": "generic_model/balboablvd_shakemap_1994northridge_genmod_dv_single/Input/SetupConfig.json"
             }
         ]
     },

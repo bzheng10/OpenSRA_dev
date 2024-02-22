@@ -176,6 +176,8 @@ def prepare_methods(workflow, n_site):
                 'module': importlib.import_module(f'src.{cat.lower()}.{haz}'),
                 'method': {},
                 'weight': [],
+                'ale': [],
+                'epi': [],
                 'contains_genmod': False # initialize flag for generic model
             }
             # reload for development
@@ -253,11 +255,19 @@ def prepare_methods(workflow, n_site):
                         for item in items:
                             if not item in model_att_to_skip:
                                 additional_params[item] = workflow[cat][haz][model][item]
-                    # get weights
+                    # get weights, aleatory, and epistemic
                     if workflow[cat][haz][model] is None:
                         mods_dict[cat.lower()][haz]['weight'].append(1)
+                        mods_dict[cat.lower()][haz]['ale'].append("Preferred")
+                        mods_dict[cat.lower()][haz]['epi'].append("Preferred")
                     else:
                         mods_dict[cat.lower()][haz]['weight'].append(workflow[cat][haz][model]['ModelWeight'])
+                        if 'Aleatory' in workflow[cat][haz][model]:
+                            mods_dict[cat.lower()][haz]['ale'].append(workflow[cat][haz][model]['Aleatory'])
+                            mods_dict[cat.lower()][haz]['epi'].append(workflow[cat][haz][model]['Epistemic'])
+                        else:
+                            mods_dict[cat.lower()][haz]['ale'].append("Preferred")
+                            mods_dict[cat.lower()][haz]['epi'].append("Preferred")
                     upstream_cat.append(mods_dict[cat.lower()][haz]['method'][model].input_pbee_dist['category'])
                 # keep unique upstream params
                 mods_dict[cat.lower()][haz]['upstream_params'] = list(set(mods_dict[cat.lower()][haz]['upstream_params']))
@@ -510,6 +520,8 @@ def process_methods_for_mean_and_sigma_of_mu(
     # number of methods for hazard
     methods = haz_dict['method']
     weights = haz_dict['weight']
+    ale_sigma = haz_dict['ale']
+    epi_sigma = haz_dict['epi']
     contains_genmod = haz_dict['contains_genmod']
     n_methods = len(methods)
     
@@ -646,7 +658,7 @@ def process_methods_for_mean_and_sigma_of_mu(
     haz_results = {}
     # loop through return params to get mean, sigma, and sigma_mu between methods
     for param in return_params:
-
+        
         # initialize hazard-level varibles for geting mean values
         mean_of_mu_vector_down = np.zeros(n_site)
         var_of_mu_down = 0
@@ -656,8 +668,14 @@ def process_methods_for_mean_and_sigma_of_mu(
         for count,method in enumerate(methods):
             # accumulate to get mean values
             mean_of_mu_vector_down += haz_results_by_method[method][param]['mean_of_mu'] * weights[count]
-            var_of_mu_down += haz_results_by_method[method][param]['sigma_of_mu']**2 * weights[count]
-            var_down += haz_results_by_method[method][param]['sigma']**2 * weights[count]
+            if epi_sigma[count] == 'Preferred':
+                var_of_mu_down += haz_results_by_method[method][param]['sigma_of_mu']**2 * weights[count]
+            else:
+                var_of_mu_down += np.ones(n_site)*epi_sigma[count]**2 * weights[count]
+            if ale_sigma[count] == 'Preferred':
+                var_down += haz_results_by_method[method][param]['sigma']**2 * weights[count]
+            else:
+                var_down += np.ones(n_site)*ale_sigma[count]**2 * weights[count]
 
         # get epistemic uncertainty with mean of method
         var_of_mu_btw_methods_vector_down = np.sum([

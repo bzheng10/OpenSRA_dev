@@ -918,6 +918,11 @@ class HutabaratEtal2022_Normal(_PipeStrainBase):
         pi = np.pi
         d_pipe = d_pipe / 1000 # mm to meter
         t_pipe = t_pipe / 1000 # mm to meter
+        # avoid zero values
+        d_pipe[d_pipe==0] = 1e-5 # m
+        t_pipe[t_pipe==0] = 1e-5 # m
+        h_pipe[h_pipe==0] = 1e-5 # m
+        # other params
         d_in = d_pipe - 2*t_pipe # m
         circum = pi * d_pipe # m
         area = pi * ((d_pipe)**2 - (d_in)**2) / 4 # m^2
@@ -1322,6 +1327,11 @@ class HutabaratEtal2022_Reverse(_PipeStrainBase):
         pi = np.pi
         d_pipe = d_pipe / 1000 # mm to meter
         t_pipe = t_pipe / 1000 # mm to meter
+        # avoid zero values
+        d_pipe[d_pipe==0] = 1e-5 # m
+        t_pipe[t_pipe==0] = 1e-5 # m
+        h_pipe[h_pipe==0] = 1e-5 # m
+        # other params
         d_in = d_pipe - 2*t_pipe # m
         circum = pi * d_pipe # m
         area = pi * ((d_pipe)**2 - (d_in)**2) / 4 # m^2
@@ -1781,6 +1791,11 @@ class HutabaratEtal2022_SSTens_85to90(_PipeStrainBase):
         pi = np.pi
         d_pipe = d_pipe / 1000 # mm to meter
         t_pipe = t_pipe / 1000 # mm to meter
+        # avoid zero values
+        d_pipe[d_pipe==0] = 1e-5 # m
+        t_pipe[t_pipe==0] = 1e-5 # m
+        h_pipe[h_pipe==0] = 1e-5 # m
+        # other params
         d_in = d_pipe - 2*t_pipe # m
         circum = pi * d_pipe # m
         area = pi * ((d_pipe)**2 - (d_in)**2) / 4 # m^2
@@ -1982,6 +1997,11 @@ class HutabaratEtal2022_SSTens_5to85(HutabaratEtal2022_SSTens_85to90):
         pi = np.pi
         d_pipe = d_pipe / 1000 # mm to meter
         t_pipe = t_pipe / 1000 # mm to meter
+        # avoid zero values
+        d_pipe[d_pipe==0] = 1e-5 # m
+        t_pipe[t_pipe==0] = 1e-5 # m
+        h_pipe[h_pipe==0] = 1e-5 # m
+        # other params
         d_in = d_pipe - 2*t_pipe # m
         circum = pi * d_pipe # m
         area = pi * ((d_pipe)**2 - (d_in)**2) / 4 # m^2

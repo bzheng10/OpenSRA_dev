@@ -75,7 +75,7 @@ class PGE2022(GroundSettlement):
     References
     ----------
     .. [1] Pacific Gas & Electric (PG&E), 202, San Francisco Bay Area Liquefaction and Lateral Spread Study, Pacific Gas & Electric (PG&E) Revised Report.
-
+    .. [2] Greenfield, M. W., Guckenheimer, M., Wade, A., Wilson, J. M., Hitchcock, C., Kottke, A. R., & Boone, M. (2022). A Tool To Evaluate Liquefaction and Resulting Permanent Ground Deformation In The San Francisco Bay Area. In Geo-Risk 2023 (pp. 285-295).
     
     """
 

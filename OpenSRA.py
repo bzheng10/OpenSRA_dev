@@ -53,22 +53,22 @@ from src.pc_func.pc_coeffs_double_int import pc_coeffs_double_int
 from src.pc_func.pc_coeffs_triple_int import pc_coeffs_triple_int
 from src.util import set_logging, lhs, get_cdf_given_pts, check_and_get_abspath, remap_str
 from src.util import get_repeats_in_list_with_idx, get_sublist_of_list_b_in_a, get_repeats_in_list
-from src.util import get_idx_of_list_b_in_a_v1, get_idx_of_list_b_in_a_v2
+from src.util import get_idx_of_list_b_in_a_v1, get_idx_of_list_b_in_a_v2, signif
 
 
 # check for PROJ_DATA and GDAL_DATA in environment variables
-# print('...checking for required enviornment variables...')
-# for each in os.environ:
-#     print(f'{each}\n\t- {os.environ[each]}')
-# if not 'CONDA_PREFIX' in os.environ:
-#     os.environ['CONDA_PREFIX'] = os.path.dirname(os.environ['PYTHONPATH'])
-#     print(f'\tadded CONDA_PREFIX')
-# if not 'PROJ_DATA' in os.environ:
-#     os.environ['PROJ_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','proj'))
-#     print(f'\tadded PROJ_DATA')
-# if not 'GDAL_DATA' in os.environ:
-#     os.environ['GDAL_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','gdal'))
-#     print(f'\tadded GDAL_DATA')
+print('...checking for required enviornment variables...')
+for each in os.environ:
+    print(f'\t- {each}: {os.environ[each]}')
+if not 'CONDA_PREFIX' in os.environ:
+    os.environ['CONDA_PREFIX'] = os.path.dirname(os.environ['PYTHONPATH'])
+    print(f'\tadded CONDA_PREFIX')
+if not 'PROJ_DATA' in os.environ:
+    os.environ['PROJ_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','proj'))
+    print(f'\tadded PROJ_DATA')
+if not 'GDAL_DATA' in os.environ:
+    os.environ['GDAL_DATA'] = os.path.abspath(os.path.join(os.environ['CONDA_PREFIX'],'Library','share','gdal'))
+    print(f'\tadded GDAL_DATA')
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -122,7 +122,7 @@ def main(
     with open(setup_config_file, 'r') as f:
         setup_config = json.load(f)
     infra_type = setup_config['Infrastructure']['InfrastructureType']
-    im_source = im_source = list(setup_config['IntensityMeasure']['SourceForIM'])[0]
+    im_source = list(setup_config['IntensityMeasure']['SourceForIM'])[0]
     logging.info(f'{counter}. Loaded setup configuration file')
     counter += 1
     
@@ -137,6 +137,7 @@ def main(
     # get various flags
     # check infrastructure type to run
     logging.info(f'{counter}. Running these configurations:')
+    counter += 1
     running_below_ground = False
     running_wells_caprocks = False
     running_above_ground = False
@@ -197,7 +198,6 @@ def main(
     if 'caprock_leakage' in workflow['DV']:
         running_caprock = True
         logging.info(f'\t- with caprock included')
-    counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Import site data
@@ -247,6 +247,14 @@ def main(
     rupture_table.event_id = rupture_table.event_id.astype(int) # set as integers if not already
     event_ids_to_run = rupture_table.event_id.values # for looping through events to run
     event_index_rel_to_rupture_table = rupture_table.index.values.astype(int)
+    # turn off sigma toggle
+    if im_source == 'ShakeMap':
+        if 'TurnOffSigma' in setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']:
+            turn_off_im_sigma = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['TurnOffSigma']
+        else:
+            turn_off_im_sigma = False
+    else:
+        turn_off_im_sigma = False
     # load additional files if below ground fault rupture
     if running_below_ground_fault_rupture:
         for col in ['seg_id_crossed', 'prob_crossing', 'norm_dist']:
@@ -318,6 +326,7 @@ def main(
     if flag_crossing_file_exists:
         logging.info(f'{counter}. Identifying indices between full instrastructure inventory and subset of inventory with crossings...')
         logging.info(f'\t- NOTE: this may take a few minutes if running fault rupture over below ground assets')
+        counter += 1
         # get probability of crossing
         if running_below_ground_fault_rupture:
             prob_crossing = [0] # placeholder
@@ -410,10 +419,9 @@ def main(
             # no possibility of segments with repeated crossings
             segment_ids_crossed_repeat = np.asarray([])
             segment_index_repeat_in_full = np.asarray([])
-            segment_ids_crossed_single = site_data.index.values
+            segment_ids_crossed_single = site_data.ID.values
             segment_index_single_in_full = site_data.index.values
         logging.info(f'... DONE')
-        counter += 1
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Get list of input params
@@ -492,12 +500,14 @@ def main(
     # Number of Epistemic samples for inputs
     if flag_possible_repeated_crossings:
         if running_below_ground_fault_rupture:
-            num_epi_input_samples = 50
+            # num_epi_input_samples = 50
+            num_epi_input_samples = 100
         else:
             # num_epi_input_samples = 1000
             num_epi_input_samples = 1000
     else:
-        num_epi_input_samples = 50
+        # num_epi_input_samples = 50
+        num_epi_input_samples = 100
     # Number of Epistemic samples for fractiles
     num_epi_fractile_samples = 1000
     # Make some arrays to be used later
@@ -1077,13 +1087,17 @@ def main(
     # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     # TMP METHOD FOR TRACKING INTERMEDIATE PARAMETERS
     logging.info(f'{counter}. Set up intermediate parameters to track...')
+    counter += 1
     # get list of params to track
     to_track_params = []
     if 'repair_rate' in workflow_order_list['case_1']['haz_list']:
         to_track_params.append('repair_rate')
     for each in ['lateral_spread','settlement','landslide','liquefaction']:
         if locals()[f'running_below_ground_{each}']:
-            to_track_params.append(each)
+            if each == 'liquefaction' and running_cpt_based_procedure:
+                pass
+            else:
+                to_track_params.append(each)
     # create dictionary to store track params
     to_track_dict = {
         each: {
@@ -1116,6 +1130,17 @@ def main(
         'settlement': 'pgdef',
         'landslide': 'pgdef',
         'repair_rate': 'repair_rate',
+        'compressive_strain': 'eps_pipe_comp',
+        'tensile_strain': 'eps_pipe_tens',
+    }
+    track_unit_map = {
+        'liquefaction': '_probability_50th_%',
+        'lateral_spread': '_deformation_50th_m',
+        'settlement': '_deformation_50th_m',
+        'landslide': '_deformation_50th_m',
+        'repair_rate': '_50th_repairs/km',
+        'compressive_strain': '_50th_%',
+        'tensile_strain': '_50th_%',
     }
     logging.info(f'\t-{", ".join(to_track_params)}')
     # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -1212,9 +1237,12 @@ def main(
                     'sigma_mu': np.round(im_import[each]['sigma_mu_table'][event_ind,sites_with_nonzero_step0].copy(),decimals=3),
                     'dist_type': 'lognormal'
                 }
+                if turn_off_im_sigma:
+                    im_dist_info[each]['sigma'] = np.ones(im_dist_info[each]['sigma'].shape)*0.001
+                    im_dist_info[each]['sigma_mu'] = np.zeros(im_dist_info[each]['sigma_mu'].shape)
                 # avoid sigma = 0 for PC
                 im_dist_info[each]['sigma'] = np.maximum(im_dist_info[each]['sigma'],0.001)
-                if each != 'pga':
+                if each != 'pga' and len(sites_with_nonzero_step0) > 0:
                     im_samples[each] = pc_workflow.get_samples_for_params(
                         {each: {
                             'mean': im_dist_info[each]['mean'],
@@ -2783,20 +2811,98 @@ def main(
                     )
                 for _ in range(rows_pad_btw_table):
                     writer.write("\n")
-        # site location tab
+        # site location tab-
         df_locs.to_csv(os.path.join(sdir,f'locations.csv'))
         # case results
         for i,case in enumerate(workflow_order_list):
             dv_str = df_workflow['DV'].iloc[i]
             dv_str = dv_str.replace(' ','_')
-            df_frac[case].to_csv(os.path.join(sdir,f'{case}_{dv_str}.csv'))
+            # <<<<<<<<<<<
+            df_out = df_frac[case].copy()
+            df_index = df_out.index
+            df_out.reset_index(inplace=True,drop=True)
+            for each in df_out.columns:
+                if each.split('_')[0] in ['5th','16th','50th','84th','95th','mean']:
+                    df_out[each] = signif(df_out[each].values,p=3)
+            if 'caprock_leakage' in workflow_order_list[case]['haz_list']:
+                df_out = pd.concat([df_out,caprock_crossing],axis=1)
+            else:
+                if 'site_data_full' in locals():
+                    df_out = pd.concat([df_out,site_data_full],axis=1)
+                else:
+                    df_out = pd.concat([df_out,site_data],axis=1)
+            df_out.index = df_index
+            # <<<<<<<<<<<
+            df_out.to_csv(os.path.join(sdir,f'{case}_{dv_str}.csv'))
             # for special cases for above ground:
             if case+'_combined' in df_frac:
-                df_frac[case+'_combined'].to_csv(os.path.join(sdir,f'{case}_{dv_str}_combined.csv'))
+                # <<<<<<<<<<<
+                df_out = df_frac[case+'_combined'].copy()
+                df_index = df_out.index
+                df_out.reset_index(inplace=True)
+                for each in df_out.columns:
+                    if each.split('_')[0] in ['5th','16th','50th','84th','95th','mean']:
+                        df_out[each] = signif(df_out[each].values,p=3)
+                # df_out = pd.DataFrame(signif(df_out.values,p=3),columns=df_out.columns)
+                df_out = pd.concat([df_out,site_data],axis=1)
+                df_out.index = df_index
+                # <<<<<<<<<<<
+                df_out.to_csv(os.path.join(sdir,f'{case}_{dv_str}_combined.csv'))
             if case+'_worst_case' in df_frac:
-                df_frac[case+'_worst_case'].to_csv(os.path.join(sdir,f'{case}_{dv_str}_worst_case.csv'))
+                # <<<<<<<<<<<
+                df_out = df_frac[case+'_worst_case'].copy()
+                df_index = df_out.index
+                df_out.reset_index(inplace=True)
+                for each in df_out.columns:
+                    if each.split('_')[0] in ['5th','16th','50th','84th','95th','mean']:
+                        df_out[each] = signif(df_out[each].values,p=3)
+                # df_out = pd.DataFrame(signif(df_out.values,p=3),columns=df_out.columns)
+                df_out = pd.concat([df_out,site_data],axis=1)
+                df_out.index = df_index
+                # <<<<<<<<<<<
+                df_out.to_csv(os.path.join(sdir,f'{case}_{dv_str}_worst_case.csv'))
     logging.info(f'... Exported result tables to directory:')
     logging.info(f'\t{sdir}')
+
+
+    # <<<<<<<<<<<<<<<<<<<<<<
+    logging.info(f'{counter}. Preparing to export tracked intermediate parameters...')
+    counter += 1
+    if turn_off_sigmas:
+        uncertainty_str = 'noSig'
+    else:
+        uncertainty_str = 'withSig'
+    # opensra_dir = os.path.dirname(os.path.abspath(__file__))
+    track_main_dir = os.path.abspath(os.path.join(sdir,'tracked_calcs'))
+    if os.path.exists(track_main_dir) is False:
+        os.mkdir(track_main_dir)
+    if im_source == 'ShakeMap':
+        sm_name = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events'][0].split('_')[0] + '_'
+    else:
+        sm_name = ''
+    for param in to_track_params:
+        # track_param_dir = os.path.join(track_main_dir,param.replace('_',''))
+        track_param_dir = os.path.join(track_main_dir,param)
+        if os.path.exists(track_param_dir) is False:
+            os.mkdir(track_param_dir)
+        logging.info(f'\t- {param}')
+        for met in track_metrics:
+            if met != 'sites':
+                df_met = pd.DataFrame(
+                    np.vstack([
+                        track_metrics['sites'][param],
+                        track_metrics[met][param]
+                    ]).T,
+                    columns=['Index',''.join(val.capitalize() for val in met.split('_'))]
+                )
+                if param == 'repair_rate':
+                    spath = os.path.join(track_param_dir,f'{sm_name}{met}_{param}_{haz_for_tracked_rr}_{uncertainty_str}_{method_for_tracked_rr}.csv')                    
+                else:
+                    spath = os.path.join(track_param_dir,f'{sm_name}{met}_{track_map[param]}_{uncertainty_str}.csv')
+                df_met.to_csv(spath,index=False)
+                # logging.info(f'\t- {param}')
+    # <<<<<<<<<<<<<<<<<<<<<<
+
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Export gpkg file with mean fractiles
@@ -2816,6 +2922,12 @@ def main(
     cases_in_df_frac = sorted(list(df_frac)) # also sort by alphabetical order
     # tracking what is in gpkg
     gpkg_contains = []
+    
+    # results string
+    if im_source == 'ShakeMap':
+        gdf_frac_layer_str = 'mean_annual_probability_of_failure'
+    else:
+        gdf_frac_layer_str = 'mean_annual_rate_of_failure'
     
     # for below ground, everything fits into one summary sheet (same number of rows):
     if running_below_ground:
@@ -2842,6 +2954,7 @@ def main(
             )
         gdf_frac_mean['SegmentID'] = index
         # for each case in df_frac, get all mean columns
+        track_col_added = []
         for i, case in enumerate(cases_in_df_frac):
             case_num = int(case[-1])
             dv_str = df_workflow['DV'].iloc[case_num-1]
@@ -2852,15 +2965,66 @@ def main(
                     new_col_name = f'{case}: {dv_str}'
                     new_col_name = remap_str(new_col_name, col_name_remap)
                     new_col_name = new_col_name.replace('_',' ')
-                    gdf_frac_mean[new_col_name] = df_frac[case][col].values
+                    track_col_added.append(new_col_name)
+                    gdf_frac_mean[new_col_name] = signif(df_frac[case][col].values,p=3)
+        # add in intermediate values if present
+        if im_source == 'ShakeMap' and len(event_ids_to_run) == 1:
+            df_inter_vals = pd.DataFrame(None,index=site_data.index)
+            # get ims
+            for im in im_import:
+                vals = signif(np.exp(im_import[im]['mean_table'][0].copy()-10),p=3)
+                if im == 'pga':
+                    df_inter_vals['pga_50th_g'] = vals
+                elif im == 'pgv':
+                    df_inter_vals['pgv_50th_cm/s'] = vals
+            # get edps/dms
+            if os.path.exists(track_main_dir):
+                for haz in os.listdir(track_main_dir):
+                    for f in os.listdir(os.path.join(track_main_dir,haz)):
+                        if 'mean_of_mu' in f:
+                            df_inter = pd.read_csv(os.path.join(track_main_dir,haz,f))
+                            if haz == 'liquefaction':
+                                vals = signif(df_inter.MeanOfMu.values*100,p=3)
+                            else:
+                                vals = signif(np.exp(df_inter.MeanOfMu.values),p=3)
+                            for_df = np.zeros(site_data.shape[0])
+                            for_df[sites_with_nonzero_step0] = vals
+                            df_inter_vals[haz+track_unit_map[haz]] = for_df
+        # reduce gdf_frac_mean down to site of site_data if crossing file exists
+        if flag_crossing_file_exists:
+            df_tmp = pd.DataFrame(None,index=site_data.index,columns=gdf_frac_mean.drop(columns=['geometry']).columns)
+            idx_full_to_crossed = np.zeros(site_data.shape[0],dtype=int)
+            segment_index_single_in_crossed = get_idx_of_list_b_in_a_v1(segment_ids_crossed,segment_ids_crossed_single)
+            if len(segment_index_single_in_crossed) > 0:
+                if not 'segment_index_single_in_full' in locals():
+                    segment_index_repeat_in_full = get_idx_of_list_b_in_a_v1(segment_ids_full,segment_ids_crossed_repeat)
+                    segment_index_single_in_full = get_idx_of_list_b_in_a_v1(segment_ids_full,segment_ids_crossed_single)
+                idx_full_to_crossed[segment_index_single_in_crossed] = segment_index_single_in_full
+            if len(segment_ids_crossed_repeat) > 0:
+                for ind, segment_id in enumerate(segment_ids_crossed_repeat):
+                    rows = np.where(segment_ids_crossed==segment_id)[0]
+                    idx_full_to_crossed[rows] = segment_index_repeat_in_full[ind]
+            gdf_frac_mean = gdf_frac_mean.loc[idx_full_to_crossed]
+            gdf_frac_mean.reset_index(drop=True,inplace=True)
+        # keep only rows with at least 1 nonzero value
+        # rows_with_atleast_one_nonzero = ~gdf_frac_mean[track_col_added].eq(0).all(1)
+        rows_with_atleast_one_nonzero = np.asarray(gdf_frac_mean.index)
+        gdf_frac_mean = gdf_frac_mean.loc[rows_with_atleast_one_nonzero]
+        # merge with site_data and df_inter_vals
+        if im_source == 'ShakeMap' and len(event_ids_to_run) == 1:
+            if not df_inter_vals.empty:
+                gdf_frac_mean = pd.concat([gdf_frac_mean,df_inter_vals.loc[rows_with_atleast_one_nonzero]],axis=1)
+        gdf_frac_mean = pd.concat([gdf_frac_mean,site_data.loc[rows_with_atleast_one_nonzero]],axis=1)
         # export
-        gdf_frac_mean.to_file(spath, layer='mean_annual_rate_of_failure', index=False, crs=epsg_wgs84)
+        gdf_frac_mean.to_file(spath, layer=gdf_frac_layer_str, index=False, crs=epsg_wgs84)
         
     # for wells and caprocks - one sheet for wells, one sheet for caprocks if exists
     if running_wells_caprocks:
         gdf_frac_mean = {}
         # first get mean fractile summary for wells
-        gdf_frac_mean['mean_annual_rate_of_failure_for_wells'] = GeoDataFrame(
+        well_layer_str = f'{gdf_frac_layer_str}_for_wells'
+        caprock_layer_str = f'{gdf_frac_layer_str}_for_caprocks'
+        gdf_frac_mean[well_layer_str] = GeoDataFrame(
             None,
             crs=epsg_wgs84,
             geometry=points_from_xy(
@@ -2868,7 +3032,7 @@ def main(
                 y=df_locs.LAT.values,
             )
         )
-        gdf_frac_mean['mean_annual_rate_of_failure_for_wells']['WellID'] = index
+        gdf_frac_mean[well_layer_str]['WellID'] = index
         # for each case in df_frac, get all mean columns
         for i, case in enumerate(cases_in_df_frac):
             case_num = int(case[-1])
@@ -2881,16 +3045,21 @@ def main(
                         new_col_name = f'{case}: {dv_str}'
                         new_col_name = remap_str(new_col_name, col_name_remap)
                         new_col_name = new_col_name.replace('_',' ')
-                        gdf_frac_mean['mean_annual_rate_of_failure_for_wells'][new_col_name] = df_frac[case][col].values
+                        gdf_frac_mean[well_layer_str][new_col_name] = signif(df_frac[case][col].values,p=3)
+        # merge with site_data
+        if 'site_data_full' in locals():
+            gdf_frac_mean[well_layer_str] = pd.concat([gdf_frac_mean[well_layer_str],site_data_full],axis=1)
+        else:
+            gdf_frac_mean[well_layer_str] = pd.concat([gdf_frac_mean[well_layer_str],site_data],axis=1)
         # for each case in df_frac, get all mean columns
         for i, case in enumerate(cases_in_df_frac):
-            if 'caprock' in workflow_order_list[case]['haz_list']:
+            if 'caprock_leakage' in workflow_order_list[case]['haz_list']:
                 case_num = int(case[-1])
                 dv_str = df_workflow['DV'].iloc[case_num-1]
                 dv_str = dv_str.replace(' ','_')
                 # next get mean fractile summary for caprocks
-                if not 'mean_annual_rate_of_failure_for_caprocks' in gdf_frac_mean:
-                    gdf_frac_mean['mean_annual_rate_of_failure_for_caprocks'] = GeoDataFrame(
+                if not caprock_layer_str in gdf_frac_mean:
+                    gdf_frac_mean[caprock_layer_str] = GeoDataFrame(
                         None,
                         crs=epsg_wgs84,
                         geometry=caprock_crossing.geometry.values
@@ -2901,7 +3070,9 @@ def main(
                         new_col_name = f'{case}: {dv_str} - {col}'
                         new_col_name = remap_str(new_col_name, col_name_remap)
                         new_col_name = new_col_name.replace('_',' ')
-                        gdf_frac_mean['mean_annual_rate_of_failure_for_caprocks'][new_col_name] = df_frac[case][col].values
+                        gdf_frac_mean[caprock_layer_str][new_col_name] = signif(df_frac[case][col].values,p=3)
+        # merge with site_data
+        gdf_frac_mean[caprock_layer_str] = pd.concat([gdf_frac_mean[caprock_layer_str],caprock_crossing.drop(columns=['geometry'])],axis=1)
         # export
         for layer in gdf_frac_mean:
             gdf_frac_mean[layer].to_file(spath, layer=layer, index=False, crs=epsg_wgs84)
@@ -2939,7 +3110,7 @@ def main(
                             new_col_name = f'{case}: {dv_str}'
                         new_col_name = remap_str(new_col_name, col_name_remap)
                         new_col_name = new_col_name.replace('_',' ')
-                        gdf_frac_mean[new_col_name] = df_frac[case][col].values
+                        gdf_frac_mean[new_col_name] = signif(df_frac[case][col].values,p=3)
                     # worst case joint
                     # if 'worst_case' in col:
                     #     new_col_name = f'{case}-{dv_str}-{col}'
@@ -2947,8 +3118,10 @@ def main(
                     #     new_col_name = remap_str(new_col_name, col_name_remap)
                     #     new_col_name = new_col_name.replace('_',' ')
                     #     gdf_frac_mean[new_col_name] = df_frac[case][col].values
+        # merge with site_data
+        gdf_frac_mean = pd.concat([gdf_frac_mean,site_data],axis=1)
         # export
-        gdf_frac_mean.to_file(spath, layer='mean_annual_rate_of_failure', index=False, crs=epsg_wgs84)
+        gdf_frac_mean.to_file(spath, layer=gdf_frac_layer_str, index=False, crs=epsg_wgs84)
     gpkg_contains.append('mean fractiles from call cases')
     
     # append other gpkg to gdf_frac_mean if they exist
@@ -3013,44 +3186,7 @@ def main(
     logging.info(f'The summary geopackage contains the following:')
     for each in gpkg_contains:
         logging.info(f'\t- {each}')
-        
-    # <<<<<<<<<<<<<<<<<<<<<<
-    logging.info(f'{counter}. Preparing to export tracked intermediate parameters...')
     counter += 1
-    if turn_off_sigmas:
-        uncertainty_str = 'noUncertainty'
-    else:
-        uncertainty_str = 'withUncertainty'
-    # opensra_dir = os.path.dirname(os.path.abspath(__file__))
-    track_main_dir = os.path.abspath(os.path.join(sdir,'tracked_calcs'))
-    if os.path.exists(track_main_dir) is False:
-        os.mkdir(track_main_dir)
-    if im_source == 'ShakeMap':
-        sm_name = setup_config['IntensityMeasure']['SourceForIM']['ShakeMap']['Events'][0].split('_')[0] + '_'
-    else:
-        sm_name = ''
-    for param in to_track_params:
-        # track_param_dir = os.path.join(track_main_dir,param.replace('_',''))
-        track_param_dir = os.path.join(track_main_dir,param)
-        if os.path.exists(track_param_dir) is False:
-            os.mkdir(track_param_dir)
-        logging.info(f'\t- {param}')
-        for met in track_metrics:
-            if met != 'sites':
-                df_met = pd.DataFrame(
-                    np.vstack([
-                        track_metrics['sites'][param],
-                        track_metrics[met][param]
-                    ]).T,
-                    columns=['Index',''.join(val.capitalize() for val in met.split('_'))]
-                )
-                if param == 'repair_rate':
-                    spath = os.path.join(track_param_dir,f'{sm_name}{met}_{param}_{haz_for_tracked_rr}_{uncertainty_str}_{method_for_tracked_rr}.csv')                    
-                else:
-                    spath = os.path.join(track_param_dir,f'{sm_name}{met}_{track_map[param]}_{uncertainty_str}.csv')
-                df_met.to_csv(spath,index=False)
-                logging.info(f'\t- {param}')
-    # <<<<<<<<<<<<<<<<<<<<<<
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # End of analysis

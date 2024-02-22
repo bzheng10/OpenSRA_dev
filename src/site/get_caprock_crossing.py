@@ -75,6 +75,8 @@ def get_caprock_crossing(
 
     # load caprocks
     caprock_list = read_file(caprock_shp_file,crs=epsg_wgs84)
+    if caprock_list.crs != epsg_wgs84:
+        caprock_list = caprock_list.to_crs(epsg_wgs84)
     n_caprock = caprock_list.shape[0]
 
     # load fault file
@@ -186,7 +188,7 @@ def get_caprock_crossing(
         geoms = caprock_list.geometry.values # keep copy
         caprock_list_gdf = GeoDataFrame(
             pd.read_csv(spath_csv),
-            crs=4326,
+            crs=epsg_wgs84,
             geometry=geoms
         )
         caprock_list_gdf.to_file(spath_gpkg,index=False,layer='data')

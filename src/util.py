@@ -28,6 +28,17 @@ from scipy.interpolate import interp2d
 from numba_stats import truncnorm, norm
 
 
+def signif(x, p):
+    """
+    round x to target p sigfigs
+    https://stackoverflow.com/questions/18915378/rounding-to-significant-figures-in-numpy
+    """
+    x = np.asarray(x)
+    x_positive = np.where(np.isfinite(x) & (x != 0), np.abs(x), 10**(p-1))
+    mags = 10 ** (p - 1 - np.floor(np.log10(x_positive)))
+    return np.round(x * mags) / mags
+
+
 def get_sublist_of_list_b_in_a(list_a,list_b):
     """
     for every key in list b, see if it is in list a

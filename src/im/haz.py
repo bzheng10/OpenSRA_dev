@@ -503,7 +503,15 @@ class SeismicHazard(object):
                     if self.ssc_name == 'UserDefinedRupture':
                         geoms.append(LineString([pt_j[:2] for pt_j in rup_meta_out.fault_trace.iloc[i]])) # only supports single, continuous rupture (i.e., no multilines)
                     else:
-                        geoms.append(MultiLineString([LineString(np.asarray(list_j)[:,:2]) for list_j in rup_meta_out.fault_trace.iloc[i]]))
+                        # check ndim, because list is not homogenous in length, check sequential indicng needed to get to a value
+                        if isinstance(rup_meta_out.fault_trace.iloc[i][0][0],float) or isinstance(rup_meta_out.fault_trace.iloc[i][0][0],int):
+                            ndims = 2
+                        elif isinstance(rup_meta_out.fault_trace.iloc[i][0][0],list):
+                            ndims = 3
+                        if ndims == 2:
+                            geoms.append(MultiLineString([LineString(np.asarray(list_j)[:,:2]) for list_j in [rup_meta_out.fault_trace.iloc[i]]]))
+                        else:
+                            geoms.append(MultiLineString([LineString(np.asarray(list_j)[:,:2]) for list_j in rup_meta_out.fault_trace.iloc[i]]))
                     
                 rup_meta_out_gdf = GeoDataFrame(
                     pd.read_csv(save_name_csv), # reread dataframe to convert fields of lists into strings

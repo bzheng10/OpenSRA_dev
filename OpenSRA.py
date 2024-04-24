@@ -74,7 +74,7 @@ if not 'GDAL_DATA' in os.environ:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Main function
 def main(
-    work_dir, logging_level='info', logging_message_detail='s',
+    work_dir, input_suffix, logging_level='info', logging_message_detail='s',
     display_after_n_event=10, clean_prev_output=True, get_timer=False,
     turn_off_sigmas=False
 ):
@@ -94,7 +94,7 @@ def main(
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Define primary directories - these should be created during Preprocess
-    input_dir = os.path.join(work_dir,'Input')
+    input_dir = os.path.join(work_dir,input_suffix)
     processed_input_dir = os.path.join(work_dir,'Processed_Input')
     im_dir = os.path.join(work_dir,'IM')
     if os.path.exists(input_dir) is False:
@@ -3209,6 +3209,10 @@ if __name__ == "__main__":
     # parser.add_argument('-i', '--input', help='Path of input directory"]')
     parser.add_argument('-w', '--workdir', help='Path to working/analysis directory')
     
+    parser.add_argument('-i', '--input_suffix',
+                        help='Directory containing the input files',
+                        default='Input', type=str)
+    
     # clean previous analysis
     # parser.add_argument('-c', '--clean', help='Clean previous analysis: "y" or "n" (default)', default='n')
     
@@ -3245,6 +3249,7 @@ if __name__ == "__main__":
     # Run "Main"
     main(
         work_dir = args.workdir,
+        input_suffix = args.input_suffix,
         # clean_prev_run = args.clean,
         # logging_level = args.logging,
         display_after_n_event=args.display,

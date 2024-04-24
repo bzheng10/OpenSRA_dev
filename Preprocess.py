@@ -72,7 +72,7 @@ if not 'GDAL_DATA' in os.environ:
 
 # -----------------------------------------------------------
 # Main function
-def main(work_dir, logging_level='info', logging_message_detail='s',
+def main(work_dir, input_suffix, logging_level='info', logging_message_detail='s',
          display_after_n_event=100, clean_prev_output=True):
     """main function that runs the preprocess procedures"""
     
@@ -96,7 +96,7 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
         os.chdir('..')
     # get paths to directories
     opensra_dir = os.path.dirname(os.path.abspath(__file__))
-    input_dir = os.path.join(work_dir,'Input')
+    input_dir = os.path.join(work_dir,input_suffix)
     processed_input_dir = os.path.join(work_dir,'Processed_Input')
     im_dir = os.path.join(work_dir,'IM')
     # clean prev outputs
@@ -363,32 +363,32 @@ def main(work_dir, logging_level='info', logging_message_detail='s',
     if 'NDAData' in setup_config['General']['Directory']:
         if len(setup_config['General']['Directory']['NDAData']) > 0:
             nda_dataset_dir = setup_config['General']['Directory']['NDAData']
-        # check if dataset dir is valid path
-        if os.path.exists(nda_dataset_dir):
-            nda_data_summary_fpath = os.path.join(nda_dataset_dir,'AvailableDataset.json')
-            with open(nda_data_summary_fpath,'r') as f:
-                nda_data_summary = json.load(f)
-            # merge with avail_data_summary
-            for param in nda_data_summary['Parameters']:
-                # first update path in data to include dirpath to folder for full file path
-                for key,val in nda_data_summary['Parameters'][param]['Datasets'].items():
-                    nda_data_summary['Parameters'][param]['Datasets'][key]['Path'] = os.path.join(
-                        nda_dataset_dir,nda_data_summary['Parameters'][param]['Datasets'][key]['Path'])
-                # see if param is already in avail_data_summary
-                if param in avail_data_summary['Parameters']:
-                    avail_set_count = len(avail_data_summary['Parameters'][param]['Datasets'])
-                    nda_set_count = len(nda_data_summary['Parameters'][param]['Datasets'])
-                    # shift datasets in avail_data_summary down
-                    for key,val in avail_data_summary['Parameters'][param]['Datasets'].items():
-                        curr_ind = int(key.replace('Set',''))
-                        avail_data_summary['Parameters'][param]['Datasets'][f'Set{curr_ind+nda_set_count}'] = val
-                    # add data from NDA to avail_data_summary
+            # check if dataset dir is valid path
+            if os.path.exists(nda_dataset_dir):
+                nda_data_summary_fpath = os.path.join(nda_dataset_dir,'AvailableDataset.json')
+                with open(nda_data_summary_fpath,'r') as f:
+                    nda_data_summary = json.load(f)
+                # merge with avail_data_summary
+                for param in nda_data_summary['Parameters']:
+                    # first update path in data to include dirpath to folder for full file path
                     for key,val in nda_data_summary['Parameters'][param]['Datasets'].items():
-                        avail_data_summary['Parameters'][param]['Datasets'][key] = val
-                else:
-                    avail_data_summary['Parameters'][param] = nda_data_summary['Parameters'][param]
-            logging.info(f'{counter}. Loaded JSON file with information of NDA datasets and added to OpenSRA pre-packaged data')
-            counter += 1
+                        nda_data_summary['Parameters'][param]['Datasets'][key]['Path'] = os.path.join(
+                            nda_dataset_dir,nda_data_summary['Parameters'][param]['Datasets'][key]['Path'])
+                    # see if param is already in avail_data_summary
+                    if param in avail_data_summary['Parameters']:
+                        avail_set_count = len(avail_data_summary['Parameters'][param]['Datasets'])
+                        nda_set_count = len(nda_data_summary['Parameters'][param]['Datasets'])
+                        # shift datasets in avail_data_summary down
+                        for key,val in avail_data_summary['Parameters'][param]['Datasets'].items():
+                            curr_ind = int(key.replace('Set',''))
+                            avail_data_summary['Parameters'][param]['Datasets'][f'Set{curr_ind+nda_set_count}'] = val
+                        # add data from NDA to avail_data_summary
+                        for key,val in nda_data_summary['Parameters'][param]['Datasets'].items():
+                            avail_data_summary['Parameters'][param]['Datasets'][key] = val
+                    else:
+                        avail_data_summary['Parameters'][param] = nda_data_summary['Parameters'][param]
+                logging.info(f'{counter}. Loaded JSON file with information of NDA datasets and added to OpenSRA pre-packaged data')
+                counter += 1
     
     # -----------------------------------------------------------
     # preprocess infrastructure file
@@ -3216,6 +3216,10 @@ if __name__ == "__main__":
     # analysis directory
     parser.add_argument('-w', '--workdir', help='Path to working/analysis directory')
     
+    parser.add_argument('-i', '--input_suffix',
+                        help='Directory containing the input files',
+                        default='Input', type=str)
+    
     # json with workflow
     # parser.add_argument('-w', '--workflow', help='Path to json file with workflow')
     
@@ -3249,6 +3253,7 @@ if __name__ == "__main__":
     # Run "Main"
     main(
         work_dir = args.workdir,
+        input_suffix = args.input_suffix,
         # infra_fpath = args.file_type,
         logging_message_detail=args.logging,
         display_after_n_event=args.display,
